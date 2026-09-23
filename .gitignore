@@ -1,0 +1,6 @@
+cloudflared.exe
+node_modules/
+data/images_cache/
+data/drive_images.json
+.DS_Store
+Thumbs.db

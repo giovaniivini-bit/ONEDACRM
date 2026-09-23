@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oneda CRM - Controle de Atividades & Métricas</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- CSS Estilo Corporativo Sério -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- ========================================================================= -->
+        <!-- SIDEBAR MINIMALISTA & CORPORATIVA                                         -->
+        <!-- ========================================================================= -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-container" onclick="window.crmNavigate('macro', 'geral')">
+                    <div class="brand-logo-icon">CO</div>
+                    <div class="brand-title-text">
+                        <span>Oneda CRM</span>
+                        <span class="brand-badge-tag">360</span>
+                    </div>
+                </div>
+                <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Recolher Menu">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <!-- Navegação Modular com Chevrons Conforme Referência -->
+            <nav class="sidebar-nav" id="sidebarNav">
+                <!-- Itens Diretos -->
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="#macro-geral" class="nav-link active" data-module="macro" data-submodule="geral">
+                            <i class="fa-solid fa-house nav-icon"></i>
+                            <span class="nav-text">Início (Resumo Macro)</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 1. MÓDULO MODELAGEM (COM ACCORDION CHEVRON) -->
+                <div class="nav-group-title" data-target="group-modelagem">
+                    <span>Modelagem</span>
+                    <i class="fa-solid fa-chevron-down chevron"></i>
+                </div>
+                <ul class="nav-list" id="group-modelagem">
+                    <li class="nav-item">
+                        <a href="#modelagem-setor13" class="nav-link" data-module="modelagem" data-submodule="setor13">
+                            <i class="fa-solid fa-tag nav-icon"></i>
+                            <span class="nav-text">Pedidos Setor 13</span>
+                            <span class="nav-badge" id="badge-setor13">--</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#modelagem-processo" class="nav-link" data-module="modelagem" data-submodule="processo">
+                            <i class="fa-solid fa-scissors nav-icon"></i>
+                            <span class="nav-text">Em Processo (05/06/12)</span>
+                            <span class="nav-badge" id="badge-processo">--</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#modelagem-leadtime" class="nav-link" data-module="modelagem" data-submodule="leadtime">
+                            <i class="fa-solid fa-stopwatch nav-icon" style="color: #10b981;"></i>
+                            <span class="nav-text">Leadtime Produtivo</span>
+                            <span class="nav-badge" id="badge-leadtime" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">22V</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 2. MÓDULO ESTILO PEDIDO -->
+                <div class="nav-group-title" data-target="group-estilo">
+                    <span>Estilo Pedido</span>
+                    <i class="fa-solid fa-chevron-down chevron"></i>
+                </div>
+                <ul class="nav-list" id="group-estilo">
+                    <li class="nav-item">
+                        <a href="#estilo-setor01" class="nav-link" data-module="estilo-pedido" data-submodule="setor01">
+                            <i class="fa-solid fa-clock-rotate-left nav-icon"></i>
+                            <span class="nav-text">Pend. Setor 01</span>
+                            <span class="nav-badge" id="badge-setor01">01</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#estilo-estampa" class="nav-link" data-module="estilo-pedido" data-submodule="estampa">
+                            <i class="fa-solid fa-shirt nav-icon"></i>
+                            <span class="nav-text">Sit. Estampa</span>
+                            <span class="nav-badge" id="badge-estampa">--</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#estilo-cores-pendentes" class="nav-link" data-module="estilo-pedido" data-submodule="cores-pendentes">
+                            <i class="fa-solid fa-palette nav-icon" style="color: #00d4ff;"></i>
+                            <span class="nav-text">Cores Pendentes (D01)</span>
+                            <span class="nav-badge" id="badge-cores" style="background: rgba(0, 212, 255, 0.2); color: #38bdf8;">D01</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#estilo-aviamentos-pendentes" class="nav-link" data-module="estilo-pedido" data-submodule="aviamentos-pendentes">
+                            <i class="fa-solid fa-box-open nav-icon" style="color: #f59e0b;"></i>
+                            <span class="nav-text">Aviamentos Pendentes (X01)</span>
+                            <span class="nav-badge" id="badge-aviamentos" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">X01</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#estilo-rotativos" class="nav-link" data-module="estilo-pedido" data-submodule="rotativos">
+                            <i class="fa-solid fa-rotate nav-icon"></i>
+                            <span class="nav-text">Rotativos (Setor 43)</span>
+                            <span class="nav-badge" id="badge-rotativos">43</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#estilo-malotes" class="nav-link" data-module="estilo-pedido" data-submodule="malotes">
+                            <i class="fa-solid fa-envelope-open-text nav-icon" style="color: #ec4899;"></i>
+                            <span class="nav-text">Malotes (88 / 83)</span>
+                            <span class="nav-badge" id="badge-malotes" style="background: rgba(236, 72, 153, 0.2); color: #f472b6;">88/83</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 3. MÓDULO ESTILO AMOSTRAS -->
+                <div class="nav-group-title" data-target="group-amostras">
+                    <span>Estilo Amostras</span>
+                    <i class="fa-solid fa-chevron-down chevron"></i>
+                </div>
+                <ul class="nav-list" id="group-amostras">
+                    <li class="nav-item">
+                        <a href="#amostras-feira" class="nav-link" data-module="estilo-amostras" data-submodule="feira">
+                            <i class="fa-solid fa-vest-patches nav-icon"></i>
+                            <span class="nav-text">Feira & Protótipos</span>
+                            <span class="nav-badge" id="badge-feira">--</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 4. CONTROLE DE QUALIDADE (CQ) -->
+                <div class="nav-group-title" data-target="group-cq">
+                    <span>Controle de Qualidade</span>
+                    <i class="fa-solid fa-chevron-down chevron"></i>
+                </div>
+                <ul class="nav-list" id="group-cq">
+                    <li class="nav-item">
+                        <a href="#qualidade-andamento-cq" class="nav-link" data-module="qualidade" data-submodule="andamento-cq">
+                            <i class="fa-solid fa-clipboard-check nav-icon" style="color: #38bdf8;"></i>
+                            <span class="nav-text">Andamento do CQ</span>
+                            <span class="nav-badge" id="badge-cq" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">CQ</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- 5. GESTÃO & DADOS -->
+                <div class="nav-group-title" data-target="group-gestao">
+                    <span>Gestão & Dados</span>
+                    <i class="fa-solid fa-chevron-down chevron"></i>
+                </div>
+                <ul class="nav-list" id="group-gestao">
+                    <li class="nav-item">
+                        <a href="#config-sync" class="nav-link" data-module="config" data-submodule="sync">
+                            <i class="fa-solid fa-cloud-arrow-down nav-icon"></i>
+                            <span class="nav-text">Sincronização</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#config-calendario" class="nav-link" data-module="config" data-submodule="calendario">
+                            <i class="fa-regular fa-calendar-days nav-icon"></i>
+                            <span class="nav-text">Calendário de Prazos</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Rodapé Minimalista -->
+            <div class="sidebar-footer">
+                <div class="footer-system-status">
+                    <span class="status-indicator-dot"></span>
+                    <span id="systemStatusText">Carregando CRM...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ========================================================================= -->
+        <!-- MAIN CONTENT                                                              -->
+        <!-- ========================================================================= -->
+        <div class="main-content">
+            <!-- 1. Top Header Fiel ao Print (Pipeline, Ideias, Novidades 3, Avatar) -->
+            <header class="top-header">
+                <div class="header-title-area">
+                    <h1 class="header-main-title" id="pageMainTitle">Pipeline de Atividades</h1>
+                </div>
+
+                <div class="header-right-tools">
+                    <a class="header-action-link" title="Ideias & Melhorias">
+                        <i class="fa-regular fa-lightbulb"></i>
+                        <span>Ideias</span>
+                    </a>
+                    <a class="header-action-link" title="Novidades & Atualizações">
+                        <i class="fa-regular fa-bell"></i>
+                        <span>Novidades</span>
+                        <span class="header-badge-count">3</span>
+                    </a>
+                    <a class="header-action-link" title="Notificações">
+                        <i class="fa-solid fa-bell"></i>
+                    </a>
+                    
+                    <!-- Avatar Exatamente como no print (Círculo Laranja com "G" + Giovani) -->
+                    <div class="header-user-profile">
+                        <div class="user-avatar-circle">G</div>
+                        <span class="user-display-name">Giovani Wietzycoski</span>
+                        <i class="fa-solid fa-chevron-down user-chevron-icon"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 2. Sub-Toolbar de Filtros & Controles Fiel ao Print -->
+            <div class="sub-toolbar">
+                <div class="toolbar-left-controls">
+                    <!-- Seletor de Funil -->
+                    <button class="toolbar-dropdown-btn" id="btnSectorDropdown">
+                        <span id="activeSectorLabel">Funil Geral Oneda</span>
+                        <i class="fa-solid fa-arrows-up-down" style="font-size: 11px; color: var(--text-muted)"></i>
+                        <i class="fa-solid fa-gear" style="font-size: 11px; color: var(--text-muted); margin-left: 2px;"></i>
+                    </button>
+
+                    <!-- Input de Busca em Pílula -->
+                    <div class="toolbar-search-pill">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="headerSearchInput" placeholder="Buscar OP, produto...">
+                    </div>
+
+                    <!-- Botão Filtros -->
+                    <button class="toolbar-pill-btn" id="btnOpenFiltersModal">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Filtros</span>
+                    </button>
+
+                    <!-- Chips / Pílulas de Filtro Rápido (Conforme o Print) -->
+                    <div class="filter-chips-group">
+                        <button class="filter-chip active" data-filter="all">
+                            <i class="fa-regular fa-user"></i>
+                            <span>Todos</span>
+                        </button>
+                        <button class="filter-chip" data-filter="atrasado">
+                            <i class="fa-regular fa-clock"></i>
+                            <span>Atividade atrasada</span>
+                        </button>
+                        <button class="filter-chip" data-filter="gargalo">
+                            <i class="fa-solid fa-link-slash"></i>
+                            <span>Precisam de você (Gargalo)</span>
+                        </button>
+                        <button class="filter-chip" data-filter="no_prazo">
+                            <i class="fa-regular fa-circle-check"></i>
+                            <span>No Prazo</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="toolbar-right-controls">
+                    <span class="toolbar-stat-text"><strong id="toolbarActiveCount">543</strong> em aberto</span>
+                    <a class="toolbar-link" onclick="window.crmNavigate('config', 'sync')">Relatórios</a>
+                    <span class="toolbar-stat-text" style="color: var(--text-dim)">•</span>
+                    
+                    <!-- Switcher de Visão: Kanban | Lista | Métricas -->
+                    <div class="view-switcher-group">
+                        <button class="view-switch-btn" id="viewModeKanban" title="Visualização em Colunas Kanban">
+                            <i class="fa-solid fa-table-columns"></i>
+                            <span>Kanban</span>
+                        </button>
+                        <button class="view-switch-btn active" id="viewModeLista" title="Visualização em Tabela">
+                            <i class="fa-solid fa-bars"></i>
+                            <span>Lista</span>
+                        </button>
+                        <button class="view-switch-btn" id="viewModeMetricas" title="Visualização de Métricas e Gráficos">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <span>Métricas</span>
+                        </button>
+                    </div>
+
+                    <!-- Botão Gerar PDF Relatório -->
+                    <button class="toolbar-pill-btn btn-export-pdf" id="btnExportPDF" onclick="window.crmGeneratePDFReport()" title="Gerar Relatório em PDF para impressão ou envio por e-mail">
+                        <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i>
+                        <span>Gerar PDF</span>
+                    </button>
+
+                    <!-- Botão de Ação Primária (Sincronizar Planilha) -->
+                    <button class="btn-primary-action" id="btnSyncSheets" title="Sincronizar dados diretamente do Google Sheets">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <span>Sincronizar Sheets</span>
+                    </button>
+
+                    <!-- Botão de Ação Secundária (Sincronizar Fotos) -->
+                    <button class="btn-secondary-action btn-sync-images-action" id="btnSyncImages" onclick="window.crmSyncImages()" title="Sincronizar fotos e imagens dos produtos do Google Drive">
+                        <i class="fa-solid fa-images"></i>
+                        <span>Sincronizar Fotos</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Global Alert Banner (se necessário) -->
+            <div id="globalAlertBanner" class="global-alert-banner" style="display: none;">
+                <i class="fa-solid fa-circle-info"></i>
+                <span id="alertBannerText"></span>
+            </div>
+
+            <!-- Cabeçalho Exclusivo para Impressão / Exportação PDF (Invisível na tela normal) -->
+            <div class="print-report-header" id="printReportHeader">
+                <div class="print-header-brand">
+                    <div style="font-size: 20px; font-weight: 900; color: #0284c7; letter-spacing: -0.5px;">ONEDA</div>
+                    <div>
+                        <div style="font-size: 15px; font-weight: 800; color: #0f172a;">CONFECÇÕES ONEDA LTDA • RELATÓRIO EXECUTIVO</div>
+                        <div style="font-size: 12px; color: #475569;" id="printReportTitle">Pipeline de Atividades & Métricas</div>
+                    </div>
+                </div>
+                <div class="print-header-meta">
+                    <div>Emissão: <strong id="printReportDate">--/--/----</strong></div>
+                    <div>Módulo: <strong id="printReportModule">--</strong></div>
+                    <div>Responsável: <strong>Giovani Wietzycoski</strong></div>
+                </div>
+            </div>
+
+            <!-- Viewport Dinâmica -->
+            <main class="view-container" id="viewContainer">
+                <!-- Conteúdo renderizado pelo app.js -->
+            </main>
+                <!-- Conteúdo renderizado pelo app.js -->
+            </main>
+        </div>
+    </div>
+
+    <!-- Container Flutuante para Toasts de Notificação -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Modal de Detalhes 360 da OP -->
+    <div class="modal-overlay" id="opDetailsModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="badge badge-purple" id="modalOpNumber">OP 000000</span>
+                    <h3 class="modal-title" id="modalOpTitle">Descrição do Produto</h3>
+                </div>
+                <button class="modal-close-btn" id="closeOpModalBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="opModalBody"></div>
+            <div class="modal-footer">
+                <button class="toolbar-pill-btn" id="closeOpModalFooterBtn">Fechar</button>
+                <button class="btn-primary-action" id="btnCopyOpDetails">
+                    <i class="fa-regular fa-copy"></i> Copiar Resumo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts da Aplicação -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
