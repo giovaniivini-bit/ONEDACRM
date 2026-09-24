@@ -5692,10 +5692,10 @@
             </div>
 
             
-            <!-- GRID COM GR�FICO 1 E GR�FICO 2 -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 24px;">
+            <!-- GRID COM GR�FICO 1 E GR�FICO 2 (Empilhados) -->
+            <div style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 24px;">
                 
-                <!-- GR�FICO 1: PIZZA TOTAL AMOSTRAS -->
+                <!-- GR�FICO 1: PIZZA TOTAL AMOSTRAS (Full Width com Legenda Lateral) -->
                 <div class="cq-big-chart-card" style="margin-bottom: 0; display: flex; flex-direction: column;">
                     <div class="leadtime-chart-header" style="border-bottom-color: rgba(56, 189, 248, 0.2);">
                         <div>
@@ -5707,8 +5707,10 @@
                         </div>
                     </div>
                     
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 0 0 0;">
-                        <svg viewBox="0 0 440 440" style="width: 100%; max-width: 440px; height: auto; overflow: visible; margin: 0 auto; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));">
+                    <div style="flex: 1; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 64px; padding: 40px 20px;">
+                        
+                        <!-- Lado Esquerdo: SVG GIGANTE -->
+                        <svg viewBox="0 0 440 440" style="width: 100%; max-width: 440px; height: auto; overflow: visible; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));">
                             <defs>
                                 <filter id="glowPieResolvidoCQ" x="-30%" y="-30%" width="160%" height="160%">
                                     <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#10b981" flood-opacity="0.65"/>
@@ -5741,15 +5743,59 @@
                             <text x="220" y="272" text-anchor="middle" dominant-baseline="central" fill="#10b981" font-size="13" font-weight="800" letter-spacing="1.5px" font-family="system-ui, -apple-system, sans-serif">${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 100).toFixed(1) : 0}% RESOLVIDO</text>
                         </svg>
                         
-                        <!-- Legenda -->
-                        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 24px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 14px; height: 14px; background: #10b981; border-radius: 4px;"></div>
-                                <span style="color: #e2e8f0; font-size: 12.5px; font-weight: 700;">Resolvidos (${totalAllCount - totalPendingCount})</span>
+                        <!-- Lado Direito: LEGENDA RICA E QUEBRADA POR SITUA��O -->
+                        <div style="display: flex; flex-direction: column; gap: 20px; min-width: 340px;">
+                            
+                            <!-- Bloco Resolvidos -->
+                            <div style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid #10b981; padding: 18px 22px; border-radius: 0 12px 12px 0;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                                    <div style="color: #ffffff; font-weight: 800; font-size: 16px;">Status Bons (Resolvidos)</div>
+                                    <div style="color: #10b981; font-weight: 900; font-size: 18px;">${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 100).toFixed(1) : 0}%</div>
+                                </div>
+                                <div style="color: #34d399; font-size: 13.5px; font-weight: 600;">${totalAllCount - totalPendingCount} OFs em dia</div>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 14px; height: 14px; background: #ef4444; border-radius: 4px;"></div>
-                                <span style="color: #e2e8f0; font-size: 12.5px; font-weight: 700;">Pendentes (${totalPendingCount})</span>
+
+                            <!-- Bloco Pendentes -->
+                            <div style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid #ef4444; padding: 18px 22px; border-radius: 0 12px 12px 0;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                                    <div style="color: #ffffff; font-weight: 800; font-size: 16px;">Pend�ncias no CQ</div>
+                                    <div style="color: #ef4444; font-weight: 900; font-size: 18px;">${totalAllCount > 0 ? ((totalPendingCount / totalAllCount) * 100).toFixed(1) : 0}%</div>
+                                </div>
+                                
+                                <!-- Breakdown das 4 situa��es -->
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px; color: #fbbf24;">
+                                            <span style="width: 10px; height: 10px; border-radius: 50%; background: #fbbf24; box-shadow: 0 0 6px #fbbf24;"></span>
+                                            <span>Reenviado CQ</span>
+                                        </div>
+                                        <strong style="color: #ffffff;">${sitCounts['REENVIADO CQ'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['REENVIADO CQ'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px; color: #38bdf8;">
+                                            <span style="width: 10px; height: 10px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 6px #38bdf8;"></span>
+                                            <span>Enviado</span>
+                                        </div>
+                                        <strong style="color: #ffffff;">${sitCounts['ENVIADO'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['ENVIADO'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                                        <div style="display: flex; align-items: center; gap: 8px; color: #fb7185;">
+                                            <span style="width: 10px; height: 10px; border-radius: 50%; background: #fb7185; box-shadow: 0 0 6px #fb7185;"></span>
+                                            <span>Expirando Vig�ncia</span>
+                                        </div>
+                                        <strong style="color: #ffffff;">${sitCounts['EXPIRANDO VIG�NCIA'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['EXPIRANDO VIG�NCIA'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
+                                    </div>
+
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
+                                        <div style="display: flex; align-items: center; gap: 8px; color: #a78bfa;">
+                                            <span style="width: 10px; height: 10px; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 6px #a78bfa;"></span>
+                                            <span>Amostras em Produ��o</span>
+                                        </div>
+                                        <strong style="color: #ffffff;">${sitCounts['AMOSTRAS EM PRODU��O'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['AMOSTRAS EM PRODU��O'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
