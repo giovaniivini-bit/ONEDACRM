@@ -65,12 +65,12 @@ O CRM usa um modelo híbrido.
 1. O usuário adiciona a imagem à pasta do Drive usada pelo CRM.
 2. O nome do arquivo deve usar o código completo do produto, por exemplo `01.16.00.7930.jpg`.
 3. O botão **Sincronizar Fotos** solicita `/api/drive-images?refresh=1`.
-4. O servidor atualiza o índice com nome, código e ID do arquivo no Drive.
-5. Na primeira visualização, a VPS busca a miniatura pelo proxy `/api/proxy-image`.
+4. Sem uma API autenticada, o Google entrega à VPS somente uma parte da listagem da pasta pública. Portanto, esse botão atualiza os arquivos que a VPS consegue enxergar, mas não garante descobrir todo o acervo.
+5. Quando o arquivo foi descoberto e possui ID, a VPS busca a miniatura pelo proxy `/api/proxy-image`.
 6. A resposta válida é guardada em `data/drive_thumbnail_cache/`.
 7. Os acessos seguintes usam o cache local da VPS.
 
-O botão de sincronização atualiza o índice; ele não copia antecipadamente todas as imagens para `images/`.
+O botão de sincronização não copia arquivos para `images/` e não deve ser tratado como uma varredura completa. Enquanto não houver Google Drive API autenticada, o fluxo confiável usado pelo CRM e pelo Studeoneda é copiar as imagens da pasta sincronizada do Drive no computador para `images/`, versioná-las no GitHub e publicá-las na VPS.
 
 ### 4.3 Fallback
 
@@ -94,8 +94,9 @@ Em **Gestão & Dados → Imagens Ausentes**, o CRM lista códigos de produtos at
 - O nome deve conter o código exato: `CODIGO.jpg`.
 - Preserve sufixos: um produto `01.16.00.7930A` deve usar `01.16.00.7930A.jpg`.
 - Evite nomes genéricos como `foto nova.jpg`.
-- Aguarde o upload do Drive terminar antes de sincronizar.
-- Após enviar a foto, clique em **Sincronizar Fotos** e confira **Imagens Ausentes**.
+- Aguarde o Google Drive para computador concluir a sincronização local.
+- Copie os novos arquivos para `images/`, publique a versão no GitHub/VPS e confira **Imagens Ausentes**.
+- O botão **Sincronizar Fotos** pode localizar arquivos públicos adicionais, mas não substitui essa publicação enquanto a API oficial não estiver configurada.
 
 ## 6. Estabilidade visual das fotos
 
@@ -169,7 +170,7 @@ Antes de aceitar a alteração, confirme:
 ## 10. Limitações atuais e próximos passos
 
 - A leitura do Google Drive não usa ainda uma API autenticada oficial.
-- Imagens novas do Drive são baixadas sob demanda, não espelhadas antecipadamente.
+- A listagem pública do Drive é parcial; imagens novas só ficam garantidas quando são espelhadas em `images/` e publicadas.
 - Os dados continuam dependentes de planilhas e seus formatos de colunas.
 - O deploy na VPS é manual e depende de acesso SSH.
 

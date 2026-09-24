@@ -48,3 +48,16 @@ No spreadsheet data files or PM2 settings were replaced. No GitHub push made.
 New files exclusively in cloud still depend on the existing Drive indexing
 mechanism. Records with no matching source image retain the no-photo placeholder.
 The static snapshot is not a replacement for a future authenticated Drive sync.
+
+## Follow-up — 2026-09-24
+
+Production diagnostics proved that the public-folder HTML scan returned 551
+indexed photos, not the full Drive collection. Repeating the refresh could not
+discover `01.18.36.0570.jpg`, even though that file existed in the locally
+synchronized Drive folder. The reliable Studeoneda model is a deployed static
+snapshot, not a complete server-side Drive scan.
+
+The 170 files present in the synchronized source folder but absent from the CRM
+snapshot were copied into `images/` for publication, including
+`01.18.36.0570.jpg`. A complete automatic cloud sync remains dependent on a
+future authenticated Google Drive API integration.
