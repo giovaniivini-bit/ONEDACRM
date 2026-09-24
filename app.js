@@ -550,30 +550,22 @@
     function getImageCoverageProducts() {
         const products = new Map();
 
-        // A tela de auditoria é propositalmente estrita: uma foto de variante
-        // não pode esconder que o código exato ainda está sem arquivo próprio.
-        const hasStrictProductImage = codigo => {
-            const normalized = String(codigo || '').trim().toUpperCase();
-            if (!normalized) return false;
-            const stripped = normalized.replace(/[^A-Z0-9]/g, '');
-            const keys = [normalized, stripped];
-            ['.JPG', '.JPEG', '.PNG', '.WEBP', '.GIF'].forEach(extension => {
-                keys.push(normalized + extension, stripped + extension);
-            });
-            return keys.some(key => Boolean(state.driveImages && state.driveImages[key]));
+        const checkImage = (codigo, op) => {
+            const img = getProductImage(codigo, op);
+            return Boolean(img && img.hasImage);
         };
 
-        state.allData.forEach(item => {
-            const codigo = String(item.codigo || '').trim();
-            if (!codigo || codigo === '—' || codigo === '-') return;
+        const registerProduct = (rawCode, desc, cliente, marca, setor, op) => {
+            const codigo = String(rawCode || '').trim();
+            if (!codigo || codigo === '—' || codigo === '-' || codigo === 'N/A') return;
 
             const key = codigo.toUpperCase();
             if (!products.has(key)) {
                 products.set(key, {
                     codigo,
-                    descricao: item.descricao || item.descGrupoProd || 'Sem descrição',
-                    cliente: item.cliente || 'Não informado',
-                    marca: item.marca || 'Não informada',
+                    descricao: desc || 'Sem descrição',
+                    cliente: cliente || 'Não informado',
+                    marca: marca || 'Não informada',
                     setores: new Set(),
                     ops: new Set(),
                     hasImage: false
@@ -581,9 +573,33 @@
             }
 
             const product = products.get(key);
-            if (item.setor) product.setores.add(String(item.setor));
-            if (item.op) product.ops.add(String(item.op));
-            if (!product.hasImage) product.hasImage = hasStrictProductImage(codigo);
+            if (setor) product.setores.add(String(setor));
+            if (op) product.ops.add(String(op));
+            if (desc && (!product.descricao || product.descricao === 'Sem descrição')) {
+                product.descricao = desc;
+            }
+            if (cliente && (!product.cliente || product.cliente === 'Não informado')) {
+                product.cliente = cliente;
+            }
+            if (!product.hasImage) product.hasImage = checkImage(codigo, op);
+        };
+
+        // 1. Produção Principal (121 colunas)
+        (state.allData || []).forEach(item => {
+            registerProduct(item.codigo, item.descricao || item.descGrupoProd, item.cliente, item.marca, item.setor, item.op);
+        });
+
+        // 2. Andamento do CQ
+        (state.andamentoCQ || []).forEach(cq => {
+            const code = cq.CODIGO || cq.IMG_PRODUTO || cq.ART_CLI;
+            const op = cq.NUMERO || cq.OFS || cq.ORDEM;
+            registerProduct(code, `Amostra CQ: ${cq.DESC_AMOSTRA || cq.STATUS || ''}`, cq.REPRESENTANTE || 'CQ', 'CQ', 'Andamento CQ', op);
+        });
+
+        // 3. Rotativos (Setor 43)
+        (state.rotativos || []).forEach(rot => {
+            const code = rot.PRODUTO || rot.CODIGO;
+            registerProduct(code, rot.DESCRICAO || 'Rotativo', rot.CLIENTE || 'Rotativos', 'Rotativo', '43 (Rotativos)', rot.OP);
         });
 
         return Array.from(products.values())
