@@ -1962,7 +1962,7 @@
             { stroke: '#06b6d4', glow: '#0891b2', name: 'teal' }
         ];
 
-        const s13Radius = 110;
+        const s13Radius = 150;
         const s13Circ = 2 * Math.PI * s13Radius; // ~691.15
         let s13Offset = 0;
         const s13Slices = statusEntries.map(([key, data], idx) => {
@@ -2152,33 +2152,34 @@
 
                     <!-- CONTAINER DO GRÁFICO DE PIZZA/DONUT SVG GRANDE -->
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 0 14px 0;">
-                        <svg viewBox="0 0 320 320" style="width: 100%; max-width: 250px; height: 250px; overflow: visible; margin: 4px 0;">
+                        <svg viewBox="0 0 440 440" style="width: 100%; max-width: 440px; height: auto; overflow: visible; margin: 0 auto; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));">
                             <defs>
                                 <filter id="s13GlowBlue" x="-30%" y="-30%" width="160%" height="160%">
-                                    <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#38bdf8" flood-opacity="0.6"/>
+                                    <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#38bdf8" flood-opacity="0.65"/>
                                 </filter>
                                 <filter id="s13GlowRed" x="-30%" y="-30%" width="160%" height="160%">
-                                    <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#ef4444" flood-opacity="0.7"/>
+                                    <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#ef4444" flood-opacity="0.9"/>
                                 </filter>
                             </defs>
-                            <g transform="rotate(-90 160 160)">
+                            <g transform="rotate(-90 220 220)">
                                 <!-- Trilha de fundo -->
-                                <circle cx="160" cy="160" r="${s13Radius}" fill="none" stroke="#121624" stroke-width="40" />
+                                <circle cx="220" cy="220" r="${s13Radius}" fill="none" stroke="#121624" stroke-width="58" />
 
-                                <!-- Fatias Dinâmicas do Donut -->
+                                <!-- Fatias Din�micas do Donut -->
                                 ${totalItems === 0 ? `
-                                    <circle cx="160" cy="160" r="${s13Radius}" fill="none" stroke="#1e293b" stroke-width="40" />
+                                    <circle cx="220" cy="220" r="${s13Radius}" fill="none" stroke="#1e293b" stroke-width="58" />
                                 ` : s13Slices.map(sl => `
-                                    <circle cx="160" cy="160" r="${s13Radius}" fill="none" stroke="${sl.color}" stroke-width="40"
+                                    <circle cx="220" cy="220" r="${s13Radius}" fill="none" stroke="${sl.color}" stroke-width="58"
                                         stroke-dasharray="${sl.dash} ${s13Circ.toFixed(2)}"
                                         stroke-dashoffset="${sl.offset}"
+                                        filter="${sl.isRuim ? 'url(#s13GlowRed)' : 'url(#s13GlowBlue)'}"
                                         style="transition: all 0.6s ease;" />
                                 `).join('')}
                             </g>
                             <!-- Texto Central Alinhado em Destaque -->
-                            <text x="160" y="142" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-size="52" font-weight="900" font-family="system-ui, -apple-system, sans-serif" letter-spacing="-1px">${totalItems}</text>
-                            <text x="160" y="180" text-anchor="middle" dominant-baseline="central" fill="#94a3b8" font-size="11" font-weight="800" letter-spacing="2.5px" font-family="system-ui, -apple-system, sans-serif">PRODUTOS</text>
-                            <text x="160" y="200" text-anchor="middle" dominant-baseline="central" fill="#38bdf8" font-size="11" font-weight="800" letter-spacing="1px" font-family="system-ui, -apple-system, sans-serif">SETOR 13</text>
+                            <text x="220" y="190" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-size="76" font-weight="900" font-family="system-ui, -apple-system, sans-serif" letter-spacing="-2px">${totalItems}</text>
+                            <text x="220" y="246" text-anchor="middle" dominant-baseline="central" fill="#94a3b8" font-size="14" font-weight="800" letter-spacing="3px" font-family="system-ui, -apple-system, sans-serif">PRODUTOS</text>
+                            <text x="220" y="272" text-anchor="middle" dominant-baseline="central" fill="#38bdf8" font-size="13" font-weight="800" letter-spacing="1.5px" font-family="system-ui, -apple-system, sans-serif">SETOR 13</text>
                         </svg>
                     </div>
 
@@ -5707,33 +5708,37 @@
                     </div>
                     
                     <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 0 0 0;">
-                        <svg viewBox="0 0 320 320" style="width: 100%; max-width: 250px; height: 250px; overflow: visible;">
+                        <svg viewBox="0 0 440 440" style="width: 100%; max-width: 440px; height: auto; overflow: visible; margin: 0 auto; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));">
                             <defs>
                                 <filter id="glowPieResolvidoCQ" x="-30%" y="-30%" width="160%" height="160%">
-                                    <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#10b981" flood-opacity="0.6"/>
+                                    <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#10b981" flood-opacity="0.65"/>
                                 </filter>
                                 <filter id="glowPiePendenteCQ" x="-30%" y="-30%" width="160%" height="160%">
-                                    <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#ef4444" flood-opacity="0.7"/>
+                                    <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#ef4444" flood-opacity="0.9"/>
                                 </filter>
                             </defs>
-                            <g transform="rotate(-90 160 160)">
-                                <circle cx="160" cy="160" r="110" fill="none" stroke="#121624" stroke-width="40" />
+                            <g transform="rotate(-90 220 220)">
+                                <circle cx="220" cy="220" r="150" fill="none" stroke="#121624" stroke-width="58" />
 
                                 <!-- Resolvidos -->
-                                <circle cx="160" cy="160" r="110" fill="none" stroke="#10b981" stroke-width="40"
-                                    stroke-dasharray="${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 2 * Math.PI * 110).toFixed(2) : 0} ${(2 * Math.PI * 110).toFixed(2)}"
-                                    stroke-dashoffset="0" style="transition: all 0.6s ease;" />
+                                <circle cx="220" cy="220" r="150" fill="none" stroke="#10b981" stroke-width="58"
+                                    stroke-dasharray="${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 2 * Math.PI * 150).toFixed(2) : 0} ${(2 * Math.PI * 150).toFixed(2)}"
+                                    stroke-dashoffset="0"
+                                    filter="url(#glowPieResolvidoCQ)"
+                                    style="transition: all 0.6s ease;" />
 
                                 <!-- Pendentes -->
-                                <circle cx="160" cy="160" r="110" fill="none" stroke="#ef4444" stroke-width="40"
-                                    stroke-dasharray="${totalAllCount > 0 ? ((totalPendingCount / totalAllCount) * 2 * Math.PI * 110).toFixed(2) : 0} ${(2 * Math.PI * 110).toFixed(2)}"
-                                    stroke-dashoffset="${totalAllCount > 0 ? (-(((totalAllCount - totalPendingCount) / totalAllCount) * 2 * Math.PI * 110)).toFixed(2) : 0}" style="transition: all 0.6s ease;" />
+                                <circle cx="220" cy="220" r="150" fill="none" stroke="#ef4444" stroke-width="58"
+                                    stroke-dasharray="${totalAllCount > 0 ? ((totalPendingCount / totalAllCount) * 2 * Math.PI * 150).toFixed(2) : 0} ${(2 * Math.PI * 150).toFixed(2)}"
+                                    stroke-dashoffset="${totalAllCount > 0 ? (-(((totalAllCount - totalPendingCount) / totalAllCount) * 2 * Math.PI * 150)).toFixed(2) : 0}"
+                                    filter="url(#glowPiePendenteCQ)"
+                                    style="transition: all 0.6s ease;" />
                             </g>
 
                             <!-- Texto Central -->
-                            <text x="160" y="142" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-size="52" font-weight="900" font-family="system-ui, sans-serif" letter-spacing="-1px">${totalAllCount}</text>
-                            <text x="160" y="180" text-anchor="middle" dominant-baseline="central" fill="#94a3b8" font-size="11" font-weight="800" letter-spacing="2.5px" font-family="system-ui, sans-serif">OFS NO CQ</text>
-                            <text x="160" y="200" text-anchor="middle" dominant-baseline="central" fill="#10b981" font-size="11" font-weight="800" letter-spacing="1px" font-family="system-ui, sans-serif">${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 100).toFixed(1) : 0}% RESOLVIDO</text>
+                            <text x="220" y="190" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-size="76" font-weight="900" font-family="system-ui, -apple-system, sans-serif" letter-spacing="-2px">${totalAllCount}</text>
+                            <text x="220" y="246" text-anchor="middle" dominant-baseline="central" fill="#94a3b8" font-size="14" font-weight="800" letter-spacing="3px" font-family="system-ui, -apple-system, sans-serif">OFS NO CQ</text>
+                            <text x="220" y="272" text-anchor="middle" dominant-baseline="central" fill="#10b981" font-size="13" font-weight="800" letter-spacing="1.5px" font-family="system-ui, -apple-system, sans-serif">${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 100).toFixed(1) : 0}% RESOLVIDO</text>
                         </svg>
                         
                         <!-- Legenda -->
