@@ -652,6 +652,15 @@
     }
 
     // Renderizador com badges oficiais (Vermelho Piscando vs Azul vs Em Branco)
+        function isModelagemPendenciaLaranja(status) {
+        if (!status) return false;
+        const s = status.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]/g, ' ');
+        if (s.includes('teste grade') || s.includes('fazend teste') || (s.includes('cliente') && s.includes('teste'))) return true;
+        return false;
+    }
+
     function renderStatusModelagemBadge(status) {
         const isEmBranco = !status || status.trim() === '' || status === '—' || status === '-' || 
             status.toUpperCase().includes('EM BRANCO') || 
@@ -662,10 +671,13 @@
             return `<span class="status-ruim-piscando" style="background: rgba(225, 29, 72, 0.2); color: #fb7185; border: 1px solid #e11d48;" title="ATENÇÃO: Status de Modelagem Em Branco / Não Informado na Planilha!"><i class="fa-solid fa-triangle-exclamation"></i> ⚠️ EM BRANCO (NÃO INFORMADO)</span>`;
         }
 
+        const isLaranja = isModelagemPendenciaLaranja(status);
         const isRuim = isModelagemPendenciaRuim(status);
         const displayText = escapeHtml(status.trim());
 
-        if (isRuim) {
+        if (isLaranja) {
+            return `<span class="status-ruim-piscando" style="background: rgba(249, 115, 22, 0.2); color: #f97316; border: 1px solid #ea580c;" title="Status em Andamento / Teste Mov"><i class="fa-solid fa-gears"></i> ${displayText}</span>`;
+        } else if (isRuim) {
             return `<span class="status-ruim-piscando" title="Pendência Crítica da Equipe de Modelagem"><i class="fa-solid fa-triangle-exclamation"></i> ${displayText}</span>`;
         } else {
             return `<span class="status-bom-azul" title="Status Resolvido / Normal de Modelagem"><i class="fa-solid fa-check"></i> ${displayText}</span>`;
@@ -1966,11 +1978,14 @@
         const s13Circ = 2 * Math.PI * s13Radius; // ~691.15
         let s13Offset = 0;
         const s13Slices = statusEntries.map(([key, data], idx) => {
+            const isLaranja = isModelagemPendenciaLaranja(key);
             const colorObj = data.isEmBranco 
                 ? { stroke: '#fb7185', glow: '#be123c', name: 'rose' } 
-                : isModelagemPendenciaRuim(key)
-                    ? { stroke: '#ef4444', glow: '#dc2626', name: 'red' }
-                    : { stroke: '#38bdf8', glow: '#0284c7', name: 'cyan' };
+                : isLaranja
+                    ? { stroke: '#f97316', glow: '#ea580c', name: 'orange' }
+                    : isModelagemPendenciaRuim(key)
+                        ? { stroke: '#ef4444', glow: '#dc2626', name: 'red' }
+                        : { stroke: '#38bdf8', glow: '#0284c7', name: 'cyan' };
             const dash = totalItems > 0 ? (data.count / totalItems) * s13Circ : 0;
             const currentDashOffset = -s13Offset;
             s13Offset += dash;
@@ -1981,6 +1996,8 @@
                 glowColor: colorObj.glow,
                 dash: dash.toFixed(2),
                 offset: currentDashOffset.toFixed(2),
+                isLaranja: isLaranja,
+                isRuim: isModelagemPendenciaRuim(key),
                 percent: totalItems > 0 ? ((data.count / totalItems) * 100).toFixed(1) : '0'
             };
         });
@@ -2160,6 +2177,9 @@
                                 <filter id="s13GlowRed" x="-30%" y="-30%" width="160%" height="160%">
                                     <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#ef4444" flood-opacity="0.9"/>
                                 </filter>
+                                <filter id="s13GlowOrange" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#f97316" flood-opacity="0.9"/>
+                                </filter>
                             </defs>
                             <g transform="rotate(-90 220 220)">
                                 <!-- Trilha de fundo -->
@@ -2172,7 +2192,7 @@
                                     <circle cx="220" cy="220" r="${s13Radius}" fill="none" stroke="${sl.color}" stroke-width="58"
                                         stroke-dasharray="${sl.dash} ${s13Circ.toFixed(2)}"
                                         stroke-dashoffset="${sl.offset}"
-                                        filter="${sl.isRuim ? 'url(#s13GlowRed)' : 'url(#s13GlowBlue)'}"
+                                        filter="${sl.isLaranja ? 'url(#s13GlowOrange)' : sl.isRuim ? 'url(#s13GlowRed)' : 'url(#s13GlowBlue)'}"
                                         style="transition: all 0.6s ease;" />
                                 `).join('')}
                             </g>
