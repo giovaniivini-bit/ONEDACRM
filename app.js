@@ -590,16 +590,19 @@
         });
 
         // 2. Andamento do CQ
-        (state.andamentoCQ || []).forEach(cq => {
+        const cqExt = state.cqExternalData || {};
+        (cqExt.records || []).forEach(cq => {
             const code = cq.CODIGO || cq.IMG_PRODUTO || cq.ART_CLI;
             const op = cq.NUMERO || cq.OFS || cq.ORDEM;
             registerProduct(code, `Amostra CQ: ${cq.DESC_AMOSTRA || cq.STATUS || ''}`, cq.REPRESENTANTE || 'CQ', 'CQ', 'Andamento CQ', op);
         });
 
         // 3. Rotativos (Setor 43)
-        (state.rotativos || []).forEach(rot => {
-            const code = rot.PRODUTO || rot.CODIGO;
-            registerProduct(code, rot.DESCRICAO || 'Rotativo', rot.CLIENTE || 'Rotativos', 'Rotativo', '43 (Rotativos)', rot.OP);
+        const rotExt = state.rotativosExternalData || {};
+        (rotExt.records || []).forEach(rot => {
+            const code = rot.produto || rot.PRODUTO || rot.CODIGO || rot.REFERENCIA;
+            const op = rot.OP || rot.ORDEM || rot.NUMERO || '';
+            registerProduct(code, rot.obs || rot.DESCRICAO || 'Rotativo', rot.CLIENTE || 'Rotativos', 'Rotativo', '43 (Rotativos)', op);
         });
 
         return Array.from(products.values())
