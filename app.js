@@ -1968,7 +1968,9 @@
         const s13Slices = statusEntries.map(([key, data], idx) => {
             const colorObj = data.isEmBranco 
                 ? { stroke: '#fb7185', glow: '#be123c', name: 'rose' } 
-                : donutColors[idx % donutColors.length];
+                : isModelagemPendenciaRuim(key)
+                    ? { stroke: '#ef4444', glow: '#dc2626', name: 'red' }
+                    : { stroke: '#38bdf8', glow: '#0284c7', name: 'cyan' };
             const dash = totalItems > 0 ? (data.count / totalItems) * s13Circ : 0;
             const currentDashOffset = -s13Offset;
             s13Offset += dash;
@@ -2134,8 +2136,8 @@
                 </div>
             </div>
 
-            <!-- 2. OS 4 GRÁFICOS SOLICITADOS (GRID 2x2 MODERNO) -->
-            <div class="analytics-grid" style="grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 18px; margin-bottom: 24px;">
+            <!-- 2. OS 4 GR�FICOS SOLICITADOS -->
+            <div class="analytics-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 18px; margin-bottom: 24px; min-width: 0;">
                 <!-- GRÁFICO 1: Separar por Status de Modelagem (GRÁFICO DE PIZZA/DONUT GRANDE) -->
                 <div class="panel-card" style="border-top: 3px solid #38bdf8; display: flex; flex-direction: column;">
                     <div class="panel-header" style="margin-bottom: 12px;">
@@ -2246,7 +2248,9 @@
                     </div>
                 </div>
 
-                <!-- GRÁFICO 3: Separar por Marca -->
+                <!-- COLUNA PARA GR�FICOS 3 E 4 -->
+                <div style="display: flex; flex-direction: column; gap: 18px; min-width: 0;">
+                    <!-- GRÁFICO 3: Separar por Marca -->
                 <div class="panel-card" style="border-top: 3px solid #f59e0b;">
                     <div class="panel-header">
                         <div>
@@ -2310,6 +2314,7 @@
                             `;
                         }).join('')}
                     </div>
+                </div>
                 </div>
             </div>
 
