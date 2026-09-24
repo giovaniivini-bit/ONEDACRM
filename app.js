@@ -5690,8 +5690,69 @@
                 </div>
             </div>
 
-            <!-- GRÁFICO GRANDE DE OFs PENDENTES NO CQ (DUAL VISUAL SVG) -->
-            <div class="cq-big-chart-card">
+            
+            <!-- GRID COM GR�FICO 1 E GR�FICO 2 -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 24px;">
+                
+                <!-- GR�FICO 1: PIZZA TOTAL AMOSTRAS -->
+                <div class="cq-big-chart-card" style="margin-bottom: 0; display: flex; flex-direction: column;">
+                    <div class="leadtime-chart-header" style="border-bottom-color: rgba(56, 189, 248, 0.2);">
+                        <div>
+                            <h3 class="leadtime-chart-title">
+                                <i class="fa-solid fa-chart-pie" style="color: #38bdf8;"></i>
+                                <span>Gr�fico 1: Total Amostras</span>
+                            </h3>
+                            <p class="leadtime-chart-subtitle">Resolu��o de OFs do CQ (${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 100).toFixed(1) : 0}% resolvidas)</p>
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 0 0 0;">
+                        <svg viewBox="0 0 320 320" style="width: 100%; max-width: 250px; height: 250px; overflow: visible;">
+                            <defs>
+                                <filter id="glowPieResolvidoCQ" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#10b981" flood-opacity="0.6"/>
+                                </filter>
+                                <filter id="glowPiePendenteCQ" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#ef4444" flood-opacity="0.7"/>
+                                </filter>
+                            </defs>
+                            <g transform="rotate(-90 160 160)">
+                                <circle cx="160" cy="160" r="110" fill="none" stroke="#121624" stroke-width="40" />
+
+                                <!-- Resolvidos -->
+                                <circle cx="160" cy="160" r="110" fill="none" stroke="#10b981" stroke-width="40"
+                                    stroke-dasharray="${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 2 * Math.PI * 110).toFixed(2) : 0} ${(2 * Math.PI * 110).toFixed(2)}"
+                                    stroke-dashoffset="0" style="transition: all 0.6s ease;" />
+
+                                <!-- Pendentes -->
+                                <circle cx="160" cy="160" r="110" fill="none" stroke="#ef4444" stroke-width="40"
+                                    stroke-dasharray="${totalAllCount > 0 ? ((totalPendingCount / totalAllCount) * 2 * Math.PI * 110).toFixed(2) : 0} ${(2 * Math.PI * 110).toFixed(2)}"
+                                    stroke-dashoffset="${totalAllCount > 0 ? (-(((totalAllCount - totalPendingCount) / totalAllCount) * 2 * Math.PI * 110)).toFixed(2) : 0}" style="transition: all 0.6s ease;" />
+                            </g>
+
+                            <!-- Texto Central -->
+                            <text x="160" y="142" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-size="52" font-weight="900" font-family="system-ui, sans-serif" letter-spacing="-1px">${totalAllCount}</text>
+                            <text x="160" y="180" text-anchor="middle" dominant-baseline="central" fill="#94a3b8" font-size="11" font-weight="800" letter-spacing="2.5px" font-family="system-ui, sans-serif">OFS NO CQ</text>
+                            <text x="160" y="200" text-anchor="middle" dominant-baseline="central" fill="#10b981" font-size="11" font-weight="800" letter-spacing="1px" font-family="system-ui, sans-serif">${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 100).toFixed(1) : 0}% RESOLVIDO</text>
+                        </svg>
+                        
+                        <!-- Legenda -->
+                        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 24px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 14px; height: 14px; background: #10b981; border-radius: 4px;"></div>
+                                <span style="color: #e2e8f0; font-size: 12.5px; font-weight: 700;">Resolvidos (${totalAllCount - totalPendingCount})</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 14px; height: 14px; background: #ef4444; border-radius: 4px;"></div>
+                                <span style="color: #e2e8f0; font-size: 12.5px; font-weight: 700;">Pendentes (${totalPendingCount})</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GR�FICO 2: BAR CHART ORIGINAL -->
+<!-- GRÁFICO GRANDE DE OFs PENDENTES NO CQ (DUAL VISUAL SVG) -->
+            <div class="cq-big-chart-card" style="margin-bottom: 0;">
                 <div class="leadtime-chart-header" style="border-bottom-color: rgba(56, 189, 248, 0.2);">
                     <div>
                         <h3 class="leadtime-chart-title">
@@ -5844,6 +5905,9 @@
                         `;
                     }).join('')}
                 </div>
+            </div>
+
+            
             </div>
 
             <!-- BARRA DE CONTROLES, BUSCA E ALTERNÂNCIA DE MODO (CARDS / TABELA) -->
