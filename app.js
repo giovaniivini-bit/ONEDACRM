@@ -3896,18 +3896,18 @@
                     <svg viewBox="0 0 440 440" class="hero-donut-svg">
                         <defs>
                             <filter id="glowDonutEstampaNormal" x="-30%" y="-30%" width="160%" height="160%">
-                                <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#10b981" flood-opacity="0.65"/>
+                                <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#00a8ff" flood-opacity="0.65"/>
                             </filter>
                             <filter id="glowDonutEstampaPendente" x="-30%" y="-30%" width="160%" height="160%">
-                                <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#00d4ff" flood-opacity="0.95"/>
+                                <feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#ef4444" flood-opacity="0.9"/>
                             </filter>
                         </defs>
                         <g transform="rotate(-90 220 220)">
                             <!-- Trilha de fundo circular -->
                             <circle cx="220" cy="220" r="150" fill="none" stroke="#121624" stroke-width="58" />
                             
-                            <!-- Fatia Sem Pendência (Verde Esmeralda #10b981) -->
-                            <circle cx="220" cy="220" r="150" fill="none" stroke="#10b981" stroke-width="58"
+                            <!-- Fatia Sem Pendência (Azul #00a8ff) -->
+                            <circle cx="220" cy="220" r="150" fill="none" stroke="#00a8ff" stroke-width="58"
                                 stroke-dasharray="${semPendenciaDash.toFixed(2)} ${circumference.toFixed(2)}"
                                 stroke-dashoffset="0"
                                 filter="url(#glowDonutEstampaNormal)"
@@ -3915,9 +3915,9 @@
                                 onclick="window.crmFilterEstampa('sem_pendencia')"
                             />
                             
-                            <!-- Fatia Com Pendência (Azul Intenso Elétrico #00d4ff) -->
+                            <!-- Fatia Com Pendência (Vermelho #ef4444) -->
                             ${pendentesCount > 0 ? `
-                                <circle cx="220" cy="220" r="150" fill="none" stroke="#00d4ff" stroke-width="58"
+                                <circle cx="220" cy="220" r="150" fill="none" stroke="#ef4444" stroke-width="58"
                                 stroke-dasharray="${pendentesDash.toFixed(2)} ${circumference.toFixed(2)}"
                                 stroke-dashoffset="${pendentesOffset.toFixed(2)}"
                                 filter="url(#glowDonutEstampaPendente)"
@@ -3934,31 +3934,31 @@
 
                     <!-- Legenda Rápida em Cards de Alto Contraste Lado a Lado -->
                     <div class="hero-pie-quick-legend">
-                        <div class="donut-legend-card blue ${state.estampaFilter === 'sem_pendencia' ? 'active' : ''}" style="cursor: pointer; border-left: 4px solid #10b981;" onclick="window.crmFilterEstampa('sem_pendencia')" title="Clique para filtrar apenas produtos Sem Pendência">
+                        <div class="donut-legend-card blue ${state.estampaFilter === 'sem_pendencia' ? 'active' : ''}" style="cursor: pointer; border-left: 4px solid #00a8ff;" onclick="window.crmFilterEstampa('sem_pendencia')" title="Clique para filtrar apenas produtos Sem Pendência">
                             <div class="donut-legend-label blue">
-                                <span class="legend-dot" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+                                <span class="legend-dot" style="background: #00a8ff; box-shadow: 0 0 8px #00a8ff;"></span>
                                 <div>
                                     <div style="font-weight: 700; font-size: 13px; color: #ffffff;">Sem Pendência (Liberados)</div>
-                                    <div style="font-size: 11px; color: #6ee7b7;">${formatNumber(semPendenciaPecas)} peças no fluxo (somente lista)</div>
+                                    <div style="font-size: 11px; color: #bae6fd;">${formatNumber(semPendenciaPecas)} peças no fluxo (somente lista)</div>
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div class="donut-legend-value" style="font-size: 14px; color: #10b981;">${semPendenciaCount} prod (${semPendenciaPct}%)</div>
-                                <span style="font-size: 10.5px; color: #10b981; text-decoration: underline;">Ver Lista ↓</span>
+                                <div class="donut-legend-value" style="font-size: 14px; color: #00a8ff;">${semPendenciaCount} prod (${semPendenciaPct}%)</div>
+                                <span style="font-size: 10.5px; color: #00a8ff; text-decoration: underline;">Ver Lista ↓</span>
                             </div>
                         </div>
 
-                        <div class="donut-legend-card red ${state.estampaFilter === 'pendentes' ? 'active' : ''}" style="cursor: pointer; border-left: 4px solid #00d4ff; background: rgba(0, 212, 255, 0.08);" onclick="window.crmFilterEstampa('pendentes')" title="Clique para filtrar apenas produtos Com Pendência">
+                        <div class="donut-legend-card red ${state.estampaFilter === 'pendentes' ? 'active' : ''}" style="cursor: pointer; border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.08);" onclick="window.crmFilterEstampa('pendentes')" title="Clique para filtrar apenas produtos Com Pendência">
                             <div class="donut-legend-label red">
-                                <span class="legend-dot" style="background: #00d4ff; box-shadow: 0 0 10px #00d4ff;"></span>
+                                <span class="legend-dot" style="background: #ef4444; box-shadow: 0 0 10px #ef4444;"></span>
                                 <div>
                                     <div style="font-weight: 700; font-size: 13px; color: #ffffff;">Pendências de Estampa</div>
-                                    <div style="font-size: 11px; color: #7dd3fc;">${formatNumber(pendentesPecas)} peças com fotos</div>
+                                    <div style="font-size: 11px; color: #fca5a5;">${formatNumber(pendentesPecas)} peças com fotos</div>
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div class="donut-legend-value" style="font-size: 14px; color: #38bdf8;">${pendentesCount} prod (${pendentesPct}%)</div>
-                                <span style="font-size: 10.5px; color: #38bdf8; text-decoration: underline;">Ver Fotos ↓</span>
+                                <div class="donut-legend-value" style="font-size: 14px; color: #f87171;">${pendentesCount} prod (${pendentesPct}%)</div>
+                                <span style="font-size: 10.5px; color: #f87171; text-decoration: underline;">Ver Fotos ↓</span>
                             </div>
                         </div>
                     </div>
