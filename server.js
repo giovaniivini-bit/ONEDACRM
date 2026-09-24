@@ -8,6 +8,7 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { createDriveImageProxy } = require('./drive-image-cache');
 
 const PORT = process.env.PORT || 3000;
 const ALT_PORT = 8080;
@@ -16,19 +17,118 @@ const DATA_DIR = path.join(BASE_DIR, 'data');
 const CURRENT_DATA_PATH = path.join(DATA_DIR, 'current_data.csv');
 const FULL_DATA_PATH = path.join(DATA_DIR, 'full_dataset.csv');
 const DRIVE_IMAGES_PATH = path.join(DATA_DIR, 'drive_images.json');
+const STATIC_IMAGES_DIR = path.join(BASE_DIR, 'images');
+const STATIC_IMAGE_MAP_PATH = path.join(BASE_DIR, 'image_map.json');
 
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
 const GOOGLE_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
 
-// In-memory drive images cache
-let driveImagesCache = { count: 0, map: {}, list: [] };
-if (fs.existsSync(DRIVE_IMAGES_PATH)) {
+// O mesmo modelo comprovado do Studeoneda: imagens versionadas em /images e
+// um mapa local disponível imediatamente, sem aguardar Google Drive ou rede.
+function loadBundledImageIndex() {
+    if (!fs.existsSync(STATIC_IMAGES_DIR)) {
+        return { count: 0, map: {}, list: [] };
+    }
+
     try {
-        driveImagesCache = JSON.parse(fs.readFileSync(DRIVE_IMAGES_PATH, 'utf8'));
+        const filenameMap = fs.existsSync(STATIC_IMAGE_MAP_PATH)
+            ? JSON.parse(fs.readFileSync(STATIC_IMAGE_MAP_PATH, 'utf8')) : {};
+        const entriesByFilename = new Map();
+        const map = {};
+
+        // Todo arquivo versionado fica disponível pelo próprio nome, mesmo
+        // quando ainda não possui um alias curado no image_map.json.
+        fs.readdirSync(STATIC_IMAGES_DIR).forEach(rawFilename => {
+            const filename = path.basename(String(rawFilename || ''));
+            if (!filename || !/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(filename)) return;
+
+            const fullPath = path.join(STATIC_IMAGES_DIR, filename);
+            const encodedFilename = encodeURIComponent(filename);
+            const base = path.basename(filename, path.extname(filename));
+            const entry = {
+                id: null,
+                filename,
+                base,
+                isLocal: true,
+                fullPath,
+                thumbUrl: `/images/${encodedFilename}`,
+                largeUrl: `/images/${encodedFilename}`,
+                driveUrl: GOOGLE_DRIVE_FOLDER_URL
+            };
+
+            entriesByFilename.set(filename.toUpperCase(), entry);
+            map[filename.toUpperCase()] = entry;
+            map[base.toUpperCase()] = entry;
+        });
+
+        // Os aliases do Studeoneda são aplicados por último e têm prioridade
+        // sobre a inferência automática pelo nome do arquivo.
+        Object.entries(filenameMap).forEach(([key, rawFilename]) => {
+            const filename = path.basename(String(rawFilename || ''));
+            if (!filename || !/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(filename)) return;
+
+            const fullPath = path.join(STATIC_IMAGES_DIR, filename);
+            if (!fs.existsSync(fullPath)) return;
+
+            const entry = entriesByFilename.get(filename.toUpperCase());
+            if (!entry) return;
+
+            map[String(key).toUpperCase()] = entry;
+            map[filename.toUpperCase()] = entry;
+        });
+
+        const list = Array.from(entriesByFilename.values());
+        return {
+            count: list.length,
+            timestamp: new Date().toISOString(),
+            source: 'bundled-static-images',
+            map,
+            list
+        };
     } catch (e) {
-        console.warn('[DRIVE] Erro ao ler cache local de imagens:', e.message);
+        console.warn('[IMG] Erro ao carregar mapa estático de imagens:', e.message);
+        return { count: 0, map: {}, list: [] };
     }
 }
+
+let driveImagesCache = loadBundledImageIndex();
+try {
+    const saved = JSON.parse(fs.readFileSync(DRIVE_IMAGES_PATH, 'utf8'));
+    if (saved.map && saved.list) {
+        const mergedMap = { ...saved.map };
+        Object.entries(driveImagesCache.map).forEach(([key, bundledEntry]) => {
+            const remoteEntry = saved.map[key];
+            mergedMap[key] = {
+                ...remoteEntry,
+                ...bundledEntry,
+                id: remoteEntry?.id || null,
+                driveUrl: remoteEntry?.driveUrl || bundledEntry.driveUrl
+            };
+        });
+        driveImagesCache = { ...saved, map: mergedMap };
+    }
+} catch (_) { /* First boot: the local index is already available. */ }
+
+let knownDriveImageIds = new Set();
+function refreshKnownDriveImageIds() {
+    knownDriveImageIds = new Set([
+        ...(driveImagesCache.list || []),
+        ...Object.values(driveImagesCache.map || {})
+    ].map(entry => entry && entry.id).filter(Boolean));
+}
+function toPublicDriveImages(indexData) {
+    const cleanEntry = entry => {
+        if (!entry || typeof entry !== 'object') return entry;
+        const { fullPath, ...publicEntry } = entry;
+        return publicEntry;
+    };
+    return {
+        ...indexData,
+        map: Object.fromEntries(Object.entries(indexData.map || {}).map(([key, entry]) => [key, cleanEntry(entry)])),
+        list: (indexData.list || []).map(cleanEntry)
+    };
+}
+refreshKnownDriveImageIds();
 
 // MIME types
 const MIME_TYPES = {
@@ -40,6 +140,9 @@ const MIME_TYPES = {
     '.svg': 'image/svg+xml',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
     '.ico': 'image/x-icon'
 };
 
@@ -162,6 +265,7 @@ const KNOWN_LOCAL_IMAGE_DIRS = [
     'G:/Meu Drive/ONEDA/APP ONEDA FICHA PRO/IMAGENS PARA o APP',
     'G:/Meu Drive/Fotos Oneda Price Pro',
     path.join(BASE_DIR, 'images'),
+    path.join(BASE_DIR, '..', 'Studeoneda', 'images'),
     path.join(BASE_DIR, '..', 'oneda-ficha-pro', 'images'),
     path.join(BASE_DIR, '..', 'oneda-top-dashboard', 'images')
 ];
@@ -178,51 +282,35 @@ const MAX_RAM_CACHE_ENTRIES = 600;
 
 
 // Scan local folders for images with newest mtime priority
-function scanLocalImageFolders() {
+async function scanLocalImageFolders() {
     localImageFilesMap.clear();
     let localCount = 0;
     for (const dir of KNOWN_LOCAL_IMAGE_DIRS) {
-        if (fs.existsSync(dir)) {
-            try {
-                const files = fs.readdirSync(dir);
-                for (const f of files) {
-                    if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(f)) {
-                        const fullPath = path.join(dir, f);
-                        const upper = f.toUpperCase();
-                        if (!localImageFilesMap.has(upper)) {
-                            localImageFilesMap.set(upper, fullPath);
-                            localCount++;
-                        } else {
-                            try {
-                                const curStat = fs.statSync(fullPath);
-                                const existingPath = localImageFilesMap.get(upper);
-                                const existingStat = fs.statSync(existingPath);
-                                if (curStat.mtimeMs > existingStat.mtimeMs) {
-                                    localImageFilesMap.set(upper, fullPath);
-                                }
-                            } catch (e) {}
-                        }
-                        // Pre-carregar imagens em RAM para Zero-Flicker e velocidade instantânea
+        try {
+            const files = await fs.promises.readdir(dir);
+            for (const f of files) {
+                if (/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(f)) {
+                    const fullPath = path.join(dir, f);
+                    const upper = f.toUpperCase();
+                    if (!localImageFilesMap.has(upper)) {
+                        localImageFilesMap.set(upper, fullPath);
+                        localCount++;
+                    } else {
                         try {
-                            if (!localImageRamCache.has(upper) && localImageRamCache.size < MAX_RAM_CACHE_ENTRIES) {
-                                const buffer = fs.readFileSync(fullPath);
-                                const ext = path.extname(fullPath).toLowerCase();
-                                const contentType = MIME_TYPES[ext] || 'image/jpeg';
-                                const etag = `"${buffer.length}-${upper}"`;
-                                localImageRamCache.set(upper, {
-                                    buffer,
-                                    contentType,
-                                    etag,
-                                    mtimeMs: Date.now(),
-                                    size: buffer.length
-                                });
+                            const existingPath = localImageFilesMap.get(upper);
+                            const [curStat, existingStat] = await Promise.all([
+                                fs.promises.stat(fullPath),
+                                fs.promises.stat(existingPath)
+                            ]);
+                            if (curStat.mtimeMs > existingStat.mtimeMs) {
+                                localImageFilesMap.set(upper, fullPath);
                             }
                         } catch (e) {}
                     }
                 }
-            } catch (e) {
-                console.warn('[IMG] Aviso ao ler pasta local:', dir, e.message);
             }
+        } catch (e) {
+            console.warn('[IMG] Aviso ao ler pasta local:', dir, e.message);
         }
     }
     return localCount;
@@ -233,23 +321,31 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
     console.log('[DRIVE] Iniciando sincronização profunda de imagens (Local + Google Drive Cloud)...');
     
     // 1. Escanear diretórios locais / Google Drive Desktop / Compartilhamento de Rede
-    scanLocalImageFolders();
+    await scanLocalImageFolders();
     const allFiles = new Map();
 
     for (const [upperFilename, fullPath] of localImageFilesMap.entries()) {
         const baseName = path.basename(fullPath).replace(/\.(?:jpg|jpeg|png|webp|gif|svg)$/i, '').trim();
         const origFilename = path.basename(fullPath);
+        const relativeStaticPath = path.relative(STATIC_IMAGES_DIR, fullPath);
+        const isBundledStatic = relativeStaticPath &&
+            relativeStaticPath !== '..' &&
+            !relativeStaticPath.startsWith(`..${path.sep}`) &&
+            !path.isAbsolute(relativeStaticPath);
         let mtime = 0;
-        try { mtime = Math.round(fs.statSync(fullPath).mtimeMs); } catch(e) {}
+        try { mtime = Math.round((await fs.promises.stat(fullPath)).mtimeMs); } catch(e) {}
         const vParam = mtime ? `&v=${mtime}` : `&v=${Date.now()}`;
+        const localAssetUrl = isBundledStatic
+            ? `/images/${encodeURIComponent(origFilename)}`
+            : `/api/image-file?file=${encodeURIComponent(origFilename)}${vParam}`;
         allFiles.set(upperFilename, {
             id: null,
             filename: origFilename,
             base: baseName,
             isLocal: true,
             fullPath: fullPath,
-            thumbUrl: `/api/image-file?file=${encodeURIComponent(origFilename)}${vParam}`,
-            largeUrl: `/api/image-file?file=${encodeURIComponent(origFilename)}${vParam}`,
+            thumbUrl: localAssetUrl,
+            largeUrl: localAssetUrl,
             driveUrl: `https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA`
         });
     }
@@ -300,8 +396,8 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
                                         filename: filename,
                                         base: baseName,
                                         isLocal: false,
-                                        thumbUrl: `/api/image-file?file=${encodeURIComponent(filename)}`,
-                                        largeUrl: `/api/image-file?file=${encodeURIComponent(filename)}`,
+                                        thumbUrl: `/api/proxy-image?id=${encodeURIComponent(fileId)}&sz=w600`,
+                                        largeUrl: `/api/proxy-image?id=${encodeURIComponent(fileId)}&sz=w1200`,
                                         driveUrl: `https://drive.google.com/file/d/${fileId}/view`
                                     });
                                 } else {
@@ -344,53 +440,47 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
         }
     });
 
+    // Descobertas de rede/Drive complementam o mapa versionado, mas nunca
+    // substituem aliases curados nem as imagens estáticas comprovadas.
+    const bundledIndex = loadBundledImageIndex();
+    const mergedMap = { ...index };
+    Object.entries(bundledIndex.map).forEach(([key, bundledEntry]) => {
+        const remoteEntry = index[key];
+        mergedMap[key] = {
+            ...remoteEntry,
+            ...bundledEntry,
+            id: remoteEntry?.id || null,
+            driveUrl: remoteEntry?.driveUrl || bundledEntry.driveUrl
+        };
+    });
+    const mergedListByFilename = new Map();
+    [...list, ...bundledIndex.list].forEach(entry => {
+        mergedListByFilename.set(String(entry.filename || '').toUpperCase(), entry);
+    });
+    const mergedList = Array.from(mergedListByFilename.values());
+
     const result = {
-        count: list.length,
+        count: mergedList.length,
         timestamp: new Date().toISOString(),
-        map: index,
-        list
+        source: 'bundled-static-images+drive',
+        map: mergedMap,
+        list: mergedList
     };
 
     driveImagesCache = result;
+    refreshKnownDriveImageIds();
     try {
         fs.writeFileSync(DRIVE_IMAGES_PATH, JSON.stringify(result, null, 2), 'utf8');
     } catch (e) {
         console.warn('[DRIVE] Aviso ao salvar drive_images.json:', e.message);
     }
 
-    console.log(`[DRIVE] Sincronização profunda concluída: ${list.length} fotos indexadas com sucesso!`);
+    console.log(`[DRIVE] Sincronização profunda concluída: ${mergedList.length} fotos indexadas com sucesso!`);
     return result;
 }
 
 // Proxy para thumbnails do Google Drive (evita bloqueios ou restrições de terceiros)
-function proxyGoogleDriveImage(fileId, res, size = 'w600') {
-    const targetUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=${size}`;
-    https.get(targetUrl, (gRes) => {
-        if (gRes.statusCode >= 300 && gRes.statusCode < 400 && gRes.headers.location) {
-            return https.get(gRes.headers.location, (finalRes) => {
-                res.writeHead(finalRes.statusCode, {
-                    'Content-Type': finalRes.headers['content-type'] || 'image/jpeg',
-                    'Cache-Control': 'public, max-age=86400',
-                    'Access-Control-Allow-Origin': '*'
-                });
-                finalRes.pipe(res);
-            }).on('error', () => {
-                res.writeHead(502);
-                res.end();
-            });
-        }
-        res.writeHead(gRes.statusCode, {
-            'Content-Type': gRes.headers['content-type'] || 'image/jpeg',
-            'Cache-Control': 'public, max-age=86400',
-            'Access-Control-Allow-Origin': '*'
-        });
-        gRes.pipe(res);
-    }).on('error', (err) => {
-        console.warn('[IMG PROXY] Erro ao buscar imagem do Drive:', err.message);
-        res.writeHead(502);
-        res.end();
-    });
-}
+const proxyGoogleDriveImage = createDriveImageProxy(path.join(DATA_DIR, 'drive_thumbnail_cache'));
 
 // Servir imagem local com alta performance e cabeçalhos de cache
 // Servir imagem local com alta performance, cache em memória RAM, cache em SSD local e cabeçalhos HTTP 304/ETag
@@ -403,6 +493,25 @@ function serveLocalImageFile(filename, req, res) {
 
     const cleanFilename = path.basename(filename);
     const upper = cleanFilename.toUpperCase();
+
+    // Original files win over old disk copies. Validate RAM against the file,
+    // so replacing a photo is visible without restarting the process.
+    const localCachedPath = path.join(IMAGE_CACHE_DIR, cleanFilename);
+    const candidates = [path.join(STATIC_IMAGES_DIR, cleanFilename),
+        localImageFilesMap.get(upper),
+        ...KNOWN_LOCAL_IMAGE_DIRS.map(dir => path.join(dir, cleanFilename)), localCachedPath];
+    const targetPath = candidates.find(candidate => candidate && fs.existsSync(candidate) && fs.statSync(candidate).isFile());
+    if (!targetPath) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+        res.end('Imagem não encontrada localmente');
+        return;
+    }
+    const currentStat = fs.statSync(targetPath);
+    const previous = localImageRamCache.get(upper);
+    if (previous && (previous.path !== targetPath || previous.mtimeMs !== Math.round(currentStat.mtimeMs) || previous.size !== currentStat.size)) {
+        localImageRamCache.delete(upper);
+    }
+    const fromLocalCache = targetPath === localCachedPath;
 
     // 1. Checagem no Cache em Memória RAM (0.1ms)
     const ramEntry = localImageRamCache.get(upper);
@@ -429,37 +538,6 @@ function serveLocalImageFile(filename, req, res) {
             'Access-Control-Allow-Origin': '*'
         });
         res.end(ramEntry.buffer);
-        return;
-    }
-
-    // 2. Checagem no Cache em Disco Local (data/images_cache)
-    const localCachedPath = path.join(IMAGE_CACHE_DIR, cleanFilename);
-    let targetPath = null;
-    let fromLocalCache = false;
-
-    if (fs.existsSync(localCachedPath)) {
-        targetPath = localCachedPath;
-        fromLocalCache = true;
-    }
-
-    // 3. Se não estiver no cache local, busca nos diretórios de rede/Drive
-    if (!targetPath) {
-        targetPath = localImageFilesMap.get(upper);
-        if (!targetPath || !fs.existsSync(targetPath)) {
-            for (const dir of KNOWN_LOCAL_IMAGE_DIRS) {
-                const candidate = path.join(dir, cleanFilename);
-                if (fs.existsSync(candidate)) {
-                    targetPath = candidate;
-                    localImageFilesMap.set(upper, targetPath);
-                    break;
-                }
-            }
-        }
-    }
-
-    if (!targetPath || !fs.existsSync(targetPath)) {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
-        res.end('Imagem não encontrada localmente');
         return;
     }
 
@@ -496,7 +574,7 @@ function serveLocalImageFile(filename, req, res) {
                 const firstKey = localImageRamCache.keys().next().value;
                 localImageRamCache.delete(firstKey);
             }
-            localImageRamCache.set(upper, { buffer, contentType, etag, mtimeMs, size });
+            localImageRamCache.set(upper, { buffer, contentType, etag, mtimeMs, size, path: targetPath });
         }
 
         res.writeHead(200, {
@@ -572,10 +650,10 @@ async function requestHandler(req, res) {
         if (force || !driveImagesCache || driveImagesCache.count === 0) {
             fetchGoogleDriveImages().then(indexData => {
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({ success: true, count: indexData.count, data: indexData }));
+                res.end(JSON.stringify({ success: true, count: indexData.count, data: toPublicDriveImages(indexData) }));
             }).catch(err => {
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({ success: false, error: err.message, data: driveImagesCache }));
+                res.end(JSON.stringify({ success: false, error: err.message, data: toPublicDriveImages(driveImagesCache) }));
             });
             return;
         }
@@ -585,7 +663,7 @@ async function requestHandler(req, res) {
             success: true,
             count: driveImagesCache.count,
             timestamp: driveImagesCache.timestamp,
-            data: driveImagesCache
+            data: toPublicDriveImages(driveImagesCache)
         }));
         return;
     }
@@ -599,7 +677,12 @@ async function requestHandler(req, res) {
             res.end('Missing file id');
             return;
         }
-        proxyGoogleDriveImage(fileId, res, size);
+        if (!knownDriveImageIds.has(fileId)) {
+            res.writeHead(404, { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain; charset=utf-8' });
+            res.end('Imagem não encontrada no índice');
+            return;
+        }
+        proxyGoogleDriveImage(fileId, res, size, req);
         return;
     }
 

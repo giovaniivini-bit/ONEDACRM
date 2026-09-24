@@ -55,18 +55,33 @@
         cqSearch: '',
         cqExternalData: null,
         cqViewAllMode: false,
-        cqDisplayMode: 'both',
+        // Cards por padrão: evita montar simultaneamente a grade de fotos e a
+        // tabela completa (mais de 2 mil nós no CQ), que tornava o scroll pesado.
+        cqDisplayMode: 'cards',
         malotesFilter: null,
         malotesSearch: '',
         malotesViewMode: 'critical', // 'both', 'cards', 'table'
         leadtimeFilter: null,
         leadtimeSearch: '',
         leadtimeExternalData: null,
+        missingImagesSearch: '',
         driveImages: {}
     };
 
     // Setores de Produção para checagem de repetição / gargalos duplos
     const PROD_SECTORS = ['05', '06', '12', '13', '26', '20', '31', '106'];
+    const PHOTO_SUBMODULES = new Set([
+        'setor13',
+        'processo',
+        'setor01',
+        'estampa',
+        'andamento-cq',
+        'rotativos',
+        'malotes',
+        'cores-aviamentos',
+        'cores-pendentes',
+        'imagens-ausentes'
+    ]);
 
     // =========================================================================
     // INICIALIZAÇÃO
@@ -128,7 +143,8 @@
             const json = await res.json();
             if (json.success && json.data && json.data.map) {
                 state.driveImages = json.data.map;
-                if (state.activeSubmodule === 'setor13') {
+                updateSidebarBadges();
+                if (PHOTO_SUBMODULES.has(state.activeSubmodule)) {
                     renderActiveView();
                 }
             }
@@ -192,12 +208,30 @@
         const formatEntry = (found) => {
             const filename = found.filename || `${found.base}.jpg`;
             const localUrl = `/api/image-file?file=${encodeURIComponent(filename)}`;
+            const bundledThumbUrl = typeof found.thumbUrl === 'string' && found.thumbUrl.startsWith('/images/')
+                ? found.thumbUrl
+                : null;
+            const bundledLargeUrl = typeof found.largeUrl === 'string' && found.largeUrl.startsWith('/images/')
+                ? found.largeUrl
+                : null;
+            const driveThumbUrl = found.id
+                ? `/api/proxy-image?id=${encodeURIComponent(found.id)}&sz=w600`
+                : null;
+            const driveLargeUrl = found.id
+                ? `/api/proxy-image?id=${encodeURIComponent(found.id)}&sz=w1200`
+                : null;
+            const placeholderUrl = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22420%22 height=%22315%22 viewBox=%220 0 420 315%22%3E%3Crect width=%22420%22 height=%22315%22 fill=%22%23111827%22/%3E%3Ctext x=%22210%22 y=%22158%22 fill=%22%2394a3b8%22 font-family=%22Arial%22 font-size=%2216%22 text-anchor=%22middle%22%3EImagem indispon%C3%ADvel%3C/text%3E%3C/svg%3E';
+            const isLocal = found.isLocal !== false;
+            const localLargeUrl = bundledLargeUrl || bundledThumbUrl || localUrl;
             return {
                 hasImage: true,
                 filename: filename,
-                thumbUrl: localUrl,
-                proxyUrl: localUrl,
-                largeUrl: localUrl,
+                // Arquivos somente na nuvem precisam passar pelo proxy do Drive;
+                // o endpoint local nunca conseguiria servi-los pelo nome.
+                thumbUrl: isLocal ? (bundledThumbUrl || localUrl) : (driveThumbUrl || placeholderUrl),
+                proxyUrl: isLocal ? (driveThumbUrl || placeholderUrl) : placeholderUrl,
+                largeUrl: isLocal ? localLargeUrl : (driveLargeUrl || driveThumbUrl || placeholderUrl),
+                largeFallbackUrl: isLocal ? driveLargeUrl : null,
                 driveUrl: found.driveUrl || `https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA`
             };
         };
@@ -511,6 +545,54 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    function getImageCoverageProducts() {
+        const products = new Map();
+
+        // A tela de auditoria é propositalmente estrita: uma foto de variante
+        // não pode esconder que o código exato ainda está sem arquivo próprio.
+        const hasStrictProductImage = codigo => {
+            const normalized = String(codigo || '').trim().toUpperCase();
+            if (!normalized) return false;
+            const stripped = normalized.replace(/[^A-Z0-9]/g, '');
+            const keys = [normalized, stripped];
+            ['.JPG', '.JPEG', '.PNG', '.WEBP', '.GIF'].forEach(extension => {
+                keys.push(normalized + extension, stripped + extension);
+            });
+            return keys.some(key => Boolean(state.driveImages && state.driveImages[key]));
+        };
+
+        state.allData.forEach(item => {
+            const codigo = String(item.codigo || '').trim();
+            if (!codigo || codigo === '—' || codigo === '-') return;
+
+            const key = codigo.toUpperCase();
+            if (!products.has(key)) {
+                products.set(key, {
+                    codigo,
+                    descricao: item.descricao || item.descGrupoProd || 'Sem descrição',
+                    cliente: item.cliente || 'Não informado',
+                    marca: item.marca || 'Não informada',
+                    setores: new Set(),
+                    ops: new Set(),
+                    hasImage: false
+                });
+            }
+
+            const product = products.get(key);
+            if (item.setor) product.setores.add(String(item.setor));
+            if (item.op) product.ops.add(String(item.op));
+            if (!product.hasImage) product.hasImage = hasStrictProductImage(codigo);
+        });
+
+        return Array.from(products.values())
+            .map(product => ({
+                ...product,
+                setores: Array.from(product.setores).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
+                ops: Array.from(product.ops).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+            }))
+            .sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
     }
 
     // =========================================================================
@@ -903,6 +985,11 @@
             const ltCount = (state.leadtimeExternalData && state.leadtimeExternalData.count) || (state.leadtimeExternalData && state.leadtimeExternalData.records && state.leadtimeExternalData.records.length) || 0;
             bLT.textContent = ltCount > 0 ? `${ltCount}` : '22V';
         }
+
+        const bMissingImages = document.getElementById('badge-missing-images');
+        if (bMissingImages) {
+            bMissingImages.textContent = getImageCoverageProducts().filter(product => !product.hasImage).length;
+        }
     }
 
     // Atualização de Título e Setor Ativo
@@ -924,6 +1011,7 @@
         else if (state.activeSubmodule === 'feira') label = 'Feira & Protótipos';
         else if (state.activeSubmodule === 'andamento-cq') label = 'Andamento do CQ (Qualidade)';
         else if (state.activeSubmodule === 'leadtime') label = 'Leadtime Produtivo (Setor 13)';
+        else if (state.activeSubmodule === 'imagens-ausentes') label = 'Controle de Imagens Ausentes';
 
         if (pageMainTitle) pageMainTitle.textContent = label;
         if (activeSectorLabel) activeSectorLabel.textContent = label;
@@ -988,6 +1076,9 @@
             // Configurações
             case 'sync':
                 renderSyncConfigView(container);
+                break;
+            case 'imagens-ausentes':
+                renderMissingImagesView(container);
                 break;
             case 'calendario':
                 renderCalendarioConfigView(container);
@@ -2284,7 +2375,7 @@
                                     <!-- ÁREA DA FOTO -->
                                     <div class="s13-photo-wrapper">
                                         ${imgInfo.hasImage ? `
-                                            <img src="${imgInfo.thumbUrl}" loading="lazy" decoding="async" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
+                                            <img src="${imgInfo.thumbUrl}" loading="lazy" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
                                             <div class="s13-photo-overlay" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OP ${item.op} • ${escapedDesc}')">
                                                 <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 24px; color: #38bdf8;"></i>
                                                 <span>Ampliar Foto</span>
@@ -2876,7 +2967,7 @@
                                             </span>
 
                                             ${imgInfo.hasImage ? `
-                                                <img src="${imgInfo.thumbUrl}" loading="lazy" decoding="async" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
+                                                <img src="${imgInfo.thumbUrl}" loading="lazy" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
                                                 <div class="s13-photo-overlay" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OP ${item.op} • Setor ${item.setor} • ${escapedDesc}')">
                                                     <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 24px; color: #38bdf8;"></i>
                                                     <span>Ampliar Foto</span>
@@ -3435,7 +3526,7 @@
                                             </span>
 
                                             ${imgInfo.hasImage ? `
-                                                <img src="${imgInfo.thumbUrl}" loading="lazy" decoding="async" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
+                                                <img src="${imgInfo.thumbUrl}" loading="lazy" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
                                                 <div class="s13-photo-overlay" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OP ${item.op} • Setor 01 • ${escapedDesc}')">
                                                     <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 24px; color: #00d4ff;"></i>
                                                     <span>Ampliar Foto</span>
@@ -3575,7 +3666,7 @@
                                         <td>
                                             <div class="table-product-cell">
                                                 ${imgInfo.hasImage ? `
-                                                    <img src="${imgInfo.thumbUrl}" loading="lazy" decoding="async" class="table-product-thumb" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
+                                                    <img src="${imgInfo.thumbUrl}" loading="lazy" class="table-product-thumb" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
                                                 ` : `
                                                     <div class="table-product-thumb-placeholder">
                                                         <i class="fa-solid fa-shirt"></i>
@@ -4017,7 +4108,7 @@
                                             </span>
 
                                             ${imgInfo.hasImage ? `
-                                                <img src="${imgInfo.thumbUrl}" loading="lazy" decoding="async" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
+                                                <img src="${imgInfo.thumbUrl}" loading="lazy" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
                                                 <div class="s13-photo-overlay" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OP ${item.op} • Setor ${item.setor} • ${escapedDesc}')">
                                                     <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 24px; color: #38bdf8;"></i>
                                                     <span>Ampliar Foto</span>
@@ -5488,7 +5579,7 @@
             });
         });
 
-        const displayMode = state.cqDisplayMode || 'both'; // 'both', 'cards', 'table'
+        const displayMode = state.cqDisplayMode || 'cards'; // 'both', 'cards', 'table'
 
         container.innerHTML = `
             <!-- CABEÇALHO DO MÓDULO ANDAMENTO DO CQ -->
@@ -5865,7 +5956,7 @@
                                                             return `
                                                                 <div class="s13-photo-card card-critico" style="border-color: ${meta.border || 'rgba(56, 189, 248, 0.35)'};">
                                                                     <!-- ÁREA DA FOTO -->
-                                                                    <div class="s13-photo-wrapper" style="aspect-ratio: 4/3; width: 100%; height: 210px; background: #090b10; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                                                    <div class="s13-photo-wrapper cq-product-media" style="aspect-ratio: 4/3; width: 100%; height: 210px; background: #090b10; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                                                                         <!-- BADGE DA SITUAÇÃO NO TOPO ESQUERDO -->
                                                                         <span class="s13-photo-tag" style="background: ${meta.color}; color: #ffffff; font-weight: 800; top: 10px; left: 10px; border-radius: 6px; box-shadow: 0 0 10px ${meta.color}88; font-size: 10.5px; padding: 3px 8px; cursor: pointer;" onclick="event.stopPropagation(); window.crmFilterCQ({ field: 'situacao', value: '${item.sitNorm || item.descAmostra}' })" title="Filtrar situação ${item.descAmostra}">
                                                                             <i class="fa-solid ${meta.icon}"></i> ${item.descAmostra}
@@ -5877,11 +5968,7 @@
                                                                         </span>
 
                                                                         ${imgInfo.hasImage ? `
-                                                                            <img src="${imgInfo.thumbUrl}" loading="lazy" decoding="async" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';" style="width: 100%; height: 100%; object-fit: contain; padding: 6px;">
-                                                                            <div class="s13-photo-overlay" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OF ${item.of} • Sem ${item.periodo} • ${item.setorAmostra} • ${escapedDesc}')">
-                                                                                <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 24px; color: #38bdf8;"></i>
-                                                                                <span>Ampliar Foto</span>
-                                                                            </div>
+                                                                            <img src="${imgInfo.thumbUrl}" loading="eager" decoding="async" width="420" height="315" class="s13-photo-img cq-product-image" alt="${item.codigo}" onerror="if (this.dataset.fallback !== '1') { this.dataset.fallback='1'; this.src='${imgInfo.proxyUrl}'; } else { this.onerror=null; this.closest('.cq-product-media')?.classList.add('image-unavailable'); }" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OF ${item.of} • Sem ${item.periodo} • ${item.setorAmostra} • ${escapedDesc}', '${imgInfo.largeFallbackUrl || ''}')" title="Clique para ampliar a foto" style="width: 100%; height: 100%; object-fit: contain; padding: 6px;">
                                                                         ` : `
                                                                             <div class="s13-photo-placeholder" style="background: #111827; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; text-align: center;">
                                                                                 <i class="fa-solid fa-shirt s13-placeholder-icon" style="font-size: 32px; color: rgba(56, 189, 248, 0.4); margin-bottom: 8px;"></i>
@@ -6455,7 +6542,7 @@
                                         </span>
 
                                         ${imgInfo.hasImage ? `
-                                            <img src="${imgInfo.thumbUrl}" loading="lazy" decoding="async" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
+                                            <img src="${imgInfo.thumbUrl}" loading="lazy" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
                                             <div class="s13-photo-overlay" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OP ${item.op} • Malote ${item.maloteSetor} • Principal Setor ${item.primarySector} • ${escapedDesc}')">
                                                 <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 24px; color: #38bdf8;"></i>
                                                 <span>Ampliar Foto</span>
@@ -7775,7 +7862,7 @@
                                                 ` : '')}
 
                                                 ${imgInfo.hasImage ? `
-                                                    <img src="${imgInfo.thumbUrl}" loading="lazy" decoding="async" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
+                                                    <img src="${imgInfo.thumbUrl}" loading="lazy" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
                                                     <div class="s13-photo-overlay" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OP ${item.op} • Setor 43 • ${escapedDesc}')">
                                                         <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 24px; color: #00d4ff;"></i>
                                                         <span>Ampliar Foto</span>
@@ -8284,7 +8371,7 @@
                                         </span>
 
                                         ${imgInfo.hasImage ? `
-                                            <img src="${imgInfo.thumbUrl}" loading="lazy" decoding="async" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
+                                            <img src="${imgInfo.thumbUrl}" loading="lazy" class="s13-photo-img" alt="${item.codigo}" onerror="this.onerror=null; this.src='${imgInfo.proxyUrl}';">
                                             <div class="s13-photo-overlay" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OP ${item.op} • Malote ${item.maloteSetor} • Principal Setor ${item.primarySector} • ${escapedDesc}')">
                                                 <i class="fa-solid fa-magnifying-glass-plus" style="font-size: 24px; color: #38bdf8;"></i>
                                                 <span>Ampliar Foto</span>
@@ -9826,6 +9913,111 @@
         `;
     }
 
+    function renderMissingImagesView(container) {
+        const products = getImageCoverageProducts();
+        const missingProducts = products.filter(product => !product.hasImage);
+        const query = String(state.missingImagesSearch || '').toLowerCase().trim();
+        const visibleProducts = missingProducts.filter(product => {
+            if (!query) return true;
+            return [product.codigo, product.descricao, product.cliente, product.marca, ...product.ops, ...product.setores]
+                .some(value => String(value || '').toLowerCase().includes(query));
+        });
+        const withImages = products.length - missingProducts.length;
+        const coverage = products.length ? Math.round((withImages / products.length) * 100) : 0;
+
+        container.innerHTML = `
+            <div class="module-view-header">
+                <div class="module-view-title-group">
+                    <h2><i class="fa-solid fa-images" style="color: #f59e0b;"></i> Controle de Imagens Ausentes</h2>
+                    <p class="module-view-description">Produtos existentes no CRM que ainda não possuem uma imagem reconhecida na pasta local ou no Google Drive.</p>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary-action btn-sync-images-action" onclick="window.crmSyncImages()">
+                        <i class="fa-solid fa-arrows-rotate"></i> Sincronizar Fotos
+                    </button>
+                    <button class="btn btn-glass" onclick="window.crmExportMissingImagesCSV()" ${missingProducts.length ? '' : 'disabled'}>
+                        <i class="fa-solid fa-file-csv"></i> Exportar Pendências
+                    </button>
+                </div>
+            </div>
+
+            <div class="kpi-grid" style="margin-bottom: 20px;">
+                <div class="kpi-card cyan">
+                    <div class="kpi-header"><span class="kpi-label">Produtos únicos</span><div class="kpi-icon"><i class="fa-solid fa-boxes-stacked"></i></div></div>
+                    <div class="kpi-value">${formatNumber(products.length)}</div>
+                    <div class="kpi-footer"><span>Códigos válidos encontrados no CRM</span></div>
+                </div>
+                <div class="kpi-card emerald">
+                    <div class="kpi-header"><span class="kpi-label">Com imagem</span><div class="kpi-icon"><i class="fa-solid fa-image"></i></div></div>
+                    <div class="kpi-value">${formatNumber(withImages)}</div>
+                    <div class="kpi-footer"><span>Reconhecidos no índice de imagens</span></div>
+                </div>
+                <div class="kpi-card amber">
+                    <div class="kpi-header"><span class="kpi-label">Sem imagem</span><div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div></div>
+                    <div class="kpi-value">${formatNumber(missingProducts.length)}</div>
+                    <div class="kpi-footer"><span>Precisam de arquivo no Drive</span></div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-header"><span class="kpi-label">Cobertura</span><div class="kpi-icon"><i class="fa-solid fa-chart-pie"></i></div></div>
+                    <div class="kpi-value">${coverage}%</div>
+                    <div class="kpi-footer"><span>Produtos com foto disponível</span></div>
+                </div>
+            </div>
+
+            <div class="table-card" style="border-top: 3px solid #f59e0b;">
+                <div class="table-toolbar" style="gap: 14px; flex-wrap: wrap;">
+                    <div class="table-title-group">
+                        <h3 class="table-title"><i class="fa-solid fa-list-check" style="color: #fbbf24;"></i> Produtos aguardando imagem</h3>
+                        <span class="badge badge-amber">${visibleProducts.length} de ${missingProducts.length}</span>
+                    </div>
+                    <div class="s13-search-box" style="min-width: min(100%, 340px);">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" placeholder="Buscar código, OP, cliente, marca ou setor..." value="${escapeHtml(state.missingImagesSearch)}" oninput="window.crmSearchMissingImages(this.value)">
+                        ${query ? '<button class="search-clear-btn" onclick="window.crmSearchMissingImages(\'\')" title="Limpar busca">&times;</button>' : ''}
+                    </div>
+                </div>
+
+                ${visibleProducts.length === 0 ? `
+                    <div style="text-align: center; padding: 48px 20px; color: var(--text-muted);">
+                        <i class="fa-solid ${missingProducts.length ? 'fa-magnifying-glass' : 'fa-circle-check'}" style="font-size: 38px; color: ${missingProducts.length ? '#94a3b8' : '#34d399'}; margin-bottom: 12px;"></i>
+                        <h4 style="color: #e2e8f0; margin-bottom: 6px;">${missingProducts.length ? 'Nenhum produto encontrado nessa busca' : 'Todos os produtos possuem imagem'}</h4>
+                        <p>${missingProducts.length ? 'Tente outro código, OP, cliente, marca ou setor.' : 'O índice de imagens cobre todos os produtos atuais do CRM.'}</p>
+                    </div>
+                ` : `
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Código do produto</th>
+                                    <th>Descrição</th>
+                                    <th>Cliente / Marca</th>
+                                    <th>OPs</th>
+                                    <th>Setores atuais</th>
+                                    <th>Arquivo esperado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${visibleProducts.map(product => `
+                                    <tr>
+                                        <td><span class="prod-code" style="color: #fbbf24;">${escapeHtml(product.codigo)}</span></td>
+                                        <td><span class="prod-name" title="${escapeHtml(product.descricao)}">${escapeHtml(product.descricao)}</span></td>
+                                        <td>
+                                            <div style="font-weight: 700; color: #e2e8f0;">${escapeHtml(product.cliente)}</div>
+                                            <div style="font-size: 10.5px; color: var(--text-muted);">${escapeHtml(product.marca)}</div>
+                                        </td>
+                                        <td>${escapeHtml(product.ops.slice(0, 5).join(', '))}${product.ops.length > 5 ? ` <span class="badge badge-sub">+${product.ops.length - 5}</span>` : ''}</td>
+                                        <td>${product.setores.map(setor => `<span class="badge badge-sub" style="margin: 2px;">${escapeHtml(setor)}</span>`).join('') || '—'}</td>
+                                        <td><code style="color: #38bdf8;">${escapeHtml(product.codigo)}.jpg</code></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `}
+            </div>
+        `;
+    }
+
     function renderCalendarioConfigView(container) {
         container.innerHTML = `
             <div class="module-view-header">
@@ -10271,6 +10463,7 @@
             if (json.data && json.data.map) {
                 state.driveImages = json.data.map;
             }
+            updateSidebarBadges();
             renderActiveView();
             showNotification(`Fotos atualizadas com sucesso! ${formatNumber(json.count || 0)} fotos de produtos indexadas e prontas.`, 'success', 'Sincronização Concluída');
         } catch (e) {
@@ -10938,7 +11131,7 @@
         }
     };
 
-    window.crmOpenImageLightbox = (imageUrl, title, subtitle) => {
+    window.crmOpenImageLightbox = (imageUrl, title, subtitle, fallbackUrl = '') => {
         let overlay = document.getElementById('crmImageLightboxOverlay');
         if (!overlay) {
             overlay = document.createElement('div');
@@ -10964,7 +11157,7 @@
                         <button class="modal-close-btn" onclick="window.crmCloseImageLightbox()" title="Fechar (ESC)">&times;</button>
                     </div>
                 </div>
-                <img src="${imageUrl}" class="image-lightbox-img" alt="${title || 'Foto do Produto'}" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'300\\' viewBox=\\'0 0 400 300\\'><rect fill=\\'%231e293b\\' width=\\'400\\' height=\\'300\\'/><text fill=\\'%2394a3b8\\' font-size=\\'16\\' font-family=\\'sans-serif\\' x=\\'50%\\' y=\\'50%\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\'>Imagem não disponível</text></svg>';">
+                <img src="${imageUrl}" data-fallback-url="${fallbackUrl}" class="image-lightbox-img" alt="${title || 'Foto do Produto'}" onerror="window.crmHandleLightboxImageError(this)">
             </div>
         `;
         overlay.style.display = 'flex';
@@ -10976,6 +11169,59 @@
             }
         };
         document.addEventListener('keydown', handleKeydown);
+    };
+
+    window.crmSearchMissingImages = (query) => {
+        state.missingImagesSearch = String(query || '');
+        renderActiveView();
+    };
+
+    window.crmExportMissingImagesCSV = () => {
+        const missingProducts = getImageCoverageProducts().filter(product => !product.hasImage);
+        if (!missingProducts.length) {
+            showNotification('Não existem produtos sem imagem para exportar.', 'info', 'Imagens Completas');
+            return;
+        }
+
+        const escapeCsv = value => {
+            let text = String(value ?? '');
+            if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+            return `"${text.replace(/"/g, '""')}"`;
+        };
+        const rows = [
+            ['Código', 'Descrição', 'Cliente', 'Marca', 'OPs', 'Setores', 'Arquivo esperado'],
+            ...missingProducts.map(product => [
+                product.codigo,
+                product.descricao,
+                product.cliente,
+                product.marca,
+                product.ops.join(', '),
+                product.setores.join(', '),
+                `${product.codigo}.jpg`
+            ])
+        ];
+        const csv = '\uFEFF' + rows.map(row => row.map(escapeCsv).join(';')).join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `produtos-sem-imagem-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    };
+
+    window.crmHandleLightboxImageError = (image) => {
+        const fallbackUrl = image.dataset.fallbackUrl;
+        if (fallbackUrl && image.dataset.fallbackTried !== '1') {
+            image.dataset.fallbackTried = '1';
+            image.src = fallbackUrl;
+            return;
+        }
+
+        image.onerror = null;
+        image.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="%231e293b" width="400" height="300"/><text fill="%2394a3b8" font-size="16" font-family="sans-serif" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">Imagem não disponível</text></svg>';
     };
 
     window.crmCloseImageLightbox = () => {

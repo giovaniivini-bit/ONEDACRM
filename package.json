@@ -4,7 +4,8 @@
   "description": "Painel de Controle de Atividades e Métricas por Setor - Confecções Oneda & Equipe",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test test/drive-image-cache.test.js"
   },
   "keywords": [
     "crm",

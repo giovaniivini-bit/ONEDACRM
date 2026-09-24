@@ -3058,15 +3058,15 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: none;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
     position: relative;
 }
 
 .s13-photo-card:hover {
-    transform: translateY(-4px);
+    transform: none;
     border-color: rgba(56, 189, 248, 0.5);
-    box-shadow: 0 10px 24px rgba(14, 165, 233, 0.18), 0 0 0 1px rgba(56, 189, 248, 0.3);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 .s13-photo-card.card-critico {
@@ -3075,7 +3075,7 @@ body {
 
 .s13-photo-card.card-critico:hover {
     border-color: #38bdf8;
-    box-shadow: 0 10px 26px rgba(56, 189, 248, 0.25), 0 0 15px rgba(56, 189, 248, 0.2);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 .s13-photo-wrapper {
@@ -3089,8 +3089,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    contain: paint layout;
-    content-visibility: auto;
+    content-visibility: visible;
 }
 
 .s13-photo-img {
@@ -3101,35 +3100,33 @@ body {
     display: block;
     background: transparent;
     opacity: 1;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+    transition: none;
 }
 
 .s13-photo-card:hover .s13-photo-img {
-    transform: scale(1.05) translateZ(0);
+    transform: none;
 }
 
 .s13-photo-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(13, 16, 26, 0.65);
-    backdrop-filter: blur(2px);
+    background: transparent;
+    backdrop-filter: none;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 8px;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transition: none;
+    cursor: zoom-in;
     color: #ffffff;
     font-size: 13px;
     font-weight: 600;
 }
 
 .s13-photo-wrapper:hover .s13-photo-overlay {
-    opacity: 1;
+    opacity: 0;
 }
 
 .s13-photo-placeholder {
@@ -3156,7 +3153,7 @@ body {
     top: 10px;
     right: 10px;
     background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(4px);
+    backdrop-filter: none;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 6px;
     padding: 3px 8px;
@@ -3693,6 +3690,95 @@ body {
     height: 530px;
     min-height: 480px;
     overflow: visible;
+}
+
+/*
+ * Estabilidade da grade de fotos do CQ
+ *
+ * Esta tela pode exibir dezenas de cards. A combinação anterior de
+ * content-visibility, camadas 3D, drop-shadow e backdrop-filter promovia cada
+ * foto para uma camada de GPU durante o scroll. Em alguns computadores isso
+ * fazia as imagens piscarem e deixava a rolagem travada.
+ */
+.cq-hierarchy-container .s13-photo-card,
+.cq-hierarchy-container .s13-photo-img,
+.cq-hierarchy-container .s13-photo-overlay {
+    transition: none;
+}
+
+.cq-hierarchy-container .s13-photo-wrapper {
+    content-visibility: visible;
+    contain: none;
+}
+
+/*
+ * O CQ possui dezenas de fotos na mesma página. Aqui usamos o mesmo princípio
+ * da galeria estática do Studeoneda: uma única superfície de imagem por card,
+ * sem overlay/desfoque que force o Chrome a recompor linhas inteiras no scroll.
+ */
+.cq-hierarchy-container .s13-photo-grid {
+    align-items: start;
+}
+
+.cq-hierarchy-container .cq-product-media {
+    width: 100% !important;
+    height: 210px !important;
+    min-height: 210px !important;
+    max-height: 210px !important;
+    aspect-ratio: auto !important;
+    isolation: auto;
+    transform: none !important;
+    filter: none !important;
+}
+
+.cq-hierarchy-container .cq-product-image {
+    position: static !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 210px !important;
+    box-sizing: border-box;
+    cursor: zoom-in;
+}
+
+.cq-hierarchy-container .s13-photo-tag {
+    backdrop-filter: none !important;
+    filter: none !important;
+}
+
+.cq-hierarchy-container .cq-product-media.image-unavailable .cq-product-image {
+    visibility: hidden;
+}
+
+.cq-hierarchy-container .cq-product-media.image-unavailable::after {
+    content: 'Imagem indisponível';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    background: #111827;
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.cq-hierarchy-container .s13-photo-card:hover {
+    transform: none;
+}
+
+.cq-hierarchy-container .s13-photo-img,
+.cq-hierarchy-container .s13-photo-card:hover .s13-photo-img {
+    transform: none;
+    backface-visibility: visible;
+    filter: none;
+    opacity: 1;
+    visibility: visible;
+}
+
+.cq-hierarchy-container .s13-photo-overlay {
+    display: none !important;
+    backdrop-filter: none;
 }
 
 /* ==========================================================================

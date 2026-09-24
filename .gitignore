@@ -2,5 +2,7 @@ cloudflared.exe
 node_modules/
 data/images_cache/
 data/drive_images.json
+data/drive_thumbnail_cache/
+*.production-before.txt
 .DS_Store
 Thumbs.db
