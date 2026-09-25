@@ -10637,44 +10637,55 @@
     }
 
     function exportCurrentTableCSV() {
-        const dataToExport = state.filteredData;
-        if (!dataToExport || dataToExport.length === 0) {
-            showNotification('Nenhum dado filtrado para exportar.', 'warning');
-            return;
+        let exportData = state.filteredData || [];
+        let moduleName = state.activeSubmodule;
+        let csvRows = [];
+
+        if (moduleName === 'cores' || moduleName === 'cores-aviamentos') {
+            exportData = (state.coresExternalData && state.coresExternalData.records) || [];
+            if (exportData.length === 0) return showNotification('Sem dados de Cores para exportar.', 'warning');
+            csvRows = [Object.keys(exportData[0] || {}).join(';')];
+            exportData.forEach(r => csvRows.push(Object.values(r).map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(';')));
+        } else if (moduleName === 'aviamentos') {
+            exportData = (state.aviamentosExternalData && state.aviamentosExternalData.records) || [];
+            if (exportData.length === 0) return showNotification('Sem dados de Aviamentos para exportar.', 'warning');
+            csvRows = [Object.keys(exportData[0] || {}).join(';')];
+            exportData.forEach(r => csvRows.push(Object.values(r).map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(';')));
+        } else if (moduleName === 'andamento-cq' || moduleName === 'cq') {
+            exportData = (state.cqExternalData && state.cqExternalData.records) || [];
+            if (exportData.length === 0) return showNotification('Sem dados de CQ para exportar.', 'warning');
+            csvRows = [Object.keys(exportData[0] || {}).join(';')];
+            exportData.forEach(r => csvRows.push(Object.values(r).map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(';')));
+        } else if (moduleName === 'leadtime') {
+            exportData = (state.leadtimeExternalData && state.leadtimeExternalData.records) || [];
+            if (exportData.length === 0) return showNotification('Sem dados de Leadtime para exportar.', 'warning');
+            csvRows = [Object.keys(exportData[0] || {}).join(';')];
+            exportData.forEach(r => csvRows.push(Object.values(r).map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(';')));
+        } else {
+            if (!exportData || exportData.length === 0) return showNotification('Nenhum dado filtrado para exportar.', 'warning');
+            const headers = ['OP', 'C�digo', 'Descri��o', 'Setor (AY)', 'Status Modelagem (Z)', 'Status Produto (BD)', 'Ordem Compra (BG)', 'Semana Entrega (BK)', 'Quantidade Pe�as (AP)', 'Dias Parado (BV)', 'Programa��o Amostras (CO)', 'Cliente', 'Marca', 'Prazo'];
+            csvRows = [headers.join(';')];
+            exportData.forEach(r => {
+                csvRows.push([
+                    r.op, r.codigo, '"' + (r.descricao || '').replace(/"/g, '""') + '"', r.setor,
+                    '"' + (r.descLocal || '').replace(/"/g, '""') + '"', '"' + (r.statusProd || '').replace(/"/g, '""') + '"',
+                    r.oc, '"' + (r.pedDescPeriodo || r.pedPeriodo || '').replace(/"/g, '""') + '"',
+                    r.qtdeOriginal, r.diasParado, '"' + (r.progAmostras || '').replace(/"/g, '""') + '"',
+                    '"' + (r.cliente || '').replace(/"/g, '""') + '"', '"' + (r.marca || '').replace(/"/g, '""') + '"', r.prazoStatus
+                ].join(';'));
+            });
         }
-
-        const headers = ['OP', 'Código', 'Descrição', 'Setor (AY)', 'Status Modelagem (Z)', 'Status Produto (BD)', 'Ordem Compra (BG)', 'Semana Entrega (BK)', 'Quantidade Peças (AP)', 'Dias Parado (BV)', 'Programação Amostras (CO)', 'Cliente', 'Marca', 'Prazo'];
-        const csvRows = [headers.join(';')];
-
-        dataToExport.forEach(r => {
-            csvRows.push([
-                r.op,
-                r.codigo,
-                `"${r.descricao.replace(/"/g, '""')}"`,
-                r.setor,
-                `"${r.descLocal.replace(/"/g, '""')}"`,
-                `"${r.statusProd.replace(/"/g, '""')}"`,
-                r.oc,
-                `"${r.pedDescPeriodo || r.pedPeriodo}"`,
-                r.qtdeOriginal,
-                r.diasParado,
-                `"${r.progAmostras.replace(/"/g, '""')}"`,
-                `"${r.cliente.replace(/"/g, '""')}"`,
-                `"${r.marca.replace(/"/g, '""')}"`,
-                r.prazoStatus
-            ].join(';'));
-        });
 
         const blob = new Blob(['\uFEFF' + csvRows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Oneda_CRM_Relatorio_${state.activeSubmodule}_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = `Oneda_CRM_Export_${moduleName}_${new Date().toISOString().slice(0, 10)}.csv`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showNotification('Relatório CSV exportado com sucesso!', 'success');
+        showNotification('Dados exportados com sucesso!', 'success');
     }
 
     async function handleCsvUpload(event) {

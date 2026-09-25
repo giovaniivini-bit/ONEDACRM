@@ -2735,16 +2735,14 @@ body {
 @media print {
     @page {
         size: A4 landscape;
-        margin: 10mm 12mm;
+        margin: 5mm;
     }
 
-    /* Reset Geral de Cores para Impressão Nítida */
     html, body {
-        background: #ffffff !important;
-        color: #0f172a !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
-        font-size: 10.5pt !important;
-        line-height: 1.3 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background: #0f172a !important; /* Mant�m o fundo escuro do app */
+        color: #f8fafc !important;
     }
 
     /* Ocultar Todos os Controles Interativos da Interface */
@@ -2767,33 +2765,34 @@ body {
         display: none !important;
     }
 
-    /* Ajuste de Layout Principal */
+    /* Ajuste de Layout Principal para caber na A4 */
     .app-layout {
         display: block !important;
-        background: #ffffff !important;
+        background: #0f172a !important;
     }
 
     .main-content {
         margin: 0 !important;
         padding: 0 !important;
         width: 100% !important;
-        background: #ffffff !important;
+        /* Dimensionamento para caber na folha A4 (aproxima��o do zoom da tela) */
+        zoom: 0.70; 
+        transform-origin: top left;
     }
 
     .view-container {
-        padding: 0 !important;
+        padding: 10px !important;
         margin: 0 !important;
-        background: #ffffff !important;
     }
 
-    /* Cabeçalho do Relatório Executivo no PDF */
+    /* Cabe�alho do Relat�rio Executivo no PDF */
     .print-report-header {
         display: flex !important;
         align-items: center;
         justify-content: space-between;
         padding-bottom: 12px;
         margin-bottom: 18px;
-        border-bottom: 2.5px solid #0284c7;
+        border-bottom: 2.5px solid #00d4ff;
     }
 
     .print-header-brand {
@@ -2804,12 +2803,12 @@ body {
 
     .print-header-meta {
         text-align: right;
-        font-size: 9.5pt;
-        color: #334155;
+        font-size: 11pt;
+        color: #94a3b8;
         line-height: 1.4;
     }
 
-    /* Cards e Containers no Modo Impresso */
+    /* Evitar quebra de p�gina dentro de cart�es e tabelas */
     .exec-card,
     .bar-chart-card,
     .feira-card,
@@ -2819,166 +2818,10 @@ body {
     .table-card,
     .hero-pie-chart-container,
     .kpi-card,
-    .panel-card {
-        background: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-        box-shadow: none !important;
-        color: #0f172a !important;
-        page-break-inside: avoid;
-        break-inside: avoid;
-        margin-bottom: 16px !important;
-        border-radius: 6px !important;
-    }
-
-    .exec-card-title,
-    .bar-chart-title,
-    .feira-card-title,
-    .feira-kpi-mini-val,
-    .feira-kpi-mini-label,
-    .table-title,
-    .kpi-label,
-    h2, h3 {
-        color: #0f172a !important;
-    }
-
-    .module-view-header {
-        margin-bottom: 14px !important;
-    }
-
-    .module-view-title-group h2 {
-        color: #0f172a !important;
-        font-size: 16pt !important;
-    }
-
-    .module-view-description {
-        color: #475569 !important;
-    }
-
-    /* Painel de Status no PDF */
-    .exec-status-row {
-        background: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
-        color: #0f172a !important;
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
-
-    .exec-status-row.is-ruim {
-        border-left: 4px solid #ef4444 !important;
-    }
-
-    .exec-status-row.is-bom {
-        border-left: 4px solid #0284c7 !important;
-    }
-
-    .exec-metrics-count {
-        color: #0f172a !important;
-    }
-
-    .exec-metrics-sub,
-    .pill-setor {
-        color: #475569 !important;
-        border-color: #cbd5e1 !important;
-        background: #f1f5f9 !important;
-    }
-
-    .pill-setor strong {
-        color: #0f172a !important;
-    }
-
-    /* Gráficos SVG no PDF */
-    svg {
-        max-width: 100% !important;
-    }
-
-    text {
-        fill: #0f172a !important;
-    }
-
-    /* Tabelas no PDF */
-    .crm-table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-    }
-
-    .crm-table th {
-        background: #f1f5f9 !important;
-        color: #1e293b !important;
-        border-bottom: 2px solid #94a3b8 !important;
-        font-size: 8.5pt !important;
-        padding: 6px 8px !important;
-    }
-
-    .crm-table td {
-        border-bottom: 1px solid #e2e8f0 !important;
-        color: #0f172a !important;
-        font-size: 8.5pt !important;
-        padding: 5px 8px !important;
-    }
-
+    .panel-card,
     .crm-table tr {
         page-break-inside: avoid;
         break-inside: avoid;
-    }
-
-    .badge {
-        border: 1px solid #94a3b8 !important;
-        color: #0f172a !important;
-        background: #f8fafc !important;
-    }
-
-    .badge-cyan {
-        border-color: #0284c7 !important;
-        color: #0369a1 !important;
-    }
-
-    .badge-purple {
-        border-color: #7c3aed !important;
-        color: #6d28d9 !important;
-    }
-
-    .badge-rose {
-        border-color: #e11d48 !important;
-        color: #be123c !important;
-    }
-
-    .badge-emerald {
-        border-color: #059669 !important;
-        color: #047857 !important;
-    }
-
-    .status-ruim-piscando {
-        border: 1px solid #ef4444 !important;
-        background: #fef2f2 !important;
-        color: #b91c1c !important;
-        animation: none !important;
-    }
-
-    .status-bom-azul {
-        border: 1px solid #0284c7 !important;
-        background: #f0f9ff !important;
-        color: #0369a1 !important;
-    }
-
-    .donut-legend-card {
-        border: 1px solid #cbd5e1 !important;
-        background: #f8fafc !important;
-    }
-
-    .donut-legend-card.blue {
-        border-color: #0284c7 !important;
-    }
-
-    .donut-legend-card.red {
-        border-color: #ef4444 !important;
-    }
-
-    .donut-legend-label.blue, .donut-legend-value.blue {
-        color: #0369a1 !important;
-    }
-
-    .donut-legend-label.red, .donut-legend-value.red {
-        color: #b91c1c !important;
     }
 }
 
