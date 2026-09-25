@@ -833,9 +833,17 @@ async function requestHandler(req, res) {
                     const respRaw = (r[targetColKey] || r['RESPONSÁVEL'] || r['Responsável'] || '').trim();
                     const resp = respRaw || 'NÃO INFORMADO';
 
-                    // Checa se a linha possui algum conteúdo
-                    const hasContent = Object.values(r).some(v => v && String(v).trim().length > 0);
-                    if (!hasContent) return;
+                    // Regra Atualizada (Setor D01 - Cores): Contar baseado na Coluna F (PANTONE)
+                    // Ignorar se o Pantone estiver vazio ou for apenas um tra�o.
+                    if (type === 'cores') {
+                        const pantoneKey = keys.find(k => k.toUpperCase().includes('PANTONE')) || keys[5];
+                        const pantone = (r[pantoneKey] || '').trim();
+                        if (!pantone || pantone === '-' || pantone === '�') return;
+                    } else {
+                        // Para aviamentos e outros, checa se a linha possui algum conte�do
+                        const hasContent = Object.values(r).some(v => v && String(v).trim().length > 0);
+                        if (!hasContent) return;
+                    }
 
                     validCount++;
                     respMap[resp] = (respMap[resp] || 0) + 1;
