@@ -5805,15 +5805,15 @@
                                             <span style="width: 10px; height: 10px; border-radius: 50%; background: #fb7185; box-shadow: 0 0 6px #fb7185;"></span>
                                             <span>Expirando Vig�ncia</span>
                                         </div>
-                                        <strong style="color: #ffffff;">${sitCounts['EXPIRANDO VIG�NCIA'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['EXPIRANDO VIG�NCIA'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
+                                        <strong style="color: #ffffff;">${sitCounts['EXPIRANDO VIGÊNCIA'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['EXPIRANDO VIGÊNCIA'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
                                     </div>
 
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
                                         <div style="display: flex; align-items: center; gap: 8px; color: #a78bfa;">
                                             <span style="width: 10px; height: 10px; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 6px #a78bfa;"></span>
-                                            <span>Amostras em Produ��o</span>
+                                            <span>Amostras em Produção</span>
                                         </div>
-                                        <strong style="color: #ffffff;">${sitCounts['AMOSTRAS EM PRODU��O'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['AMOSTRAS EM PRODU��O'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
+                                        <strong style="color: #ffffff;">${sitCounts['AMOSTRAS EM PRODUÇÃO'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['AMOSTRAS EM PRODUÇÃO'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
                                     </div>
                                 </div>
                             </div>
