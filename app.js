@@ -117,7 +117,9 @@
             const cliente = (r.CLIENTE || r['CLIENTE'] || r['Cliente'] || 'OUTROS').trim();
             const prefixo = (r.PREFIXO || r['PREFIXO'] || '').trim();
             const pedido = (r.PEDIDO || r['PEDIDO'] || '').trim().toUpperCase();
-            const macro = (r.MACRO_CATEGORIA || r['MACRO_CATEGORIA'] || 'OUTROS').trim();
+            let grupoRaw = r.DESC_GRUPO || r['DESC_GRUPO'] || '';
+            let macro = grupoRaw.split('(')[0].trim();
+            if (!macro) macro = (r.MACRO_CATEGORIA || r['MACRO_CATEGORIA'] || 'OUTROS').trim();
             const custoRaw = r.CUSTO_PRODUTO || r['CUSTO_PRODUTO'] || '0';
             const custo = parseCost(custoRaw);
             
@@ -259,7 +261,7 @@
 
         const sortedMacros = Object.keys(macroMap).map(k => ({ name: k, total: macroMap[k].total, comp: macroMap[k].comp })).sort((a,b) => b.total - a.total);
         const pieMacroData = sortedMacros.map(m => ({ label: m.name, val: m.total }));
-        const macroColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#64748b'];
+        const macroColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#64748b', '#84cc16', '#14b8a6', '#d946ef', '#f97316', '#6366f1', '#eab308', '#22c55e', '#0ea5e9', '#be123c', '#4338ca', '#b45309', '#0f766e', '#4d7c0f', '#0369a1', '#7e22ce'];
 
         const html = `
             <div id="print-area-aproveitamento" style="background:#0f172a; padding: 24px;">
@@ -383,24 +385,26 @@
                     </div>
 
                     <div class="cq-macro-card" style="padding: 20px; display:flex; flex-direction:column;">
-                        <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin-top:0; margin-bottom: 16px;">
-                            <i class="fa-solid fa-chart-pie" style="color:#ec4899; margin-right:8px;"></i> Divisão por Categoria
+                        <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin-top:0; margin-bottom: 24px;">
+                            <i class="fa-solid fa-chart-pie" style="color:#ec4899; margin-right:8px;"></i> Divisão por Tipos de Produto (Modelos Detalhados)
                         </h3>
-                        <div style="display:flex; gap:20px; align-items:center; flex:1;">
-                            <svg viewBox="-100 -100 200 200" style="width: 160px; height: 160px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
-                                ${drawPie(pieMacroData, 90)}
-                                <circle cx="0" cy="0" r="50" fill="#0f172a" />
-                                <text x="0" y="5" fill="#ffffff" font-size="20" font-weight="900" text-anchor="middle" font-family="system-ui">${pieMacroData.length}</text>
-                            </svg>
-                            <div style="flex: 1; display:flex; flex-direction:column; gap:8px;">
+                        <div style="display:flex; gap:40px; align-items:center; flex:1;">
+                            <div style="flex: 1; display:flex; justify-content:center;">
+                                <svg viewBox="-200 -200 400 400" style="width: 100%; max-width: 500px; height: auto; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
+                                    ${drawPie(pieMacroData, 180)}
+                                    <circle cx="0" cy="0" r="100" fill="#0f172a" />
+                                    <text x="0" y="5" fill="#ffffff" font-size="36" font-weight="900" text-anchor="middle" font-family="system-ui">${pieMacroData.length}</text>
+                                    <text x="0" y="30" fill="#94a3b8" font-size="14" font-weight="600" text-anchor="middle" font-family="system-ui">Modelos</text>
+                                </svg>
+                            </div>
+                            <div style="flex: 1; display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px; max-height: 450px; overflow-y:auto; padding-right:16px;">
                                 ${sortedMacros.map((m, i) => `
-                                    <div style="display:flex; justify-content:space-between; align-items:center; font-size: 12px;">
-                                        <div style="display:flex; align-items:center; gap:6px;">
-                                            <div style="width:10px; height:10px; border-radius:2px; background:${macroColors[i % macroColors.length]};"></div>
-                                            <strong style="color:#e2e8f0;">${m.name}</strong>
+                                    <div style="display:flex; justify-content:space-between; align-items:center; font-size: 12px; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px; border-left: 3px solid ${macroColors[i % macroColors.length]};">
+                                        <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                                            <strong style="color:#e2e8f0; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" title="${m.name}">${m.name}</strong>
                                         </div>
-                                        <div style="color:#94a3b8;">
-                                            ${m.total} <span style="color:#10b981; font-weight:bold; margin-left:6px;">(${((m.comp/m.total)*100).toFixed(0)}%)</span>
+                                        <div style="color:#94a3b8; font-weight:600;">
+                                            ${m.total} <span style="color:#10b981; font-weight:900; margin-left:6px;" title="Conversão">(${((m.comp/m.total)*100).toFixed(0)}%)</span>
                                         </div>
                                     </div>
                                 `).join('')}
