@@ -342,12 +342,13 @@
                         <table class="data-table" style="width: 100%; font-size: 12px;">
                             <thead>
                                 <tr>
-                                    <th>Rede</th>
-                                    <th style="text-align:right;">Volume Total</th>
-                                    <th style="text-align:right;">Conversão</th>
-                                    <th style="text-align:right;">Ticket Médio (Geral)</th>
-                                    <th style="text-align:right; color:#10b981;">Custo Comprados (S)</th>
-                                    <th style="text-align:right; color:#f43f5e;">Custo Não Comp. (N)</th>
+                                    <th style="padding: 10px 8px;">Rede</th>
+                                    <th style="text-align:right; padding: 10px 8px;">Volume Total</th>
+                                    <th style="text-align:right; padding: 10px 8px;">Conversão</th>
+                                    <th style="text-align:right; padding: 10px 8px;">Custo (Geral)</th>
+                                    <th style="text-align:right; color:#10b981; padding: 10px 8px;">Custo Comprados (S)</th>
+                                    <th style="text-align:right; color:#f43f5e; padding: 10px 8px;">Custo Não Comp. (N)</th>
+                                    <th style="text-align:right; color:#fbbf24; padding: 10px 8px;">Variação (N vs S)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -363,6 +364,17 @@
                                         <td style="text-align:right; padding: 12px 8px; font-weight:700; color:#cbd5e1;">${formatBRL(avgG)}</td>
                                         <td style="text-align:right; padding: 12px 8px; color:#34d399; font-weight:600;">${formatBRL(avgS)}</td>
                                         <td style="text-align:right; padding: 12px 8px; color:#fb7185; font-weight:600;">${formatBRL(avgN)}</td>
+                                        <td style="text-align:right; padding: 12px 8px;">
+                                            ${(() => {
+                                                if (avgS > 0 && avgN > 0) {
+                                                    const diff = ((avgN - avgS) / avgS) * 100;
+                                                    if (diff > 0) return '<span style="color:#fb7185; font-weight:bold;">+' + diff.toFixed(1) + '%</span> <span style="font-size:10px; color:#64748b;">(mais caro)</span>';
+                                                    if (diff < 0) return '<span style="color:#34d399; font-weight:bold;">' + diff.toFixed(1) + '%</span> <span style="font-size:10px; color:#64748b;">(mais barato)</span>';
+                                                    return '<span style="color:#94a3b8; font-weight:bold;">0%</span>';
+                                                }
+                                                return '<span style="color:#64748b;">-</span>';
+                                            })()}
+                                        </td>
                                     </tr>
                                     `;
                                 }).join('')}
