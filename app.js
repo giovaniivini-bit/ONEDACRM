@@ -5986,7 +5986,7 @@
                                 </text>
                                 
                                 <text x="${colCenterX}" y="${pad.top + drawH + 42}" fill="#64748b" font-size="10.5" font-weight="700" text-anchor="middle" font-family="system-ui, sans-serif">
-                                    Sem ${wData.periodo.slice(-2)}
+                                    Sem ${String(wData.periodo || '').slice(-2)}
                                 </text>
                             </g>
                         `;
@@ -6101,7 +6101,7 @@
                                     ${wData.periodo}
                                 </text>
                                 <text x="${colCenterX}" y="${pad.top + drawH + 42}" fill="#64748b" font-size="10.5" font-weight="700" text-anchor="middle" font-family="system-ui, sans-serif">
-                                    Sem ${wData.periodo.slice(-2)}
+                                    Sem ${String(wData.periodo || '').slice(-2)}
                                 </text>
                             </g>
                         `;
