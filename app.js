@@ -260,8 +260,24 @@
             return svg;
         }
 
-        const sortedMacros = Object.keys(macroMap).map(k => ({ name: k, total: macroMap[k].total, comp: macroMap[k].comp })).sort((a,b) => b.total - a.total);
-        const pieMacroData = sortedMacros.map(m => ({ label: m.name, val: m.total }));
+        const originalModelCount = Object.keys(macroMap).length;
+        let finalMacros = [];
+        let outros = { name: 'OUTROS', total: 0, comp: 0 };
+        Object.keys(macroMap).forEach(k => {
+            if (macroMap[k].total < 10 && k !== 'OUTROS') {
+                outros.total += macroMap[k].total;
+                outros.comp += macroMap[k].comp;
+            } else if (k === 'OUTROS') {
+                outros.total += macroMap[k].total;
+                outros.comp += macroMap[k].comp;
+            } else {
+                finalMacros.push({ name: k, total: macroMap[k].total, comp: macroMap[k].comp });
+            }
+        });
+        if (outros.total > 0) finalMacros.push(outros);
+        finalMacros.sort((a,b) => b.total - a.total);
+        
+        const pieMacroData = finalMacros.map(m => ({ label: m.name, val: m.total }));
         const macroColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#64748b', '#84cc16', '#14b8a6', '#d946ef', '#f97316', '#6366f1', '#eab308', '#22c55e', '#0ea5e9', '#be123c', '#4338ca', '#b45309', '#0f766e', '#4d7c0f', '#0369a1', '#7e22ce'];
 
         const html = `
@@ -394,18 +410,20 @@
                                 <svg viewBox="-200 -200 400 400" style="width: 100%; max-width: 500px; height: auto; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
                                     ${drawPie(pieMacroData, 180)}
                                     <circle cx="0" cy="0" r="100" fill="#0f172a" />
-                                    <text x="0" y="5" fill="#ffffff" font-size="36" font-weight="900" text-anchor="middle" font-family="system-ui">${pieMacroData.length}</text>
-                                    <text x="0" y="30" fill="#94a3b8" font-size="14" font-weight="600" text-anchor="middle" font-family="system-ui">Modelos</text>
+                                    <text x="0" y="5" fill="#ffffff" font-size="36" font-weight="900" text-anchor="middle" font-family="system-ui">${originalModelCount}</text>
+                                    <text x="0" y="30" fill="#94a3b8" font-size="14" font-weight="600" text-anchor="middle" font-family="system-ui">Modelos Totais</text>
                                 </svg>
                             </div>
                             <div style="flex: 1; display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px; max-height: 450px; overflow-y:auto; padding-right:16px;">
-                                ${sortedMacros.map((m, i) => `
+                                ${finalMacros.map((m, i) => `
                                     <div style="display:flex; justify-content:space-between; align-items:center; font-size: 12px; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px; border-left: 3px solid ${macroColors[i % macroColors.length]};">
-                                        <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                                        <div style="display:flex; flex-direction:column; gap:2px; overflow:hidden;">
                                             <strong style="color:#e2e8f0; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" title="${m.name}">${m.name}</strong>
+                                            <span style="color:#0ea5e9; font-weight:700; font-size:10px;">Representa: ${((m.total / totalCount) * 100).toFixed(1)}%</span>
                                         </div>
-                                        <div style="color:#94a3b8; font-weight:600;">
-                                            ${m.total} <span style="color:#10b981; font-weight:900; margin-left:6px;" title="Conversão">(${((m.comp/m.total)*100).toFixed(0)}%)</span>
+                                        <div style="color:#94a3b8; font-weight:600; text-align:right;">
+                                            ${m.total} un <br>
+                                            <span style="color:#10b981; font-weight:900; font-size:10px;" title="Conversão">Conv: ${((m.comp/m.total)*100).toFixed(0)}%</span>
                                         </div>
                                     </div>
                                 `).join('')}
