@@ -5468,6 +5468,51 @@
             }
         });
 
+        const allSituacaoMeta = {
+            'VIGENTES E OUTROS': { color: '#10b981', lightColor: '#34d399', bg: 'rgba(16, 185, 129, 0.18)', label: 'Vigentes / Resolvidas', icon: 'fa-check-circle' },
+            'REENVIADO CQ': situacaoMeta['REENVIADO CQ'],
+            'ENVIADO': situacaoMeta['ENVIADO'],
+            'EXPIRANDO VIGÊNCIA': situacaoMeta['EXPIRANDO VIGÊNCIA'],
+            'AMOSTRAS EM PRODUÇÃO': situacaoMeta['AMOSTRAS EM PRODUÇÃO']
+        };
+        const allTargetSituacoes = ['VIGENTES E OUTROS', 'REENVIADO CQ', 'ENVIADO', 'EXPIRANDO VIGÊNCIA', 'AMOSTRAS EM PRODUÇÃO'];
+
+        const allWeeksMap = {};
+        sortedWeeks.forEach(w => {
+            allWeeksMap[w] = {
+                total: 0,
+                bySit: {
+                    'VIGENTES E OUTROS': 0,
+                    'REENVIADO CQ': 0,
+                    'ENVIADO': 0,
+                    'EXPIRANDO VIGÊNCIA': 0,
+                    'AMOSTRAS EM PRODUÇÃO': 0
+                }
+            };
+        });
+
+        const allSitCounts = {
+            'VIGENTES E OUTROS': 0,
+            'REENVIADO CQ': 0,
+            'ENVIADO': 0,
+            'EXPIRANDO VIGÊNCIA': 0,
+            'AMOSTRAS EM PRODUÇÃO': 0
+        };
+
+        normalizedRecords.forEach(r => {
+            if (allWeeksMap[r.periodo]) {
+                const cat = r.isPending ? r.sitNorm : 'VIGENTES E OUTROS';
+                allWeeksMap[r.periodo].total++;
+                allWeeksMap[r.periodo].bySit[cat]++;
+                allSitCounts[cat]++;
+            }
+        });
+
+        const allWeeksDataList = sortedWeeks.map(w => allWeeksMap[w]);
+        const maxAllWeekTotal = Math.max(...allWeeksDataList.map(w => w.total), 5);
+        const yMaxAllWeek = Math.ceil(maxAllWeekTotal * 1.25);
+
+
         // =====================================================================
         // AGRUPAMENTO DE OFs PENDENTES POR SEMANA (COLUNA N) E SITUAÇÃO (COLUNA I)
         // =====================================================================
@@ -5546,8 +5591,13 @@
                 filteredRecords = filteredRecords.filter(r => r.periodo === state.cqFilter.value);
                 activeFilterBadge = `Semana: ${state.cqFilter.value}`;
             } else if (state.cqFilter.field === 'situacao') {
-                filteredRecords = filteredRecords.filter(r => r.sitNorm === state.cqFilter.value || r.descAmostra === state.cqFilter.value);
+                if (state.cqFilter.value === 'VIGENTES E OUTROS') {
+                    filteredRecords = filteredRecords.filter(r => !r.isPending);
+                } else {
+                    filteredRecords = filteredRecords.filter(r => r.sitNorm === state.cqFilter.value || r.descAmostra === state.cqFilter.value);
+                }
                 activeFilterBadge = `Situação: ${state.cqFilter.value}`;
+            } else if (state.cqFilter.field === 'setor') {
             } else if (state.cqFilter.field === 'setor') {
                 filteredRecords = filteredRecords.filter(r => r.setorAmostra === state.cqFilter.value);
                 activeFilterBadge = `Setor: ${state.cqFilter.value}`;
@@ -5980,6 +6030,109 @@
 
             
             </div>
+
+            <div class="cq-macro-card" style="margin-top: 24px; padding: 24px;">
+                <div style="margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <h3 style="color: #ffffff; font-size: 19px; font-weight: 800; display: flex; align-items: center; gap: 12px; margin: 0;">
+                            <i class="fa-solid fa-chart-column" style="color: #10b981;"></i>
+                            Gráfico 3: Divisão Total (Pendentes + Vigentes) por Semana (Coluna N) e Situação
+                        </h3>
+                    </div>
+                    <div style="color: #94a3b8; font-size: 13.5px; margin-top: 6px; font-weight: 600;">
+                        Colunas Empilhadas por Semana | Visão Geral do Período (Incluindo OCs Resolvidas / Vigentes)
+                    </div>
+                </div>
+
+                <svg viewBox="0 0 ${svgW} ${svgH}" style="width: 100%; height: auto; background: rgba(15, 23, 42, 0.3); border-radius: 12px; overflow: visible;">
+                    <!-- Linhas de Grade Y -->
+                    ${[0, 0.25, 0.5, 0.75, 1].map(ratio => {
+                        const y = pad.top + drawH - (drawH * ratio);
+                        const val = Math.round(yMaxAllWeek * ratio);
+                        return `
+                            <line x1="${pad.left - 5}" y1="${y}" x2="${svgW - pad.right}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1" />
+                            <text x="${pad.left - 12}" y="${y}" fill="#64748b" font-size="11" font-weight="700" text-anchor="end" dominant-baseline="central" font-family="system-ui, sans-serif">
+                                ${val}
+                            </text>
+                        `;
+                    }).join('')}
+
+                    <!-- Barras Empilhadas Gráfico 3 -->
+                    ${allWeeksDataList.map((wData, colIdx) => {
+                        const colCenterX = pad.left + (colIdx * colSlotW) + (colSlotW / 2);
+                        let accumH = 0;
+                        const isWeekSelected = state.cqFilter && state.cqFilter.field === 'periodo' && state.cqFilter.value === wData.periodo;
+
+                        const segmentElements = allTargetSituacoes.map(sit => {
+                            const count = wData.bySit[sit];
+                            if (!count) return '';
+                            const h = (count / yMaxAllWeek) * drawH;
+                            const yPos = pad.top + drawH - accumH - h;
+                            accumH += h;
+                            const color = allSituacaoMeta[sit].color;
+                            
+                            return `
+                                <rect x="${colCenterX - 14}" y="${yPos}" width="28" height="${h}" fill="${color}" rx="${h < 4 ? 1 : 2}" stroke="#0f172a" stroke-width="1.5" />
+                            `;
+                        }).join('');
+
+                        const totalBarH = (wData.total / yMaxAllWeek) * drawH;
+                        const barY = pad.top + drawH - totalBarH;
+
+                        return `
+                            <g class="leadtime-bar-group" style="cursor: pointer;" onclick="window.crmFilterCQ({ field: 'periodo', value: '${wData.periodo}' })">
+                                <!-- Área de Hover -->
+                                <rect x="${pad.left + (colIdx * colSlotW) + 2}" y="${pad.top}" width="${colSlotW - 4}" height="${drawH}" fill="rgba(255,255,255,${isWeekSelected ? '0.08' : '0.01'})" rx="6" />
+                                
+                                <!-- Segmentos Empilhados -->
+                                ${segmentElements}
+
+                                <!-- Rótulo de Quantidade no Topo da Barra -->
+                                <g class="of-label-pill">
+                                    <rect x="${colCenterX - 18}" y="${barY - 22}" width="36" height="18" rx="4" fill="rgba(15, 23, 42, 0.95)" stroke="${wData.total > 0 ? '#10b981' : 'rgba(255,255,255,0.2)'}" stroke-width="1.2" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))" />
+                                    <text x="${colCenterX}" y="${barY - 9}" fill="${wData.total > 0 ? '#ffffff' : '#64748b'}" font-size="12" font-weight="900" text-anchor="middle" font-family="system-ui, sans-serif">
+                                        ${wData.total}
+                                    </text>
+                                </g>
+
+                                <!-- Rótulo da Semana no Eixo X -->
+                                <text x="${colCenterX}" y="${pad.top + drawH + 24}" fill="${isWeekSelected ? '#10b981' : '#cbd5e1'}" font-size="13" font-weight="800" text-anchor="middle" font-family="system-ui, sans-serif">
+                                    ${wData.periodo}
+                                </text>
+                                <text x="${colCenterX}" y="${pad.top + drawH + 42}" fill="#64748b" font-size="10.5" font-weight="700" text-anchor="middle" font-family="system-ui, sans-serif">
+                                    Sem ${wData.periodo.slice(-2)}
+                                </text>
+                            </g>
+                        `;
+                    }).join('')}
+
+                    <!-- Rótulos dos Eixos -->
+                    <text x="${pad.left}" y="${pad.top - 18}" fill="#10b981" font-size="13" font-weight="800" text-anchor="start" font-family="system-ui, sans-serif">
+                        ← TOTAL DE AMOSTRAS (OFs)
+                    </text>
+                    <text x="${svgW - pad.right}" y="${pad.top - 18}" fill="#94a3b8" font-size="13" font-weight="800" text-anchor="end" font-family="system-ui, sans-serif">
+                        SEMANAS DE CQ (COL N) →
+                    </text>
+                </svg>
+
+                <!-- LEGENDA INTERATIVA DO GRÁFICO 3 -->
+                <div class="leadtime-legend-bar" style="border-top-color: rgba(16, 185, 129, 0.15);">
+                    ${allTargetSituacoes.map(sitKey => {
+                        const meta = allSituacaoMeta[sitKey];
+                        const count = allSitCounts[sitKey] || 0;
+                        const isSelected = state.cqFilter && state.cqFilter.field === 'situacao' && state.cqFilter.value === sitKey;
+
+                        return `
+                            <div class="cq-legend-chip ${isSelected ? 'active' : ''}" style="cursor: pointer; ${isSelected ? `border-color: ${meta.color}; background: ${meta.bg};` : ''}" onclick="window.crmFilterCQ({ field: 'situacao', value: '${sitKey}' })" title="Filtrar ${meta.label}">
+                                <span class="cq-legend-dot" style="background: ${meta.color}; box-shadow: 0 0 8px ${meta.color};"></span>
+                                <span style="font-weight: 700; color: #f1f5f9;">${meta.label}</span>
+                                <span class="cq-legend-count" style="color: ${meta.lightColor}; font-size: 13px;">${count} OFs</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+
 
             <!-- BARRA DE CONTROLES, BUSCA E ALTERNÂNCIA DE MODO (CARDS / TABELA) -->
             <div class="filter-toolbar" style="margin-bottom: 20px;">
