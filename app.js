@@ -5480,6 +5480,7 @@
         const allWeeksMap = {};
         sortedWeeks.forEach(w => {
             allWeeksMap[w] = {
+                periodo: w,
                 total: 0,
                 bySit: {
                     'VIGENTES E OUTROS': 0,
