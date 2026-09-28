@@ -190,7 +190,7 @@
         // SVG dimensions
         const svgW = 1000;
         const svgH = 400;
-        const pad = { top: 40, right: 60, bottom: 60, left: 60 };
+        const pad = { top: 40, right: 60, bottom: 75, left: 60 };
         const drawW = svgW - pad.left - pad.right;
         const drawH = svgH - pad.top - pad.bottom;
         
@@ -220,6 +220,7 @@
                     <text x="${cx}" y="${pad.top + drawH - hComp - hNao - 8}" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" font-family="system-ui">${c.total}</text>
                     <text x="${cx}" y="${pad.top + drawH + 20}" fill="#cbd5e1" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui">${c.name}</text>
                     <text x="${cx}" y="${pad.top + drawH + 35}" fill="#64748b" font-size="10" font-weight="normal" text-anchor="middle" font-family="system-ui">${c.prefix ? 'Pref: '+c.prefix : ''}</text>
+                    <text x="${cx}" y="${pad.top + drawH + 52}" fill="#0ea5e9" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui">${((c.total / totalCount) * 100).toFixed(1)}%</text>
                 </g>
             `;
         }).join('');
@@ -314,7 +315,7 @@
                 <!-- Pareto -->
                 <div class="cq-macro-card" style="margin-bottom: 24px; padding: 20px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-                        <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin: 0;"><i class="fa-solid fa-chart-column" style="color:#fbbf24; margin-right:8px;"></i> Curva de Pareto por Cliente</h3>
+                        <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin: 0;"><i class="fa-solid fa-chart-column" style="color:#fbbf24; margin-right:8px;"></i> Visualização geral por cliente</h3>
                         <div style="display:flex; gap: 12px; font-size: 12px; font-weight: 600;">
                             <span style="color: #10b981;"><i class="fa-solid fa-square"></i> Comprado (Base)</span>
                             <span style="color: #f43f5e;"><i class="fa-solid fa-square"></i> Não Comprado (Topo)</span>
