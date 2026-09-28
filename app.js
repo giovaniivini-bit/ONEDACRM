@@ -334,7 +334,7 @@
                 </div>
 
                 <!-- Exec Table & Macros -->
-                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <div style="display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 24px;">
                     <div class="cq-macro-card" style="padding: 20px; max-height: 400px; overflow-y: auto;">
                         <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin-top:0; margin-bottom: 16px;">
                             <i class="fa-solid fa-table" style="color:#3b82f6; margin-right:8px;"></i> Resumo Executivo
@@ -343,20 +343,29 @@
                             <thead>
                                 <tr>
                                     <th>Rede</th>
-                                    <th style="text-align:right;">Vol</th>
-                                    <th style="text-align:right;">Conv.</th>
-                                    <th style="text-align:right;">Custo G.</th>
+                                    <th style="text-align:right;">Volume Total</th>
+                                    <th style="text-align:right;">Conversão</th>
+                                    <th style="text-align:right;">Ticket Médio (Geral)</th>
+                                    <th style="text-align:right; color:#10b981;">Custo Comprados (S)</th>
+                                    <th style="text-align:right; color:#f43f5e;">Custo Não Comp. (N)</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${sortedClients.map(c => `
-                                    <tr style="cursor:pointer;" onclick="window.crmFilterCQ({field:'cliente', value:'${c.name}'})">
-                                        <td><strong>${c.name}</strong></td>
-                                        <td style="text-align:right;">${c.total}</td>
-                                        <td style="text-align:right; color:${c.comp/c.total > 0.3 ? '#10b981' : '#f43f5e'}; font-weight:bold;">${((c.comp/c.total)*100).toFixed(1)}%</td>
-                                        <td style="text-align:right;">${formatBRL(c.qTotal > 0 ? c.sumTotal/c.qTotal : 0)}</td>
+                                ${sortedClients.map(c => {
+                                    const avgG = c.qTotal > 0 ? c.sumTotal/c.qTotal : 0;
+                                    const avgS = c.qComp > 0 ? c.sumComp/c.qComp : 0;
+                                    const avgN = c.qNao > 0 ? c.sumNao/c.qNao : 0;
+                                    return `
+                                    <tr style="cursor:pointer; border-bottom: 1px solid rgba(255,255,255,0.05);" onclick="window.crmFilterCQ({field:'cliente', value:'${c.name}'})">
+                                        <td style="padding: 12px 8px;"><strong>${c.name}</strong> <span style="font-size:10px; color:#64748b; margin-left:6px;">(${c.prefix})</span></td>
+                                        <td style="text-align:right; padding: 12px 8px;">${c.total}</td>
+                                        <td style="text-align:right; padding: 12px 8px; color:${c.comp/c.total > 0.3 ? '#10b981' : '#f43f5e'}; font-weight:bold;">${((c.comp/c.total)*100).toFixed(1)}%</td>
+                                        <td style="text-align:right; padding: 12px 8px; font-weight:700; color:#cbd5e1;">${formatBRL(avgG)}</td>
+                                        <td style="text-align:right; padding: 12px 8px; color:#34d399; font-weight:600;">${formatBRL(avgS)}</td>
+                                        <td style="text-align:right; padding: 12px 8px; color:#fb7185; font-weight:600;">${formatBRL(avgN)}</td>
                                     </tr>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     </div>
