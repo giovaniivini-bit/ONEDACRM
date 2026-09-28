@@ -543,6 +543,9 @@
             if (rotRes && rotRes.success) {
                 state.rotativosExternalData = rotRes;
             }
+            if (apRes && apRes.success) {
+                state.aproveitamentoExternalData = apRes;
+            }
             updateSidebarBadges();
             if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
