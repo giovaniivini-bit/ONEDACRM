@@ -164,6 +164,35 @@
         const aprovGeral = totalCount > 0 ? (compCount / totalCount) * 100 : 0;
         const diffCustos = avgNao > 0 ? ((avgNao - avgComp) / avgNao) * 100 : 0;
         
+        const monthNames = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
+        let minDate = new Date(8640000000000000);
+        let maxDate = new Date(-8640000000000000);
+        rawRecords.forEach(r => {
+            let dStr = r.DATA_CAD || r['DATA_CAD'];
+            if (dStr && dStr.includes('/')) {
+                let parts = dStr.split('/');
+                if (parts.length >= 3) {
+                    let date = new Date(parts[2], parts[1]-1, parts[0]);
+                    if (!isNaN(date)) {
+                        if (date < minDate) minDate = date;
+                        if (date > maxDate) maxDate = date;
+                    }
+                }
+            }
+        });
+        let periodText = "";
+        if (minDate <= maxDate) {
+            let startMonth = monthNames[minDate.getMonth()];
+            let startYear = String(minDate.getFullYear()).slice(-2);
+            let endMonth = monthNames[maxDate.getMonth()];
+            let endYear = String(maxDate.getFullYear()).slice(-2);
+            if (startMonth === endMonth && startYear === endYear) {
+                periodText = `${startMonth} ${startYear}`;
+            } else {
+                periodText = `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
+            }
+        }
+        
         // Sorting clients
         const sortedClients = Object.values(cliMap).sort((a,b) => b.total - a.total);
         let accum = 0;
@@ -284,7 +313,7 @@
             <div id="print-area-aproveitamento" style="background:#0f172a; padding: 24px;">
                 <div class="header-main-title" style="margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; display:flex; justify-content: space-between; align-items:center;">
                     <div>
-                        <h2 style="font-size: 24px; font-weight: 800; color: #f8fafc; margin: 0;">Aproveitamento de Amostras</h2>
+                        <h2 style="font-size: 24px; font-weight: 800; color: #f8fafc; margin: 0; text-transform: uppercase;">APROVEITAMENTO AMOSTRAS ${periodText ? periodText : ''}</h2>
                         <div style="font-size: 14px; color: #94a3b8; margin-top: 4px;">Setor 01F • Análise de Conversão e Custos por Cliente</div>
                     </div>
                     <div style="display:flex; gap:12px;">
@@ -300,30 +329,57 @@
                 </div>
 
                 <!-- KPIs -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                    <div class="cq-kpi-card" style="border-color: rgba(56, 189, 248, 0.35);">
-                        <div class="cq-kpi-title"><i class="fa-solid fa-box-open" style="color: #38bdf8;"></i> Total de Amostras</div>
-                        <div class="cq-kpi-value" style="color: #38bdf8;">${totalCount}</div>
-                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Peças Desenvolvidas</div>
-                    </div>
-                    <div class="cq-kpi-card" style="border-color: rgba(16, 185, 129, 0.35);">
-                        <div class="cq-kpi-title"><i class="fa-solid fa-check-double" style="color: #10b981;"></i> Amostras Compradas</div>
-                        <div class="cq-kpi-value" style="color: #10b981;">${compCount} <span style="font-size:16px; font-weight:600; color:#34d399;">(${aprovGeral.toFixed(1)}%)</span></div>
-                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Taxa de Conversão</div>
-                    </div>
-                    <div class="cq-kpi-card" style="border-color: rgba(148, 163, 184, 0.35);">
-                        <div class="cq-kpi-title"><i class="fa-solid fa-money-bill-wave" style="color: #94a3b8;"></i> Custo Médio Geral</div>
-                        <div class="cq-kpi-value" style="color: #cbd5e1;">${formatBRL(avgGeral)}</div>
-                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Ticket Médio Total</div>
-                    </div>
-                    <div class="cq-kpi-card" style="border-color: rgba(244, 63, 94, 0.35);">
-                        <div class="cq-kpi-title"><i class="fa-solid fa-scale-unbalanced" style="color: #f43f5e;"></i> Diferença de Custo</div>
-                        <div style="font-size: 13px; color: #cbd5e1; margin-top: 8px; line-height:1.4;">
-                            Comprados: <strong style="color: #10b981;">${formatBRL(avgComp)}</strong><br>
-                            Não Comp: <strong style="color: #f43f5e;">${formatBRL(avgNao)}</strong>
+                <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-bottom: 24px; gap: 16px; display: grid;">
+                    <div class="kpi-card" style="border-color: rgba(56, 189, 248, 0.45); background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(13, 16, 26, 0.9) 100%);">
+                        <div class="kpi-header">
+                            <span class="kpi-label" style="color: #38bdf8; font-weight: 800; letter-spacing: 0.5px;">TOTAL DE AMOSTRAS</span>
+                            <div class="kpi-icon" style="color: #38bdf8;"><i class="fa-solid fa-box-open"></i></div>
                         </div>
-                        <div style="font-size: 11px; color: #fbbf24; margin-top: 6px; font-weight:700;">
-                            ${diffCustos > 0 ? `Comprados custam ${diffCustos.toFixed(1)}% a menos` : `Comprados custam ${Math.abs(diffCustos).toFixed(1)}% a mais`}
+                        <div class="kpi-value" style="font-size: 44px; font-weight: 900; color: #ffffff; line-height: 1.1;">
+                            ${totalCount} <span style="font-size: 16px; font-weight: 700; color: #38bdf8;">peças</span>
+                        </div>
+                        <div class="kpi-footer">
+                            <span style="font-weight: 600; color: var(--text-secondary);">Peças totais desenvolvidas</span>
+                        </div>
+                    </div>
+                    
+                    <div class="kpi-card" style="border-color: rgba(16, 185, 129, 0.45); background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(13, 16, 26, 0.9) 100%);">
+                        <div class="kpi-header">
+                            <span class="kpi-label" style="color: #10b981; font-weight: 800; letter-spacing: 0.5px;">AMOSTRAS COMPRADAS</span>
+                            <div class="kpi-icon" style="color: #10b981;"><i class="fa-solid fa-check-double"></i></div>
+                        </div>
+                        <div class="kpi-value" style="font-size: 44px; font-weight: 900; color: #ffffff; line-height: 1.1;">
+                            ${compCount} <span style="font-size: 16px; font-weight: 700; color: #10b981;">peças</span>
+                        </div>
+                        <div class="kpi-footer">
+                            <span style="font-weight: 700; color: #34d399; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">${aprovGeral.toFixed(1)}% Taxa de Conversão</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="border-color: rgba(148, 163, 184, 0.45); background: linear-gradient(135deg, rgba(148, 163, 184, 0.12) 0%, rgba(13, 16, 26, 0.9) 100%);">
+                        <div class="kpi-header">
+                            <span class="kpi-label" style="color: #94a3b8; font-weight: 800; letter-spacing: 0.5px;">CUSTO MÉDIO GERAL</span>
+                            <div class="kpi-icon" style="color: #94a3b8;"><i class="fa-solid fa-money-bill-wave"></i></div>
+                        </div>
+                        <div class="kpi-value" style="font-size: 36px; font-weight: 900; color: #ffffff; line-height: 1.1; margin-top: 8px;">
+                            ${formatBRL(avgGeral)}
+                        </div>
+                        <div class="kpi-footer">
+                            <span style="font-weight: 600; color: var(--text-secondary);">Ticket Médio Total (Todas as peças)</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card" style="border-color: rgba(244, 63, 94, 0.45); background: linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, rgba(13, 16, 26, 0.9) 100%);">
+                        <div class="kpi-header">
+                            <span class="kpi-label" style="color: #f43f5e; font-weight: 800; letter-spacing: 0.5px;">DIFERENÇA DE CUSTO</span>
+                            <div class="kpi-icon" style="color: #f43f5e;"><i class="fa-solid fa-scale-unbalanced"></i></div>
+                        </div>
+                        <div class="kpi-value" style="font-size: 16px; font-weight: 700; color: #ffffff; line-height: 1.4; margin-top: 4px;">
+                            Comprados: <span style="color: #10b981; font-size:18px;">${formatBRL(avgComp)}</span><br>
+                            Não Comp.: <span style="color: #f43f5e; font-size:18px;">${formatBRL(avgNao)}</span>
+                        </div>
+                        <div class="kpi-footer">
+                            <span style="font-weight: 700; color: #fbbf24; background: rgba(251,191,36,0.1); padding: 2px 6px; border-radius: 4px;">${diffCustos > 0 ? `Comprados custam ${diffCustos.toFixed(1)}% a menos` : `Comprados custam ${Math.abs(diffCustos).toFixed(1)}% a mais`}</span>
                         </div>
                     </div>
                 </div>
