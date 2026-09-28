@@ -726,6 +726,15 @@ async function requestHandler(req, res) {
                 cacheFile: path.join(DATA_DIR, 'andamento_cq_external.json'),
                 targetColIndex: 8 // Coluna I (Situação de Amostra)
             },
+            
+            aproveitamento: {
+                name: 'Aproveitamento de Amostras (760)',
+                id: '1gUzTqx6VOuRMBiMlAvyqsyRzVtOy5SaI7ORCeaUG36k',
+                gid: '0',
+                url: 'https://docs.google.com/spreadsheets/d/1gUzTqx6VOuRMBiMlAvyqsyRzVtOy5SaI7ORCeaUG36k/gviz/tq?tqx=out:csv&sheet=Aproveitamento+Amostras+(760)',
+                cacheFile: path.join(DATA_DIR, 'aproveitamento_external.json'),
+                targetColIndex: 0
+            },
             leadtime: {
                 name: 'Leadtime Produtivo',
                 id: '14eFcBm3glH1H04dG7UKoLvIXf0QithHrNXnscGxyvdw',

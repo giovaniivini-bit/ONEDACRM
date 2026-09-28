@@ -86,6 +86,369 @@
     // =========================================================================
     // INICIALIZAÇÃO
     // =========================================================================
+
+    function renderAproveitamentoView(container) {
+        const ext = state.aproveitamentoExternalData || { count: 0, records: [] };
+        const rawRecords = ext.records || [];
+        
+        let totalCount = 0;
+        let compCount = 0;
+        let sumCustoGeral = 0;
+        let sumCustoComp = 0;
+        let sumCustoNao = 0;
+        let qtdeGeralCusto = 0;
+        let qtdeCompCusto = 0;
+        let qtdeNaoCusto = 0;
+        
+        const cliMap = {};
+        const macroMap = {};
+        
+        function parseCost(c) {
+            if (!c) return 0;
+            let str = String(c).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+            return parseFloat(str) || 0;
+        }
+        
+        // Filtering
+        const searchQ = (state.cqSearch || '').toLowerCase().trim();
+        const activeCli = state.cqFilter && state.cqFilter.field === 'cliente' ? state.cqFilter.value : null;
+        
+        rawRecords.forEach(r => {
+            const cliente = (r.CLIENTE || r['CLIENTE'] || r['Cliente'] || 'OUTROS').trim();
+            const prefixo = (r.PREFIXO || r['PREFIXO'] || '').trim();
+            const pedido = (r.PEDIDO || r['PEDIDO'] || '').trim().toUpperCase();
+            const macro = (r.MACRO_CATEGORIA || r['MACRO_CATEGORIA'] || 'OUTROS').trim();
+            const custoRaw = r.CUSTO_PRODUTO || r['CUSTO_PRODUTO'] || '0';
+            const custo = parseCost(custoRaw);
+            
+            const isComprado = (pedido === 'S');
+            
+            // Global metrics
+            totalCount++;
+            if (isComprado) compCount++;
+            if (custo > 0) {
+                sumCustoGeral += custo;
+                qtdeGeralCusto++;
+                if (isComprado) {
+                    sumCustoComp += custo;
+                    qtdeCompCusto++;
+                } else {
+                    sumCustoNao += custo;
+                    qtdeNaoCusto++;
+                }
+            }
+            
+            if (!cliMap[cliente]) {
+                cliMap[cliente] = { name: cliente, prefix: prefixo, total: 0, comp: 0, nao: 0, sumTotal: 0, sumComp: 0, sumNao: 0, qTotal: 0, qComp: 0, qNao: 0 };
+            }
+            cliMap[cliente].total++;
+            if (isComprado) cliMap[cliente].comp++; else cliMap[cliente].nao++;
+            if (custo > 0) {
+                cliMap[cliente].sumTotal += custo;
+                cliMap[cliente].qTotal++;
+                if (isComprado) { cliMap[cliente].sumComp += custo; cliMap[cliente].qComp++; }
+                else { cliMap[cliente].sumNao += custo; cliMap[cliente].qNao++; }
+            }
+            
+            if (!macroMap[macro]) macroMap[macro] = { total: 0, comp: 0 };
+            macroMap[macro].total++;
+            if (isComprado) macroMap[macro].comp++;
+        });
+        
+        const avgGeral = qtdeGeralCusto > 0 ? sumCustoGeral / qtdeGeralCusto : 0;
+        const avgComp = qtdeCompCusto > 0 ? sumCustoComp / qtdeCompCusto : 0;
+        const avgNao = qtdeNaoCusto > 0 ? sumCustoNao / qtdeNaoCusto : 0;
+        
+        const aprovGeral = totalCount > 0 ? (compCount / totalCount) * 100 : 0;
+        const diffCustos = avgNao > 0 ? ((avgNao - avgComp) / avgNao) * 100 : 0;
+        
+        // Sorting clients
+        const sortedClients = Object.values(cliMap).sort((a,b) => b.total - a.total);
+        let accum = 0;
+        sortedClients.forEach(c => {
+            accum += c.total;
+            c.paretoPct = (accum / totalCount) * 100;
+        });
+        
+        // Grid Data
+        const filteredGrid = rawRecords.filter(r => {
+            if (searchQ) {
+                const s = searchQ;
+                const match = (r.CODIGO || '').toLowerCase().includes(s) || (r.DESCRICAO || '').toLowerCase().includes(s);
+                if (!match) return false;
+            }
+            if (activeCli) {
+                if ((r.CLIENTE || 'OUTROS').trim() !== activeCli) return false;
+            }
+            return true;
+        });
+        
+        const formatBRL = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        // SVG dimensions
+        const svgW = 1000;
+        const svgH = 400;
+        const pad = { top: 40, right: 60, bottom: 60, left: 60 };
+        const drawW = svgW - pad.left - pad.right;
+        const drawH = svgH - pad.top - pad.bottom;
+        
+        const maxVol = sortedClients.length > 0 ? sortedClients[0].total : 1;
+        const yMax = Math.ceil(maxVol * 1.15);
+        const colW = sortedClients.length > 0 ? Math.min(80, (drawW / sortedClients.length) - 10) : 40;
+        const stepX = sortedClients.length > 0 ? drawW / sortedClients.length : drawW;
+        
+        let paretoPathD = '';
+        const points = [];
+        
+        const colsHtml = sortedClients.map((c, i) => {
+            const cx = pad.left + (i * stepX) + (stepX / 2);
+            const hComp = (c.comp / yMax) * drawH;
+            const hNao = (c.nao / yMax) * drawH;
+            
+            const py = pad.top + drawH - (c.paretoPct / 100) * drawH;
+            points.push({x: cx, y: py});
+            if (i === 0) paretoPathD += `M ${cx} ${py}`;
+            else paretoPathD += ` L ${cx} ${py}`;
+            
+            return `
+                <g style="cursor:pointer;" onclick="window.crmFilterCQ({ field: 'cliente', value: '${c.name}' })">
+                    <rect x="${cx - colW/2}" y="${pad.top + drawH - hComp}" width="${colW}" height="${hComp}" fill="#10b981" />
+                    <rect x="${cx - colW/2}" y="${pad.top + drawH - hComp - hNao}" width="${colW}" height="${hNao}" fill="#f43f5e" />
+                    
+                    <text x="${cx}" y="${pad.top + drawH - hComp - hNao - 8}" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle" font-family="system-ui">${c.total}</text>
+                    <text x="${cx}" y="${pad.top + drawH + 20}" fill="#cbd5e1" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui">${c.name}</text>
+                    <text x="${cx}" y="${pad.top + drawH + 35}" fill="#64748b" font-size="10" font-weight="normal" text-anchor="middle" font-family="system-ui">${c.prefix ? 'Pref: '+c.prefix : ''}</text>
+                </g>
+            `;
+        }).join('');
+        
+        const lineHtml = points.length > 0 ? `
+            <path d="${paretoPathD}" fill="none" stroke="#fbbf24" stroke-width="3" />
+            ${points.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#1e293b" stroke="#fbbf24" stroke-width="2" />`).join('')}
+        ` : '';
+
+        function drawPie(dataArr, radius) {
+            let svg = '';
+            let acc = 0;
+            const total = dataArr.reduce((s, d) => s + d.val, 0);
+            if (total === 0) return '';
+            
+            const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#64748b'];
+            
+            dataArr.forEach((d, i) => {
+                const pct = d.val / total;
+                const a1 = acc * 2 * Math.PI;
+                const a2 = (acc + pct) * 2 * Math.PI;
+                acc += pct;
+                
+                const x1 = Math.cos(a1) * radius;
+                const y1 = Math.sin(a1) * radius;
+                const x2 = Math.cos(a2) * radius;
+                const y2 = Math.sin(a2) * radius;
+                
+                const largeArc = pct > 0.5 ? 1 : 0;
+                
+                if (pct > 0.999) {
+                    svg += `<circle cx="0" cy="0" r="${radius}" fill="${colors[i % colors.length]}" />`;
+                } else {
+                    svg += `<path d="M 0 0 L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${colors[i % colors.length]}" stroke="#0f172a" stroke-width="1.5" />`;
+                }
+            });
+            return svg;
+        }
+
+        const sortedMacros = Object.keys(macroMap).map(k => ({ name: k, total: macroMap[k].total, comp: macroMap[k].comp })).sort((a,b) => b.total - a.total);
+        const pieMacroData = sortedMacros.map(m => ({ label: m.name, val: m.total }));
+        const macroColors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#64748b'];
+
+        const html = `
+            <div id="print-area-aproveitamento" style="background:#0f172a; padding: 24px;">
+                <div class="header-main-title" style="margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; display:flex; justify-content: space-between; align-items:center;">
+                    <div>
+                        <h2 style="font-size: 24px; font-weight: 800; color: #f8fafc; margin: 0;">Aproveitamento de Amostras</h2>
+                        <div style="font-size: 14px; color: #94a3b8; margin-top: 4px;">Setor 01F • Análise de Conversão e Custos por Cliente</div>
+                    </div>
+                    <div style="display:flex; gap:12px;">
+                        ${activeCli ? `
+                        <button onclick="window.crmFilterCQ({field:'cliente', value:null})" class="badge badge-purple" style="border:none; cursor:pointer;">
+                            <i class="fa-solid fa-times"></i> Limpar Filtro: ${activeCli}
+                        </button>
+                        ` : ''}
+                        <button onclick="window.print()" class="btn btn-primary" style="font-size:13px; font-weight:bold;">
+                            <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPIs -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                    <div class="cq-kpi-card" style="border-color: rgba(56, 189, 248, 0.35);">
+                        <div class="cq-kpi-title"><i class="fa-solid fa-box-open" style="color: #38bdf8;"></i> Total de Amostras</div>
+                        <div class="cq-kpi-value" style="color: #38bdf8;">${totalCount}</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Peças Desenvolvidas</div>
+                    </div>
+                    <div class="cq-kpi-card" style="border-color: rgba(16, 185, 129, 0.35);">
+                        <div class="cq-kpi-title"><i class="fa-solid fa-check-double" style="color: #10b981;"></i> Amostras Compradas</div>
+                        <div class="cq-kpi-value" style="color: #10b981;">${compCount} <span style="font-size:16px; font-weight:600; color:#34d399;">(${aprovGeral.toFixed(1)}%)</span></div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Taxa de Conversão</div>
+                    </div>
+                    <div class="cq-kpi-card" style="border-color: rgba(148, 163, 184, 0.35);">
+                        <div class="cq-kpi-title"><i class="fa-solid fa-money-bill-wave" style="color: #94a3b8;"></i> Custo Médio Geral</div>
+                        <div class="cq-kpi-value" style="color: #cbd5e1;">${formatBRL(avgGeral)}</div>
+                        <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Ticket Médio Total</div>
+                    </div>
+                    <div class="cq-kpi-card" style="border-color: rgba(244, 63, 94, 0.35);">
+                        <div class="cq-kpi-title"><i class="fa-solid fa-scale-unbalanced" style="color: #f43f5e;"></i> Diferença de Custo</div>
+                        <div style="font-size: 13px; color: #cbd5e1; margin-top: 8px; line-height:1.4;">
+                            Comprados: <strong style="color: #10b981;">${formatBRL(avgComp)}</strong><br>
+                            Não Comp: <strong style="color: #f43f5e;">${formatBRL(avgNao)}</strong>
+                        </div>
+                        <div style="font-size: 11px; color: #fbbf24; margin-top: 6px; font-weight:700;">
+                            ${diffCustos > 0 ? `Comprados custam ${diffCustos.toFixed(1)}% a menos` : `Comprados custam ${Math.abs(diffCustos).toFixed(1)}% a mais`}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pareto -->
+                <div class="cq-macro-card" style="margin-bottom: 24px; padding: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin: 0;"><i class="fa-solid fa-chart-column" style="color:#fbbf24; margin-right:8px;"></i> Curva de Pareto por Cliente</h3>
+                        <div style="display:flex; gap: 12px; font-size: 12px; font-weight: 600;">
+                            <span style="color: #10b981;"><i class="fa-solid fa-square"></i> Comprado (Base)</span>
+                            <span style="color: #f43f5e;"><i class="fa-solid fa-square"></i> Não Comprado (Topo)</span>
+                            <span style="color: #fbbf24;"><i class="fa-solid fa-minus"></i> % Acumulado</span>
+                        </div>
+                    </div>
+                    <svg viewBox="0 0 ${svgW} ${svgH}" style="width: 100%; height: auto; background: rgba(15, 23, 42, 0.4); border-radius: 8px;">
+                        ${[0, 0.25, 0.5, 0.75, 1].map(r => {
+                            const y = pad.top + drawH - (drawH * r);
+                            return `
+                                <line x1="${pad.left - 5}" y1="${y}" x2="${svgW - pad.right}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+                                <text x="${pad.left - 10}" y="${y}" fill="#64748b" font-size="11" text-anchor="end" dominant-baseline="central">${Math.round(yMax * r)}</text>
+                                <text x="${svgW - pad.right + 10}" y="${y}" fill="#fbbf24" font-size="11" text-anchor="start" dominant-baseline="central">${Math.round(r * 100)}%</text>
+                            `;
+                        }).join('')}
+                        ${colsHtml}
+                        ${lineHtml}
+                    </svg>
+                </div>
+
+                <!-- Exec Table & Macros -->
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; margin-bottom: 24px;">
+                    <div class="cq-macro-card" style="padding: 20px; max-height: 400px; overflow-y: auto;">
+                        <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin-top:0; margin-bottom: 16px;">
+                            <i class="fa-solid fa-table" style="color:#3b82f6; margin-right:8px;"></i> Resumo Executivo
+                        </h3>
+                        <table class="data-table" style="width: 100%; font-size: 12px;">
+                            <thead>
+                                <tr>
+                                    <th>Rede</th>
+                                    <th style="text-align:right;">Vol</th>
+                                    <th style="text-align:right;">Conv.</th>
+                                    <th style="text-align:right;">Custo G.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sortedClients.map(c => `
+                                    <tr style="cursor:pointer;" onclick="window.crmFilterCQ({field:'cliente', value:'${c.name}'})">
+                                        <td><strong>${c.name}</strong></td>
+                                        <td style="text-align:right;">${c.total}</td>
+                                        <td style="text-align:right; color:${c.comp/c.total > 0.3 ? '#10b981' : '#f43f5e'}; font-weight:bold;">${((c.comp/c.total)*100).toFixed(1)}%</td>
+                                        <td style="text-align:right;">${formatBRL(c.qTotal > 0 ? c.sumTotal/c.qTotal : 0)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="cq-macro-card" style="padding: 20px; display:flex; flex-direction:column;">
+                        <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin-top:0; margin-bottom: 16px;">
+                            <i class="fa-solid fa-chart-pie" style="color:#ec4899; margin-right:8px;"></i> Divisão por Categoria
+                        </h3>
+                        <div style="display:flex; gap:20px; align-items:center; flex:1;">
+                            <svg viewBox="-100 -100 200 200" style="width: 160px; height: 160px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
+                                ${drawPie(pieMacroData, 90)}
+                                <circle cx="0" cy="0" r="50" fill="#0f172a" />
+                                <text x="0" y="5" fill="#ffffff" font-size="20" font-weight="900" text-anchor="middle" font-family="system-ui">${pieMacroData.length}</text>
+                            </svg>
+                            <div style="flex: 1; display:flex; flex-direction:column; gap:8px;">
+                                ${sortedMacros.map((m, i) => `
+                                    <div style="display:flex; justify-content:space-between; align-items:center; font-size: 12px;">
+                                        <div style="display:flex; align-items:center; gap:6px;">
+                                            <div style="width:10px; height:10px; border-radius:2px; background:${macroColors[i % macroColors.length]};"></div>
+                                            <strong style="color:#e2e8f0;">${m.name}</strong>
+                                        </div>
+                                        <div style="color:#94a3b8;">
+                                            ${m.total} <span style="color:#10b981; font-weight:bold; margin-left:6px;">(${((m.comp/m.total)*100).toFixed(0)}%)</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid -->
+                <div class="cq-macro-card" style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin: 0;">
+                            <i class="fa-solid fa-list" style="color:#06b6d4; margin-right:8px;"></i> Base de Amostras (${filteredGrid.length})
+                        </h3>
+                        <input type="text" id="cqSearchInput" placeholder="Buscar código ou descrição..." class="cq-search-input" style="padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; width: 250px;">
+                    </div>
+                    
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        <table class="data-table" style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                            <thead style="position: sticky; top: 0; background: #0f172a; z-index: 10;">
+                                <tr>
+                                    <th style="padding:10px;">CÓDIGO</th>
+                                    <th style="padding:10px;">CLIENTE</th>
+                                    <th style="padding:10px;">DESCRIÇÃO</th>
+                                    <th style="padding:10px;">CATEGORIA</th>
+                                    <th style="padding:10px; text-align:center;">STATUS</th>
+                                    <th style="padding:10px; text-align:right;">CUSTO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filteredGrid.slice(0, 100).map(r => {
+                                    const isC = (r.PEDIDO || '').toUpperCase() === 'S';
+                                    return `
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                            <td style="padding:10px; font-family:monospace; color:#38bdf8;">${r.CODIGO}</td>
+                                            <td style="padding:10px; font-weight:600; color:#e2e8f0;">${r.CLIENTE}</td>
+                                            <td style="padding:10px; color:#cbd5e1;">${r.DESCRICAO}</td>
+                                            <td style="padding:10px; color:#94a3b8;">${r.MACRO_CATEGORIA}</td>
+                                            <td style="padding:10px; text-align:center;">
+                                                <span style="padding:4px 8px; border-radius:4px; font-weight:bold; font-size:10px; background:${isC ? 'rgba(16,185,129,0.2)' : 'rgba(244,63,94,0.2)'}; color:${isC ? '#34d399' : '#fb7185'};">
+                                                    ${isC ? 'COMPRADO' : 'NÃO COMP.'}
+                                                </span>
+                                            </td>
+                                            <td style="padding:10px; text-align:right; color:#e2e8f0;">${r.CUSTO_PRODUTO || '-'}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                        ${filteredGrid.length > 100 ? `<div style="padding: 12px; text-align: center; color: #64748b; font-style: italic;">Mostrando 100 de ${filteredGrid.length} resultados.</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+        const searchEl = document.getElementById('cqSearchInput');
+        if (searchEl) {
+            searchEl.value = state.cqSearch || '';
+            searchEl.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    window.crmFilterCQ({ field: 'search', value: e.target.value });
+                }
+            });
+        }
+    }
+
+
     document.addEventListener('DOMContentLoaded', () => {
         setupEventListeners();
         loadCRMData();
@@ -157,12 +520,13 @@
     async function loadExternalSheets(force = false) {
         if (!window.location.protocol.startsWith('http')) return;
         try {
-            const [coresRes, avRes, cqRes, ltRes, rotRes] = await Promise.all([
+            const [coresRes, avRes, cqRes, ltRes, rotRes, apRes] = await Promise.all([
                 fetch(`/api/external-sheet?type=cores${force ? '&refresh=1' : ''}`).then(r => r.json()).catch(() => null),
                 fetch(`/api/external-sheet?type=aviamentos${force ? '&refresh=1' : ''}`).then(r => r.json()).catch(() => null),
                 fetch(`/api/external-sheet?type=cq${force ? '&refresh=1' : ''}`).then(r => r.json()).catch(() => null),
                 fetch(`/api/external-sheet?type=leadtime${force ? '&refresh=1' : ''}`).then(r => r.json()).catch(() => null),
-                fetch(`/api/external-sheet?type=rotativos${force ? '&refresh=1' : ''}`).then(r => r.json()).catch(() => null)
+                fetch(`/api/external-sheet?type=rotativos${force ? '&refresh=1' : ''}`).then(r => r.json()).catch(() => null),
+                fetch(`/api/external-sheet?type=aproveitamento${force ? '&refresh=1' : ''}`).then(r => r.json()).catch(() => null)
             ]);
             if (coresRes && coresRes.success) {
                 state.coresExternalData = coresRes;
@@ -180,7 +544,7 @@
                 state.rotativosExternalData = rotRes;
             }
             updateSidebarBadges();
-            if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'leadtime', 'rotativos', 'geral'].includes(state.activeSubmodule)) {
+            if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
             }
         } catch (e) {
@@ -1041,6 +1405,7 @@
         else if (state.activeSubmodule === 'malotes') label = 'Malotes (Setores 88 e 83)';
         else if (state.activeSubmodule === 'feira') label = 'Feira & Protótipos';
         else if (state.activeSubmodule === 'andamento-cq') label = 'Andamento do CQ (Qualidade)';
+        else if (state.activeSubmodule === 'aproveitamento') label = 'Aproveitamento de Amostras';
         else if (state.activeSubmodule === 'leadtime') label = 'Leadtime Produtivo (Setor 13)';
         else if (state.activeSubmodule === 'imagens-ausentes') label = 'Controle de Imagens Ausentes';
 
@@ -10651,7 +11016,7 @@
             if (exportData.length === 0) return showNotification('Sem dados de Aviamentos para exportar.', 'warning');
             csvRows = [Object.keys(exportData[0] || {}).join(';')];
             exportData.forEach(r => csvRows.push(Object.values(r).map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(';')));
-        } else if (moduleName === 'andamento-cq' || moduleName === 'cq') {
+        } else if (moduleName === 'andamento-cq' || moduleName === 'aproveitamento' || moduleName === 'cq') {
             exportData = (state.cqExternalData && state.cqExternalData.records) || [];
             if (exportData.length === 0) return showNotification('Sem dados de CQ para exportar.', 'warning');
             csvRows = [Object.keys(exportData[0] || {}).join(';')];
