@@ -1462,6 +1462,9 @@
             case 'andamento-cq':
                 renderAndamentoCQView(container);
                 break;
+            case 'aproveitamento':
+                renderAproveitamentoView(container);
+                break;
             case 'leadtime':
                 renderLeadtimeView(container);
                 break;
