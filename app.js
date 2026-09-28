@@ -5803,218 +5803,26 @@
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                                         <div style="display: flex; align-items: center; gap: 8px; color: #fb7185;">
                                             <span style="width: 10px; height: 10px; border-radius: 50%; background: #fb7185; box-shadow: 0 0 6px #fb7185;"></span>
-                                            <span>Expirando Vig�ncia</span>
+                                            <span>Expirando Vigência</span>
                                         </div>
-                                        <strong style="color: #ffffff;">${sitCounts['EXPIRANDO VIG�NCIA'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['EXPIRANDO VIG�NCIA'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
+                                        <strong style="color: #ffffff;">${sitCounts['EXPIRANDO VIGÊNCIA'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['EXPIRANDO VIGÊNCIA'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
                                     </div>
 
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px;">
                                         <div style="display: flex; align-items: center; gap: 8px; color: #a78bfa;">
                                             <span style="width: 10px; height: 10px; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 6px #a78bfa;"></span>
-                                            <span>Amostras em Produ��o</span>
+                                            <span>Amostras em Produção</span>
                                         </div>
-                                        <strong style="color: #ffffff;">${sitCounts['AMOSTRAS EM PRODU��O'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['AMOSTRAS EM PRODU��O'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
+                                        <strong style="color: #ffffff;">${sitCounts['AMOSTRAS EM PRODUÇÃO'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['AMOSTRAS EM PRODUÇÃO'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- GR�FICO 2: BAR CHART ORIGINAL -->
-<!-- GRÁFICO GRANDE DE OFs PENDENTES NO CQ (DUAL VISUAL SVG) -->
-            <div class="cq-big-chart-card" style="margin-bottom: 0;">
-                <div class="leadtime-chart-header" style="border-bottom-color: rgba(56, 189, 248, 0.2);">
-                    <div>
-                        <h3 class="leadtime-chart-title">
-                            <i class="fa-solid fa-chart-simple" style="color: #38bdf8;"></i>
-                            <span>Distribuição de OFs Pendentes no CQ por Semana (Coluna N) e Situação (Coluna I)</span>
-                        </h3>
-                        <p class="leadtime-chart-subtitle">
-                            Colunas Empilhadas por Semana de CQ | Divisão por Situações: Reenviado CQ, Enviado, Expirando Vigência e Amostras em Produção
-                        </p>
-                    </div>
-                    <span class="badge badge-cyan" style="font-size: 11.5px; padding: 4px 10px;">
-                        Clique em qualquer coluna ou situação para filtrar as OFs
-                    </span>
-                </div>
-
-                <!-- SVG DUAL-AXIS CHART -->
-                <svg viewBox="0 0 ${svgW} ${svgH}" class="cq-big-svg">
-                    <defs>
-                        <!-- Gradientes das 4 Situações -->
-                        <linearGradient id="gradReenviadoCQ" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.95"/>
-                            <stop offset="100%" stop-color="#d97706" stop-opacity="0.8"/>
-                        </linearGradient>
-                        <linearGradient id="gradEnviadoCQ" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.95"/>
-                            <stop offset="100%" stop-color="#0891b2" stop-opacity="0.8"/>
-                        </linearGradient>
-                        <linearGradient id="gradExpirandoCQ" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#fb7185" stop-opacity="0.95"/>
-                            <stop offset="100%" stop-color="#e11d48" stop-opacity="0.8"/>
-                        </linearGradient>
-                        <linearGradient id="gradProducaoCQ" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.95"/>
-                            <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.8"/>
-                        </linearGradient>
-                    </defs>
-
-                    <!-- Linhas de Grade Horizontais e Eixo Y -->
-                    ${[0, 0.25, 0.5, 0.75, 1].map(frac => {
-                        const yVal = Math.round(yMaxWeek * frac);
-                        const yPos = pad.top + drawH - (drawH * frac);
-                        return `
-                            <line x1="${pad.left}" y1="${yPos}" x2="${svgW - pad.right}" y2="${yPos}" stroke="rgba(255,255,255,0.07)" stroke-dasharray="3 3" />
-                            <text x="${pad.left - 12}" y="${yPos + 4}" fill="#38bdf8" font-size="12" font-weight="800" text-anchor="end" font-family="system-ui, sans-serif">${yVal}</text>
-                            <text x="${svgW - pad.right + 12}" y="${yPos + 4}" fill="#94a3b8" font-size="12" font-weight="700" text-anchor="start" font-family="system-ui, sans-serif">${yVal} OFs</text>
-                        `;
-                    }).join('')}
-
-                    <!-- Linha Base do Eixo X -->
-                    <line x1="${pad.left}" y1="${pad.top + drawH}" x2="${svgW - pad.right}" y2="${pad.top + drawH}" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" />
-
-                    <!-- COLUNAS EMPILHADAS POR SEMANA -->
-                    ${weeksDataList.map((wData, colIdx) => {
-                        const colCenterX = pad.left + (colIdx * colSlotW) + (colSlotW / 2);
-                        const barX = colCenterX - (barW / 2);
-                        let currentBaseY = pad.top + drawH;
-                        const isWeekSelected = state.cqFilter && state.cqFilter.field === 'periodo' && state.cqFilter.value === wData.periodo;
-
-                        const segmentElements = targetSituacoes.map(sitKey => {
-                            const count = wData.bySit[sitKey] || 0;
-                            if (count === 0) return '';
-                            const segH = (count / yMaxWeek) * drawH;
-                            const segY = currentBaseY - segH;
-                            currentBaseY = segY;
-                            const meta = situacaoMeta[sitKey];
-                            const isSitSelected = state.cqFilter && state.cqFilter.field === 'situacao' && state.cqFilter.value === sitKey;
-
-                            return `
-                                <rect x="${barX}" y="${segY}" width="${barW}" height="${Math.max(segH, 3)}"
-                                    fill="url(#${meta.gradId})"
-                                    opacity="${(isWeekSelected || isSitSelected) ? '1' : '0.9'}"
-                                    rx="4"
-                                    filter="${(isWeekSelected || isSitSelected) ? 'drop-shadow(0 0 8px ' + meta.color + ')' : 'none'}"
-                                    style="cursor: pointer; transition: all 0.25s ease;"
-                                    onclick="event.stopPropagation(); window.crmFilterCQ({ field: 'situacao', value: '${sitKey}' })"
-                                >
-                                    <title>Semana ${wData.periodo} • ${meta.label}: ${count} OFs</title>
-                                </rect>
-                                ${segH > 18 ? `
-                                    <text x="${colCenterX}" y="${segY + (segH / 2) + 4}" fill="#ffffff" font-size="11.5" font-weight="900" text-anchor="middle" font-family="system-ui, sans-serif">
-                                        ${count}
-                                    </text>
-                                ` : ''}
-                            `;
-                        }).join('');
-
-                        const totalBarH = (wData.total / yMaxWeek) * drawH;
-                        const barY = pad.top + drawH - totalBarH;
-
-                        return `
-                            <g class="leadtime-bar-group" style="cursor: pointer;" onclick="window.crmFilterCQ({ field: 'periodo', value: '${wData.periodo}' })">
-                                <!-- Área de Hover -->
-                                <rect x="${pad.left + (colIdx * colSlotW) + 2}" y="${pad.top}" width="${colSlotW - 4}" height="${drawH}" fill="rgba(255,255,255,${isWeekSelected ? '0.08' : '0.01'})" rx="6" />
-                                
-                                <!-- Segmentos Empilhados -->
-                                ${segmentElements}
-
-                                <!-- Rótulo de Quantidade no Topo da Barra com Pill Badge -->
-                                <g class="of-label-pill">
-                                    <rect x="${colCenterX - 18}" y="${barY - 22}" width="36" height="18" rx="4" fill="rgba(15, 23, 42, 0.95)" stroke="${wData.total > 0 ? '#38bdf8' : 'rgba(255,255,255,0.2)'}" stroke-width="1.2" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))" />
-                                    <text x="${colCenterX}" y="${barY - 9}" fill="${wData.total > 0 ? '#ffffff' : '#64748b'}" font-size="12" font-weight="900" text-anchor="middle" font-family="system-ui, sans-serif">
-                                        ${wData.total}
-                                    </text>
-                                </g>
-
-                                <!-- Rótulo da Semana no Eixo X -->
-                                <text x="${colCenterX}" y="${pad.top + drawH + 24}" fill="${isWeekSelected ? '#38bdf8' : '#cbd5e1'}" font-size="13" font-weight="800" text-anchor="middle" font-family="system-ui, sans-serif">
-                                    ${wData.periodo}
-                                </text>
-                                
-                                <text x="${colCenterX}" y="${pad.top + drawH + 42}" fill="#64748b" font-size="10.5" font-weight="700" text-anchor="middle" font-family="system-ui, sans-serif">
-                                    Sem ${wData.periodo.slice(-2)}
-                                </text>
-                            </g>
-                        `;
-                    }).join('')}
-
-                    <!-- LINHA DE TENDÊNCIA DE VOLUME PENDENTE -->
-                    ${linePoints.length > 1 ? `
-                        <path d="${linePathD}" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" filter="drop-shadow(0 0 6px rgba(56,189,248,0.5))" stroke-dasharray="4 4" />
-                    ` : ''}
-
-                    <!-- PONTOS DA LINHA DE TENDÊNCIA -->
-                    ${linePoints.map(pt => `
-                        <circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="5" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5" />
-                    `).join('')}
-
-                    <!-- Rótulos dos Eixos -->
-                    <text x="${pad.left}" y="${pad.top - 18}" fill="#38bdf8" font-size="13" font-weight="800" text-anchor="start" font-family="system-ui, sans-serif">
-                        ← QTD OFs PENDENTES
-                    </text>
-                    <text x="${svgW - pad.right}" y="${pad.top - 18}" fill="#94a3b8" font-size="13" font-weight="800" text-anchor="end" font-family="system-ui, sans-serif">
-                        SEMANAS DE CQ (COL N) →
-                    </text>
-                </svg>
-
-                <!-- LEGENDA INTERATIVA DAS 4 SITUAÇÕES -->
-                <div class="leadtime-legend-bar" style="border-top-color: rgba(56, 189, 248, 0.15);">
-                    ${targetSituacoes.map(sitKey => {
-                        const meta = situacaoMeta[sitKey];
-                        const count = sitCounts[sitKey] || 0;
-                        const isSelected = state.cqFilter && state.cqFilter.field === 'situacao' && state.cqFilter.value === sitKey;
-
-                        return `
-                            <div class="cq-legend-chip ${isSelected ? 'active' : ''}" style="cursor: pointer; ${isSelected ? `border-color: ${meta.color}; background: ${meta.bg};` : ''}" onclick="window.crmFilterCQ({ field: 'situacao', value: '${sitKey}' })" title="Filtrar ${meta.label}">
-                                <span class="cq-legend-dot" style="background: ${meta.color}; box-shadow: 0 0 8px ${meta.color};"></span>
-                                <span style="font-weight: 700; color: #f1f5f9;">${meta.label}</span>
-                                <span class="cq-legend-count" style="color: ${meta.lightColor}; font-size: 13px;">${count} OFs</span>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
             </div>
 
-            
-            </div>
-
-            <!-- BARRA DE CONTROLES, BUSCA E ALTERNÂNCIA DE MODO (CARDS / TABELA) -->
-            <div class="filter-toolbar" style="margin-bottom: 20px;">
-                <div class="filter-toolbar-left" style="width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-                    <!-- Input de Busca -->
-                    <div class="search-input-wrapper" style="max-width: 380px; width: 100%;">
-                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                        <input 
-                            type="text" 
-                            class="search-input" 
-                            placeholder="Buscar por OF (Col B), Código, Semana, Setor, Situação..." 
-                            value="${state.cqSearch || ''}"
-                            oninput="window.crmSearchCQ(this.value)"
-                        />
-                        ${state.cqSearch ? `
-                            <button class="search-clear-btn" onclick="window.crmSearchCQ('')" title="Limpar busca">&times;</button>
-                        ` : ''}
-                    </div>
-
-                    <!-- Modo de Exibição (Cards / Tabela / Ambos) e Filtros Rápidos -->
-                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <!-- Alternador de Visualização -->
-                        <div class="btn-group" style="background: rgba(15, 23, 42, 0.7); padding: 3px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                            <button class="btn ${displayMode === 'cards' ? 'btn-primary' : 'btn-ghost'}" onclick="window.crmSetCQDisplayMode('cards')" style="font-size: 11.5px; padding: 5px 10px;" title="Ver fotos dos produtos em grade de cards">
-                                <i class="fa-solid fa-grip"></i> Fotos (Cards)
-                            </button>
-                            <button class="btn ${displayMode === 'table' ? 'btn-primary' : 'btn-ghost'}" onclick="window.crmSetCQDisplayMode('table')" style="font-size: 11.5px; padding: 5px 10px;" title="Ver tabela detalhada">
-                                <i class="fa-solid fa-table-list"></i> Tabela
-                            </button>
-                            <button class="btn ${displayMode === 'both' ? 'btn-primary' : 'btn-ghost'}" onclick="window.crmSetCQDisplayMode('both')" style="font-size: 11.5px; padding: 5px 10px;" title="Ver fotos e tabela">
-                                <i class="fa-solid fa-layer-group"></i> Ambos
-                            </button>
-                        </div>
-
-                        <!-- Filtro Apenas Pendentes vs Todas -->
+            <!-- Filtro Apenas Pendentes vs Todas -->
                         <button class="exec-action-btn ${!state.cqFilter && !showAllMode ? 'active' : ''}" onclick="window.crmSetCQViewMode(false)" title="Ver apenas as 4 situações pendentes (${totalPendingCount} OFs)">
                             <i class="fa-solid fa-filter"></i> Apenas Pendentes (${totalPendingCount})
                         </button>
