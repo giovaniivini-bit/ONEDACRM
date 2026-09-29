@@ -2730,7 +2730,7 @@ body {
 }
 
 /* ========================================================================= */
-/* ESTILOS DE IMPRESSÃO & GERAÇÃO DE RELATÓRIO PDF                           */
+
 /* ========================================================================= */
 /* Old print media removed */
 }
@@ -3706,88 +3706,9 @@ body {
 
 
 /* ========================================================================= */
-/* ESTILOS DE IMPRESSÃO & PDF (A4 LANDSCAPE OVERRIDES)                       */
+
 /* ========================================================================= */
-@media print {
-    @page {
-        size: A4 landscape !important;
-        margin: 10mm !important;
-    }
 
-    html, body {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* Ocultar elementos UI para PDF */
-    .sidebar,
-    .top-header,
-    .sub-toolbar,
-    .btn-primary-action,
-    .btn-export-pdf,
-    .view-switcher-group,
-    .filter-chips-group,
-    .toolbar-search-pill,
-    .toolbar-pill-btn,
-    .exec-action-btn,
-    .filter-clear-btn,
-    .toast-container,
-    .modal-overlay,
-    .modal-close-btn,
-    .chevron,
-    #themeToggleBtn,
-    .header-right-tools button {
-        display: none !important;
-    }
-
-    .app-layout {
-        display: block !important;
-        background: transparent !important;
-    }
-
-    .main-content {
-        margin: 0 auto !important;
-        padding: 0 !important;
-        width: 100% !important;
-        max-width: 277mm !important;
-        zoom: 1 !important; 
-        transform: none !important;
-        background: transparent !important;
-    }
-
-    .view-container {
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-    }
-
-    .page-break-before {
-        page-break-before: always !important;
-        break-before: page !important;
-        margin-top: 20px !important;
-        display: block !important;
-        height: 1px !important;
-    }
-
-    /* Evitar cortes no meio de elementos chave */
-    .exec-card,
-    .bar-chart-card,
-    .feira-card,
-    .feira-kpi-mini-card,
-    .estampa-comparison-card,
-    .estampa-split-card-item,
-    .table-card,
-    .hero-pie-chart-container,
-    .kpi-card,
-    .panel-card,
-    .cq-macro-card,
-    .kpi-grid,
-    .data-table th,
-    .data-table tr {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-    }
-}
 
 /* ==========================================================================
    LIGHT MODE
@@ -3869,10 +3790,101 @@ body.light-mode strong[style*="color:#e2e8f0"] {
     color: #1e293b !important;
 }
 
-
-/* OVERRIDES DE IMPRESSÃO (GRID 4 COLUNAS NAS MINIATURAS) */
+/* ========================================================================= */
+/* ESTILOS DE IMPRESSÃO & PDF (A4 LANDSCAPE OVERRIDES - FULL BLEED)          */
+/* ========================================================================= */
 @media print {
-    /* Forçar 4 itens por linha em todas as galerias/miniaturas no PDF */
+    @page {
+        size: A4 landscape !important;
+        margin: 0 !important; /* Zero margin para preenchimento de fundo total */
+    }
+
+    html, body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: var(--bg-base, #0c0d11) !important; /* Fundo preenche tudo */
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 100vh !important;
+    }
+
+    /* Ocultar elementos UI para PDF */
+    .sidebar,
+    .top-header,
+    .sub-toolbar,
+    .btn-primary-action,
+    .btn-export-pdf,
+    .view-switcher-group,
+    .filter-chips-group,
+    .toolbar-search-pill,
+    .toolbar-pill-btn,
+    .exec-action-btn,
+    .filter-clear-btn,
+    .toast-container,
+    .modal-overlay,
+    .modal-close-btn,
+    .chevron,
+    #themeToggleBtn,
+    .header-right-tools button {
+        display: none !important;
+    }
+
+    .app-layout {
+        display: block !important;
+        background: transparent !important;
+    }
+
+    .main-content {
+        margin: 0 auto !important;
+        padding: 10mm 15mm !important; /* Margem interna segura */
+        width: 297mm !important; /* A4 Landscape Width */
+        max-width: 297mm !important;
+        zoom: 1 !important; 
+        transform: none !important;
+        background: transparent !important;
+        box-sizing: border-box !important;
+    }
+
+    .view-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    .page-break-before {
+        page-break-before: always !important;
+        break-before: page !important;
+        margin-top: 0 !important;
+        padding-top: 10mm !important;
+        display: block !important;
+        height: 1px !important;
+    }
+
+    /* Ajuste para grids não ficarem esticados bizarramente nas laterais */
+    .kpi-grid, 
+    .analytics-grid,
+    .cq-kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .macro-executive-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+
+    .cq-charts-grid,
+    .exec-processo-layout,
+    .macro-dual-row {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+    }
+
+    /* Forçar 4 itens por linha nas galerias/miniaturas no PDF */
     .s13-photo-grid {
         display: grid !important;
         grid-template-columns: repeat(4, 1fr) !important;
@@ -3883,6 +3895,24 @@ body.light-mode strong[style*="color:#e2e8f0"] {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
         width: 100% !important;
-        zoom: 0.9 !important; /* leve zoom out para garantir encaixe horizontal */
+        zoom: 0.92 !important; /* encaixe horizontal elegante */
+    }
+
+    /* Evitar cortes no meio de elementos chave */
+    .exec-card,
+    .bar-chart-card,
+    .feira-card,
+    .feira-kpi-mini-card,
+    .estampa-comparison-card,
+    .estampa-split-card-item,
+    .table-card,
+    .hero-pie-chart-container,
+    .kpi-card,
+    .panel-card,
+    .cq-macro-card,
+    .data-table th,
+    .data-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
     }
 }
