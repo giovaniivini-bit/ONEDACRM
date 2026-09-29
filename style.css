@@ -2732,173 +2732,7 @@ body {
 /* ========================================================================= */
 /* ESTILOS DE IMPRESSÃO & GERAÇÃO DE RELATÓRIO PDF                           */
 /* ========================================================================= */
-@media print {
-    @page {
-        size: A4 landscape;
-        margin: 10mm;
-    }
-
-    html, body {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* Ocultar elementos UI para PDF */
-    .sidebar,
-    .top-header,
-    .sub-toolbar,
-    .btn-primary-action,
-    .btn-export-pdf,
-    .view-switcher-group,
-    .filter-chips-group,
-    .toolbar-search-pill,
-    .toolbar-pill-btn,
-    .exec-action-btn,
-    .filter-clear-btn,
-    .toast-container,
-    .modal-overlay,
-    .modal-close-btn,
-    .chevron,
-    #themeToggleBtn,
-    .header-right-tools button {
-        display: none !important;
-    }
-
-    .app-layout {
-        display: block !important;
-        background: transparent !important;
-    }
-
-    .main-content {
-        margin: 0 auto !important;
-        padding: 0 !important;
-        width: 100% !important;
-        max-width: 277mm !important; /* Ajuste preciso para A4 landscape centralizado */
-        zoom: 1; 
-        transform: none !important;
-        background: transparent !important;
-    }
-
-    .view-container {
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-    }
-
-    .page-break-before {
-        page-break-before: always !important;
-        break-before: page !important;
-        margin-top: 20px !important;
-    }
-
-    /* Evitar cortes no meio de elementos chave */
-    .exec-card,
-    .bar-chart-card,
-    .feira-card,
-    .feira-kpi-mini-card,
-    .estampa-comparison-card,
-    .estampa-split-card-item,
-    .table-card,
-    .hero-pie-chart-container,
-    .kpi-card,
-    .panel-card,
-    .cq-macro-card,
-    .kpi-grid,
-    .data-table th,
-    .data-table tr {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-    }
-}
-ze: A4 landscape;
-        margin: 5mm;
-    }
-
-    html, body {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        background: #0f172a !important; /* Mant�m o fundo escuro do app */
-        color: #f8fafc !important;
-    }
-
-    /* Ocultar Todos os Controles Interativos da Interface */
-    .sidebar,
-    .top-header,
-    .sub-toolbar,
-    .btn-primary-action,
-    .btn-export-pdf,
-    .view-switcher-group,
-    .filter-chips-group,
-    .toolbar-search-pill,
-    .toolbar-pill-btn,
-    .exec-action-btn,
-    .filter-clear-btn,
-    .toast-container,
-    .modal-overlay,
-    .modal-close-btn,
-    .chevron,
-    button {
-        display: none !important;
-    }
-
-    /* Ajuste de Layout Principal para caber na A4 */
-    .app-layout {
-        display: block !important;
-        background: #0f172a !important;
-    }
-
-    .main-content {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        /* Dimensionamento para caber na folha A4 (aproxima��o do zoom da tela) */
-        zoom: 0.70; 
-        transform-origin: top left;
-    }
-
-    .view-container {
-        padding: 10px !important;
-        margin: 0 !important;
-    }
-
-    /* Cabe�alho do Relat�rio Executivo no PDF */
-    .print-report-header {
-        display: flex !important;
-        align-items: center;
-        justify-content: space-between;
-        padding-bottom: 12px;
-        margin-bottom: 18px;
-        border-bottom: 2.5px solid #00d4ff;
-    }
-
-    .print-header-brand {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .print-header-meta {
-        text-align: right;
-        font-size: 11pt;
-        color: #94a3b8;
-        line-height: 1.4;
-    }
-
-    /* Evitar quebra de p�gina dentro de cart�es e tabelas */
-    .exec-card,
-    .bar-chart-card,
-    .feira-card,
-    .feira-kpi-mini-card,
-    .estampa-comparison-card,
-    .estampa-split-card-item,
-    .table-card,
-    .hero-pie-chart-container,
-    .kpi-card,
-    .panel-card,
-    .crm-table tr {
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
+/* Old print media removed */
 }
 
 /* ==========================================================================
@@ -3871,6 +3705,90 @@ ze: A4 landscape;
 
 
 
+/* ========================================================================= */
+/* ESTILOS DE IMPRESSÃO & PDF (A4 LANDSCAPE OVERRIDES)                       */
+/* ========================================================================= */
+@media print {
+    @page {
+        size: A4 landscape !important;
+        margin: 10mm !important;
+    }
+
+    html, body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Ocultar elementos UI para PDF */
+    .sidebar,
+    .top-header,
+    .sub-toolbar,
+    .btn-primary-action,
+    .btn-export-pdf,
+    .view-switcher-group,
+    .filter-chips-group,
+    .toolbar-search-pill,
+    .toolbar-pill-btn,
+    .exec-action-btn,
+    .filter-clear-btn,
+    .toast-container,
+    .modal-overlay,
+    .modal-close-btn,
+    .chevron,
+    #themeToggleBtn,
+    .header-right-tools button {
+        display: none !important;
+    }
+
+    .app-layout {
+        display: block !important;
+        background: transparent !important;
+    }
+
+    .main-content {
+        margin: 0 auto !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 277mm !important;
+        zoom: 1 !important; 
+        transform: none !important;
+        background: transparent !important;
+    }
+
+    .view-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    .page-break-before {
+        page-break-before: always !important;
+        break-before: page !important;
+        margin-top: 20px !important;
+        display: block !important;
+        height: 1px !important;
+    }
+
+    /* Evitar cortes no meio de elementos chave */
+    .exec-card,
+    .bar-chart-card,
+    .feira-card,
+    .feira-kpi-mini-card,
+    .estampa-comparison-card,
+    .estampa-split-card-item,
+    .table-card,
+    .hero-pie-chart-container,
+    .kpi-card,
+    .panel-card,
+    .cq-macro-card,
+    .kpi-grid,
+    .data-table th,
+    .data-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+}
+
 /* ==========================================================================
    LIGHT MODE
    ========================================================================== */
@@ -3934,7 +3852,6 @@ body.light-mode text[fill="#cbd5e1"] {
 body.light-mode circle[fill="#0f172a"] {
     fill: #ffffff !important;
 }
-
 
 /* Overrides for hardcoded colors in JS */
 body.light-mode h2[style*="color: #f8fafc"],
