@@ -16,6 +16,8 @@ Leia [docs/GUIA-DO-CRM.md](docs/GUIA-DO-CRM.md) antes de alterar o sistema no An
 
 O diagnóstico estrutural e o backlog técnico desta rodada estão em
 [docs/AUDITORIA-ARQUITETURA-2026-09.md](docs/AUDITORIA-ARQUITETURA-2026-09.md).
+O procedimento de publicação, verificação e rollback está em
+[docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Execução local
 
