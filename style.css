@@ -2735,6 +2735,82 @@ body {
 @media print {
     @page {
         size: A4 landscape;
+        margin: 10mm;
+    }
+
+    html, body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Ocultar elementos UI para PDF */
+    .sidebar,
+    .top-header,
+    .sub-toolbar,
+    .btn-primary-action,
+    .btn-export-pdf,
+    .view-switcher-group,
+    .filter-chips-group,
+    .toolbar-search-pill,
+    .toolbar-pill-btn,
+    .exec-action-btn,
+    .filter-clear-btn,
+    .toast-container,
+    .modal-overlay,
+    .modal-close-btn,
+    .chevron,
+    #themeToggleBtn,
+    .header-right-tools button {
+        display: none !important;
+    }
+
+    .app-layout {
+        display: block !important;
+        background: transparent !important;
+    }
+
+    .main-content {
+        margin: 0 auto !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 277mm !important; /* Ajuste preciso para A4 landscape centralizado */
+        zoom: 1; 
+        transform: none !important;
+        background: transparent !important;
+    }
+
+    .view-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    .page-break-before {
+        page-break-before: always !important;
+        break-before: page !important;
+        margin-top: 20px !important;
+    }
+
+    /* Evitar cortes no meio de elementos chave */
+    .exec-card,
+    .bar-chart-card,
+    .feira-card,
+    .feira-kpi-mini-card,
+    .estampa-comparison-card,
+    .estampa-split-card-item,
+    .table-card,
+    .hero-pie-chart-container,
+    .kpi-card,
+    .panel-card,
+    .cq-macro-card,
+    .kpi-grid,
+    .data-table th,
+    .data-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+}
+ze: A4 landscape;
         margin: 5mm;
     }
 
@@ -3793,3 +3869,85 @@ body {
 
 
 
+
+
+/* ==========================================================================
+   LIGHT MODE
+   ========================================================================== */
+body.light-mode {
+    --bg-base: #f8fafc;
+    --bg-sidebar: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f1f5f9;
+    --bg-input: #f1f5f9;
+    --bg-pill: #e2e8f0;
+    --bg-pill-hover: #cbd5e1;
+    --bg-pill-active: #94a3b8;
+
+    --border-base: #e2e8f0;
+    --border-subtle: rgba(0, 0, 0, 0.05);
+    --border-hover: rgba(0, 0, 0, 0.1);
+
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #475569;
+    --text-dim: #64748b;
+}
+
+body.light-mode .top-header,
+body.light-mode .sub-toolbar,
+body.light-mode .sidebar {
+    background: #ffffff;
+    border-color: var(--border-base);
+}
+
+body.light-mode .kpi-card,
+body.light-mode .panel-card,
+body.light-mode .cq-macro-card,
+body.light-mode .table-card {
+    background: #ffffff !important;
+    border-color: var(--border-base) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .data-table th {
+    background: #f8fafc !important;
+    color: #334155 !important;
+    border-bottom-color: var(--border-base) !important;
+}
+
+body.light-mode .data-table tr {
+    border-color: #e2e8f0 !important;
+}
+
+body.light-mode .data-table td {
+    color: #0f172a !important;
+}
+
+body.light-mode text[fill="#ffffff"] {
+    fill: #0f172a !important;
+}
+body.light-mode text[fill="#cbd5e1"] {
+    fill: #334155 !important;
+}
+body.light-mode circle[fill="#0f172a"] {
+    fill: #ffffff !important;
+}
+
+
+/* Overrides for hardcoded colors in JS */
+body.light-mode h2[style*="color: #f8fafc"],
+body.light-mode h3[style*="color: #f8fafc"],
+body.light-mode .kpi-value,
+body.light-mode .cq-kpi-value {
+    color: #0f172a !important;
+}
+body.light-mode div[style*="color: #94a3b8"],
+body.light-mode div[style*="color: #cbd5e1"],
+body.light-mode span[style*="color: #cbd5e1"] {
+    color: #475569 !important;
+}
+body.light-mode strong[style*="color:#e2e8f0"] {
+    color: #1e293b !important;
+}

@@ -384,7 +384,7 @@
                     </div>
                 </div>
 
-                <!-- Pareto -->
+                <!-- Pareto --><div class="page-break-before"></div>
                 <div class="cq-macro-card" style="margin-bottom: 24px; padding: 20px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
                         <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin: 0;"><i class="fa-solid fa-chart-column" style="color:#fbbf24; margin-right:8px;"></i> Visualização geral por cliente</h3>
@@ -488,7 +488,7 @@
                     </div>
                 </div>
 
-                <!-- Grid -->
+                <!-- Grid --><div class="page-break-before"></div>
                 <div class="cq-macro-card" style="padding: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin: 0;">
@@ -11905,3 +11905,40 @@
 
 })();
 
+
+
+// =========================================================================
+// THEME TOGGLE LOGIC
+// =========================================================================
+window.toggleTheme = function() {
+    const isLight = document.body.classList.toggle('light-mode');
+    localStorage.setItem('crmTheme', isLight ? 'light' : 'dark');
+    updateThemeIcon();
+    // Refresh active view to redraw charts with correct SVG colors
+    if (window.renderActiveView) window.renderActiveView();
+};
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('crmTheme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+    } else if (savedTheme === 'dark') {
+        document.body.classList.remove('light-mode');
+    }
+    updateThemeIcon();
+}
+
+function updateThemeIcon() {
+    const icon = document.getElementById('themeIcon');
+    if (icon) {
+        if (document.body.classList.contains('light-mode')) {
+            icon.className = 'fa-solid fa-sun';
+            icon.style.color = '#f59e0b';
+        } else {
+            icon.className = 'fa-solid fa-moon';
+            icon.style.color = 'inherit';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initTheme);
