@@ -3947,6 +3947,56 @@ body.light-mode .kpi-value {
         min-height: 100vh !important;
     }
 
+    
+    /* ========================================================================= */
+    /* COMPRESSÃO PARA 1 PÁGINA: SETOR 13, PROCESSO (05/06/12), SETOR 01         */
+    /* ========================================================================= */
+    
+    .module-view-header {
+        margin-bottom: 10px !important;
+        padding-bottom: 5px !important;
+        zoom: 0.85 !important;
+    }
+
+    .kpi-grid, .cq-kpi-grid {
+        margin-bottom: 10px !important;
+        gap: 10px !important;
+        zoom: 0.85 !important;
+    }
+
+    .cq-macro-card,
+    .analytics-grid,
+    .cq-charts-grid,
+    .exec-processo-layout {
+        margin-bottom: 10px !important;
+        gap: 10px !important;
+        zoom: 0.70 !important;
+        page-break-inside: avoid !important;
+    }
+
+    .panel-card, .table-card {
+        margin-bottom: 10px !important;
+    }
+
+    
+    /* Separar perfeitamente a seção de Analytics (Pág 1 comprimida) das Miniaturas (Pág 2 em diante) */
+    #processoTableSection,
+    .cq-macro-card + .table-card {
+        page-break-before: always !important;
+        break-before: page !important;
+    }
+
+    /* Force the thumbnail/grid section to start cleanly on the next page */
+    .s13-gallery-toolbar {
+        page-break-before: always !important;
+        break-before: page !important;
+    }
+
+    /* Remove empty manual page breaks between charts in print mode */
+    div.page-break-before {
+        display: none !important;
+    }
+
     /* Ocultar elementos UI para PDF */
     .sidebar,
     .top-header,
