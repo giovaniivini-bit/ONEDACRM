@@ -3868,3 +3868,21 @@ body.light-mode span[style*="color: #cbd5e1"] {
 body.light-mode strong[style*="color:#e2e8f0"] {
     color: #1e293b !important;
 }
+
+
+/* OVERRIDES DE IMPRESSÃO (GRID 4 COLUNAS NAS MINIATURAS) */
+@media print {
+    /* Forçar 4 itens por linha em todas as galerias/miniaturas no PDF */
+    .s13-photo-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    .s13-photo-card {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        width: 100% !important;
+        zoom: 0.9 !important; /* leve zoom out para garantir encaixe horizontal */
+    }
+}

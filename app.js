@@ -2949,7 +2949,10 @@
                                         </div>
 
                                         <!-- Linha 5: Grid de Metadados (Etiqueta, Prog Amostra, Tipo, Semana, Marca, Peças) -->
-                                        <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px;">
+                                        <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px;"><div class="s13-meta-item">
+            <span class="s13-meta-label">OC / RIS</span>
+            ${(item.oc || '').trim().toUpperCase().startsWith('S') || !(item.oc || '').trim() ? `<span class="s13-meta-val" style="color: #f97316; font-weight: 800; background: rgba(249,115,22,0.15); padding: 1px 4px; border-radius: 4px;">SEM OC</span>` : `<span class="s13-meta-val" style="color: #94a3b8; font-weight: 700;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>${item.oc}</span>`}
+        </div>
                                             <div class="s13-meta-item">
                                                 <span class="s13-meta-label">Etiqueta</span>
                                                 <span class="s13-meta-val" style="color: #60a5fa;" title="${item.etiqueta || '—'}">${item.etiqueta || '—'}</span>
@@ -4099,7 +4102,10 @@
                                             </div>
 
                                             <!-- Linha 5: Grid de Metadados (Semana, Peças, Dias no Setor, Cliente) -->
-                                            <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 6px;">
+                                            <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 6px;"><div class="s13-meta-item">
+            <span class="s13-meta-label">OC / RIS</span>
+            ${(item.oc || '').trim().toUpperCase().startsWith('S') || !(item.oc || '').trim() ? `<span class="s13-meta-val" style="color: #f97316; font-weight: 800; background: rgba(249,115,22,0.15); padding: 1px 4px; border-radius: 4px;">SEM OC</span>` : `<span class="s13-meta-val" style="color: #94a3b8; font-weight: 700;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>${item.oc}</span>`}
+        </div>
                                                 <div class="s13-meta-item">
                                                     <span class="s13-meta-label">Semana Entrega (BK)</span>
                                                     <span class="s13-meta-val" style="color: #c084fc; font-weight: 700;" title="${item.pedDescPeriodo || item.pedPeriodo || '—'}">${item.pedDescPeriodo || item.pedPeriodo || '—'}</span>
@@ -4675,7 +4681,10 @@
                                             </div>
 
                                             <!-- Linha 5: Grid de Metadados (Semana, Peças, Dias no Setor, Cliente) -->
-                                            <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 6px;">
+                                            <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 6px;"><div class="s13-meta-item">
+            <span class="s13-meta-label">OC / RIS</span>
+            ${(item.oc || '').trim().toUpperCase().startsWith('S') || !(item.oc || '').trim() ? `<span class="s13-meta-val" style="color: #f97316; font-weight: 800; background: rgba(249,115,22,0.15); padding: 1px 4px; border-radius: 4px;">SEM OC</span>` : `<span class="s13-meta-val" style="color: #94a3b8; font-weight: 700;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>${item.oc}</span>`}
+        </div>
                                                 <div class="s13-meta-item">
                                                     <span class="s13-meta-label">Semana Entrega</span>
                                                     <span class="s13-meta-val" style="color: #c084fc; font-weight: 700;" title="${item.pedDescPeriodo || item.pedPeriodo || '—'}">${item.pedDescPeriodo || item.pedPeriodo || '—'}</span>
@@ -8527,6 +8536,10 @@
                                                         <span class="s13-meta-val" style="color: #e2e8f0; font-weight: 600;">${item.cliente || item.marca || '—'}</span>
                                                     </div>
                                                     <div class="s13-meta-item">
+                                                        <span class="s13-meta-label">OC / RIS</span>
+                                                        ${(item.oc || '').trim().toUpperCase().startsWith('S') || !(item.oc || '').trim() ? `<span class="s13-meta-val" style="color: #f97316; font-weight: 800; background: rgba(249,115,22,0.15); padding: 1px 4px; border-radius: 4px;">SEM OC</span>` : `<span class="s13-meta-val" style="color: #94a3b8; font-weight: 700;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>${item.oc}</span>`}
+                                                    </div>
+                                                    <div class="s13-meta-item">
                                                         <span class="s13-meta-label">Semana Pedido</span>
                                                         <span class="s13-meta-val" style="color: #38bdf8; font-weight: 700;">${item.pedDescPeriodo || item.semanaPedido || '—'}</span>
                                                     </div>
@@ -10781,16 +10794,25 @@
             }
             return cardList.slice(0, 50).map(item => {
                 const isDuplicate = ['CM1', 'D01', '43'].includes(item.setor) && state.productionCodes.has(item.codigo);
+                // Lógica RIS / OC
+                let ocText = (item.oc || '').trim().toUpperCase();
+                let ocHtml = '';
+                if (!ocText || ocText.startsWith('S')) {
+                    ocHtml = `<span class="badge" style="background: rgba(249, 115, 22, 0.15); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3);"><i class="fa-solid fa-file-invoice"></i> SEM OC</span>`;
+                } else {
+                    ocHtml = `<span class="badge" style="background: rgba(255, 255, 255, 0.05); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.1);"><i class="fa-solid fa-file-invoice"></i> OC: ${ocText}</span>`;
+                }
                 return `
-                    <div class="kanban-card" onclick="window.crmOpenOpModal('${item.op}')">
-                        <div class="kanban-card-top">
-                            <span class="kanban-card-op">OP ${item.op}</span>
-                            <span class="badge badge-sub">${item.setor}</span>
-                        </div>
-                        <div class="kanban-card-title">${item.codigo} • ${item.descricao}</div>
-                        <div style="margin: 6px 0; display: flex; flex-wrap: wrap; gap: 4px;">
-                            ${renderStatusModelagemBadge(item.descLocal)}
-                            ${item.diasParado > 2 ? renderDiasSetorBadge(item.diasParado) : ''}
+                        <div class="kanban-card" onclick="window.crmOpenOpModal('${item.op}')">
+                            <div class="kanban-card-top">
+                                <span class="kanban-card-op">OP ${item.op}</span>
+                                <span class="badge badge-sub">${item.setor}</span>
+                            </div>
+                            <div class="kanban-card-title">${item.codigo} • ${item.descricao}</div>
+                            <div style="margin: 6px 0; display: flex; flex-wrap: wrap; gap: 4px;">
+                                ${renderStatusModelagemBadge(item.descLocal)}
+                                ${item.diasParado > 2 ? renderDiasSetorBadge(item.diasParado) : ''}
+                                ${ocHtml}
                         </div>
                         ${isDuplicate ? '<span class="badge badge-rose"><i class="fa-solid fa-triangle-exclamation"></i> Repete em Produção</span>' : ''}
                         <div class="kanban-card-meta">
