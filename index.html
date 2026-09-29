@@ -170,6 +170,13 @@
                 </div>
                 <ul class="nav-list" id="group-gestao">
                     <li class="nav-item">
+                        <a href="#gestao-alertas" class="nav-link" data-module="gestao" data-submodule="alertas">
+                            <i class="fa-solid fa-triangle-exclamation nav-icon" style="color: #fb7185;"></i>
+                            <span class="nav-text">Alertas</span>
+                            <span class="nav-badge" id="badge-alertas" style="background: rgba(244, 63, 94, 0.18); color: #fb7185;">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="#config-sync" class="nav-link" data-module="config" data-submodule="sync">
                             <i class="fa-solid fa-cloud-arrow-down nav-icon"></i>
                             <span class="nav-text">Sincronização</span>
@@ -223,8 +230,9 @@
                         <span>Novidades</span>
                         <span class="header-badge-count">3</span>
                     </a>
-                    <a class="header-action-link" title="Notificações">
+                    <a class="header-action-link" title="Abrir Alertas" onclick="window.crmNavigate('gestao', 'alertas')" style="cursor: pointer;">
                         <i class="fa-solid fa-bell"></i>
+                        <span class="header-badge-count" id="headerAlertsCount" style="display: none;">0</span>
                     </a>
                     
                     <!-- Avatar Exatamente como no print (Círculo Laranja com "G" + Giovani) -->
@@ -352,8 +360,6 @@
             <main class="view-container" id="viewContainer">
                 <!-- Conteúdo renderizado pelo app.js -->
             </main>
-                <!-- Conteúdo renderizado pelo app.js -->
-            </main>
         </div>
     </div>
 
@@ -381,7 +387,15 @@
     </div>
 
     <!-- Scripts da Aplicação -->
-    <script src="data.js"></script>
-    <script src="app.js?v=1790709575201"></script>
+    <script>
+        // O snapshot completo só é carregado quando o arquivo é aberto offline.
+        // Em HTTP, os dados chegam exclusivamente pela API e não ficam públicos
+        // como arquivo estático duplicado.
+        if (window.location.protocol === 'file:') {
+            document.write('<script src="data.js"><\/script>');
+        }
+    </script>
+    <script src="alerts-engine.js?v=20260929"></script>
+    <script src="app.js?v=20260929-alertas"></script>
 </body>
 </html>

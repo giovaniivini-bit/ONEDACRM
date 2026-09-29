@@ -9,6 +9,13 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { createDriveImageProxy } = require('./drive-image-cache');
+const alertsEngine = require('./alerts-engine');
+const {
+    readRequestBody,
+    requestIsSameOrigin,
+    isAdminRequest,
+    applySecurityHeaders
+} = require('./server-security');
 
 const PORT = process.env.PORT || 3000;
 const ALT_PORT = 8080;
@@ -19,9 +26,74 @@ const FULL_DATA_PATH = path.join(DATA_DIR, 'full_dataset.csv');
 const DRIVE_IMAGES_PATH = path.join(DATA_DIR, 'drive_images.json');
 const STATIC_IMAGES_DIR = path.join(BASE_DIR, 'images');
 const STATIC_IMAGE_MAP_PATH = path.join(BASE_DIR, 'image_map.json');
+const ALERT_RULES_PATH = process.env.ALERT_RULES_PATH
+    ? path.resolve(process.env.ALERT_RULES_PATH)
+    : path.join(DATA_DIR, 'alert_rules.json');
+const ADMIN_TOKEN = String(process.env.CRM_ADMIN_TOKEN || '').trim();
+const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE_TTL_MS) || 5 * 60_000);
+const PUBLIC_FILES = new Set(['index.html', 'style.css', 'app.js', 'alerts-engine.js']);
+
+if (!ADMIN_TOKEN) {
+    console.warn('⚠️  CRM_ADMIN_TOKEN não configurado: escritas remotas estão bloqueadas; somente localhost na mesma origem é aceito.');
+}
+const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
+const RULES_BODY_LIMIT = 256 * 1024;
 
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
 const GOOGLE_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
+
+function sendJson(res, statusCode, payload, extraHeaders = {}) {
+    res.writeHead(statusCode, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store',
+        ...extraHeaders
+    });
+    res.end(JSON.stringify(payload));
+}
+
+function requireAdmin(req, res) {
+    if (isAdminRequest(req, ADMIN_TOKEN)) return true;
+    sendJson(res, 401, {
+        success: false,
+        code: 'ADMIN_AUTH_REQUIRED',
+        error: 'Esta ação administrativa exige autorização.'
+    });
+    return false;
+}
+
+function atomicWriteFileSync(targetPath, content, encoding = 'utf8') {
+    const tempPath = `${targetPath}.${process.pid}.tmp`;
+    fs.writeFileSync(tempPath, content, encoding);
+    try {
+        fs.renameSync(tempPath, targetPath);
+    } catch (error) {
+        // Windows não substitui sempre um arquivo existente via rename. O
+        // fallback mantém o desenvolvimento local funcional; produção Linux
+        // utiliza o rename atômico acima.
+        fs.copyFileSync(tempPath, targetPath);
+        fs.unlinkSync(tempPath);
+    }
+}
+
+function loadAlertRules() {
+    try {
+        if (fs.existsSync(ALERT_RULES_PATH)) {
+            const saved = JSON.parse(fs.readFileSync(ALERT_RULES_PATH, 'utf8'));
+            const validation = alertsEngine.validateRules(saved);
+            if (validation.valid) return saved;
+            console.warn('[ALERTAS] Regras salvas inválidas; usando regras padrão:', validation.error);
+        }
+    } catch (error) {
+        console.warn('[ALERTAS] Não foi possível ler as regras; usando padrões:', error.message);
+    }
+    return alertsEngine.cloneDefaults();
+}
+
+function saveAlertRules(rules) {
+    const normalized = alertsEngine.normalizeRules(rules);
+    atomicWriteFileSync(ALERT_RULES_PATH, JSON.stringify(normalized, null, 2), 'utf8');
+    return normalized;
+}
 
 // O mesmo modelo comprovado do Studeoneda: imagens versionadas em /images e
 // um mapa local disponível imediatamente, sem aguardar Google Drive ou rede.
@@ -593,12 +665,21 @@ function serveLocalImageFile(filename, req, res) {
     }
 }
 async function requestHandler(req, res) {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    applySecurityHeaders(res);
+    const origin = req.headers.origin;
+    if (origin && requestIsSameOrigin(req)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-CRM-Admin-Token');
     
     if (req.method === 'OPTIONS') {
+        if (origin && !requestIsSameOrigin(req)) {
+            res.writeHead(403);
+            res.end();
+            return;
+        }
         res.writeHead(204);
         res.end();
         return;
@@ -606,6 +687,33 @@ async function requestHandler(req, res) {
     
     const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
     const pathname = parsedUrl.pathname;
+
+    if (pathname === '/api/health') {
+        sendJson(res, 200, { ok: true, service: 'oneda-crm', timestamp: new Date().toISOString() });
+        return;
+    }
+
+    if (pathname === '/api/alert-rules') {
+        if (req.method === 'GET') {
+            sendJson(res, 200, { success: true, data: loadAlertRules() });
+            return;
+        }
+        if (req.method === 'PUT') {
+            if (!requireAdmin(req, res)) return;
+            try {
+                const body = await readRequestBody(req, RULES_BODY_LIMIT);
+                const parsed = JSON.parse(body || '{}');
+                const saved = saveAlertRules(parsed.rules);
+                sendJson(res, 200, { success: true, count: saved.length, data: saved });
+            } catch (error) {
+                sendJson(res, error.statusCode || 400, { success: false, error: error.message });
+            }
+            return;
+        }
+        res.writeHead(405, { Allow: 'GET, PUT' });
+        res.end();
+        return;
+    }
     
     // API: Obter Dados do CRM
     if (pathname === '/api/data') {
@@ -628,14 +736,13 @@ async function requestHandler(req, res) {
             const records = parseCSV(content);
             const stat = fs.statSync(fileToRead);
             
-            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-            res.end(JSON.stringify({
+            sendJson(res, 200, {
                 success: true,
                 count: records.length,
                 source: path.basename(fileToRead),
                 lastModified: stat.mtime.toISOString(),
                 data: records
-            }));
+            });
         } catch (err) {
             console.error('Erro ao ler dados:', err);
             res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -647,6 +754,12 @@ async function requestHandler(req, res) {
     // API: Obter Mapeamento de Imagens do Google Drive
     if (pathname === '/api/drive-images') {
         const force = parsedUrl.searchParams.get('refresh') === '1';
+        if (force && req.method !== 'POST') {
+            res.writeHead(405, { Allow: 'GET, POST' });
+            res.end();
+            return;
+        }
+        if (force && !requireAdmin(req, res)) return;
         if (force || !driveImagesCache || driveImagesCache.count === 0) {
             fetchGoogleDriveImages().then(indexData => {
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -690,7 +803,13 @@ async function requestHandler(req, res) {
     if (pathname === '/api/image-file' || pathname.startsWith('/images/')) {
         let filename = parsedUrl.searchParams.get('file');
         if (!filename && pathname.startsWith('/images/')) {
-            filename = decodeURIComponent(pathname.replace(/^\/images\//, ''));
+            try {
+                filename = decodeURIComponent(pathname.replace(/^\/images\//, ''));
+            } catch (_) {
+                res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+                res.end('400 - URL de imagem inválida');
+                return;
+            }
         }
         serveLocalImageFile(filename, req, res);
         return;
@@ -699,7 +818,13 @@ async function requestHandler(req, res) {
     // API: Obter Dados de Planilhas Externas (Cores e Aviamentos do Drive)
     if (pathname === '/api/external-sheet') {
         const type = (parsedUrl.searchParams.get('type') || 'aviamentos').toLowerCase();
-        const force = parsedUrl.searchParams.get('refresh') === '1';
+        const force = parsedUrl.searchParams.get('refresh') === '1' && req.method === 'POST';
+        if (!['GET', 'POST'].includes(req.method)) {
+            res.writeHead(405, { Allow: 'GET, POST' });
+            res.end();
+            return;
+        }
+        if (req.method === 'POST' && !requireAdmin(req, res)) return;
         
         const configs = {
             cores: {
@@ -764,6 +889,12 @@ async function requestHandler(req, res) {
                 } catch (e) {}
             }
 
+            const cachedAt = cachedData && Date.parse(cachedData.timestamp || '');
+            if (!force && cachedData && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS) {
+                sendJson(res, 200, { ...cachedData, cacheAgeMs: Date.now() - cachedAt });
+                return;
+            }
+
             try {
                 // Tenta baixar da nuvem Google Sheets
                 const csvText = await fetchGoogleSheetCSV(cfg.url);
@@ -822,7 +953,7 @@ async function requestHandler(req, res) {
                         isLive: true
                     };
 
-                    fs.writeFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
+                    atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
                     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                     res.end(JSON.stringify(payload));
                     return;
@@ -870,7 +1001,7 @@ async function requestHandler(req, res) {
                     isLive: true
                 };
 
-                fs.writeFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
+                atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
 
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify(payload));
@@ -884,26 +1015,21 @@ async function requestHandler(req, res) {
                         warning: `Usando cache local (${err.message})`
                     }));
                 } else {
-                    // Fallback estruturado inicial caso ainda não haja cache
-                    const fallbackResp = type === 'cores' ? 
-                        { 'NATHALIA': 18, 'ANA': 12, 'CARLOS': 7, 'NÃO INFORMADO': 3 } : 
-                        { 'NATHALIA': 83, 'ANA': 9, 'HERING': 4 };
-                    
-                    const fallbackCount = Object.values(fallbackResp).reduce((a, b) => a + b, 0);
-
+                    // Nunca inventar indicadores operacionais. Sem cache válido,
+                    // a interface recebe indisponibilidade explícita.
                     const fallbackPayload = {
-                        success: true,
+                        success: false,
                         type,
                         title: cfg.name,
-                        count: fallbackCount,
-                        byResponsavel: fallbackResp,
+                        count: 0,
+                        byResponsavel: {},
                         records: [],
-                        timestamp: new Date().toISOString(),
+                        timestamp: null,
                         isLive: false,
-                        note: 'Dados sincronizados via cache local / aguardando autorização no Drive'
+                        error: `Fonte indisponível e nenhum cache válido encontrado (${err.message})`
                     };
 
-                    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+                    res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
                     res.end(JSON.stringify(fallbackPayload));
                 }
             }
@@ -913,11 +1039,10 @@ async function requestHandler(req, res) {
 
     // API: Importar dados CSV / TSV colados diretamente para planilhas externas
     if (pathname === '/api/external-sheet/import' && req.method === 'POST') {
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            try {
-                const parsed = JSON.parse(body);
+        if (!requireAdmin(req, res)) return;
+        try {
+                const body = await readRequestBody(req, WRITE_BODY_LIMIT);
+                const parsed = JSON.parse(body || '{}');
                 const type = parsed.type || 'cq';
                 const rawData = parsed.csvText || '';
                 
@@ -947,32 +1072,35 @@ async function requestHandler(req, res) {
                     isImported: true
                 };
 
-                fs.writeFileSync(cacheFile, JSON.stringify(payload, null, 2), 'utf8');
+                atomicWriteFileSync(cacheFile, JSON.stringify(payload, null, 2), 'utf8');
 
-                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify(payload));
-            } catch (err) {
-                res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({ success: false, error: err.message }));
-            }
-        });
+                sendJson(res, 200, payload);
+        } catch (err) {
+            sendJson(res, err.statusCode || 400, { success: false, error: err.message });
+        }
         return;
     }
 
     // API: Sincronização ao vivo com o Google Sheets & Google Drive
     if (pathname === '/api/sync') {
+        if (req.method !== 'POST') {
+            res.writeHead(405, { Allow: 'POST' });
+            res.end();
+            return;
+        }
+        if (!requireAdmin(req, res)) return;
         try {
             console.log('[SYNC] Sincronizando diretamente com o Google Sheets e Google Drive...');
             const liveCSV = await fetchGoogleSheetCSV();
             
             // Salva no current_data.csv e no full_dataset.csv
-            fs.writeFileSync(CURRENT_DATA_PATH, liveCSV, 'utf8');
-            fs.writeFileSync(FULL_DATA_PATH, liveCSV, 'utf8');
+            atomicWriteFileSync(CURRENT_DATA_PATH, liveCSV, 'utf8');
+            atomicWriteFileSync(FULL_DATA_PATH, liveCSV, 'utf8');
             
             // Salva também no data.js (para modo offline/standalone)
             const originalRecords = parseCSV(liveCSV);
             const dataJsContent = `// Gerado automaticamente pelo sync do CRM\nwindow.CRM_EMBEDDED_DATA = ${JSON.stringify(originalRecords)};\n`;
-            fs.writeFileSync(path.join(BASE_DIR, 'data.js'), dataJsContent, 'utf8');
+            atomicWriteFileSync(path.join(BASE_DIR, 'data.js'), dataJsContent, 'utf8');
 
             // Sincroniza também as imagens da pasta do Drive em segundo plano
             fetchGoogleDriveImages().catch(e => console.warn('[SYNC DRIVE IMG ERROR]', e.message));
@@ -997,52 +1125,46 @@ async function requestHandler(req, res) {
     
     // API: Upload de CSV Local
     if (pathname === '/api/upload' && req.method === 'POST') {
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            try {
-                if (!body || body.trim().length === 0) {
-                    res.writeHead(400, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ success: false, error: 'Conteúdo CSV vazio.' }));
-                    return;
-                }
-                
-                fs.writeFileSync(CURRENT_DATA_PATH, body, 'utf8');
-                const records = parseCSV(body);
-                
-                res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-                res.end(JSON.stringify({
-                    success: true,
-                    count: records.length,
-                    message: 'Planilha enviada e carregada com sucesso!'
-                }));
-            } catch (err) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ success: false, error: err.message }));
+        if (!requireAdmin(req, res)) return;
+        try {
+            const body = await readRequestBody(req, WRITE_BODY_LIMIT);
+            if (!body || body.trim().length === 0) {
+                sendJson(res, 400, { success: false, error: 'Conteúdo CSV vazio.' });
+                return;
             }
-        });
+
+            atomicWriteFileSync(CURRENT_DATA_PATH, body, 'utf8');
+            const records = parseCSV(body);
+
+            sendJson(res, 200, {
+                success: true,
+                count: records.length,
+                message: 'Planilha enviada e carregada com sucesso!'
+            });
+        } catch (err) {
+            sendJson(res, err.statusCode || 500, { success: false, error: err.message });
+        }
         return;
     }
     
     // Servir Arquivos Estáticos do Frontend
-    let filePath = path.join(BASE_DIR, pathname === '/' ? 'index.html' : pathname);
-    
-    // Prevenir Directory Traversal
-    if (!filePath.startsWith(BASE_DIR)) {
-        res.writeHead(403, { 'Content-Type': 'text/plain' });
-        res.end('Acesso negado');
+    let publicName;
+    try {
+        publicName = pathname === '/' ? 'index.html' : decodeURIComponent(pathname).replace(/^\/+/, '');
+    } catch (_) {
+        res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+        res.end('400 - URL inválida');
         return;
     }
+    if (!PUBLIC_FILES.has(publicName)) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+        res.end('404 - Não Encontrado');
+        return;
+    }
+    const filePath = path.join(BASE_DIR, publicName);
     
     fs.stat(filePath, (err, stats) => {
         if (err || !stats.isFile()) {
-            // Fallback para index.html para SPAs
-            const fallbackPath = path.join(BASE_DIR, 'index.html');
-            if (fs.existsSync(fallbackPath)) {
-                res.writeHead(200, { 'Content-Type': MIME_TYPES['.html'] });
-                fs.createReadStream(fallbackPath).pipe(res);
-                return;
-            }
             res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
             res.end('404 - Não Encontrado');
             return;
@@ -1051,35 +1173,41 @@ async function requestHandler(req, res) {
         const ext = path.extname(filePath).toLowerCase();
         const contentType = MIME_TYPES[ext] || 'application/octet-stream';
         
-        // Cache control para desenvolvimento ágil
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Cache-Control', ext === '.html' ? 'no-cache, no-store, must-revalidate' : 'public, max-age=3600');
         res.writeHead(200, { 'Content-Type': contentType });
         fs.createReadStream(filePath).pipe(res);
     });
 }
 
-// Iniciar servidor primário na porta 3000
-const server1 = http.createServer(requestHandler);
-server1.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n======================================================`);
-    console.log(`🚀 ONEDA CRM rodando na porta ${PORT}`);
-    console.log(`👉 Link Principal: http://localhost:${PORT}`);
-    console.log(`👉 Link Direto IP:  http://127.0.0.1:${PORT}`);
-    console.log(`======================================================\n`);
+function startServers() {
+    const server1 = http.createServer(requestHandler);
+    server1.listen(PORT, '0.0.0.0', () => {
+        console.log(`\n======================================================`);
+        console.log(`🚀 ONEDA CRM rodando na porta ${PORT}`);
+        console.log(`👉 Link Principal: http://localhost:${PORT}`);
+        console.log(`👉 Link Direto IP:  http://127.0.0.1:${PORT}`);
+        console.log(`======================================================\n`);
 
-    // Sincronizar imagens do Drive em segundo plano na inicialização
-    fetchGoogleDriveImages().catch(e => console.warn('[DRIVE] Aviso no sync inicial:', e.message));
-});
+        // Sincronizar imagens do Drive em segundo plano na inicialização
+        fetchGoogleDriveImages().catch(e => console.warn('[DRIVE] Aviso no sync inicial:', e.message));
+    });
 
-// Iniciar servidor secundário na porta 8080
-try {
-    const server2 = http.createServer(requestHandler);
-    server2.listen(ALT_PORT, '0.0.0.0', () => {
-        console.log(`🚀 Porta alternativa ${ALT_PORT} pronta: http://localhost:${ALT_PORT}`);
-    });
-    server2.on('error', (err) => {
-        console.warn(`[AVISO] Porta ${ALT_PORT} indisponível, usando apenas ${PORT}:`, err.message);
-    });
-} catch (e) {
-    console.warn(`[AVISO] Não foi possível iniciar na porta alternativa:`, e.message);
+    // Iniciar servidor secundário na porta 8080
+    try {
+        const server2 = http.createServer(requestHandler);
+        server2.listen(ALT_PORT, '0.0.0.0', () => {
+            console.log(`🚀 Porta alternativa ${ALT_PORT} pronta: http://localhost:${ALT_PORT}`);
+        });
+        server2.on('error', (err) => {
+            console.warn(`[AVISO] Porta ${ALT_PORT} indisponível, usando apenas ${PORT}:`, err.message);
+        });
+        return { server1, server2 };
+    } catch (e) {
+        console.warn(`[AVISO] Não foi possível iniciar na porta alternativa:`, e.message);
+        return { server1, server2: null };
+    }
 }
+
+if (require.main === module) startServers();
+
+module.exports = { requestHandler, startServers };

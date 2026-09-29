@@ -17,6 +17,7 @@ O CRM consolida informações de produção e controle da Oneda. A interface pos
 - malotes dos setores 88 e 83;
 - feira e protótipos;
 - andamento do Controle de Qualidade;
+- alertas operacionais programáveis;
 - sincronização, calendário e controle de imagens ausentes.
 
 O projeto não utiliza React, banco SQL ou API externa própria. É uma aplicação Node.js com HTML, CSS e JavaScript puros.
@@ -34,7 +35,10 @@ O projeto não utiliza React, banco SQL ou API externa própria. É uma aplicaç
 | `images/` | Fotos estáticas que são publicadas junto com o CRM. |
 | `image_map.json` | Liga códigos/aliases de produtos aos arquivos da pasta `images/`. |
 | `drive-image-cache.js` | Proxy e cache persistente das imagens obtidas no Google Drive. |
-| `test/` | Testes automatizados do proxy/cache de imagens. |
+| `alerts-engine.js` | Motor puro que valida regras e cruza condições com os dados do CRM. |
+| `server-security.js` | Limites de requisição, autorização administrativa e cabeçalhos de segurança. |
+| `data/alert_rules.json` | Regras personalizadas salvas na VPS (dado operacional, fora do Git). |
+| `test/` | Testes automatizados do motor de alertas, segurança e cache de imagens. |
 
 ## 3. Como os dados das planilhas chegam ao CRM
 
@@ -119,11 +123,46 @@ $env:PORT='3102'
 node server.js
 ```
 
+### 7.1 Chave administrativa
+
+As consultas e telas continuam acessíveis normalmente. Operações que alteram dados —
+sincronização forçada, importação, upload e gravação de regras — exigem a variável
+`CRM_ADMIN_TOKEN` na produção. O navegador solicita a chave na primeira operação
+administrativa e a conserva somente na memória enquanto a página permanece aberta;
+recarregar a página remove a chave.
+
+```powershell
+$env:CRM_ADMIN_TOKEN='use-uma-chave-longa-e-aleatoria'
+node server.js
+```
+
+Sem a variável, o servidor aceita gravações somente em `localhost` e na mesma origem.
+Na VPS, operações administrativas permanecem bloqueadas até a chave ser configurada.
+
+### 7.2 Módulo Alertas
+
+Em **Gestão & Dados → Alertas**, o CRM cruza os 377 registros atuais com regras
+programáveis. Cada regra define prioridade, combinação E/OU, até oito condições e uma
+mensagem com campos dinâmicos. O motor aceita texto, números, campos vazios e comparações
+de data com o dia atual.
+
+As três regras iniciais cobrem prazo em atraso, produtos parados no Setor 13 e produtos
+sem imagem. Regras padrão podem ser ativadas, editadas ou duplicadas; regras criadas pelo
+usuário também podem ser excluídas. Antes de salvar, use **Testar regra** para conferir a
+quantidade de ocorrências e um exemplo. A tela monta 30 avisos por lote para preservar a
+fluidez em computadores mais modestos.
+
+As regras ficam em `data/alert_rules.json`; preserve esse arquivo durante deploys. O
+cálculo ocorre no navegador sobre os dados atuais, portanto não duplica as planilhas e
+não altera nenhuma tela operacional existente.
+
 Checks mínimos antes de publicar:
 
 ```bash
 node --check app.js
 node --check server.js
+node --check alerts-engine.js
+node --check server-security.js
 npm test
 git diff --check
 ```
@@ -135,6 +174,7 @@ Validação manual obrigatória:
 3. Abrir uma foto no lightbox.
 4. Conferir a tela Imagens Ausentes.
 5. Sincronizar fotos e confirmar que os números são recalculados.
+6. Abrir Alertas, filtrar prioridades, testar uma regra e confirmar a persistência.
 
 ## 8. Produção e publicação
 
@@ -148,7 +188,7 @@ Fluxo seguro:
 2. Enviar o commit ao GitHub.
 3. Fazer backup dos arquivos que serão substituídos na VPS.
 4. Atualizar o código em `/home/ubuntu/apps/ONEDACRM`.
-5. Não sobrescrever `.env`, caches ou snapshots de planilhas sem necessidade.
+5. Não sobrescrever `.env`, `data/alert_rules.json`, caches ou snapshots de planilhas sem necessidade.
 6. Reiniciar somente `oneda-crm-app` no PM2.
 7. Verificar APIs, imagens e telas no endereço público.
 
@@ -173,6 +213,8 @@ Antes de aceitar a alteração, confirme:
 - A listagem pública do Drive é parcial; imagens novas só ficam garantidas quando são espelhadas em `images/` e publicadas.
 - Os dados continuam dependentes de planilhas e seus formatos de colunas.
 - O deploy na VPS é manual e depende de acesso SSH.
+- O CRM ainda não possui contas e perfis por usuário; a chave administrativa protege as
+  mutações, mas a leitura dos dados depende da restrição de acesso aplicada ao endereço.
 
 Evoluções recomendadas:
 

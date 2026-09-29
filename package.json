@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test test/drive-image-cache.test.js"
+    "test": "node --test test/drive-image-cache.test.js test/alerts-engine.test.js test/server-security.test.js test/server-routes.test.js"
   },
   "keywords": [
     "crm",
