@@ -3790,6 +3790,143 @@ body.light-mode strong[style*="color:#e2e8f0"] {
     color: #1e293b !important;
 }
 
+
+/* ==========================================================================
+   ENHANCED LIGHT MODE OVERRIDES
+   ========================================================================== */
+/* Fix dark cards in galleries */
+body.light-mode .s13-photo-card,
+body.light-mode .kanban-card {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .s13-photo-placeholder {
+    background: #f1f5f9 !important;
+}
+
+body.light-mode .s13-photo-placeholder strong {
+    color: #0f172a !important;
+}
+
+/* Fix text inside cards */
+body.light-mode .s13-card-code,
+body.light-mode .kanban-card-title {
+    color: #0f172a !important;
+}
+
+body.light-mode .s13-card-desc {
+    color: #475569 !important;
+}
+
+body.light-mode .s13-meta-label,
+body.light-mode .kanban-card-meta {
+    color: #64748b !important;
+}
+
+body.light-mode .s13-meta-val {
+    color: #1e293b !important;
+}
+
+/* SVG Text Fills for Light Mode */
+body.light-mode text[fill="#f8fafc"],
+body.light-mode text[fill="#e2e8f0"],
+body.light-mode text[fill="#f1f5f9"] {
+    fill: #0f172a !important;
+}
+
+body.light-mode text[fill="#94a3b8"],
+body.light-mode text[fill="#64748b"] {
+    fill: #475569 !important;
+}
+
+/* Hardcoded inline style text overrides */
+body.light-mode div[style*="color: #e2e8f0"],
+body.light-mode div[style*="color:#e2e8f0"],
+body.light-mode span[style*="color: #e2e8f0"],
+body.light-mode span[style*="color:#e2e8f0"] {
+    color: #1e293b !important;
+}
+
+body.light-mode div[style*="color: #f8fafc"],
+body.light-mode div[style*="color:#f8fafc"],
+body.light-mode span[style*="color: #f8fafc"],
+body.light-mode span[style*="color:#f8fafc"] {
+    color: #0f172a !important;
+}
+
+
+/* ==========================================================================
+   ENHANCED LIGHT MODE TEXT & SVGS
+   ========================================================================== */
+
+
+body.light-mode text[fill="#ffffff"],
+body.light-mode text[fill="#f8fafc"],
+body.light-mode text[fill="#e2e8f0"],
+body.light-mode text[fill="#f1f5f9"] {
+    fill: #0f172a !important;
+}
+
+/* Hardcoded SVG stroke override for pie chart default empty state */
+body.light-mode circle[stroke="#334155"] {
+    stroke: #e2e8f0 !important;
+}
+
+/* Make sure the "Gráfico X" panel titles get dark text */
+body.light-mode .panel-title,
+body.light-mode .leadtime-chart-title span {
+    color: #0f172a !important;
+}
+
+/* Fix Text Inside SVGs (like the Pie Chart center) */
+
+
+/* Force light gray labels to be dark gray */
+body.light-mode text[fill="#94a3b8"],
+body.light-mode text[fill="#cbd5e1"] {
+    fill: #475569 !important;
+}
+
+/* Fix Donut Legend Cards */
+body.light-mode .donut-legend-card {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+body.light-mode .donut-legend-label div {
+    color: #0f172a !important; /* Force text inside legend to dark */
+}
+
+/* Fix generic card headers and spans that have hardcoded white/light-gray */
+body.light-mode .hero-pie-chart-container h3,
+body.light-mode .hero-pie-chart-container span,
+body.light-mode .cq-macro-card h4,
+body.light-mode .cq-macro-card span,
+body.light-mode .kpi-header span,
+body.light-mode .kpi-footer span {
+    color: #1e293b !important;
+}
+
+/* Fix right-side chart bar labels (like 4 prod (36%) - 5.909 pçs) */
+body.light-mode .cq-chart-row-label,
+body.light-mode .cq-chart-row-val {
+    color: #334155 !important;
+}
+
+/* Fix any remaining hardcoded inline light text */
+body.light-mode [style*="color: #ffffff"],
+body.light-mode [style*="color:#ffffff"],
+body.light-mode [style*="color: #f8fafc"],
+body.light-mode [style*="color:#f8fafc"] {
+    color: #0f172a !important;
+}
+
+/* Ensure KPI values stay dark */
+body.light-mode .kpi-value {
+    color: #0f172a !important;
+}
+
 /* ========================================================================= */
 /* ESTILOS DE IMPRESSÃO & PDF (A4 LANDSCAPE OVERRIDES - FULL BLEED)          */
 /* ========================================================================= */
