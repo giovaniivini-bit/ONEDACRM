@@ -55,4 +55,3 @@ O commit anterior ao último deploy fica registrado em:
 Antes de qualquer rollback, faça backup dos dados operacionais e confirme o commit alvo.
 Depois do rollback, rode os testes, reinicie somente `oneda-crm-app` e valide o health
 check e as telas principais.
-
