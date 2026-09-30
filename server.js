@@ -38,6 +38,7 @@ if (!ADMIN_TOKEN) {
 }
 const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
 const RULES_BODY_LIMIT = 256 * 1024;
+const ALERT_RULESET_VERSION = 2;
 
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
 const GOOGLE_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
@@ -79,9 +80,20 @@ function loadAlertRules() {
     try {
         if (fs.existsSync(ALERT_RULES_PATH)) {
             const saved = JSON.parse(fs.readFileSync(ALERT_RULES_PATH, 'utf8'));
-            const validation = alertsEngine.validateRules(saved);
-            if (validation.valid) return saved;
-            console.warn('[ALERTAS] Regras salvas inválidas; usando regras padrão:', validation.error);
+            if (saved && saved.version === ALERT_RULESET_VERSION && Array.isArray(saved.rules)) {
+                const validation = alertsEngine.validateRules(saved.rules);
+                if (validation.valid) return saved.rules;
+                console.warn('[ALERTAS] Regras salvas inválidas; usando regras padrão:', validation.error);
+            } else {
+                const legacyRules = Array.isArray(saved) ? saved : (Array.isArray(saved?.rules) ? saved.rules : null);
+                const validation = alertsEngine.validateRules(legacyRules);
+                if (validation.valid) {
+                    const defaultIds = new Set(alertsEngine.DEFAULT_RULES.map(rule => rule.id));
+                    const customRules = alertsEngine.normalizeRules(legacyRules).filter(rule => !rule.system && !defaultIds.has(rule.id));
+                    return [...alertsEngine.cloneDefaults(), ...customRules];
+                }
+                console.warn('[ALERTAS] Regras legadas inválidas; usando regras padrão:', validation.error);
+            }
         }
     } catch (error) {
         console.warn('[ALERTAS] Não foi possível ler as regras; usando padrões:', error.message);
@@ -91,8 +103,60 @@ function loadAlertRules() {
 
 function saveAlertRules(rules) {
     const normalized = alertsEngine.normalizeRules(rules);
-    atomicWriteFileSync(ALERT_RULES_PATH, JSON.stringify(normalized, null, 2), 'utf8');
+    atomicWriteFileSync(ALERT_RULES_PATH, JSON.stringify({ version: ALERT_RULESET_VERSION, rules: normalized }, null, 2), 'utf8');
     return normalized;
+}
+
+function validateCalendarRecords(records) {
+    if (!Array.isArray(records) || records.length < 40) {
+        throw new Error('Calendário Industrial incompleto: são esperadas ao menos 40 semanas.');
+    }
+    const normalizeHeader = value => String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+    const firstRow = records[0] || {};
+    const keys = Object.keys(firstRow);
+    const expectedHeaders = [
+        ['semana', 0],
+        ['datalimiteparasetor13', 1],
+        ['quantidadediasaceitaveisparaficarpendentesetor01', 4]
+    ];
+    expectedHeaders.forEach(([expected, index]) => {
+        if (normalizeHeader(keys[index]) !== expected) {
+            throw new Error(`Calendário Industrial inválido: coluna ${index + 1} não corresponde ao formato esperado.`);
+        }
+    });
+    const currentYear = new Date().getFullYear();
+    const cycleYears = new Set();
+    const weekNumbers = [];
+    const seenWeeks = new Set();
+    const contentRows = records.filter(row => Object.values(row).some(value => String(value || '').trim()));
+    const validRows = contentRows.filter(row => {
+        const values = Object.values(row);
+        const week = String(values[0] || '').trim();
+        const weekMatch = week.match(/^(\d{2})(\d{2})$/);
+        if (!weekMatch || seenWeeks.has(week)) return false;
+        const cycleYear = 2000 + Number(weekMatch[1]);
+        const weekNumber = Number(weekMatch[2]);
+        if (cycleYear < currentYear - 2 || cycleYear > currentYear + 2 || weekNumber < 1 || weekNumber > 53) return false;
+
+        const deadline = alertsEngine.parseIndustrialDate(String(values[1] || '').trim(), week);
+        const limitMatch = String(values[4] || '').trim().match(/^(\d{1,2})\s*(?:dias?)?$/i);
+        const limit = limitMatch ? Number(limitMatch[1]) : NaN;
+        if (!deadline || !Number.isInteger(limit) || limit < 0 || limit > 30) return false;
+
+        seenWeeks.add(week);
+        cycleYears.add(cycleYear);
+        weekNumbers.push(weekNumber);
+        return true;
+    });
+    const coversAnnualCycle = weekNumbers.length > 0 && Math.min(...weekNumbers) <= 2 && Math.max(...weekNumbers) >= 40;
+    if (validRows.length < 40 || validRows.length !== contentRows.length || cycleYears.size !== 1 || !coversAnnualCycle) {
+        throw new Error('Calendário Industrial inválido: semanas, datas ou limites estão ausentes.');
+    }
+    return validRows;
 }
 
 // O mesmo modelo comprovado do Studeoneda: imagens versionadas em /images e
@@ -875,6 +939,14 @@ async function requestHandler(req, res) {
                 url: 'https://docs.google.com/spreadsheets/d/1uQGFBQjMI4Gnyq8eIMxRqFArmr00bEazGQVrHRD9vlY/export?format=csv&gid=0',
                 cacheFile: path.join(DATA_DIR, 'rotativos_external.json'),
                 targetColIndex: 0 // Coluna A (Produto)
+            },
+            calendar: {
+                name: 'Calendário Industrial',
+                id: '1T9u4hGeKPPJyKix62u--mudStz3R22RlIrDkqk0ViBg',
+                gid: '0',
+                url: 'https://docs.google.com/spreadsheets/d/1T9u4hGeKPPJyKix62u--mudStz3R22RlIrDkqk0ViBg/export?format=csv&gid=0',
+                cacheFile: path.join(DATA_DIR, 'calendar_external.json'),
+                targetColIndex: 4 // Coluna E (limite de dias do Setor 01)
             }
         };
 
@@ -886,7 +958,14 @@ async function requestHandler(req, res) {
             if (fs.existsSync(cfg.cacheFile)) {
                 try {
                     cachedData = JSON.parse(fs.readFileSync(cfg.cacheFile, 'utf8'));
-                } catch (e) {}
+                    if (type === 'calendar') {
+                        const validCachedRows = validateCalendarRecords(cachedData?.records);
+                        cachedData = { ...cachedData, count: validCachedRows.length, records: validCachedRows };
+                    }
+                } catch (e) {
+                    if (type === 'calendar') console.warn(`[CALENDÁRIO] Cache ignorado: ${e.message}`);
+                    cachedData = null;
+                }
             }
 
             const cachedAt = cachedData && Date.parse(cachedData.timestamp || '');
@@ -899,6 +978,23 @@ async function requestHandler(req, res) {
                 // Tenta baixar da nuvem Google Sheets
                 const csvText = await fetchGoogleSheetCSV(cfg.url);
                 const records = parseCSV(csvText);
+
+                if (type === 'calendar') {
+                    const calendarRows = validateCalendarRecords(records);
+                    const payload = {
+                        success: true,
+                        type: 'calendar',
+                        title: cfg.name,
+                        count: calendarRows.length,
+                        records: calendarRows,
+                        timestamp: new Date().toISOString(),
+                        isLive: true
+                    };
+
+                    atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
+                    sendJson(res, 200, payload);
+                    return;
+                }
 
                 if (type === 'rotativos') {
                     let totalPendentes = 0;
@@ -1210,4 +1306,4 @@ function startServers() {
 
 if (require.main === module) startServers();
 
-module.exports = { requestHandler, startServers };
+module.exports = { requestHandler, startServers, validateCalendarRecords };

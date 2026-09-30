@@ -9,7 +9,7 @@ const rulesPath = path.join(os.tmpdir(), `oneda-alert-rules-${process.pid}.json`
 process.env.CRM_ADMIN_TOKEN = 'route-test-secret';
 process.env.ALERT_RULES_PATH = rulesPath;
 
-const { requestHandler } = require('../server');
+const { requestHandler, validateCalendarRecords } = require('../server');
 
 let server;
 let port;
@@ -83,6 +83,42 @@ test('persists valid alert rules and reloads them', async () => {
     const loaded = await request({ route: '/api/alert-rules' });
     assert.equal(loaded.status, 200);
     assert.equal(JSON.parse(loaded.body).data[0].id, 'route-test');
+    const stored = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
+    assert.equal(stored.version, 2);
+    assert.equal(stored.rules[0].id, 'route-test');
+
+    const oldSystemRule = { ...rule, id: 'prazo-atrasado', name: 'Antiga', system: true };
+    fs.writeFileSync(rulesPath, JSON.stringify([oldSystemRule, rule]), 'utf8');
+    const migrated = JSON.parse((await request({ route: '/api/alert-rules' })).body).data;
+    assert.deepEqual(migrated.map(item => item.id), [
+        'setor13-calendario',
+        'setor01-limite-dias',
+        'malotes-parte-principal',
+        'route-test'
+    ]);
+});
+
+test('validates the industrial calendar before it can replace the cache', () => {
+    const validRows = Array.from({ length: 40 }, (_, index) => ({
+        SEMANA: `26${String(index + 1).padStart(2, '0')}`,
+        'Data limite para setor 13': '24/set.',
+        'data setor 20 -  CORTE iniciar': '',
+        'data limite para liberar pendência de estampa': '',
+        'quantidade dias aceitaveis para ficar pendente setor 01': '2 dias'
+    }));
+    assert.equal(validateCalendarRecords(validRows).length, 40);
+    assert.throws(() => validateCalendarRecords(validRows.slice(0, 3)), /incompleto/);
+    assert.throws(() => validateCalendarRecords(validRows.map(row => ({ ...row, 'Data limite para setor 13': '' }))), /inválido/);
+    assert.throws(() => validateCalendarRecords(validRows.map((row, index) => ({
+        ...row,
+        SEMANA: `99${String(index + 1).padStart(2, '0')}`,
+        'Data limite para setor 13': 'arquivo indisponivel',
+        'quantidade dias aceitaveis para ficar pendente setor 01': 'erro 999'
+    }))), /inválido/);
+    assert.throws(() => validateCalendarRecords(validRows.map(row => ({
+        ...row,
+        'quantidade dias aceitaveis para ficar pendente setor 01': '99 dias'
+    }))), /inválido/);
 });
 
 test('rejects oversized rules and foreign CORS preflight', async () => {

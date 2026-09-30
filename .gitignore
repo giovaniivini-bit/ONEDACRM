@@ -4,6 +4,7 @@ data/alert_rules.json
 data/alert_rules.json.tmp
 .tmp-alert-rules*.json
 data/aproveitamento_external.json
+data/calendar_external.json
 data/images_cache/
 data/drive_images.json
 data/drive_thumbnail_cache/

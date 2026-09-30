@@ -141,20 +141,37 @@ Na VPS, operações administrativas permanecem bloqueadas até a chave ser confi
 
 ### 7.2 Módulo Alertas
 
-Em **Gestão & Dados → Alertas**, o CRM cruza os 377 registros atuais com regras
-programáveis. Cada regra define prioridade, combinação E/OU, até oito condições e uma
-mensagem com campos dinâmicos. O motor aceita texto, números, campos vazios e comparações
-de data com o dia atual.
+Em **Gestão & Dados → Alertas**, o CRM cruza os registros operacionais com o
+[Calendário Industrial](https://docs.google.com/spreadsheets/d/1T9u4hGeKPPJyKix62u--mudStz3R22RlIrDkqk0ViBg/edit?usp=sharing).
+Essa é a única planilha de referência para os limites do módulo. O servidor lê a aba
+`Página1` (`gid=0`) e mantém um snapshot em `data/calendar_external.json`, usado somente
+quando o Google Sheets fica temporariamente indisponível.
 
-As três regras iniciais cobrem prazo em atraso, produtos parados no Setor 13 e produtos
-sem imagem. Regras padrão podem ser ativadas, editadas ou duplicadas; regras criadas pelo
-usuário também podem ser excluídas. Antes de salvar, use **Testar regra** para conferir a
+As três regras operacionais são:
+
+1. **Setor 13:** a coluna A informa a semana e a coluna B, a data limite. Se a data atual
+   for posterior ao limite e o pedido continuar no setor 13, o aviso informa OF, semana e
+   data limite. Datas como `24/set.` recebem o ano do ciclo industrial (`2645` → 2026).
+   Como o ciclo começa antes do ano civil, as semanas iniciais de novembro/dezembro usam
+   o ano anterior (`2601`, com `20/nov.`, → 20/11/2025).
+2. **Setor 01:** a coluna E informa a quantidade máxima de dias. O aviso aparece somente
+   quando `diasParado` for maior que o limite — estar exatamente no limite não gera alerta.
+3. **Malotes 83/88:** o CRM cruza registros da mesma OF. O aviso aparece quando o malote
+   está no setor 83 ou 88 e a parte principal está no setor 20 ou 26.
+
+Não há alerta padrão de imagem ausente, prazo genérico ou permanência no Setor 13 fora
+desse calendário. Se a planilha e o snapshot estiverem indisponíveis, os alertas dos
+setores 13 e 01 ficam suspensos de forma explícita; o cruzamento de Malotes continua.
+
+Cada regra ainda permite definir prioridade, combinação E/OU, até oito condições e uma
+mensagem com campos dinâmicos. Antes de salvar, use **Testar regra** para conferir a
 quantidade de ocorrências e um exemplo. A tela monta 30 avisos por lote para preservar a
 fluidez em computadores mais modestos.
 
-As regras ficam em `data/alert_rules.json`; preserve esse arquivo durante deploys. O
-cálculo ocorre no navegador sobre os dados atuais, portanto não duplica as planilhas e
-não altera nenhuma tela operacional existente.
+As regras ficam em `data/alert_rules.json`, atualmente no formato versionado
+`{"version": 2, "rules": [...]}`; preserve esse arquivo durante deploys. O cálculo ocorre
+no navegador e não altera a planilha nem os dados operacionais. Ao migrar do formato
+anterior, o CRM troca os padrões antigos, mas preserva regras personalizadas.
 
 Checks mínimos antes de publicar:
 

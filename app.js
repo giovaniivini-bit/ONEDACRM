@@ -48,6 +48,7 @@
         rotativosSearch: '',
         rotativosViewMode: 'grid',
         rotativosExternalData: null,
+        calendarExternalData: null,
         rotativosActiveTab: 'drive',
         rotativosDriveFilter: null,
         rotativosDriveSearch: '', // 'grid' (4 fotos por linha) ou 'table',
@@ -684,13 +685,14 @@
                     return response.ok ? payload : payload;
                 }).catch(() => null);
             };
-            const [coresRes, avRes, cqRes, ltRes, rotRes, apRes] = await Promise.all([
+            const [coresRes, avRes, cqRes, ltRes, rotRes, apRes, calendarRes] = await Promise.all([
                 requestExternal('cores'),
                 requestExternal('aviamentos'),
                 requestExternal('cq'),
                 requestExternal('leadtime'),
                 requestExternal('rotativos'),
-                requestExternal('aproveitamento')
+                requestExternal('aproveitamento'),
+                requestExternal('calendar')
             ]);
             if (coresRes && coresRes.success) {
                 state.coresExternalData = coresRes;
@@ -710,8 +712,11 @@
             if (apRes && apRes.success) {
                 state.aproveitamentoExternalData = apRes;
             }
+            if (calendarRes && calendarRes.success) {
+                state.calendarExternalData = calendarRes;
+            }
             updateSidebarBadges();
-            if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'geral'].includes(state.activeSubmodule)) {
+            if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'alertas', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
             }
         } catch (e) {
@@ -1157,7 +1162,12 @@
             // silenciosa para evitar um pico falso de alertas no primeiro paint.
             hasImage: state.imagesLoaded ? Boolean(getProductImage(item).hasImage) : true
         }));
-        state.activeAlerts = window.CRMAlertsEngine.evaluateRecords(records, state.alertRules);
+        const operationalRecords = window.CRMAlertsEngine.buildOperationalAlertRecords(
+            records,
+            state.calendarExternalData?.records || [],
+            { now: new Date() }
+        );
+        state.activeAlerts = window.CRMAlertsEngine.evaluateRecords(operationalRecords, state.alertRules);
         return state.activeAlerts;
     }
 
@@ -10600,6 +10610,11 @@
         updateAlertsBadges();
         const alerts = state.activeAlerts || [];
         const rules = state.alertRules || [];
+        const calendarRecords = state.calendarExternalData?.records || [];
+        const calendarAvailable = calendarRecords.length > 0;
+        const calendarMode = calendarAvailable
+            ? (state.calendarExternalData?.isLive === false ? 'cache local' : 'ao vivo')
+            : 'indisponível';
         const query = String(state.alertsSearch || '').trim().toLocaleLowerCase('pt-BR');
         const filteredAlerts = alerts.filter(alert => {
             if (state.alertsSeverity !== 'all' && alert.severity !== state.alertsSeverity) return false;
@@ -10714,10 +10729,17 @@
                     <p class="module-view-description">Pendências calculadas automaticamente a partir dos dados atuais e das regras programadas.</p>
                 </div>
                 <div class="alerts-header-actions">
+                    <span class="badge ${calendarAvailable ? 'badge-cyan' : 'badge-rose'}"><i class="fa-solid fa-calendar-days"></i> Calendário ${calendarMode}</span>
                     <span class="badge badge-sub">${rules.filter(rule => rule.enabled).length} regras ativas</span>
                     <button class="btn btn-glass" onclick="window.crmRefreshAlerts()"><i class="fa-solid fa-arrows-rotate"></i> Recalcular</button>
                 </div>
             </div>
+            ${calendarAvailable ? '' : `
+                <div class="alert-rule-test-result error" style="display:block; margin-bottom:16px;">
+                    <strong>Calendário Industrial indisponível.</strong>
+                    <span>Os alertas do Setor 13 e do Setor 01 ficam suspensos até a planilha ou o cache voltar; o cruzamento de Malotes continua ativo.</span>
+                </div>
+            `}
             <div class="kpi-grid alerts-kpi-grid">
                 <div class="kpi-card rose"><div class="kpi-header"><span class="kpi-label">Críticos</span><div class="kpi-icon"><i class="fa-solid fa-circle-exclamation"></i></div></div><div class="kpi-value">${formatNumber(counts.critical)}</div><div class="kpi-footer">Ação imediata</div></div>
                 <div class="kpi-card amber"><div class="kpi-header"><span class="kpi-label">Atenção</span><div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div></div><div class="kpi-value">${formatNumber(counts.warning)}</div><div class="kpi-footer">Requer acompanhamento</div></div>
@@ -11628,7 +11650,7 @@
                     </div>
                     <div id="alertRuleConditions" class="alert-rule-condition-list"></div>
                     <label><span>Mensagem do aviso</span><textarea id="alertRuleMessage" maxlength="400" rows="3" placeholder="Use {op}, {codigo}, {setor}, {diasParado}...">${escapeHtml(draft.message || '')}</textarea></label>
-                    <div class="alert-rule-help">Campos dinâmicos disponíveis: <code>{op}</code>, <code>{codigo}</code>, <code>{setor}</code>, <code>{cliente}</code>, <code>{diasParado}</code>, <code>{semanaPedido}</code>.</div>
+                    <div class="alert-rule-help">Campos dinâmicos disponíveis: <code>{op}</code>, <code>{codigo}</code>, <code>{setor}</code>, <code>{diasParado}</code>, <code>{semanaPedido}</code>, <code>{deadlineSetor13}</code>, <code>{setor01LimitDays}</code>, <code>{primarySector}</code>, <code>{maloteSetor}</code>.</div>
                     <label class="alert-rule-toggle"><input id="alertRuleEnabled" type="checkbox" ${draft.enabled !== false ? 'checked' : ''}><span>Ativar regra ao salvar</span></label>
                     <div id="alertRuleTestResult" class="alert-rule-test-result" style="display:none;"></div>
                 </div>
@@ -11717,7 +11739,12 @@
             const validation = window.CRMAlertsEngine.validateRules([draft]);
             if (!validation.valid) throw new Error(validation.error);
             const records = state.allData.map(item => ({ ...item, hasImage: state.imagesLoaded ? Boolean(getProductImage(item).hasImage) : true }));
-            const matches = window.CRMAlertsEngine.evaluateRecords(records, [draft]);
+            const operationalRecords = window.CRMAlertsEngine.buildOperationalAlertRecords(
+                records,
+                state.calendarExternalData?.records || [],
+                { now: new Date() }
+            );
+            const matches = window.CRMAlertsEngine.evaluateRecords(operationalRecords, [draft]);
             result.style.display = 'block';
             result.className = 'alert-rule-test-result success';
             result.innerHTML = `<strong>${formatNumber(matches.length)} ocorrência(s) encontrada(s).</strong>${matches[0] ? `<span>Exemplo: ${escapeHtml(matches[0].message)}</span>` : '<span>A regra está válida, mas nenhum registro atual atende às condições.</span>'}`;

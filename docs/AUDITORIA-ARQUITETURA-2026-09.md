@@ -38,16 +38,18 @@ de negócio com a renderização. Ele recebe registros e regras validadas, produ
 deduplicadas e não altera os dados de origem. A interface pagina os resultados e a API
 persiste somente as regras personalizadas.
 
-Essa base foi desenhada para receber futuramente o Calendário Industrial: a planilha deve
-ser normalizada em campos de data no servidor e, depois, exposta como condições do motor,
-sem codificar cada alerta diretamente na tela.
+A base agora consome o Calendário Industrial como fonte exclusiva dos limites dos setores
+13 e 01. A leitura usa snapshot local resiliente, enquanto o motor puro normaliza semana,
+datas e limites antes de avaliar as regras. O terceiro cruzamento identifica, pela mesma
+OF, malotes nos setores 83/88 cuja parte principal permanece nos setores 20/26.
 
 ## Pontos ainda recomendados
 
 ### Prioridade alta
 
 - colocar o endereço do CRM atrás de autenticação individual ou VPN/Cloudflare Access;
-- configurar `CRM_ADMIN_TOKEN` forte e backup de `data/alert_rules.json` na VPS;
+- configurar `CRM_ADMIN_TOKEN` forte e backup de `data/alert_rules.json` e
+  `data/calendar_external.json` na VPS;
 - autenticar a Google Drive API para eliminar a listagem pública parcial;
 - adicionar smoke automatizado das rotas HTTP ao pipeline de publicação.
 
@@ -67,7 +69,7 @@ sem codificar cada alerta diretamente na tela.
 ## Evidências de validação
 
 - verificação de sintaxe dos quatro arquivos JavaScript centrais;
-- 15 testes automatizados aprovados, incluindo rotas HTTP reais;
+- testes automatizados do motor, segurança, cache de imagens e rotas HTTP reais;
 - smoke HTTP para arquivos públicos, arquivos bloqueados, CORS, autorização e métodos;
 - validação visual da tela Alertas, cálculo real, filtro, criação, teste e persistência;
 - abertura da tela inicial com os 377 registros e badges dos módulos existentes.
