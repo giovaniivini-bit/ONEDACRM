@@ -10,10 +10,10 @@ const fs = require('fs');
 const path = require('path');
 const { createDriveImageProxy } = require('./drive-image-cache');
 const alertsEngine = require('./alerts-engine');
+const { createAdminAuth } = require('./admin-auth');
 const {
     readRequestBody,
     requestIsSameOrigin,
-    isAdminRequest,
     applySecurityHeaders
 } = require('./server-security');
 
@@ -30,11 +30,29 @@ const ALERT_RULES_PATH = process.env.ALERT_RULES_PATH
     ? path.resolve(process.env.ALERT_RULES_PATH)
     : path.join(DATA_DIR, 'alert_rules.json');
 const ADMIN_TOKEN = String(process.env.CRM_ADMIN_TOKEN || '').trim();
+const ADMIN_PASSWORD_HASH = String(process.env.CRM_ADMIN_PASSWORD_HASH || '').trim();
+const CRM_PUBLIC_ORIGIN = String(process.env.CRM_PUBLIC_ORIGIN || '').trim();
+const CRM_TRUST_PROXY = process.env.CRM_TRUST_PROXY === '1';
+const CRM_TRUSTED_PROXY_IPS = String(process.env.CRM_TRUSTED_PROXY_IPS || '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean);
+const sameOriginRequest = req => requestIsSameOrigin(req, {
+    publicOrigin: CRM_PUBLIC_ORIGIN,
+    trustProxy: CRM_TRUST_PROXY
+});
+const adminAuth = createAdminAuth({
+    passwordHash: ADMIN_PASSWORD_HASH,
+    legacyToken: ADMIN_TOKEN,
+    publicOrigin: CRM_PUBLIC_ORIGIN,
+    trustProxy: CRM_TRUST_PROXY,
+    trustedProxyAddresses: CRM_TRUSTED_PROXY_IPS
+});
 const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE_TTL_MS) || 5 * 60_000);
 const PUBLIC_FILES = new Set(['index.html', 'style.css', 'app.js', 'alerts-engine.js']);
 
-if (!ADMIN_TOKEN) {
-    console.warn('⚠️  CRM_ADMIN_TOKEN não configurado: escritas remotas estão bloqueadas; somente localhost na mesma origem é aceito.');
+if (!ADMIN_PASSWORD_HASH) {
+    console.warn('⚠️  CRM_ADMIN_PASSWORD_HASH não configurado: login administrativo por senha está indisponível.');
 }
 const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
 const RULES_BODY_LIMIT = 256 * 1024;
@@ -53,7 +71,7 @@ function sendJson(res, statusCode, payload, extraHeaders = {}) {
 }
 
 function requireAdmin(req, res) {
-    if (isAdminRequest(req, ADMIN_TOKEN)) return true;
+    if (adminAuth.isAuthorized(req)) return true;
     sendJson(res, 401, {
         success: false,
         code: 'ADMIN_AUTH_REQUIRED',
@@ -731,7 +749,7 @@ function serveLocalImageFile(filename, req, res) {
 async function requestHandler(req, res) {
     applySecurityHeaders(res);
     const origin = req.headers.origin;
-    if (origin && requestIsSameOrigin(req)) {
+    if (origin && sameOriginRequest(req)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Vary', 'Origin');
     }
@@ -739,7 +757,7 @@ async function requestHandler(req, res) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-CRM-Admin-Token');
     
     if (req.method === 'OPTIONS') {
-        if (origin && !requestIsSameOrigin(req)) {
+        if (origin && !sameOriginRequest(req)) {
             res.writeHead(403);
             res.end();
             return;
@@ -754,6 +772,64 @@ async function requestHandler(req, res) {
 
     if (pathname === '/api/health') {
         sendJson(res, 200, { ok: true, service: 'oneda-crm', timestamp: new Date().toISOString() });
+        return;
+    }
+
+    if (pathname === '/api/admin/session') {
+        if (req.method !== 'GET') {
+            res.writeHead(405, { Allow: 'GET' });
+            res.end();
+            return;
+        }
+        sendJson(res, 200, { success: true, ...adminAuth.status(req) });
+        return;
+    }
+
+    if (pathname === '/api/admin/login') {
+        if (req.method !== 'POST') {
+            res.writeHead(405, { Allow: 'POST' });
+            res.end();
+            return;
+        }
+        if (!sameOriginRequest(req)) {
+            sendJson(res, 403, { success: false, error: 'Origem da solicitação não autorizada.' });
+            return;
+        }
+        try {
+            const body = JSON.parse(await readRequestBody(req, 16 * 1024) || '{}');
+            const result = adminAuth.login(req, body.password);
+            if (!result.ok) {
+                const headers = result.retryAfterSeconds ? { 'Retry-After': String(result.retryAfterSeconds) } : {};
+                sendJson(res, result.statusCode, {
+                    success: false,
+                    error: result.statusCode === 429
+                        ? 'Muitas tentativas. Aguarde alguns minutos e tente novamente.'
+                        : 'Senha administrativa inválida.'
+                }, headers);
+                return;
+            }
+            sendJson(res, 200, {
+                success: true,
+                authenticated: true,
+                expiresAt: new Date(result.expiresAt).toISOString()
+            }, { 'Set-Cookie': result.cookie });
+        } catch (error) {
+            sendJson(res, error.statusCode || 400, { success: false, error: 'Solicitação de login inválida.' });
+        }
+        return;
+    }
+
+    if (pathname === '/api/admin/logout') {
+        if (req.method !== 'POST') {
+            res.writeHead(405, { Allow: 'POST' });
+            res.end();
+            return;
+        }
+        if (!sameOriginRequest(req)) {
+            sendJson(res, 403, { success: false, error: 'Origem da solicitação não autorizada.' });
+            return;
+        }
+        sendJson(res, 200, { success: true, authenticated: false }, { 'Set-Cookie': adminAuth.logout(req) });
         return;
     }
 

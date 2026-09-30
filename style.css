@@ -54,6 +54,77 @@
     --transition-fast: all 0.15s ease;
 }
 
+.admin-login-overlay {
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.admin-login-card {
+    width: min(420px, 100%);
+    padding: 28px;
+}
+
+.admin-login-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    border-radius: 14px;
+    color: #a78bfa;
+    background: rgba(124, 58, 237, 0.16);
+    font-size: 21px;
+}
+
+.admin-login-description {
+    margin: 10px 0 20px;
+    color: var(--text-muted, #94a3b8);
+    line-height: 1.5;
+}
+
+.admin-login-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary, #cbd5e1);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.admin-login-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 9px;
+    outline: none;
+    color: var(--text-primary, #f8fafc);
+    background: var(--bg-primary, #0f172a);
+    font: inherit;
+}
+
+.admin-login-input:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.16);
+}
+
+.admin-login-error {
+    min-height: 20px;
+    margin: 8px 0 0;
+    color: #fb7185;
+    font-size: 12px;
+}
+
+.admin-login-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+}
+
 /* ========================================================================== */
 /* ALERTAS OPERACIONAIS                                                       */
 /* ========================================================================== */

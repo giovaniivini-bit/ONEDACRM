@@ -73,7 +73,6 @@
         alertsTab: 'active',
         alertsPageLimit: 30,
         alertsLoading: true,
-        adminToken: '',
         imagesLoaded: false,
         driveImages: {}
     };
@@ -628,26 +627,68 @@
         }
     }
 
+    let adminLoginPromise = null;
+
+    function requestAdminLogin() {
+        if (adminLoginPromise) return adminLoginPromise;
+        const modal = document.getElementById('adminLoginModal');
+        const form = document.getElementById('adminLoginForm');
+        const passwordInput = document.getElementById('adminPasswordInput');
+        const errorText = document.getElementById('adminLoginError');
+        const cancelButton = document.getElementById('cancelAdminLoginBtn');
+
+        adminLoginPromise = new Promise((resolve, reject) => {
+            const finish = (error = null) => {
+                modal.style.display = 'none';
+                passwordInput.value = '';
+                form.onsubmit = null;
+                cancelButton.onclick = null;
+                adminLoginPromise = null;
+                if (error) reject(error);
+                else resolve();
+            };
+
+            errorText.textContent = '';
+            modal.style.display = 'flex';
+            window.setTimeout(() => passwordInput.focus(), 0);
+
+            cancelButton.onclick = () => finish(new Error('Ação administrativa cancelada.'));
+            form.onsubmit = async event => {
+                event.preventDefault();
+                const password = passwordInput.value;
+                if (!password) return;
+                const submitButton = form.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                errorText.textContent = '';
+                try {
+                    const response = await fetch('/api/admin/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password })
+                    });
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(payload.error || 'Não foi possível entrar.');
+                    finish();
+                } catch (error) {
+                    errorText.textContent = error.message;
+                    passwordInput.select();
+                } finally {
+                    submitButton.disabled = false;
+                }
+            };
+        });
+        return adminLoginPromise;
+    }
+
     async function adminFetch(url, options = {}) {
-        const makeRequest = token => {
-            const headers = new Headers(options.headers || {});
-            if (token) headers.set('X-CRM-Admin-Token', token);
-            return fetch(url, { ...options, headers });
-        };
-        const sentToken = state.adminToken || '';
-        let response = await makeRequest(sentToken);
+        const makeRequest = () => fetch(url, options);
+        let response = await makeRequest();
         if (response.status !== 401) return response;
 
-        const newerToken = state.adminToken || '';
-        if (newerToken && newerToken !== sentToken) return makeRequest(newerToken);
-
-        const entered = window.prompt('Esta ação administrativa exige a chave do CRM. Informe a chave de administração:');
-        if (!entered) throw new Error('Ação cancelada: chave administrativa não informada.');
-        state.adminToken = entered.trim();
-        response = await makeRequest(entered.trim());
+        await requestAdminLogin();
+        response = await makeRequest();
         if (response.status === 401) {
-            state.adminToken = '';
-            throw new Error('Chave administrativa inválida.');
+            throw new Error('A sessão administrativa não pôde ser validada. Entre novamente.');
         }
         return response;
     }

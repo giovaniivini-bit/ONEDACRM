@@ -4,9 +4,11 @@ const fs = require('node:fs');
 const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
+const { encodePasswordHash } = require('../admin-auth');
 
 const rulesPath = path.join(os.tmpdir(), `oneda-alert-rules-${process.pid}.json`);
 process.env.CRM_ADMIN_TOKEN = 'route-test-secret';
+process.env.CRM_ADMIN_PASSWORD_HASH = encodePasswordHash('Senha administrativa para rotas!');
 process.env.ALERT_RULES_PATH = rulesPath;
 
 const { requestHandler, validateCalendarRecords } = require('../server');
@@ -96,6 +98,71 @@ test('persists valid alert rules and reloads them', async () => {
         'malotes-parte-principal',
         'route-test'
     ]);
+});
+
+test('authenticates administrative writes with an HttpOnly session cookie', async () => {
+    const origin = `http://127.0.0.1:${port}`;
+    const missingOrigin = await request({
+        method: 'POST',
+        route: '/api/admin/login',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'Senha administrativa para rotas!' })
+    });
+    assert.equal(missingOrigin.status, 403);
+
+    const invalid = await request({
+        method: 'POST',
+        route: '/api/admin/login',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({ password: 'senha incorreta' })
+    });
+    assert.equal(invalid.status, 401);
+
+    const login = await request({
+        method: 'POST',
+        route: '/api/admin/login',
+        headers: { 'Content-Type': 'application/json', Origin: origin },
+        body: JSON.stringify({ password: 'Senha administrativa para rotas!' })
+    });
+    assert.equal(login.status, 200);
+    assert.match(login.headers['set-cookie'][0], /HttpOnly/);
+    assert.match(login.headers['set-cookie'][0], /SameSite=Strict/);
+    const cookie = login.headers['set-cookie'][0].split(';')[0];
+
+    const session = await request({
+        route: '/api/admin/session',
+        headers: { Cookie: cookie, Origin: origin }
+    });
+    assert.equal(JSON.parse(session.body).authenticated, true);
+
+    const saved = await request({
+        method: 'PUT',
+        route: '/api/alert-rules',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie, Origin: origin },
+        body: JSON.stringify({ rules: [] })
+    });
+    assert.equal(saved.status, 200);
+
+    const crossOrigin = await request({
+        method: 'PUT',
+        route: '/api/alert-rules',
+        headers: { 'Content-Type': 'application/json', Cookie: cookie, Origin: 'https://evil.example' },
+        body: JSON.stringify({ rules: [] })
+    });
+    assert.equal(crossOrigin.status, 401);
+
+    const logout = await request({
+        method: 'POST',
+        route: '/api/admin/logout',
+        headers: { Cookie: cookie, Origin: origin }
+    });
+    assert.equal(logout.status, 200);
+    assert.match(logout.headers['set-cookie'][0], /Max-Age=0/);
+    const afterLogout = await request({
+        route: '/api/admin/session',
+        headers: { Cookie: cookie, Origin: origin }
+    });
+    assert.equal(JSON.parse(afterLogout.body).authenticated, false);
 });
 
 test('validates the industrial calendar before it can replace the cache', () => {

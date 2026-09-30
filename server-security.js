@@ -40,12 +40,17 @@ function safeTokenEquals(actual, expected) {
     return left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
-function requestIsSameOrigin(req) {
+function requestIsSameOrigin(req, { publicOrigin = '', trustProxy = false } = {}) {
     const origin = req.headers.origin;
     if (!origin) return false;
     try {
         const originUrl = new URL(origin);
-        return originUrl.host === req.headers.host;
+        if (publicOrigin) return originUrl.origin === new URL(publicOrigin).origin;
+        const forwardedProtocol = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim();
+        const protocol = trustProxy && forwardedProtocol
+            ? forwardedProtocol
+            : (req.socket?.encrypted ? 'https' : 'http');
+        return originUrl.origin === `${protocol}://${req.headers.host}`;
     } catch (_) {
         return false;
     }

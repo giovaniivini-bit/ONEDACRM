@@ -366,6 +366,22 @@
     <!-- Container Flutuante para Toasts de Notificação -->
     <div id="toastContainer" class="toast-container"></div>
 
+    <!-- Login administrativo: a senha nunca é armazenada no navegador. -->
+    <div class="modal-overlay admin-login-overlay" id="adminLoginModal" style="display: none;">
+        <form class="modal-card admin-login-card" id="adminLoginForm">
+            <div class="admin-login-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h3 class="modal-title">Acesso administrativo</h3>
+            <p class="admin-login-description">Digite a senha para sincronizar dados, importar arquivos ou alterar configurações.</p>
+            <label class="admin-login-label" for="adminPasswordInput">Senha administrativa</label>
+            <input class="admin-login-input" id="adminPasswordInput" type="password" autocomplete="current-password" required>
+            <p class="admin-login-error" id="adminLoginError" role="alert"></p>
+            <div class="admin-login-actions">
+                <button class="toolbar-pill-btn" id="cancelAdminLoginBtn" type="button">Cancelar</button>
+                <button class="btn-primary-action" type="submit"><i class="fa-solid fa-right-to-bracket"></i> Entrar</button>
+            </div>
+        </form>
+    </div>
+
     <!-- Modal de Detalhes 360 da OP -->
     <div class="modal-overlay" id="opDetailsModal" style="display: none;">
         <div class="modal-card">
@@ -395,7 +411,7 @@
             document.write('<script src="data.js"><\/script>');
         }
     </script>
-    <script src="alerts-engine.js?v=20260930-calendar-alerts"></script>
-    <script src="app.js?v=20260930-calendar-alerts"></script>
+    <script src="alerts-engine.js?v=20260930-admin-login"></script>
+    <script src="app.js?v=20260930-admin-login"></script>
 </body>
 </html>

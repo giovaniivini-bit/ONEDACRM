@@ -27,9 +27,17 @@ npm start
 
 Acesse `http://127.0.0.1:3000`.
 
-Copie `.env.example` para o mecanismo de variáveis usado no ambiente e defina uma
-`CRM_ADMIN_TOKEN` forte na produção. Essa chave protege sincronizações, imports,
-uploads e alterações nas regras de alertas.
+Copie `.env.example` para o mecanismo de variáveis usado no ambiente e defina
+`CRM_ADMIN_PASSWORD_HASH` na produção. O navegador abre o login somente ao executar
+uma ação administrativa; a senha é validada no servidor e nunca é armazenada no
+navegador. A sessão segura dura até 8 horas e protege sincronizações, imports, uploads
+e alterações nas regras de alertas.
+
+`CRM_ADMIN_TOKEN` existe apenas como recuperação temporária para automações antigas e
+deve permanecer fora do Git.
+
+Para gerar um hash compatível sem deixar a senha no histórico do terminal, execute
+`node scripts/generate-admin-hash.js`; a digitação é mascarada e apenas o hash é exibido.
 
 ## Testes
 

@@ -10,7 +10,14 @@ test('compares admin tokens safely', () => {
 });
 
 test('recognizes same-origin requests and rejects foreign origins', () => {
-    assert.equal(requestIsSameOrigin({ headers: { origin: 'https://crm.example.com', host: 'crm.example.com' } }), true);
+    assert.equal(requestIsSameOrigin({
+        headers: { origin: 'https://crm.example.com', host: 'crm.example.com' },
+        socket: { encrypted: true }
+    }), true);
+    assert.equal(requestIsSameOrigin({ headers: { origin: 'https://crm.example.com', host: 'crm.example.com' } }), false);
+    assert.equal(requestIsSameOrigin({
+        headers: { origin: 'https://crm.example.com', host: 'internal:3000', 'x-forwarded-proto': 'https' }
+    }, { publicOrigin: 'https://crm.example.com', trustProxy: true }), true);
     assert.equal(requestIsSameOrigin({ headers: { origin: 'https://evil.example', host: 'crm.example.com' } }), false);
     const local = {
         headers: { origin: 'http://127.0.0.1:3000', host: '127.0.0.1:3000' },
@@ -21,7 +28,7 @@ test('recognizes same-origin requests and rejects foreign origins', () => {
     assert.equal(isAdminRequest(local, ''), true);
     assert.equal(isAdminRequest({
         headers: { origin: 'http://localhost:3000', host: 'localhost:3000' },
-        socket: { remoteAddress: '203.0.113.8' }
+        socket: { remoteAddress: '203.0.113.8', encrypted: true }
     }, ''), false);
     assert.equal(isAdminRequest({
         headers: { origin: 'https://crm.example.com', host: 'crm.example.com' },

@@ -123,21 +123,27 @@ $env:PORT='3102'
 node server.js
 ```
 
-### 7.1 Chave administrativa
+### 7.1 Login administrativo
 
 As consultas e telas continuam acessíveis normalmente. Operações que alteram dados —
 sincronização forçada, importação, upload e gravação de regras — exigem a variável
-`CRM_ADMIN_TOKEN` na produção. O navegador solicita a chave na primeira operação
-administrativa e a conserva somente na memória enquanto a página permanece aberta;
-recarregar a página remove a chave.
+`CRM_ADMIN_PASSWORD_HASH` na produção. O navegador solicita a senha na primeira operação
+administrativa, mas não a armazena. O servidor devolve uma sessão em cookie seguro,
+inacessível ao JavaScript, válida por até 8 horas. Recarregar a página preserva a
+sessão; reiniciar o servidor ou usar o endpoint de logout a encerra.
 
 ```powershell
-$env:CRM_ADMIN_TOKEN='use-uma-chave-longa-e-aleatoria'
+$hash = node scripts/generate-admin-hash.js
+$env:CRM_ADMIN_PASSWORD_HASH=$hash
 node server.js
 ```
 
-Sem a variável, o servidor aceita gravações somente em `localhost` e na mesma origem.
-Na VPS, operações administrativas permanecem bloqueadas até a chave ser configurada.
+O gerador solicita e confirma a senha de modo mascarado e imprime somente o hash. Em
+desenvolvimento, atribua o valor retornado a `CRM_ADMIN_PASSWORD_HASH`. Sem essa variável
+e sem a chave legada, inclusive `localhost` permanece bloqueado para gravações.
+Na VPS, operações administrativas permanecem bloqueadas até o hash ser configurado.
+Durante a migração, `CRM_ADMIN_TOKEN` pode ser mantido como recuperação de emergência,
+sempre fora do Git.
 
 ### 7.2 Módulo Alertas
 
@@ -230,7 +236,7 @@ Antes de aceitar a alteração, confirme:
 - A listagem pública do Drive é parcial; imagens novas só ficam garantidas quando são espelhadas em `images/` e publicadas.
 - Os dados continuam dependentes de planilhas e seus formatos de colunas.
 - O deploy na VPS é manual e depende de acesso SSH.
-- O CRM ainda não possui contas e perfis por usuário; a chave administrativa protege as
+- O CRM ainda não possui contas e perfis por usuário; o login administrativo protege as
   mutações, mas a leitura dos dados depende da restrição de acesso aplicada ao endereço.
 
 Evoluções recomendadas:

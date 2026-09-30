@@ -32,17 +32,33 @@ Antes do `git pull`, confirme que a relação de arquivos não inclui dados oper
 Reinicie somente `oneda-crm-app`; os demais aplicativos da VPS não fazem parte deste
 deploy.
 
-## Chave administrativa
+## Login administrativo
 
-A chave não fica no Git. Na VPS, ela está armazenada em:
+A senha não fica no Git nem no navegador. A VPS recebe somente o hash scrypt em
+`CRM_ADMIN_PASSWORD_HASH`. Ao entrar, o servidor cria uma sessão de até 8 horas em um
+cookie `HttpOnly`, `Secure` e `SameSite=Strict`.
+
+Gere um hash compatível sem expor a senha no histórico do terminal:
+
+```bash
+node scripts/generate-admin-hash.js
+```
+
+Em produção, configure também `CRM_PUBLIC_ORIGIN` com a URL HTTPS exata e
+`CRM_TRUST_PROXY=1` e `CRM_TRUSTED_PROXY_IPS=127.0.0.1,::1`, pois o Caddy local
+encaminha o endereço real do cliente. O cabeçalho só é aceito quando a conexão imediata
+vem desses endereços, evitando falsificação e mantendo o limite separado por usuário.
+
+A chave anterior permanece temporariamente como recuperação em:
 
 ```text
 /home/ubuntu/.config/oneda-crm/admin-token
 ```
 
-O arquivo deve permanecer com permissão `600`. O PM2 recebe a variável
-`CRM_ADMIN_TOKEN` e sua lista de processos persistida mantém a configuração após reboot.
-Nunca copie o valor da chave para documentação, commit, log ou canal público.
+O arquivo deve permanecer com permissão `600`. O PM2 recebe as variáveis
+`CRM_ADMIN_PASSWORD_HASH` e, durante a transição, `CRM_ADMIN_TOKEN`; sua lista de
+processos persistida mantém a configuração após reboot. Nunca copie senha, hash ou
+chave para documentação, commit, log ou canal público.
 
 ## Rollback
 
