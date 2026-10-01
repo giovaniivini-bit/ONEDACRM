@@ -4616,6 +4616,656 @@ body.light-mode .toolbar-pill-btn.active {
     font-weight: 700 !important;
 }
 
+/* ==========================================================================
+   A360 GLOBAL UNIVERSAL COLOR MAPPING (LIGHT MODE)
+   Overrides all inline light/neon hex colors with dark saturated equivalents.
+   ========================================================================== */
+
+body.light-mode [style*="color: #ffffff"],
+body.light-mode [style*="color:#ffffff"],
+body.light-mode [style*="color: #FFFFFF"],
+body.light-mode [style*="color:#FFFFFF"] {
+    color: #0f172a !important;
+}
+
+body.light-mode [fill="#ffffff"],
+body.light-mode [fill="#FFFFFF"] {
+    fill: #0f172a !important;
+}
+
+body.light-mode [stroke="#ffffff"],
+body.light-mode [stroke="#FFFFFF"] {
+    stroke: #0f172a !important;
+}
+
+body.light-mode [style*="color: #f8fafc"],
+body.light-mode [style*="color:#f8fafc"],
+body.light-mode [style*="color: #F8FAFC"],
+body.light-mode [style*="color:#F8FAFC"] {
+    color: #0f172a !important;
+}
+
+body.light-mode [fill="#f8fafc"],
+body.light-mode [fill="#F8FAFC"] {
+    fill: #0f172a !important;
+}
+
+body.light-mode [stroke="#f8fafc"],
+body.light-mode [stroke="#F8FAFC"] {
+    stroke: #0f172a !important;
+}
+
+body.light-mode [style*="color: #f1f5f9"],
+body.light-mode [style*="color:#f1f5f9"],
+body.light-mode [style*="color: #F1F5F9"],
+body.light-mode [style*="color:#F1F5F9"] {
+    color: #1e293b !important;
+}
+
+body.light-mode [fill="#f1f5f9"],
+body.light-mode [fill="#F1F5F9"] {
+    fill: #1e293b !important;
+}
+
+body.light-mode [stroke="#f1f5f9"],
+body.light-mode [stroke="#F1F5F9"] {
+    stroke: #1e293b !important;
+}
+
+body.light-mode [style*="color: #e2e8f0"],
+body.light-mode [style*="color:#e2e8f0"],
+body.light-mode [style*="color: #E2E8F0"],
+body.light-mode [style*="color:#E2E8F0"] {
+    color: #334155 !important;
+}
+
+body.light-mode [fill="#e2e8f0"],
+body.light-mode [fill="#E2E8F0"] {
+    fill: #334155 !important;
+}
+
+body.light-mode [stroke="#e2e8f0"],
+body.light-mode [stroke="#E2E8F0"] {
+    stroke: #334155 !important;
+}
+
+body.light-mode [style*="color: #cbd5e1"],
+body.light-mode [style*="color:#cbd5e1"],
+body.light-mode [style*="color: #CBD5E1"],
+body.light-mode [style*="color:#CBD5E1"] {
+    color: #475569 !important;
+}
+
+body.light-mode [fill="#cbd5e1"],
+body.light-mode [fill="#CBD5E1"] {
+    fill: #475569 !important;
+}
+
+body.light-mode [stroke="#cbd5e1"],
+body.light-mode [stroke="#CBD5E1"] {
+    stroke: #475569 !important;
+}
+
+body.light-mode [style*="color: #94a3b8"],
+body.light-mode [style*="color:#94a3b8"],
+body.light-mode [style*="color: #94A3B8"],
+body.light-mode [style*="color:#94A3B8"] {
+    color: #475569 !important;
+}
+
+body.light-mode [fill="#94a3b8"],
+body.light-mode [fill="#94A3B8"] {
+    fill: #475569 !important;
+}
+
+body.light-mode [stroke="#94a3b8"],
+body.light-mode [stroke="#94A3B8"] {
+    stroke: #475569 !important;
+}
+
+body.light-mode [style*="color: #00a8ff"],
+body.light-mode [style*="color:#00a8ff"],
+body.light-mode [style*="color: #00A8FF"],
+body.light-mode [style*="color:#00A8FF"] {
+    color: #0284c7 !important;
+}
+
+body.light-mode [fill="#00a8ff"],
+body.light-mode [fill="#00A8FF"] {
+    fill: #0284c7 !important;
+}
+
+body.light-mode [stroke="#00a8ff"],
+body.light-mode [stroke="#00A8FF"] {
+    stroke: #0284c7 !important;
+}
+
+body.light-mode [style*="color: #00d4ff"],
+body.light-mode [style*="color:#00d4ff"],
+body.light-mode [style*="color: #00D4FF"],
+body.light-mode [style*="color:#00D4FF"] {
+    color: #0369a1 !important;
+}
+
+body.light-mode [fill="#00d4ff"],
+body.light-mode [fill="#00D4FF"] {
+    fill: #0369a1 !important;
+}
+
+body.light-mode [stroke="#00d4ff"],
+body.light-mode [stroke="#00D4FF"] {
+    stroke: #0369a1 !important;
+}
+
+body.light-mode [style*="color: #06b6d4"],
+body.light-mode [style*="color:#06b6d4"],
+body.light-mode [style*="color: #06B6D4"],
+body.light-mode [style*="color:#06B6D4"] {
+    color: #0891b2 !important;
+}
+
+body.light-mode [fill="#06b6d4"],
+body.light-mode [fill="#06B6D4"] {
+    fill: #0891b2 !important;
+}
+
+body.light-mode [stroke="#06b6d4"],
+body.light-mode [stroke="#06B6D4"] {
+    stroke: #0891b2 !important;
+}
+
+body.light-mode [style*="color: #22d3ee"],
+body.light-mode [style*="color:#22d3ee"],
+body.light-mode [style*="color: #22D3EE"],
+body.light-mode [style*="color:#22D3EE"] {
+    color: #0e7490 !important;
+}
+
+body.light-mode [fill="#22d3ee"],
+body.light-mode [fill="#22D3EE"] {
+    fill: #0e7490 !important;
+}
+
+body.light-mode [stroke="#22d3ee"],
+body.light-mode [stroke="#22D3EE"] {
+    stroke: #0e7490 !important;
+}
+
+body.light-mode [style*="color: #67e8f9"],
+body.light-mode [style*="color:#67e8f9"],
+body.light-mode [style*="color: #67E8F9"],
+body.light-mode [style*="color:#67E8F9"] {
+    color: #155e75 !important;
+}
+
+body.light-mode [fill="#67e8f9"],
+body.light-mode [fill="#67E8F9"] {
+    fill: #155e75 !important;
+}
+
+body.light-mode [stroke="#67e8f9"],
+body.light-mode [stroke="#67E8F9"] {
+    stroke: #155e75 !important;
+}
+
+body.light-mode [style*="color: #38bdf8"],
+body.light-mode [style*="color:#38bdf8"],
+body.light-mode [style*="color: #38BDF8"],
+body.light-mode [style*="color:#38BDF8"] {
+    color: #0284c7 !important;
+}
+
+body.light-mode [fill="#38bdf8"],
+body.light-mode [fill="#38BDF8"] {
+    fill: #0284c7 !important;
+}
+
+body.light-mode [stroke="#38bdf8"],
+body.light-mode [stroke="#38BDF8"] {
+    stroke: #0284c7 !important;
+}
+
+body.light-mode [style*="color: #7dd3fc"],
+body.light-mode [style*="color:#7dd3fc"],
+body.light-mode [style*="color: #7DD3FC"],
+body.light-mode [style*="color:#7DD3FC"] {
+    color: #0369a1 !important;
+}
+
+body.light-mode [fill="#7dd3fc"],
+body.light-mode [fill="#7DD3FC"] {
+    fill: #0369a1 !important;
+}
+
+body.light-mode [stroke="#7dd3fc"],
+body.light-mode [stroke="#7DD3FC"] {
+    stroke: #0369a1 !important;
+}
+
+body.light-mode [style*="color: #bae6fd"],
+body.light-mode [style*="color:#bae6fd"],
+body.light-mode [style*="color: #BAE6FD"],
+body.light-mode [style*="color:#BAE6FD"] {
+    color: #075985 !important;
+}
+
+body.light-mode [fill="#bae6fd"],
+body.light-mode [fill="#BAE6FD"] {
+    fill: #075985 !important;
+}
+
+body.light-mode [stroke="#bae6fd"],
+body.light-mode [stroke="#BAE6FD"] {
+    stroke: #075985 !important;
+}
+
+body.light-mode [style*="color: #3b82f6"],
+body.light-mode [style*="color:#3b82f6"],
+body.light-mode [style*="color: #3B82F6"],
+body.light-mode [style*="color:#3B82F6"] {
+    color: #1d4ed8 !important;
+}
+
+body.light-mode [fill="#3b82f6"],
+body.light-mode [fill="#3B82F6"] {
+    fill: #1d4ed8 !important;
+}
+
+body.light-mode [stroke="#3b82f6"],
+body.light-mode [stroke="#3B82F6"] {
+    stroke: #1d4ed8 !important;
+}
+
+body.light-mode [style*="color: #60a5fa"],
+body.light-mode [style*="color:#60a5fa"],
+body.light-mode [style*="color: #60A5FA"],
+body.light-mode [style*="color:#60A5FA"] {
+    color: #2563eb !important;
+}
+
+body.light-mode [fill="#60a5fa"],
+body.light-mode [fill="#60A5FA"] {
+    fill: #2563eb !important;
+}
+
+body.light-mode [stroke="#60a5fa"],
+body.light-mode [stroke="#60A5FA"] {
+    stroke: #2563eb !important;
+}
+
+body.light-mode [style*="color: #0ea5e9"],
+body.light-mode [style*="color:#0ea5e9"],
+body.light-mode [style*="color: #0EA5E9"],
+body.light-mode [style*="color:#0EA5E9"] {
+    color: #0284c7 !important;
+}
+
+body.light-mode [fill="#0ea5e9"],
+body.light-mode [fill="#0EA5E9"] {
+    fill: #0284c7 !important;
+}
+
+body.light-mode [stroke="#0ea5e9"],
+body.light-mode [stroke="#0EA5E9"] {
+    stroke: #0284c7 !important;
+}
+
+body.light-mode [style*="color: #10b981"],
+body.light-mode [style*="color:#10b981"],
+body.light-mode [style*="color: #10B981"],
+body.light-mode [style*="color:#10B981"] {
+    color: #059669 !important;
+}
+
+body.light-mode [fill="#10b981"],
+body.light-mode [fill="#10B981"] {
+    fill: #059669 !important;
+}
+
+body.light-mode [stroke="#10b981"],
+body.light-mode [stroke="#10B981"] {
+    stroke: #059669 !important;
+}
+
+body.light-mode [style*="color: #34d399"],
+body.light-mode [style*="color:#34d399"],
+body.light-mode [style*="color: #34D399"],
+body.light-mode [style*="color:#34D399"] {
+    color: #047857 !important;
+}
+
+body.light-mode [fill="#34d399"],
+body.light-mode [fill="#34D399"] {
+    fill: #047857 !important;
+}
+
+body.light-mode [stroke="#34d399"],
+body.light-mode [stroke="#34D399"] {
+    stroke: #047857 !important;
+}
+
+body.light-mode [style*="color: #6ee7b7"],
+body.light-mode [style*="color:#6ee7b7"],
+body.light-mode [style*="color: #6EE7B7"],
+body.light-mode [style*="color:#6EE7B7"] {
+    color: #065f46 !important;
+}
+
+body.light-mode [fill="#6ee7b7"],
+body.light-mode [fill="#6EE7B7"] {
+    fill: #065f46 !important;
+}
+
+body.light-mode [stroke="#6ee7b7"],
+body.light-mode [stroke="#6EE7B7"] {
+    stroke: #065f46 !important;
+}
+
+body.light-mode [style*="color: #86efac"],
+body.light-mode [style*="color:#86efac"],
+body.light-mode [style*="color: #86EFAC"],
+body.light-mode [style*="color:#86EFAC"] {
+    color: #166534 !important;
+}
+
+body.light-mode [fill="#86efac"],
+body.light-mode [fill="#86EFAC"] {
+    fill: #166534 !important;
+}
+
+body.light-mode [stroke="#86efac"],
+body.light-mode [stroke="#86EFAC"] {
+    stroke: #166534 !important;
+}
+
+body.light-mode [style*="color: #a7f3d0"],
+body.light-mode [style*="color:#a7f3d0"],
+body.light-mode [style*="color: #A7F3D0"],
+body.light-mode [style*="color:#A7F3D0"] {
+    color: #14532d !important;
+}
+
+body.light-mode [fill="#a7f3d0"],
+body.light-mode [fill="#A7F3D0"] {
+    fill: #14532d !important;
+}
+
+body.light-mode [stroke="#a7f3d0"],
+body.light-mode [stroke="#A7F3D0"] {
+    stroke: #14532d !important;
+}
+
+body.light-mode [style*="color: #ef4444"],
+body.light-mode [style*="color:#ef4444"],
+body.light-mode [style*="color: #EF4444"],
+body.light-mode [style*="color:#EF4444"] {
+    color: #b91c1c !important;
+}
+
+body.light-mode [fill="#ef4444"],
+body.light-mode [fill="#EF4444"] {
+    fill: #b91c1c !important;
+}
+
+body.light-mode [stroke="#ef4444"],
+body.light-mode [stroke="#EF4444"] {
+    stroke: #b91c1c !important;
+}
+
+body.light-mode [style*="color: #f43f5e"],
+body.light-mode [style*="color:#f43f5e"],
+body.light-mode [style*="color: #F43F5E"],
+body.light-mode [style*="color:#F43F5E"] {
+    color: #e11d48 !important;
+}
+
+body.light-mode [fill="#f43f5e"],
+body.light-mode [fill="#F43F5E"] {
+    fill: #e11d48 !important;
+}
+
+body.light-mode [stroke="#f43f5e"],
+body.light-mode [stroke="#F43F5E"] {
+    stroke: #e11d48 !important;
+}
+
+body.light-mode [style*="color: #f87171"],
+body.light-mode [style*="color:#f87171"],
+body.light-mode [style*="color: #F87171"],
+body.light-mode [style*="color:#F87171"] {
+    color: #dc2626 !important;
+}
+
+body.light-mode [fill="#f87171"],
+body.light-mode [fill="#F87171"] {
+    fill: #dc2626 !important;
+}
+
+body.light-mode [stroke="#f87171"],
+body.light-mode [stroke="#F87171"] {
+    stroke: #dc2626 !important;
+}
+
+body.light-mode [style*="color: #fb7185"],
+body.light-mode [style*="color:#fb7185"],
+body.light-mode [style*="color: #FB7185"],
+body.light-mode [style*="color:#FB7185"] {
+    color: #e11d48 !important;
+}
+
+body.light-mode [fill="#fb7185"],
+body.light-mode [fill="#FB7185"] {
+    fill: #e11d48 !important;
+}
+
+body.light-mode [stroke="#fb7185"],
+body.light-mode [stroke="#FB7185"] {
+    stroke: #e11d48 !important;
+}
+
+body.light-mode [style*="color: #fca5a5"],
+body.light-mode [style*="color:#fca5a5"],
+body.light-mode [style*="color: #FCA5A5"],
+body.light-mode [style*="color:#FCA5A5"] {
+    color: #b91c1c !important;
+}
+
+body.light-mode [fill="#fca5a5"],
+body.light-mode [fill="#FCA5A5"] {
+    fill: #b91c1c !important;
+}
+
+body.light-mode [stroke="#fca5a5"],
+body.light-mode [stroke="#FCA5A5"] {
+    stroke: #b91c1c !important;
+}
+
+body.light-mode [style*="color: #ec4899"],
+body.light-mode [style*="color:#ec4899"],
+body.light-mode [style*="color: #EC4899"],
+body.light-mode [style*="color:#EC4899"] {
+    color: #db2777 !important;
+}
+
+body.light-mode [fill="#ec4899"],
+body.light-mode [fill="#EC4899"] {
+    fill: #db2777 !important;
+}
+
+body.light-mode [stroke="#ec4899"],
+body.light-mode [stroke="#EC4899"] {
+    stroke: #db2777 !important;
+}
+
+body.light-mode [style*="color: #f472b6"],
+body.light-mode [style*="color:#f472b6"],
+body.light-mode [style*="color: #F472B6"],
+body.light-mode [style*="color:#F472B6"] {
+    color: #be185d !important;
+}
+
+body.light-mode [fill="#f472b6"],
+body.light-mode [fill="#F472B6"] {
+    fill: #be185d !important;
+}
+
+body.light-mode [stroke="#f472b6"],
+body.light-mode [stroke="#F472B6"] {
+    stroke: #be185d !important;
+}
+
+body.light-mode [style*="color: #a855f7"],
+body.light-mode [style*="color:#a855f7"],
+body.light-mode [style*="color: #A855F7"],
+body.light-mode [style*="color:#A855F7"] {
+    color: #7e22ce !important;
+}
+
+body.light-mode [fill="#a855f7"],
+body.light-mode [fill="#A855F7"] {
+    fill: #7e22ce !important;
+}
+
+body.light-mode [stroke="#a855f7"],
+body.light-mode [stroke="#A855F7"] {
+    stroke: #7e22ce !important;
+}
+
+body.light-mode [style*="color: #c084fc"],
+body.light-mode [style*="color:#c084fc"],
+body.light-mode [style*="color: #C084FC"],
+body.light-mode [style*="color:#C084FC"] {
+    color: #9333ea !important;
+}
+
+body.light-mode [fill="#c084fc"],
+body.light-mode [fill="#C084FC"] {
+    fill: #9333ea !important;
+}
+
+body.light-mode [stroke="#c084fc"],
+body.light-mode [stroke="#C084FC"] {
+    stroke: #9333ea !important;
+}
+
+body.light-mode [style*="color: #a78bfa"],
+body.light-mode [style*="color:#a78bfa"],
+body.light-mode [style*="color: #A78BFA"],
+body.light-mode [style*="color:#A78BFA"] {
+    color: #7c3aed !important;
+}
+
+body.light-mode [fill="#a78bfa"],
+body.light-mode [fill="#A78BFA"] {
+    fill: #7c3aed !important;
+}
+
+body.light-mode [stroke="#a78bfa"],
+body.light-mode [stroke="#A78BFA"] {
+    stroke: #7c3aed !important;
+}
+
+body.light-mode [style*="color: #f59e0b"],
+body.light-mode [style*="color:#f59e0b"],
+body.light-mode [style*="color: #F59E0B"],
+body.light-mode [style*="color:#F59E0B"] {
+    color: #b45309 !important;
+}
+
+body.light-mode [fill="#f59e0b"],
+body.light-mode [fill="#F59E0B"] {
+    fill: #b45309 !important;
+}
+
+body.light-mode [stroke="#f59e0b"],
+body.light-mode [stroke="#F59E0B"] {
+    stroke: #b45309 !important;
+}
+
+body.light-mode [style*="color: #f97316"],
+body.light-mode [style*="color:#f97316"],
+body.light-mode [style*="color: #F97316"],
+body.light-mode [style*="color:#F97316"] {
+    color: #c2410c !important;
+}
+
+body.light-mode [fill="#f97316"],
+body.light-mode [fill="#F97316"] {
+    fill: #c2410c !important;
+}
+
+body.light-mode [stroke="#f97316"],
+body.light-mode [stroke="#F97316"] {
+    stroke: #c2410c !important;
+}
+
+body.light-mode [style*="color: #fbbf24"],
+body.light-mode [style*="color:#fbbf24"],
+body.light-mode [style*="color: #FBBF24"],
+body.light-mode [style*="color:#FBBF24"] {
+    color: #d97706 !important;
+}
+
+body.light-mode [fill="#fbbf24"],
+body.light-mode [fill="#FBBF24"] {
+    fill: #d97706 !important;
+}
+
+body.light-mode [stroke="#fbbf24"],
+body.light-mode [stroke="#FBBF24"] {
+    stroke: #d97706 !important;
+}
+
+body.light-mode [style*="color: #fde68a"],
+body.light-mode [style*="color:#fde68a"],
+body.light-mode [style*="color: #FDE68A"],
+body.light-mode [style*="color:#FDE68A"] {
+    color: #b45309 !important;
+}
+
+body.light-mode [fill="#fde68a"],
+body.light-mode [fill="#FDE68A"] {
+    fill: #b45309 !important;
+}
+
+body.light-mode [stroke="#fde68a"],
+body.light-mode [stroke="#FDE68A"] {
+    stroke: #b45309 !important;
+}
+
+
+/* Universal Border and Background Fixes for specific inline artifacts */
+body.light-mode [style*="border: 1px solid rgba(255, 255, 255"] {
+    border-color: #cbd5e1 !important;
+}
+body.light-mode [style*="border-bottom: 1px solid rgba(255, 255, 255"] {
+    border-bottom-color: #cbd5e1 !important;
+}
+body.light-mode [style*="border-top: 1px solid rgba(255, 255, 255"] {
+    border-top-color: #cbd5e1 !important;
+}
+
+/* Ensure ALL panels, tables, and macros have white backgrounds */
+body.light-mode .module-view,
+body.light-mode .content-section,
+body.light-mode .cq-hierarchy-container {
+    background: #f1f5f9 !important;
+}
+
+body.light-mode .list-row,
+body.light-mode .data-table tr,
+body.light-mode .kanban-card,
+body.light-mode .dist-item {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+body.light-mode .list-row:hover,
+body.light-mode .data-table tr:hover {
+    background: #f8fafc !important;
+}
+
 /* ========================================================================= */
 /* ESTILOS DE IMPRESSÃO & PDF (A4 LANDSCAPE OVERRIDES - FULL BLEED)          */
 /* ========================================================================= */
