@@ -2961,7 +2961,7 @@
 
             <!-- 3. GRADE VISUAL DE PRODUTOS COM FOTOS (4 POR LINHA - SOLICITADO PELO USUÁRIO) -->
             <div class="table-card" id="setor13TableSection">
-                <div class="s13-gallery-toolbar">
+                <div class="s13-gallery-toolbar pdf-screen-controls">
                     <div class="table-title-group">
                         <h3 class="table-title" style="display: flex; align-items: center; gap: 8px;">
                             <i class="fa-solid fa-images" style="color: #38bdf8;"></i> Modelagens & Produtos do Setor 13
@@ -3059,21 +3059,14 @@
 
                                     <!-- CORPO DO CARD COM INFORMAÇÕES COMPLETAS -->
                                     <div class="s13-card-body">
-                                        <!-- Linha 1: Código e OP + Badges de Etiqueta & Prog -->
+                                        <!-- Linha 1: Código e OP -->
                                         <div class="s13-card-code-row">
                                             <div class="s13-card-code" title="Código do Produto">${item.codigo}</div>
-                                            <div style="display: flex; align-items: center; gap: 4px;">
-                                                ${item.etiqueta && item.etiqueta !== '—' ? `
-                                                    <span class="badge badge-sub" style="font-size: 10.5px; padding: 2px 6px; color: #60a5fa; border-color: rgba(96, 165, 250, 0.3);" title="Etiqueta: ${item.etiqueta}">
-                                                        Etq ${item.etiqueta}
-                                                    </span>
-                                                ` : ''}
-                                                <span class="s13-card-op-badge" title="Ordem de Produção">OP ${item.op}</span>
-                                            </div>
+                                            <span class="s13-card-op-badge" title="Ordem de Produção">OP ${item.op}</span>
                                         </div>
 
                                         <!-- Linha 2: Descrição -->
-                                        <div style="font-size: 12px; font-weight: 600; color: #e2e8f0; line-height: 1.35; max-height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="${item.descricao}">
+                                        <div class="s13-card-description" title="${item.descricao}">
                                             ${item.descricao || 'Produto sem descrição cadastrada'}
                                         </div>
 
@@ -3082,7 +3075,7 @@
                                             ${hasOver2 ? `
                                                 <div class="s13-dias-badge critico" title="Produto parado há mais de 2 dias no Setor 13">
                                                     <i class="fa-solid fa-fire"></i>
-                                                    <strong>${item.diasParado} DIAS NO SETOR</strong> (CRÍTICO > 2)
+                                                    <strong>${item.diasParado} dias</strong> • crítico
                                                 </div>
                                             ` : `
                                                 <div class="s13-dias-badge normal">
@@ -3097,30 +3090,18 @@
                                             ${renderStatusModelagemBadge(item.statusModelagem || item.descLocal)}
                                         </div>
 
-                                        <!-- Linha 5: Grid de Metadados (Etiqueta, Prog Amostra, Tipo, Semana, Marca, Peças) -->
+                                        <!-- Linha 5: Metadados essenciais; os campos complementares ficam no modo tabela. -->
                                         <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px;"><div class="s13-meta-item">
             <span class="s13-meta-label">OC / RIS</span>
             ${(item.oc || '').trim().toUpperCase().startsWith('S') || !(item.oc || '').trim() ? `<span class="s13-meta-val" style="color: #f97316; font-weight: 800; background: rgba(249,115,22,0.15); padding: 1px 4px; border-radius: 4px;">SEM OC</span>` : `<span class="s13-meta-val" style="color: #94a3b8; font-weight: 700;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>${item.oc}</span>`}
         </div>
                                             <div class="s13-meta-item">
-                                                <span class="s13-meta-label">Etiqueta</span>
-                                                <span class="s13-meta-val" style="color: #60a5fa;" title="${item.etiqueta || '—'}">${item.etiqueta || '—'}</span>
-                                            </div>
-                                            <div class="s13-meta-item">
                                                 <span class="s13-meta-label">Prog. Amostra</span>
                                                 <span class="s13-meta-val" style="color: #c084fc;" title="${item.progAmostras || '—'}">${item.progAmostras || '—'}</span>
                                             </div>
                                             <div class="s13-meta-item">
-                                                <span class="s13-meta-label">Tipo Produto</span>
-                                                <span class="s13-meta-val" style="color: #f472b6;" title="${item.tipoProduto || 'Outros'}">${item.tipoProduto || '—'}</span>
-                                            </div>
-                                            <div class="s13-meta-item">
                                                 <span class="s13-meta-label">Semana Ped.</span>
                                                 <span class="s13-meta-val" style="color: #38bdf8;" title="${item.semanaPedido || '—'}">${item.semanaPedido || '—'}</span>
-                                            </div>
-                                            <div class="s13-meta-item">
-                                                <span class="s13-meta-label">Marca</span>
-                                                <span class="s13-meta-val" style="color: #fbbf24;" title="${item.marca || 'Sem Marca'}">${item.marca || '—'}</span>
                                             </div>
                                             <div class="s13-meta-item">
                                                 <span class="s13-meta-label">Total Peças</span>
@@ -3137,7 +3118,7 @@
                                                 <button class="s13-btn-action" onclick="window.crmOpenImageLightbox('${imgInfo.largeUrl}', '${escapedCode}', 'OP ${item.op} • ${escapedDesc}')" title="Ampliar Imagem">
                                                     <i class="fa-solid fa-eye"></i> Foto
                                                 </button>
-                                                <a href="${imgInfo.driveUrl}" target="_blank" class="s13-btn-action" style="flex: 0 0 34px; padding: 7px 0;" title="Abrir arquivo no Google Drive">
+                                                <a href="${imgInfo.driveUrl}" target="_blank" class="s13-btn-action" style="flex: 0 0 30px;" title="Abrir arquivo no Google Drive">
                                                     <i class="fa-brands fa-google-drive" style="color: #34d399;"></i>
                                                 </a>
                                             ` : ''}
@@ -3553,7 +3534,7 @@
             </div>
 
             <!-- CONTROLES GERAIS E BARRA DE BUSCA -->
-            <div class="table-card" style="margin-bottom: 24px; padding: 16px 20px;">
+            <div class="table-card pdf-screen-controls" style="margin-bottom: 24px; padding: 16px 20px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                     <!-- Barra de Pesquisa Rápida -->
                     <div class="s13-search-box" style="flex: 1; max-width: 480px;">
@@ -3599,7 +3580,7 @@
             <!-- SEÇÃO 1: PRODUTOS COM PENDÊNCIA DE MODELAGEM (COM IMAGENS / FOTOS - 4 POR LINHA) -->
             ${state.processoFilter !== 'bons' ? `
                 <div class="table-card" id="processoGallerySection" style="margin-bottom: 28px; border-top: 3px solid #ef4444;">
-                    <div class="s13-gallery-toolbar" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+                    <div class="s13-gallery-toolbar pdf-screen-controls" style="border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
                         <div class="table-title-group">
                             <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
                                 <i class="fa-solid fa-images" style="color: #ef4444;"></i>
@@ -3707,7 +3688,7 @@
             ` : ''}
 
             <!-- SEÇÃO 2: TABELA COMPLETA DE PRODUTOS / FLUXO NORMAL (LIBERADOS) -->
-            <div class="table-card" id="processoTableSection">
+            <div class="table-card pdf-detail-list" id="processoTableSection">
                 <div class="table-toolbar">
                     <div class="table-title-group">
                         <h3 class="table-title" style="display: flex; align-items: center; gap: 8px;">
@@ -4104,7 +4085,7 @@
             </div>
 
             <!-- BARRA DE CONTROLE, BUSCA E FILTROS RÁPIDOS -->
-            <div class="table-card" style="margin-top: 24px; padding: 14px 18px; margin-bottom: 20px;">
+            <div class="table-card pdf-screen-controls" style="margin-top: 24px; padding: 14px 18px; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                     <!-- Campo de Busca em Tempo Real -->
                     <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 280px;">
@@ -4149,7 +4130,7 @@
 
             <!-- SEÇÃO DE FOTOS DOS PRODUTOS PENDENTES NO SETOR 01 (GRADE VISUAL 4 POR LINHA) -->
             ${state.setor01ViewMode === 'grid' ? `
-                <div class="table-card" style="border-top: 3px solid #00d4ff; margin-bottom: 24px;">
+                <div class="table-card" id="setor01GallerySection" style="border-top: 3px solid #00d4ff; margin-bottom: 24px;">
                     <div class="table-toolbar" style="border-bottom: 1px solid rgba(0, 212, 255, 0.2);">
                         <div class="table-title-group">
                             <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -4289,7 +4270,7 @@
             ` : ''}
 
             <!-- TABELA DETALHADA DE PENDÊNCIAS DO SETOR 01 -->
-            <div class="table-card" id="setor01TableSection" style="border-top: 3px solid #00d4ff;">
+            <div class="table-card pdf-detail-list" id="setor01TableSection" style="border-top: 3px solid #00d4ff;">
                 <div class="table-toolbar" style="border-bottom: 1px solid rgba(0, 212, 255, 0.2);">
                     <div class="table-title-group">
                         <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -4696,7 +4677,7 @@
             </div>
 
             <!-- CONTROLES GERAIS E BARRA DE BUSCA -->
-            <div class="table-card" style="margin-bottom: 24px; padding: 16px 20px;">
+            <div class="table-card pdf-screen-controls" style="margin-bottom: 24px; padding: 16px 20px;">
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                     <!-- Barra de Pesquisa Rápida -->
                     <div class="s13-search-box" style="flex: 1; max-width: 480px;">
@@ -4742,7 +4723,7 @@
             <!-- SEÇÃO 1: PRODUTOS COM PENDÊNCIA DE ESTAMPA (COM IMAGENS / FOTOS - 4 POR LINHA) -->
             ${state.estampaFilter !== 'sem_pendencia' ? `
                 <div class="table-card" id="estampaGallerySection" style="margin-bottom: 28px; border-top: 3px solid #00d4ff;">
-                    <div class="s13-gallery-toolbar" style="border-bottom: 1px solid rgba(0, 212, 255, 0.2);">
+                    <div class="s13-gallery-toolbar pdf-screen-controls" style="border-bottom: 1px solid rgba(0, 212, 255, 0.2);">
                         <div class="table-title-group">
                             <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
                                 <i class="fa-solid fa-images" style="color: #00d4ff;"></i>
@@ -4862,7 +4843,7 @@
 
             <!-- SEÇÃO 2: PRODUTOS LIBERADOS / SEM PENDÊNCIA (SOMENTE LISTA / TABELA DETALHADA) -->
             ${state.estampaFilter !== 'pendentes' ? `
-                <div class="table-card" id="estampaTableSection" style="border-top: 3px solid #10b981;">
+                <div class="table-card pdf-detail-list" id="estampaTableSection" style="border-top: 3px solid #10b981;">
                     <div class="table-toolbar" style="border-bottom: 1px solid rgba(16, 185, 129, 0.2);">
                         <div class="table-title-group">
                             <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -7287,7 +7268,7 @@
             </div>
 
             <!-- SEÇÃO DE FOTOS DOS PRODUTOS CRÍTICOS (PARTE PRINCIPAL NOS SETORES 20, 31 E 106) -->
-            <div class="table-card" style="border-top: 3px solid #f43f5e; margin-bottom: 24px; padding: 18px 20px;">
+            <div class="table-card" id="malotesGallerySection" style="border-top: 3px solid #f43f5e; margin-bottom: 24px; padding: 18px 20px;">
                 <div class="table-toolbar" style="border-bottom: 1px solid rgba(244, 63, 94, 0.2); justify-content: space-between; padding-bottom: 12px; margin-bottom: 16px;">
                     <div class="table-title-group">
                         <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -7384,7 +7365,7 @@
             </div>
 
             <!-- BARRA DE CONTROLES E BUSCA DA TABELA -->
-            <div class="filter-toolbar" style="margin-bottom: 16px;">
+            <div class="filter-toolbar pdf-screen-controls" style="margin-bottom: 16px;">
                 <div class="filter-toolbar-left" style="width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                     <!-- Input de Busca -->
                     <div class="search-input-wrapper" style="max-width: 380px; width: 100%;">
@@ -7420,7 +7401,7 @@
             </div>
 
             <!-- TABELA DETALHADA DE MALOTES -->
-            <div class="table-card" style="border-top: 3px solid #ec4899; margin-bottom: 24px;">
+            <div class="table-card pdf-detail-list" id="malotesTableSection" style="border-top: 3px solid #ec4899; margin-bottom: 24px;">
                 <div class="table-toolbar" style="border-bottom: 1px solid rgba(236, 72, 153, 0.2); justify-content: space-between;">
                     <div class="table-title-group">
                         <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -9120,7 +9101,7 @@
             </div>
 
             <!-- SEÇÃO DE FOTOS DOS PRODUTOS CRÍTICOS (PARTE PRINCIPAL NOS SETORES 20, 31 E 106) -->
-            <div class="table-card" style="border-top: 3px solid #f43f5e; margin-bottom: 24px; padding: 18px 20px;">
+            <div class="table-card" id="malotesGallerySection" style="border-top: 3px solid #f43f5e; margin-bottom: 24px; padding: 18px 20px;">
                 <div class="table-toolbar" style="border-bottom: 1px solid rgba(244, 63, 94, 0.2); justify-content: space-between; padding-bottom: 12px; margin-bottom: 16px;">
                     <div class="table-title-group">
                         <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -9217,7 +9198,7 @@
             </div>
 
             <!-- BARRA DE CONTROLES E BUSCA DA TABELA -->
-            <div class="filter-toolbar" style="margin-bottom: 16px;">
+            <div class="filter-toolbar pdf-screen-controls" style="margin-bottom: 16px;">
                 <div class="filter-toolbar-left" style="width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                     <!-- Input de Busca -->
                     <div class="search-input-wrapper" style="max-width: 380px; width: 100%;">
@@ -9253,7 +9234,7 @@
             </div>
 
             <!-- TABELA DETALHADA DE MALOTES -->
-            <div class="table-card" style="border-top: 3px solid #ec4899; margin-bottom: 24px;">
+            <div class="table-card pdf-detail-list" id="malotesTableSection" style="border-top: 3px solid #ec4899; margin-bottom: 24px;">
                 <div class="table-toolbar" style="border-bottom: 1px solid rgba(236, 72, 153, 0.2); justify-content: space-between;">
                     <div class="table-title-group">
                         <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -12427,12 +12408,41 @@
     };
 
     window.crmGeneratePDFReport = () => {
+        const originalSetor13ViewMode = state.setor13ViewMode;
+        const originalSetor01ViewMode = state.setor01ViewMode;
+        const originalProcessoFilter = state.processoFilter;
+        const originalEstampaFilter = state.estampaFilter;
+        let viewWasAdjustedForPrint = false;
+
+        // PDFs executivos sempre usam miniaturas. A preferência visual da tela
+        // é restaurada assim que o diálogo de impressão é encerrado.
+        if (state.activeSubmodule === 'setor13' && state.setor13ViewMode !== 'grid') {
+            state.setor13ViewMode = 'grid';
+            viewWasAdjustedForPrint = true;
+        }
+        if (state.activeSubmodule === 'setor01' && state.setor01ViewMode !== 'grid') {
+            state.setor01ViewMode = 'grid';
+            viewWasAdjustedForPrint = true;
+        }
+        if (state.activeSubmodule === 'processo' && state.processoFilter === 'bons') {
+            state.processoFilter = null;
+            viewWasAdjustedForPrint = true;
+        }
+        if (state.activeSubmodule === 'estampa' && state.estampaFilter === 'sem_pendencia') {
+            state.estampaFilter = null;
+            viewWasAdjustedForPrint = true;
+        }
+        if (viewWasAdjustedForPrint) {
+            renderActiveView();
+        }
+
         const subTitleMap = {
             'geral': 'Pipeline Geral de Atividades da Fábrica',
             'setor13': 'Modelagem - Pedidos Setor 13 (Aguardando Retorno)',
             'processo': 'Modelagem - Pedidos em Processo (Setores 05, 06, 12)',
             'setor01': 'Estilo Pedido - Pendências Setor 01',
             'estampa': 'Estilo Pedido - Situação de Estampa',
+            'malotes': 'Malotes - Setores 88 e 83',
             'cores-aviamentos': 'Estilo Pedido - Cores e Aviamentos (CM1/D01)',
             'rotativos': 'Estilo Pedido - Rotativos (Setor 43)',
             'feira': 'Estilo Amostras - Feira & Protótipos (Fluxo D36)'
@@ -12450,6 +12460,41 @@
             const now = new Date();
             printDate.textContent = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         }
+
+        // O Setor 13 possui uma composição própria de impressão: a primeira
+        // página reúne o resumo e os gráficos; as miniaturas começam na página 2.
+        // A classe é temporária para não alterar o layout normal da aplicação.
+        const printModeClasses = [
+            'print-setor13',
+            'print-processo',
+            'print-setor01',
+            'print-estampa',
+            'print-malotes',
+            'print-gallery-report'
+        ];
+        document.body.classList.remove(...printModeClasses);
+        const activePrintClass = {
+            setor13: 'print-setor13',
+            processo: 'print-processo',
+            setor01: 'print-setor01',
+            estampa: 'print-estampa',
+            malotes: 'print-malotes'
+        }[state.activeSubmodule];
+        if (activePrintClass) {
+            document.body.classList.add(activePrintClass, 'print-gallery-report');
+        }
+
+        const cleanupPrintMode = () => {
+            document.body.classList.remove(...printModeClasses);
+            if (viewWasAdjustedForPrint) {
+                state.setor13ViewMode = originalSetor13ViewMode;
+                state.setor01ViewMode = originalSetor01ViewMode;
+                state.processoFilter = originalProcessoFilter;
+                state.estampaFilter = originalEstampaFilter;
+                renderActiveView();
+            }
+        };
+        window.addEventListener('afterprint', cleanupPrintMode, { once: true });
 
         showNotification('Formatando relatório executivo para salvar em PDF ou imprimir...', 'info', 'Gerando Relatório');
         setTimeout(() => {

@@ -3298,6 +3298,98 @@ body {
     flex-grow: 1;
 }
 
+/* Setor 13 — cards compactos no modo de miniaturas. Mantém o modo tabela completo. */
+#setor13TableSection .s13-photo-wrapper {
+    height: 125px;
+    aspect-ratio: auto;
+}
+
+#setor13TableSection .s13-photo-img {
+    padding: 3px;
+}
+
+#setor13TableSection .s13-photo-placeholder {
+    gap: 3px;
+    padding: 6px;
+}
+
+#setor13TableSection .s13-photo-placeholder .s13-placeholder-icon {
+    font-size: 20px;
+}
+
+#setor13TableSection .s13-photo-placeholder strong {
+    font-size: 10.5px !important;
+}
+
+#setor13TableSection .s13-photo-placeholder span {
+    font-size: 8.5px !important;
+}
+
+#setor13TableSection .s13-photo-tag {
+    top: 5px;
+    right: 5px;
+    padding: 2px 6px;
+    font-size: 9px;
+}
+
+#setor13TableSection .s13-card-body {
+    padding: 9px;
+    gap: 5px;
+}
+
+#setor13TableSection .s13-card-code {
+    font-size: 13px;
+}
+
+#setor13TableSection .s13-card-op-badge {
+    padding: 1px 6px;
+    font-size: 9.5px;
+}
+
+#setor13TableSection .s13-card-description {
+    color: #e2e8f0;
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+}
+
+#setor13TableSection .s13-dias-badge {
+    gap: 4px;
+    padding: 2px 7px;
+    font-size: 10px;
+}
+
+#setor13TableSection .s13-card-meta-grid {
+    gap: 3px 6px !important;
+    margin-top: 1px;
+    padding: 6px;
+    font-size: 10px;
+}
+
+#setor13TableSection .s13-meta-item {
+    gap: 0;
+}
+
+#setor13TableSection .s13-meta-label {
+    font-size: 8.5px;
+}
+
+#setor13TableSection .s13-card-actions {
+    gap: 5px;
+    padding-top: 5px;
+}
+
+#setor13TableSection .s13-btn-action {
+    gap: 4px;
+    padding: 4px 6px;
+    font-size: 9.5px;
+}
+
 .s13-card-code-row {
     display: flex;
     align-items: center;
@@ -4355,15 +4447,121 @@ body.light-mode .kpi-value {
     
     /* Separar perfeitamente a seção de Analytics (Pág 1 comprimida) das Miniaturas (Pág 2 em diante) */
     #processoTableSection,
+    #setor13TableSection,
     .cq-macro-card + .table-card {
         page-break-before: always !important;
         break-before: page !important;
     }
 
-    /* Force the thumbnail/grid section to start cleanly on the next page */
+    /* A quebra pertence ao contêiner da galeria. Aplicá-la no toolbar interno
+       criava uma folha vazia entre o resumo e as miniaturas em alguns browsers. */
     .s13-gallery-toolbar {
+        page-break-before: auto !important;
+        break-before: auto !important;
+    }
+
+    /* Setor 13: resumo executivo e quatro gráficos juntos na página 1. */
+    body.print-setor13 .main-content {
+        padding: 5mm 10mm !important;
+    }
+
+    body.print-setor13 .module-view-header {
+        margin-bottom: 4px !important;
+        padding-bottom: 2px !important;
+        zoom: 0.68 !important;
+    }
+
+    body.print-setor13 .kpi-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 6px !important;
+        margin-bottom: 6px !important;
+        zoom: 0.62 !important;
+    }
+
+    body.print-setor13 .kpi-card {
+        min-height: 0 !important;
+        padding: 10px !important;
+    }
+
+    body.print-setor13 .analytics-grid {
+        gap: 8px !important;
+        margin-bottom: 0 !important;
+        zoom: 0.55 !important;
+        height: 500px !important;
+        max-height: 500px !important;
+        overflow: hidden !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    body.print-setor13 .analytics-grid .panel-card {
+        margin: 0 !important;
+        padding: 10px !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    body.print-setor13 .analytics-grid svg {
+        max-height: 250px !important;
+    }
+
+    /* As listas podem ter cardinalidade variável. No relatório executivo,
+       mostramos os itens prioritários que já vêm ordenados e impedimos que
+       o volume de dados crie uma segunda página de gráficos. */
+    body.print-setor13 .analytics-grid .dist-list {
+        max-height: 155px !important;
+        overflow: hidden !important;
+    }
+
+    body.print-setor13 #setor13TableSection {
+        margin-top: 0 !important;
+    }
+
+    /* Relatórios executivos: a página 1 contém somente indicadores/gráficos;
+       a galeria começa na página 2 e as listas detalhadas não são impressas. */
+    .pdf-detail-list,
+    .pdf-screen-controls {
+        display: none !important;
+    }
+
+    body.print-processo #processoGallerySection,
+    body.print-setor01 #setor01GallerySection,
+    body.print-estampa #estampaGallerySection,
+    body.print-malotes #malotesGallerySection {
         page-break-before: always !important;
         break-before: page !important;
+    }
+
+    body.print-gallery-report .module-view-header {
+        margin-bottom: 4px !important;
+        padding-bottom: 2px !important;
+        zoom: 0.68 !important;
+    }
+
+    body.print-gallery-report .exec-processo-layout {
+        gap: 8px !important;
+        height: 500px !important;
+        max-height: 500px !important;
+        margin-bottom: 0 !important;
+        overflow: hidden !important;
+        zoom: 0.60 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    body.print-gallery-report .exec-processo-layout > * {
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    body.print-gallery-report .exec-processo-layout svg {
+        max-height: 270px !important;
+    }
+
+    body.print-gallery-report .exec-card-content,
+    body.print-gallery-report .hero-pie-quick-legend {
+        max-height: 330px !important;
+        overflow: hidden !important;
     }
 
     /* Remove empty manual page breaks between charts in print mode */
@@ -4457,6 +4655,20 @@ body.light-mode .kpi-value {
         break-inside: avoid !important;
         width: 100% !important;
         zoom: 0.92 !important; /* encaixe horizontal elegante */
+    }
+
+    body.print-setor13 #setor13TableSection .s13-photo-wrapper {
+        height: 105px !important;
+    }
+
+    body.print-setor13 #setor13TableSection .s13-card-body {
+        padding: 7px !important;
+        gap: 3px !important;
+    }
+
+    body.print-setor13 #setor13TableSection .s13-photo-placeholder {
+        gap: 2px !important;
+        padding: 4px !important;
     }
 
     /* Evitar cortes no meio de elementos chave */
