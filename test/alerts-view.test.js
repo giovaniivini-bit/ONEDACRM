@@ -26,3 +26,28 @@ test('alertas exibem a imagem do pedido como primeiro conteúdo do cartão', () 
     assert.match(css, /\.alert-item-image img\s*\{[\s\S]*?object-fit: contain;/);
     assert.match(css, /\.alert-item-image\.image-unavailable \.alert-item-image-fallback\s*\{[\s\S]*?display: grid;/);
 });
+
+test('filtro de tipo é dinâmico e o PDF respeita o conjunto filtrado', () => {
+    const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
+    const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+
+    assert.match(app, /alertsCategory: 'all'/);
+    assert.match(app, /function getAlertCategory\(alert\)/);
+    assert.match(app, /ruleId === 'setor13-calendario'/);
+    assert.match(app, /ruleId === 'setor01-limite-dias'/);
+    assert.match(app, /ruleId === 'malotes-parte-principal'/);
+    assert.doesNotMatch(app, /\['05', '06', '12', '13'\]\.includes\(setor\)/);
+    assert.match(app, /new Map\(\)\)\.values\(\)/);
+    assert.match(app, /getAlertCategory\(alert\)\.key !== state\.alertsCategory/);
+    assert.match(app, /!categories\.some\(category => category\.key === state\.alertsCategory\)/);
+    assert.match(app, /window\.crmFilterAlertsCategory/);
+    assert.match(app, /state\.alertsPageLimit = Number\.MAX_SAFE_INTEGER/);
+    assert.match(app, /state\.alertsTab = 'active'/);
+    assert.match(app, /state\.alertsTab = originalAlertsTab/);
+    assert.match(app, /alertas: 'print-alertas'/);
+    assert.match(css, /body\.print-alertas \.alerts-panel\s*\{[\s\S]*?break-inside: auto !important/);
+    assert.match(css, /body\.print-alertas \.alert-item\s*\{[\s\S]*?min-height: 26mm !important[\s\S]*?break-inside: avoid !important/);
+    assert.match(index, /style\.css\?v=20261001-alert-filter-pdf/);
+    assert.match(index, /app\.js\?v=20261001-alert-filter-pdf/);
+});

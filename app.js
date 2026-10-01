@@ -70,6 +70,7 @@
         activeAlerts: [],
         alertsSearch: '',
         alertsSeverity: 'all',
+        alertsCategory: 'all',
         alertsTab: 'active',
         alertsPageLimit: 30,
         alertsLoading: true,
@@ -10627,6 +10628,29 @@
         return `${field?.label || condition.field} ${operator?.label || condition.operator}${noValue ? '' : ` “${condition.value || '—'}”`}`;
     }
 
+    function getAlertCategory(alert) {
+        const ruleId = String(alert?.ruleId || '').toLocaleLowerCase('pt-BR');
+
+        if (ruleId === 'malotes-parte-principal') {
+            return { key: 'malote', label: 'Malote' };
+        }
+        if (ruleId === 'setor01-limite-dias') {
+            return { key: 'setor01', label: 'Pedido Setor 01' };
+        }
+        if (ruleId === 'setor13-calendario') {
+            return { key: 'modelagem', label: 'Modelagem' };
+        }
+
+        const fallbackLabel = String(alert?.title || 'Outros alertas').trim();
+        const fallbackKey = `regra:${String(alert?.ruleId || fallbackLabel)
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('pt-BR')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '') || 'outros'}`;
+        return { key: fallbackKey, label: fallbackLabel };
+    }
+
     function renderAlertsView(container) {
         recalculateAlerts();
         updateAlertsBadges();
@@ -10638,8 +10662,17 @@
             ? (state.calendarExternalData?.isLive === false ? 'cache local' : 'ao vivo')
             : 'indisponível';
         const query = String(state.alertsSearch || '').trim().toLocaleLowerCase('pt-BR');
+        const categories = Array.from(alerts.reduce((map, alert) => {
+            const category = getAlertCategory(alert);
+            if (!map.has(category.key)) map.set(category.key, category);
+            return map;
+        }, new Map()).values());
+        if (state.alertsCategory !== 'all' && !categories.some(category => category.key === state.alertsCategory)) {
+            state.alertsCategory = 'all';
+        }
         const filteredAlerts = alerts.filter(alert => {
             if (state.alertsSeverity !== 'all' && alert.severity !== state.alertsSeverity) return false;
+            if (state.alertsCategory !== 'all' && getAlertCategory(alert).key !== state.alertsCategory) return false;
             if (!query) return true;
             return [alert.title, alert.message, alert.op, alert.codigo, alert.setor, alert.cliente]
                 .some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(query));
@@ -10670,6 +10703,15 @@
                         </button>
                     `).join('')}
                 </div>
+            </div>
+            <div class="alerts-category-filter" aria-label="Filtrar por tipo de alerta">
+                <span class="alerts-category-label"><i class="fa-solid fa-layer-group"></i> Tipo:</span>
+                <button class="filter-chip ${state.alertsCategory === 'all' ? 'active' : ''}" onclick="window.crmFilterAlertsCategory('all')">Todos os tipos</button>
+                ${categories.map(category => `
+                    <button class="filter-chip ${state.alertsCategory === category.key ? 'active' : ''}" onclick="window.crmFilterAlertsCategory('${escapeHtml(category.key)}')">
+                        ${escapeHtml(category.label)}
+                    </button>
+                `).join('')}
             </div>
             <div class="alerts-list">
                 ${visibleAlerts.length ? visibleAlerts.map(alert => {
@@ -11741,6 +11783,12 @@
         state.alertsPageLimit = 30;
         renderActiveView();
     };
+    window.crmFilterAlertsCategory = category => {
+        const availableCategories = new Set((state.activeAlerts || []).map(alert => getAlertCategory(alert).key));
+        state.alertsCategory = category === 'all' || availableCategories.has(category) ? category : 'all';
+        state.alertsPageLimit = 30;
+        renderActiveView();
+    };
     let alertsSearchTimer = null;
     window.crmSearchAlerts = query => {
         state.alertsSearch = query || '';
@@ -12459,6 +12507,8 @@
         const originalSetor01ViewMode = state.setor01ViewMode;
         const originalProcessoFilter = state.processoFilter;
         const originalEstampaFilter = state.estampaFilter;
+        const originalAlertsPageLimit = state.alertsPageLimit;
+        const originalAlertsTab = state.alertsTab;
         let viewWasAdjustedForPrint = false;
 
         // PDFs executivos sempre usam miniaturas. A preferência visual da tela
@@ -12479,6 +12529,11 @@
             state.estampaFilter = null;
             viewWasAdjustedForPrint = true;
         }
+        if (state.activeSubmodule === 'alertas') {
+            state.alertsTab = 'active';
+            state.alertsPageLimit = Number.MAX_SAFE_INTEGER;
+            viewWasAdjustedForPrint = true;
+        }
         if (viewWasAdjustedForPrint) {
             renderActiveView();
         }
@@ -12490,6 +12545,7 @@
             'setor01': 'Estilo Pedido - Pendências Setor 01',
             'estampa': 'Estilo Pedido - Situação de Estampa',
             'malotes': 'Malotes - Setores 88 e 83',
+            'alertas': 'Alertas Operacionais',
             'cores-aviamentos': 'Estilo Pedido - Cores e Aviamentos (CM1/D01)',
             'rotativos': 'Estilo Pedido - Rotativos (Setor 43)',
             'feira': 'Estilo Amostras - Feira & Protótipos (Fluxo D36)'
@@ -12517,6 +12573,7 @@
             'print-setor01',
             'print-estampa',
             'print-malotes',
+            'print-alertas',
             'print-gallery-report'
         ];
         document.body.classList.remove(...printModeClasses);
@@ -12526,6 +12583,7 @@
             setor01: 'print-setor01',
             estampa: 'print-estampa',
             malotes: 'print-malotes'
+            ,alertas: 'print-alertas'
         }[state.activeSubmodule];
         if (activePrintClass) {
             document.body.classList.add(activePrintClass, 'print-gallery-report');
@@ -12538,6 +12596,8 @@
                 state.setor01ViewMode = originalSetor01ViewMode;
                 state.processoFilter = originalProcessoFilter;
                 state.estampaFilter = originalEstampaFilter;
+                state.alertsPageLimit = originalAlertsPageLimit;
+                state.alertsTab = originalAlertsTab;
                 renderActiveView();
             }
         };

@@ -192,6 +192,23 @@
     flex-wrap: wrap;
 }
 
+.alerts-category-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: -4px 0 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-base);
+}
+
+.alerts-category-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 2px;
+}
+
 .alerts-list,
 .alerts-rules-list {
     display: grid;
@@ -4645,6 +4662,73 @@ body.light-mode .kpi-value {
     body.print-gallery-report .hero-pie-quick-legend {
         max-height: 330px !important;
         overflow: hidden !important;
+    }
+
+    /* Alertas preservam a composição da tela: resumo e primeiros cartões
+       dividem a primeira folha; as seguintes comportam até seis alertas. */
+    body.print-alertas .main-content {
+        padding: 5mm 8mm !important;
+    }
+
+    body.print-alertas .module-view-header {
+        margin-bottom: 3mm !important;
+        padding-bottom: 0 !important;
+        zoom: 0.72 !important;
+    }
+
+    body.print-alertas .alerts-header-actions,
+    body.print-alertas .alerts-tabs,
+    body.print-alertas .alerts-load-more {
+        display: none !important;
+    }
+
+    body.print-alertas .alerts-kpi-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 2mm !important;
+        margin-bottom: 3mm !important;
+        zoom: 0.68 !important;
+    }
+
+    body.print-alertas .alerts-panel {
+        padding: 3mm !important;
+        margin: 0 !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
+    body.print-alertas .alerts-toolbar,
+    body.print-alertas .alerts-category-filter {
+        margin-bottom: 2mm !important;
+        padding-bottom: 2mm !important;
+        zoom: 0.78 !important;
+    }
+
+    body.print-alertas .alerts-search-box {
+        display: none !important;
+    }
+
+    body.print-alertas .alerts-list {
+        display: grid !important;
+        gap: 2mm !important;
+    }
+
+    body.print-alertas .alert-item {
+        min-height: 26mm !important;
+        padding: 3mm !important;
+        gap: 3mm !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        box-sizing: border-box !important;
+    }
+
+    body.print-alertas .alert-item-image {
+        width: 28mm !important;
+        height: 20mm !important;
+        flex: 0 0 28mm !important;
+    }
+
+    body.print-alertas .alert-item .btn {
+        display: none !important;
     }
 
     /* Remove empty manual page breaks between charts in print mode */
