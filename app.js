@@ -10674,8 +10674,29 @@
             <div class="alerts-list">
                 ${visibleAlerts.length ? visibleAlerts.map(alert => {
                     const meta = severityMeta[alert.severity] || severityMeta.info;
+                    const imgInfo = getProductImage(alert.codigo, alert.op);
+                    const imageTitle = escapeHtml(alert.codigo || `OF ${alert.op || ''}`);
+                    const imageSubtitle = escapeHtml(`OF ${alert.op || '—'} • Setor ${alert.setor || '—'} • ${alert.title || 'Alerta operacional'}`);
                     return `
                         <article class="alert-item alert-${alert.severity}">
+                            ${imgInfo.hasImage ? `
+                                <button class="alert-item-image js-alert-open-image"
+                                    type="button"
+                                    data-image-url="${escapeHtml(imgInfo.largeUrl)}"
+                                    data-image-fallback="${escapeHtml(imgInfo.largeFallbackUrl || '')}"
+                                    data-image-title="${imageTitle}"
+                                    data-image-subtitle="${imageSubtitle}"
+                                    title="Ampliar imagem do pedido">
+                                    <img src="${escapeHtml(imgInfo.thumbUrl)}" alt="Imagem do pedido ${imageTitle}" loading="lazy" onerror="if (this.dataset.fallback !== '1') { this.dataset.fallback='1'; this.src='${escapeHtml(imgInfo.proxyUrl || '')}'; } else { this.onerror=null; this.closest('.alert-item-image')?.classList.add('image-unavailable'); }">
+                                    <span><i class="fa-solid fa-magnifying-glass-plus"></i></span>
+                                    <span class="alert-item-image-fallback"><i class="fa-regular fa-image"></i><small>Sem foto</small></span>
+                                </button>
+                            ` : `
+                                <div class="alert-item-image alert-item-image-placeholder" title="Pedido sem imagem disponível">
+                                    <i class="fa-regular fa-image"></i>
+                                    <small>Sem foto</small>
+                                </div>
+                            `}
                             <div class="alert-item-icon" style="color: ${meta.color};"><i class="fa-solid ${meta.icon}"></i></div>
                             <div class="alert-item-content">
                                 <div class="alert-item-heading">
@@ -10778,6 +10799,14 @@
         `;
         container.querySelectorAll('.js-alert-open-op').forEach(button => {
             button.addEventListener('click', () => openOpModal(button.dataset.alertOp || ''));
+        });
+        container.querySelectorAll('.js-alert-open-image').forEach(button => {
+            button.addEventListener('click', () => window.crmOpenImageLightbox(
+                button.dataset.imageUrl || '',
+                button.dataset.imageTitle || '',
+                button.dataset.imageSubtitle || '',
+                button.dataset.imageFallback || ''
+            ));
         });
     }
 
@@ -12308,6 +12337,12 @@
     };
 
     window.crmOpenImageLightbox = (imageUrl, title, subtitle, fallbackUrl = '') => {
+        const safeImageUrl = (value) => {
+            const url = String(value || '').trim();
+            return url.startsWith('/') || url.startsWith('https://') || url.startsWith('data:image/') ? url : '';
+        };
+        const resolvedImageUrl = safeImageUrl(imageUrl);
+        const resolvedFallbackUrl = safeImageUrl(fallbackUrl);
         let overlay = document.getElementById('crmImageLightboxOverlay');
         if (!overlay) {
             overlay = document.createElement('div');
@@ -12323,19 +12358,31 @@
             <div class="image-lightbox-content" onclick="event.stopPropagation()">
                 <div class="image-lightbox-header">
                     <div>
-                        <strong style="color: #ffffff; font-size: 15px; font-family: monospace;">${title || 'Visualização da Foto'}</strong>
-                        ${subtitle ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${subtitle}</div>` : ''}
+                        <strong class="image-lightbox-title" style="color: #ffffff; font-size: 15px; font-family: monospace;"></strong>
+                        <div class="image-lightbox-subtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;"></div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <a href="${imageUrl}" target="_blank" class="toolbar-pill-btn" style="padding: 4px 10px; font-size: 11.5px; text-decoration: none;" title="Abrir imagem original em nova aba">
+                        <a target="_blank" rel="noopener noreferrer" class="toolbar-pill-btn image-lightbox-original" style="padding: 4px 10px; font-size: 11.5px; text-decoration: none;" title="Abrir imagem original em nova aba">
                             <i class="fa-solid fa-arrow-up-right-from-square"></i> Original
                         </a>
                         <button class="modal-close-btn" onclick="window.crmCloseImageLightbox()" title="Fechar (ESC)">&times;</button>
                     </div>
                 </div>
-                <img src="${imageUrl}" data-fallback-url="${fallbackUrl}" class="image-lightbox-img" alt="${title || 'Foto do Produto'}" onerror="window.crmHandleLightboxImageError(this)">
+                <img class="image-lightbox-img" onerror="window.crmHandleLightboxImageError(this)">
             </div>
         `;
+        const titleElement = overlay.querySelector('.image-lightbox-title');
+        const subtitleElement = overlay.querySelector('.image-lightbox-subtitle');
+        const originalLink = overlay.querySelector('.image-lightbox-original');
+        const imageElement = overlay.querySelector('.image-lightbox-img');
+        titleElement.textContent = String(title || 'Visualização da Foto');
+        subtitleElement.textContent = String(subtitle || '');
+        subtitleElement.hidden = !subtitle;
+        originalLink.href = resolvedImageUrl || '#';
+        originalLink.hidden = !resolvedImageUrl;
+        imageElement.src = resolvedImageUrl;
+        imageElement.dataset.fallbackUrl = resolvedFallbackUrl;
+        imageElement.alt = String(title || 'Foto do Produto');
         overlay.style.display = 'flex';
 
         const handleKeydown = (e) => {

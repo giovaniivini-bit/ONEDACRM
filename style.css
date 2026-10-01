@@ -218,6 +218,83 @@
 .alert-item.alert-warning { border-left: 4px solid #f59e0b; }
 .alert-item.alert-info { border-left: 4px solid #0ea5e9; }
 
+.alert-item-image {
+    position: relative;
+    width: 92px;
+    height: 68px;
+    flex: 0 0 92px;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    background: #0b1120;
+    color: var(--text-muted);
+}
+
+button.alert-item-image {
+    cursor: zoom-in;
+}
+
+.alert-item-image img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+.alert-item-image > span {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: rgba(2, 6, 23, 0.55);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+.alert-item-image .alert-item-image-fallback {
+    display: none;
+}
+
+.alert-item-image:hover > span,
+.alert-item-image:focus-visible > span {
+    opacity: 1;
+}
+
+.alert-item-image-placeholder,
+.alert-item-image.image-unavailable {
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 3px;
+    font-size: 17px;
+}
+
+.alert-item-image-placeholder small {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.alert-item-image.image-unavailable img,
+.alert-item-image.image-unavailable > span:not(.alert-item-image-fallback) {
+    display: none;
+}
+
+.alert-item-image.image-unavailable .alert-item-image-fallback {
+    display: grid;
+    gap: 3px;
+    background: transparent;
+    opacity: 1;
+}
+
+.alert-item-image-fallback small {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 .alert-item-icon {
     width: 32px;
     height: 32px;
@@ -420,6 +497,12 @@
 
     .alert-rule-actions {
         flex-wrap: wrap;
+    }
+
+    .alert-item-image {
+        width: 112px;
+        height: 82px;
+        flex-basis: 82px;
     }
 
     .alert-form-grid,
