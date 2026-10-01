@@ -4286,6 +4286,9 @@ body {
 body.light-mode {
     --bg-base: #f1f5f9;
     --bg-card: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-sidebar: #ffffff;
+    --bg-card: #ffffff;
     --border-base: #cbd5e1;
     --border-strong: #94a3b8;
     --text-primary: #0f172a;
@@ -4468,6 +4471,60 @@ body.light-mode circle[stroke="#334155"] {
 
 body.light-mode circle[fill="#0f172a"] {
     fill: #ffffff !important;
+}
+
+
+/* 8. Toolbar & Buttons Overrides */
+body.light-mode .s13-search-box,
+body.light-mode .btn-group[style*="background: rgba(15, 23, 42"] {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-mode .s13-search-box input {
+    color: #0f172a !important;
+}
+body.light-mode .s13-search-box input::placeholder {
+    color: #94a3b8 !important;
+}
+body.light-mode .s13-search-box i {
+    color: #64748b !important;
+}
+
+
+body.light-mode .badge-sub,
+body.light-mode .badge[style*="background: rgba(15, 23, 42"] {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border-color: #cbd5e1 !important;
+}
+
+
+body.light-mode .btn-export-pdf {
+    color: #dc2626 !important; /* dark red for legibility */
+    border-color: #fca5a5 !important;
+}
+body.light-mode .btn-export-pdf i {
+    color: #dc2626 !important;
+}
+
+
+body.light-mode .btn-sync-images-action,
+body.light-mode .btn-sync-images-action i {
+    color: #0284c7 !important;
+    border-color: #7dd3fc !important;
+}
+
+
+body.light-mode .btn-group .toolbar-pill-btn:not(.active) {
+    background: transparent !important;
+    color: #64748b !important;
+}
+
+body.light-mode .toolbar-pill-btn.active {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
 }
 
 /* ========================================================================= */
