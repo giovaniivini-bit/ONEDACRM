@@ -4398,6 +4398,57 @@ body.light-mode [style*="color: #e2e8f0"] {
 }
 
 
+body.light-mode [style*="color: #c084fc"],
+body.light-mode [style*="color:#c084fc"] {
+    color: #9333ea !important;
+}
+body.light-mode [style*="color: #a78bfa"],
+body.light-mode [style*="color:#a78bfa"] {
+    color: #7c3aed !important;
+}
+
+
+body.light-mode [style*="color: #fb7185"],
+body.light-mode [style*="color:#fb7185"] {
+    color: #e11d48 !important;
+}
+body.light-mode [style*="color: #f472b6"],
+body.light-mode [style*="color:#f472b6"] {
+    color: #db2777 !important;
+}
+
+/* Deepen light blue inline styles for light mode readability */
+body.light-mode [style*="color: #38bdf8"],
+body.light-mode [style*="color:#38bdf8"] {
+    color: #0284c7 !important;
+}
+
+body.light-mode [style*="color: #60a5fa"],
+body.light-mode [style*="color:#60a5fa"] {
+    color: #2563eb !important;
+}
+
+/* Fix Setor 13 Descriptions and Badges */
+body.light-mode .s13-card-description {
+    color: #475569 !important;
+    background: transparent !important;
+    border-color: transparent !important;
+}
+
+body.light-mode .s13-card-op-badge[style*="color: #fb7185"] {
+    color: #e11d48 !important;
+    border-color: #fda4af !important;
+    background: #fff1f2 !important;
+}
+
+body.light-mode .s13-card-op-badge[style*="color: #38bdf8"] {
+    color: #0284c7 !important;
+    border-color: #bae6fd !important;
+    background: #f0f9ff !important;
+}
+
+
+
 /* Remove heavy shadows from SVG texts in light mode */
 body.light-mode svg text {
     text-shadow: none !important;
@@ -4491,6 +4542,44 @@ body.light-mode .s13-search-box i {
     color: #64748b !important;
 }
 
+
+
+/* Light Mode Badge Palette Overrides */
+body.light-mode .badge-cyan {
+    background: #e0f2fe !important;
+    color: #0284c7 !important;
+    border-color: #7dd3fc !important;
+}
+body.light-mode .badge-emerald {
+    background: #d1fae5 !important;
+    color: #059669 !important;
+    border-color: #6ee7b7 !important;
+}
+body.light-mode .badge-amber {
+    background: #fef3c7 !important;
+    color: #d97706 !important;
+    border-color: #fcd34d !important;
+}
+body.light-mode .badge-rose {
+    background: #ffe4e6 !important;
+    color: #e11d48 !important;
+    border-color: #fda4af !important;
+}
+body.light-mode .badge-purple {
+    background: #f3e8ff !important;
+    color: #7e22ce !important;
+    border-color: #d8b4fe !important;
+}
+body.light-mode .badge-pink {
+    background: #fce7f3 !important;
+    color: #db2777 !important;
+    border-color: #f9a8d4 !important;
+}
+body.light-mode .badge-indigo {
+    background: #e0e7ff !important;
+    color: #4338ca !important;
+    border-color: #a5b4fc !important;
+}
 
 body.light-mode .badge-sub,
 body.light-mode .badge[style*="background: rgba(15, 23, 42"] {
