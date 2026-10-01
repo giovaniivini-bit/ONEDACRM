@@ -3400,8 +3400,10 @@ body {
 
 /* Setor 13 — cards compactos no modo de miniaturas. Mantém o modo tabela completo. */
 #setor13TableSection .s13-photo-wrapper {
-    height: 125px;
+    height: auto;
     aspect-ratio: auto;
+    min-height: 260px; /* Imagem muito maior na proporção do card */
+    flex-grow: 1; /* Absorve todo o espaço vazio vertical do grid */
 }
 
 #setor13TableSection .s13-photo-img {
@@ -3433,8 +3435,9 @@ body {
 }
 
 #setor13TableSection .s13-card-body {
-    padding: 9px;
-    gap: 5px;
+    padding: 10px 12px;
+    gap: 6px;
+    flex-grow: 0; /* Para não empurrar e deixar área vazia, deixando compacto embaixo */
 }
 
 #setor13TableSection .s13-card-code {
