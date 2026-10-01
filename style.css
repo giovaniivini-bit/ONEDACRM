@@ -4279,25 +4279,29 @@ body {
 /* ==========================================================================
    LIGHT MODE
    ========================================================================== */
+/* 1. Base Variables Enhancement */
 body.light-mode {
-    --bg-base: #f8fafc;
-    --bg-sidebar: #ffffff;
-    --bg-surface: #ffffff;
+    --bg-base: #f1f5f9;
     --bg-card: #ffffff;
-    --bg-card-hover: #f1f5f9;
-    --bg-input: #f1f5f9;
-    --bg-pill: #e2e8f0;
-    --bg-pill-hover: #cbd5e1;
-    --bg-pill-active: #94a3b8;
-
-    --border-base: #e2e8f0;
-    --border-subtle: rgba(0, 0, 0, 0.05);
-    --border-hover: rgba(0, 0, 0, 0.1);
-
+    --border-base: #cbd5e1;
+    --border-strong: #94a3b8;
     --text-primary: #0f172a;
     --text-secondary: #334155;
     --text-muted: #475569;
-    --text-dim: #64748b;
+}
+
+/* 2. Global Card Styles */
+body.light-mode .kpi-card,
+body.light-mode .panel-card,
+body.light-mode .cq-macro-card,
+body.light-mode .table-card,
+body.light-mode .bar-chart-card,
+body.light-mode .exec-card,
+body.light-mode .feira-card {
+    background: #ffffff !important;
+    border: 1px solid var(--border-base) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 12px !important;
 }
 
 body.light-mode .top-header,
@@ -4305,15 +4309,6 @@ body.light-mode .sub-toolbar,
 body.light-mode .sidebar {
     background: #ffffff;
     border-color: var(--border-base);
-}
-
-body.light-mode .kpi-card,
-body.light-mode .panel-card,
-body.light-mode .cq-macro-card,
-body.light-mode .table-card {
-    background: #ffffff !important;
-    border-color: var(--border-base) !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 body.light-mode .data-table th {
@@ -4330,104 +4325,46 @@ body.light-mode .data-table td {
     color: #0f172a !important;
 }
 
-body.light-mode text[fill="#ffffff"] {
-    fill: #0f172a !important;
-}
-body.light-mode text[fill="#cbd5e1"] {
-    fill: #334155 !important;
-}
-body.light-mode circle[fill="#0f172a"] {
-    fill: #ffffff !important;
-}
-
-/* Overrides for hardcoded colors in JS */
-body.light-mode h2[style*="color: #f8fafc"],
-body.light-mode h3[style*="color: #f8fafc"],
-body.light-mode .kpi-value,
-body.light-mode .cq-kpi-value {
-    color: #0f172a !important;
-}
-body.light-mode div[style*="color: #94a3b8"],
-body.light-mode div[style*="color: #cbd5e1"],
-body.light-mode span[style*="color: #cbd5e1"] {
-    color: #475569 !important;
-}
-body.light-mode strong[style*="color:#e2e8f0"] {
-    color: #1e293b !important;
-}
-
-
-/* ==========================================================================
-   ENHANCED LIGHT MODE OVERRIDES
-   ========================================================================== */
-/* Fix dark cards in galleries */
-body.light-mode .s13-photo-card,
-body.light-mode .kanban-card {
+/* 3. Pie Chart Containers */
+body.light-mode div.hero-pie-chart-container[style*="background: rgba(15, 23, 42"] {
     background: #ffffff !important;
-    border-color: #e2e8f0 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    border-color: var(--border-base) !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
 }
 
-body.light-mode .s13-photo-placeholder {
+body.light-mode .hero-pie-chart-container {
+    background: #ffffff !important;
+    border-color: var(--border-base) !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+}
+
+/* 4. Photo Cards & Wrappers (The Black Background Fix) */
+body.light-mode .s13-photo-card {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-mode .s13-photo-wrapper,
+body.light-mode .s13-photo-placeholder,
+body.light-mode .s13-photo-placeholder[style*="background: #111827"] {
     background: #f1f5f9 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.light-mode .s13-photo-placeholder i,
+body.light-mode .s13-photo-placeholder span {
+    color: #475569 !important;
 }
 
 body.light-mode .s13-photo-placeholder strong {
     color: #0f172a !important;
 }
 
-/* Fix text inside cards */
-body.light-mode .s13-card-code,
-body.light-mode .kanban-card-title {
-    color: #0f172a !important;
-}
-
-body.light-mode .s13-card-desc {
-    color: #475569 !important;
-}
-
-body.light-mode .s13-meta-label,
-body.light-mode .kanban-card-meta {
-    color: #64748b !important;
-}
-
-body.light-mode .s13-meta-val {
-    color: #1e293b !important;
-}
-
-/* SVG Text Fills for Light Mode */
-body.light-mode text[fill="#f8fafc"],
-body.light-mode text[fill="#e2e8f0"],
-body.light-mode text[fill="#f1f5f9"] {
-    fill: #0f172a !important;
-}
-
-body.light-mode text[fill="#94a3b8"],
-body.light-mode text[fill="#64748b"] {
-    fill: #475569 !important;
-}
-
-/* Hardcoded inline style text overrides */
-body.light-mode div[style*="color: #e2e8f0"],
-body.light-mode div[style*="color:#e2e8f0"],
-body.light-mode span[style*="color: #e2e8f0"],
-body.light-mode span[style*="color:#e2e8f0"] {
-    color: #1e293b !important;
-}
-
-body.light-mode div[style*="color: #f8fafc"],
-body.light-mode div[style*="color:#f8fafc"],
-body.light-mode span[style*="color: #f8fafc"],
-body.light-mode span[style*="color:#f8fafc"] {
-    color: #0f172a !important;
-}
-
-
-/* ==========================================================================
-   ENHANCED LIGHT MODE TEXT & SVGS
-   ========================================================================== */
-
-
+/* 5. Text Fills and Inline Colors */
 body.light-mode text[fill="#ffffff"],
 body.light-mode text[fill="#f8fafc"],
 body.light-mode text[fill="#e2e8f0"],
@@ -4435,52 +4372,12 @@ body.light-mode text[fill="#f1f5f9"] {
     fill: #0f172a !important;
 }
 
-/* Hardcoded SVG stroke override for pie chart default empty state */
-body.light-mode circle[stroke="#334155"] {
-    stroke: #e2e8f0 !important;
-}
-
-/* Make sure the "Gráfico X" panel titles get dark text */
-body.light-mode .panel-title,
-body.light-mode .leadtime-chart-title span {
-    color: #0f172a !important;
-}
-
-/* Fix Text Inside SVGs (like the Pie Chart center) */
-
-
-/* Force light gray labels to be dark gray */
 body.light-mode text[fill="#94a3b8"],
-body.light-mode text[fill="#cbd5e1"] {
+body.light-mode text[fill="#cbd5e1"],
+body.light-mode text[fill="#64748b"] {
     fill: #475569 !important;
 }
 
-/* Fix Donut Legend Cards */
-body.light-mode .donut-legend-card {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-}
-body.light-mode .donut-legend-label div {
-    color: #0f172a !important; /* Force text inside legend to dark */
-}
-
-/* Fix generic card headers and spans that have hardcoded white/light-gray */
-body.light-mode .hero-pie-chart-container h3,
-body.light-mode .hero-pie-chart-container span,
-body.light-mode .cq-macro-card h4,
-body.light-mode .cq-macro-card span,
-body.light-mode .kpi-header span,
-body.light-mode .kpi-footer span {
-    color: #1e293b !important;
-}
-
-/* Fix right-side chart bar labels (like 4 prod (36%) - 5.909 pçs) */
-body.light-mode .cq-chart-row-label,
-body.light-mode .cq-chart-row-val {
-    color: #334155 !important;
-}
-
-/* Fix any remaining hardcoded inline light text */
 body.light-mode [style*="color: #ffffff"],
 body.light-mode [style*="color:#ffffff"],
 body.light-mode [style*="color: #f8fafc"],
@@ -4488,9 +4385,86 @@ body.light-mode [style*="color:#f8fafc"] {
     color: #0f172a !important;
 }
 
-/* Ensure KPI values stay dark */
-body.light-mode .kpi-value {
+body.light-mode [style*="color: #94a3b8"],
+body.light-mode [style*="color: #cbd5e1"],
+body.light-mode [style*="color: #e2e8f0"] {
+    color: #475569 !important;
+}
+
+
+/* Remove heavy shadows from SVG texts in light mode */
+body.light-mode svg text {
+    text-shadow: none !important;
+}
+
+/* Specific elements needing dark text */
+body.light-mode .hero-pie-chart-container h3,
+body.light-mode .cq-macro-card h4,
+body.light-mode .panel-title,
+body.light-mode .leadtime-chart-title span,
+body.light-mode .s13-card-code,
+body.light-mode .kanban-card-title,
+body.light-mode .s13-meta-val {
     color: #0f172a !important;
+}
+
+body.light-mode h2[style*="color: #f8fafc"],
+body.light-mode h3[style*="color: #f8fafc"],
+body.light-mode .kpi-value,
+body.light-mode .cq-kpi-value {
+    color: #0f172a !important;
+}
+
+body.light-mode .hero-pie-chart-container span,
+body.light-mode .cq-macro-card span,
+body.light-mode .s13-card-desc,
+body.light-mode .s13-meta-label,
+body.light-mode .kpi-footer span,
+body.light-mode .kpi-header span,
+body.light-mode .cq-chart-row-label,
+body.light-mode .cq-chart-row-val {
+    color: #475569 !important;
+}
+
+/* 6. Donut Legend Cards */
+body.light-mode .donut-legend-card[style*="background: rgba(15, 23, 42"] {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    border-style: solid !important;
+    border-width: 1px 1px 1px 4px !important;
+}
+
+body.light-mode .donut-legend-card.active {
+    background: #f1f5f9 !important;
+    box-shadow: 0 0 0 1px var(--border-base) !important;
+}
+
+body.light-mode .donut-legend-label div {
+    color: #0f172a !important;
+}
+
+/* 7. Bar Chart Boxes (inside cq-charts-grid) */
+body.light-mode .cq-chart-row {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 6px !important;
+}
+
+body.light-mode .cq-chart-row:hover {
+    background: #f1f5f9 !important;
+}
+
+/* Fix SVG empty background */
+body.light-mode circle[stroke="#121624"] {
+    stroke: #e2e8f0 !important;
+}
+
+body.light-mode circle[stroke="#334155"] {
+    stroke: #cbd5e1 !important;
+}
+
+body.light-mode circle[fill="#0f172a"] {
+    fill: #ffffff !important;
 }
 
 /* ========================================================================= */
