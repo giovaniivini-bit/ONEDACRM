@@ -39,6 +39,8 @@ test('cards do Setor 01 exibem etiqueta e pendências de aviamento e cor', () =>
     assert.match(app, /<span class="s13-meta-label">Etiqueta<\/span>/);
     assert.match(app, /<span class="s13-meta-label">Setor Aviamento<\/span>/);
     assert.match(app, /<span class="s13-meta-label">Setor Cor<\/span>/);
-    assert.match(app, /setor === 'X02' \? 'danger' : 'success'/);
-    assert.match(app, /setor === 'D02' \? 'danger' : 'success'/);
+    assert.match(app, /setor === 'X01' \? 'danger badge-pulse-red' : 'success'/);
+    assert.match(app, /setor === 'D01' \? 'danger badge-pulse-red' : 'success'/);
+    assert.match(app, /id="setor01TableSection" style="[^"]*\$\{state\.setor01ViewMode === 'table' \? '' : 'display: none;'\}/);
+    assert.match(app, /state\.setor01ViewMode === 'table' \? 'setor01TableSection' : 'setor01GallerySection'/);
 });

@@ -4268,7 +4268,7 @@
                                                     <span class="s13-meta-label">Setor Aviamento</span>
                                                     <span class="s01-sector-chip-list">
                                                         ${item.setoresAviamento.length ? item.setoresAviamento.map(setor => `
-                                                            <span class="s01-sector-chip ${setor === 'X02' ? 'danger' : 'success'}">SETOR ${setor}</span>
+                                                            <span class="s01-sector-chip ${setor === 'X01' ? 'danger badge-pulse-red' : 'success'}">SETOR ${setor}</span>
                                                         `).join('') : '<span class="s01-sector-chip empty">—</span>'}
                                                     </span>
                                                 </div>
@@ -4276,7 +4276,7 @@
                                                     <span class="s13-meta-label">Setor Cor</span>
                                                     <span class="s01-sector-chip-list">
                                                         ${item.setoresCor.length ? item.setoresCor.map(setor => `
-                                                            <span class="s01-sector-chip ${setor === 'D02' ? 'danger' : 'success'}">SETOR ${setor}</span>
+                                                            <span class="s01-sector-chip ${setor === 'D01' ? 'danger badge-pulse-red' : 'success'}">SETOR ${setor}</span>
                                                         `).join('') : '<span class="s01-sector-chip empty">—</span>'}
                                                     </span>
                                                 </div>
@@ -4298,7 +4298,7 @@
             ` : ''}
 
             <!-- TABELA DETALHADA DE PENDÊNCIAS DO SETOR 01 -->
-            <div class="table-card pdf-detail-list" id="setor01TableSection" style="border-top: 3px solid #00d4ff;">
+            <div class="table-card pdf-detail-list" id="setor01TableSection" style="border-top: 3px solid #00d4ff; ${state.setor01ViewMode === 'table' ? '' : 'display: none;'}">
                 <div class="table-toolbar" style="border-bottom: 1px solid rgba(0, 212, 255, 0.2);">
                     <div class="table-title-group">
                         <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -11880,9 +11880,11 @@
             state.setor01Filter = null;
         }
         renderActiveView();
-        const table = document.getElementById('setor01TableSection');
-        if (table && typeof table.scrollIntoView === 'function') {
-            table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const resultsSection = document.getElementById(
+            state.setor01ViewMode === 'table' ? 'setor01TableSection' : 'setor01GallerySection'
+        );
+        if (resultsSection && typeof resultsSection.scrollIntoView === 'function') {
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         if (state.setor01Filter === 'criticos') {
             showNotification('Filtrando produtos com <strong>Permanência Crítica (> 2 Dias) no Setor 01</strong>', 'warning', 'Setor 01');
