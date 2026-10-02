@@ -55,7 +55,7 @@ test('creates only the three requested operational alert types', () => {
     assert.match(alerts.find(alert => alert.ruleId === 'malotes-parte-principal').message, /setor 20, malote no setor 88/);
 });
 
-test('does not alert on the deadline, at the day limit, or without a matching calendar week', () => {
+test('uses the unique Setor 01 calendar limit when the order has no week', () => {
     const calendarRows = [{
         SEMANA: '2645',
         'Data limite para setor 13': '24/set.',
@@ -64,8 +64,22 @@ test('does not alert on the deadline, at the day limit, or without a matching ca
     const records = engine.buildOperationalAlertRecords([
         { op: '1', codigo: 'A', setor: '13', semanaPedido: '2645' },
         { op: '2', codigo: 'B', setor: '01', semanaPedido: '2645', diasParado: 2 },
-        { op: '3', codigo: 'C', setor: '13', semanaPedido: '9999' }
+        { op: '3', codigo: 'C', setor: '13', semanaPedido: '9999' },
+        { op: '4', codigo: 'D', setor: '01', semanaPedido: '', diasParado: 3 }
     ], calendarRows, { now: new Date(2026, 8, 24, 18) });
+    const alerts = engine.evaluateRecords(records, engine.cloneDefaults());
+    assert.equal(alerts.length, 1);
+    assert.equal(alerts[0].ruleId, 'setor01-limite-dias');
+    assert.match(alerts[0].message, /produto D está há 3 dias; limite é 2 dias/);
+});
+
+test('does not guess a Setor 01 limit when the calendar has conflicting limits', () => {
+    const records = engine.buildOperationalAlertRecords([
+        { op: '5', codigo: 'E', setor: '01', semanaPedido: '', diasParado: 9 }
+    ], [
+        { SEMANA: '2645', 'Data limite para setor 13': '24/set.', 'quantidade dias aceitaveis para ficar pendente setor 01': '2 dias' },
+        { SEMANA: '2646', 'Data limite para setor 13': '01/out.', 'quantidade dias aceitaveis para ficar pendente setor 01': '3 dias' }
+    ]);
     assert.equal(engine.evaluateRecords(records, engine.cloneDefaults()).length, 0);
 });
 

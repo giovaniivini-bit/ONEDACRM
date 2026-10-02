@@ -71,7 +71,6 @@
         alertsSearch: '',
         alertsSeverity: 'all',
         alertsCategory: 'all',
-        alertsTab: 'active',
         alertsPageLimit: 30,
         alertsLoading: true,
         imagesLoaded: false,
@@ -10621,13 +10620,6 @@
     // =========================================================================
     // CONFIGURAÇÕES & CALENDÁRIO
     // =========================================================================
-    function renderAlertConditionSummary(condition) {
-        const field = window.CRMAlertsEngine.FIELD_DEFINITIONS.find(item => item.value === condition.field);
-        const operator = window.CRMAlertsEngine.OPERATORS.find(item => item.value === condition.operator);
-        const noValue = ['empty', 'notEmpty', 'beforeToday', 'afterToday'].includes(condition.operator);
-        return `${field?.label || condition.field} ${operator?.label || condition.operator}${noValue ? '' : ` “${condition.value || '—'}”`}`;
-    }
-
     function getAlertCategory(alert) {
         const ruleId = String(alert?.ruleId || '').toLocaleLowerCase('pt-BR');
 
@@ -10771,51 +10763,15 @@
             </div>
         `;
 
-        const rulesContent = `
-            <div class="alerts-rules-header">
-                <div>
-                    <h3>Regras programadas</h3>
-                    <p>Defina condições usando os campos que já existem no CRM. Teste a regra antes de salvar.</p>
-                </div>
-                <button class="btn btn-primary" onclick="window.crmOpenAlertRuleModal()"><i class="fa-solid fa-plus"></i> Nova regra</button>
-            </div>
-            <div class="alerts-rules-list">
-                ${rules.map(rule => {
-                    const meta = severityMeta[rule.severity] || severityMeta.info;
-                    return `
-                        <article class="alert-rule-card ${rule.enabled ? '' : 'disabled'}">
-                            <div class="alert-rule-main">
-                                <div class="alert-rule-title">
-                                    <span class="alert-rule-status-dot" style="background:${meta.color};"></span>
-                                    <strong>${escapeHtml(rule.name)}</strong>
-                                    ${rule.system ? '<span class="badge badge-sub">Padrão</span>' : '<span class="badge badge-purple">Personalizada</span>'}
-                                </div>
-                                <p>${escapeHtml(rule.description || 'Sem descrição.')}</p>
-                                <div class="alert-rule-conditions">
-                                    ${(rule.conditions || []).map(condition => `<span>${escapeHtml(renderAlertConditionSummary(condition))}</span>`).join(`<b> ${rule.match === 'any' ? 'OU' : 'E'} </b>`)}
-                                </div>
-                            </div>
-                            <div class="alert-rule-actions">
-                                <label class="alert-rule-toggle"><input type="checkbox" ${rule.enabled ? 'checked' : ''} onchange="window.crmToggleAlertRule('${escapeHtml(rule.id)}', this.checked)"><span>${rule.enabled ? 'Ativa' : 'Inativa'}</span></label>
-                                <button class="btn btn-glass" onclick="window.crmOpenAlertRuleModal('${escapeHtml(rule.id)}')" title="Editar regra"><i class="fa-solid fa-pen"></i></button>
-                                <button class="btn btn-glass" onclick="window.crmDuplicateAlertRule('${escapeHtml(rule.id)}')" title="Duplicar regra"><i class="fa-regular fa-copy"></i></button>
-                                ${rule.system ? '' : `<button class="btn btn-glass alert-delete-btn" onclick="window.crmDeleteAlertRule('${escapeHtml(rule.id)}')" title="Excluir regra"><i class="fa-solid fa-trash"></i></button>`}
-                            </div>
-                        </article>
-                    `;
-                }).join('')}
-            </div>
-        `;
-
         container.innerHTML = `
             <div class="module-view-header">
                 <div class="module-view-title-group">
                     <h2><i class="fa-solid fa-triangle-exclamation" style="color:#fb7185;"></i> Alertas Operacionais</h2>
-                    <p class="module-view-description">Pendências calculadas automaticamente a partir dos dados atuais e das regras programadas.</p>
+                    <p class="module-view-description">Pendências calculadas automaticamente a partir dos dados atuais e das regras oficiais do CRM.</p>
                 </div>
                 <div class="alerts-header-actions">
                     <span class="badge ${calendarAvailable ? 'badge-cyan' : 'badge-rose'}"><i class="fa-solid fa-calendar-days"></i> Calendário ${calendarMode}</span>
-                    <span class="badge badge-sub">${rules.filter(rule => rule.enabled).length} regras ativas</span>
+                    <span class="badge badge-sub">${rules.filter(rule => rule.enabled).length} regras oficiais</span>
                     <button class="btn btn-glass" onclick="window.crmRefreshAlerts()"><i class="fa-solid fa-arrows-rotate"></i> Recalcular</button>
                 </div>
             </div>
@@ -10832,11 +10788,10 @@
                 <div class="kpi-card purple"><div class="kpi-header"><span class="kpi-label">Total ativo</span><div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div></div><div class="kpi-value">${formatNumber(alerts.length)}</div><div class="kpi-footer">Atualizado agora</div></div>
             </div>
             <div class="alerts-tabs">
-                <button class="${state.alertsTab === 'active' ? 'active' : ''}" onclick="window.crmSetAlertsTab('active')"><i class="fa-solid fa-bell"></i> Avisos ativos</button>
-                <button class="${state.alertsTab === 'rules' ? 'active' : ''}" onclick="window.crmSetAlertsTab('rules')"><i class="fa-solid fa-sliders"></i> Programar regras</button>
+                <button class="active" type="button"><i class="fa-solid fa-bell"></i> Avisos ativos</button>
             </div>
             <section class="panel-card alerts-panel">
-                ${state.alertsLoading ? '<div class="alerts-empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Carregando regras...</p></div>' : (state.alertsTab === 'rules' ? rulesContent : activeContent)}
+                ${state.alertsLoading ? '<div class="alerts-empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Carregando alertas...</p></div>' : activeContent}
             </section>
         `;
         container.querySelectorAll('.js-alert-open-op').forEach(button => {
@@ -11647,118 +11602,6 @@
         }
     }
 
-    async function persistAlertRules(nextRules) {
-        const normalized = window.CRMAlertsEngine.normalizeRules(nextRules);
-        const response = await adminFetch('/api/alert-rules', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rules: normalized })
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok || !payload.success) throw new Error(payload.error || `HTTP ${response.status}`);
-        state.alertRules = payload.data;
-        recalculateAlerts();
-        updateAlertsBadges();
-        if (state.activeSubmodule === 'alertas') renderActiveView();
-        return payload.data;
-    }
-
-    function getAlertRuleDraftFromModal() {
-        const modal = document.getElementById('crmAlertRuleModal');
-        if (!modal) throw new Error('Editor de regra não encontrado.');
-        const existingId = modal.dataset.ruleId || '';
-        const existing = state.alertRules.find(rule => rule.id === existingId);
-        const conditions = Array.from(modal.querySelectorAll('.alert-condition-row')).map(row => ({
-            field: row.querySelector('[data-role="field"]').value,
-            operator: row.querySelector('[data-role="operator"]').value,
-            value: row.querySelector('[data-role="value"]').value
-        }));
-        const name = modal.querySelector('#alertRuleName').value.trim();
-        const generatedId = name.toLocaleLowerCase('pt-BR')
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 55);
-        return {
-            id: existingId || `${generatedId || 'regra'}-${Date.now().toString(36)}`,
-            name,
-            description: modal.querySelector('#alertRuleDescription').value.trim(),
-            enabled: modal.querySelector('#alertRuleEnabled').checked,
-            severity: modal.querySelector('#alertRuleSeverity').value,
-            match: modal.querySelector('#alertRuleMatch').value,
-            conditions,
-            message: modal.querySelector('#alertRuleMessage').value.trim(),
-            system: Boolean(existing?.system)
-        };
-    }
-
-    function renderAlertRuleConditionRows(conditions) {
-        const container = document.getElementById('alertRuleConditions');
-        if (!container) return;
-        const fieldOptions = window.CRMAlertsEngine.FIELD_DEFINITIONS.map(field => `<option value="${field.value}">${escapeHtml(field.label)}</option>`).join('');
-        const operatorOptions = window.CRMAlertsEngine.OPERATORS.map(operator => `<option value="${operator.value}">${escapeHtml(operator.label)}</option>`).join('');
-        container.innerHTML = conditions.map((condition, index) => `
-            <div class="alert-condition-row" data-index="${index}">
-                <select data-role="field">${fieldOptions}</select>
-                <select data-role="operator">${operatorOptions}</select>
-                <input data-role="value" type="text" maxlength="200" placeholder="Valor da condição" value="${escapeHtml(condition.value || '')}">
-                <button type="button" class="btn btn-glass alert-delete-btn" onclick="window.crmRemoveAlertCondition(${index})" ${conditions.length === 1 ? 'disabled' : ''} title="Remover condição"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-        `).join('');
-        Array.from(container.querySelectorAll('.alert-condition-row')).forEach((row, index) => {
-            row.querySelector('[data-role="field"]').value = conditions[index].field;
-            row.querySelector('[data-role="operator"]').value = conditions[index].operator;
-        });
-    }
-
-    function openAlertRuleModal(ruleId = '') {
-        const existing = state.alertRules.find(rule => rule.id === ruleId);
-        const draft = existing ? JSON.parse(JSON.stringify(existing)) : {
-            name: '', description: '', enabled: true, severity: 'warning', match: 'all',
-            conditions: [{ field: 'setor', operator: 'equals', value: '' }],
-            message: 'OF {op} · produto {codigo} requer atenção no setor {setor}.'
-        };
-        let modal = document.getElementById('crmAlertRuleModal');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = 'crmAlertRuleModal';
-            modal.className = 'modal-overlay';
-            document.body.appendChild(modal);
-        }
-        modal.dataset.ruleId = ruleId;
-        modal.style.display = 'flex';
-        modal.innerHTML = `
-            <div class="modal-card alert-rule-modal-card">
-                <div class="modal-header">
-                    <div class="modal-title-group"><span class="badge badge-rose">Alertas</span><h3 class="modal-title">${existing ? 'Editar regra' : 'Nova regra'}</h3></div>
-                    <button class="modal-close-btn" onclick="window.crmCloseAlertRuleModal()">&times;</button>
-                </div>
-                <div class="modal-body alert-rule-form">
-                    <div class="alert-form-grid">
-                        <label><span>Nome da regra</span><input id="alertRuleName" maxlength="120" value="${escapeHtml(draft.name)}" placeholder="Ex.: Atraso na Modelagem"></label>
-                        <label><span>Prioridade</span><select id="alertRuleSeverity"><option value="critical">Crítico</option><option value="warning">Atenção</option><option value="info">Informativo</option></select></label>
-                    </div>
-                    <label><span>Descrição</span><input id="alertRuleDescription" maxlength="300" value="${escapeHtml(draft.description || '')}" placeholder="Explique quando essa regra deve avisar"></label>
-                    <div class="alert-rule-builder-heading">
-                        <label><span>Combinação</span><select id="alertRuleMatch"><option value="all">Todas as condições (E)</option><option value="any">Qualquer condição (OU)</option></select></label>
-                        <button type="button" class="btn btn-glass" onclick="window.crmAddAlertCondition()"><i class="fa-solid fa-plus"></i> Condição</button>
-                    </div>
-                    <div id="alertRuleConditions" class="alert-rule-condition-list"></div>
-                    <label><span>Mensagem do aviso</span><textarea id="alertRuleMessage" maxlength="400" rows="3" placeholder="Use {op}, {codigo}, {setor}, {diasParado}...">${escapeHtml(draft.message || '')}</textarea></label>
-                    <div class="alert-rule-help">Campos dinâmicos disponíveis: <code>{op}</code>, <code>{codigo}</code>, <code>{setor}</code>, <code>{diasParado}</code>, <code>{semanaPedido}</code>, <code>{deadlineSetor13}</code>, <code>{setor01LimitDays}</code>, <code>{primarySector}</code>, <code>{maloteSetor}</code>.</div>
-                    <label class="alert-rule-toggle"><input id="alertRuleEnabled" type="checkbox" ${draft.enabled !== false ? 'checked' : ''}><span>Ativar regra ao salvar</span></label>
-                    <div id="alertRuleTestResult" class="alert-rule-test-result" style="display:none;"></div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-glass" onclick="window.crmTestAlertRule()"><i class="fa-solid fa-flask"></i> Testar regra</button>
-                    <button class="btn btn-glass" onclick="window.crmCloseAlertRuleModal()">Cancelar</button>
-                    <button class="btn-primary-action" onclick="window.crmSaveAlertRule()"><i class="fa-solid fa-check"></i> Salvar regra</button>
-                </div>
-            </div>
-        `;
-        modal.querySelector('#alertRuleSeverity').value = draft.severity;
-        modal.querySelector('#alertRuleMatch').value = draft.match;
-        renderAlertRuleConditionRows(draft.conditions || []);
-    }
-
     // Exportação para o escopo global (para eventos inline do HTML)
     window.crmOpenOpModal = openOpModal;
     window.crmCloseAllModals = closeAllModals;
@@ -11773,10 +11616,6 @@
     window.crmNavigate = (mod, sub) => {
         const targetLink = document.querySelector(`.nav-link[data-module="${mod}"][data-submodule="${sub}"]`);
         if (targetLink) targetLink.click();
-    };
-    window.crmSetAlertsTab = tab => {
-        state.alertsTab = tab === 'rules' ? 'rules' : 'active';
-        renderActiveView();
     };
     window.crmFilterAlerts = severity => {
         state.alertsSeverity = ['critical', 'warning', 'info'].includes(severity) ? severity : 'all';
@@ -11805,108 +11644,6 @@
         updateAlertsBadges();
         renderActiveView();
         showNotification(`${state.activeAlerts.length} alertas recalculados com os dados atuais.`, 'success', 'Alertas Atualizados');
-    };
-    window.crmOpenAlertRuleModal = openAlertRuleModal;
-    window.crmCloseAlertRuleModal = () => {
-        const modal = document.getElementById('crmAlertRuleModal');
-        if (modal) modal.style.display = 'none';
-    };
-    window.crmAddAlertCondition = () => {
-        try {
-            const draft = getAlertRuleDraftFromModal();
-            if (draft.conditions.length >= 8) return showNotification('Cada regra pode ter no máximo 8 condições.', 'warning', 'Limite de Condições');
-            draft.conditions.push({ field: 'setor', operator: 'equals', value: '' });
-            renderAlertRuleConditionRows(draft.conditions);
-        } catch (error) {
-            showNotification(error.message, 'danger', 'Erro na Regra');
-        }
-    };
-    window.crmRemoveAlertCondition = index => {
-        try {
-            const draft = getAlertRuleDraftFromModal();
-            if (draft.conditions.length <= 1) return;
-            draft.conditions.splice(index, 1);
-            renderAlertRuleConditionRows(draft.conditions);
-        } catch (error) {
-            showNotification(error.message, 'danger', 'Erro na Regra');
-        }
-    };
-    window.crmTestAlertRule = () => {
-        const result = document.getElementById('alertRuleTestResult');
-        try {
-            const draft = getAlertRuleDraftFromModal();
-            const validation = window.CRMAlertsEngine.validateRules([draft]);
-            if (!validation.valid) throw new Error(validation.error);
-            const records = state.allData.map(item => ({ ...item, hasImage: state.imagesLoaded ? Boolean(getProductImage(item).hasImage) : true }));
-            const operationalRecords = window.CRMAlertsEngine.buildOperationalAlertRecords(
-                records,
-                state.calendarExternalData?.records || [],
-                { now: new Date() }
-            );
-            const matches = window.CRMAlertsEngine.evaluateRecords(operationalRecords, [draft]);
-            result.style.display = 'block';
-            result.className = 'alert-rule-test-result success';
-            result.innerHTML = `<strong>${formatNumber(matches.length)} ocorrência(s) encontrada(s).</strong>${matches[0] ? `<span>Exemplo: ${escapeHtml(matches[0].message)}</span>` : '<span>A regra está válida, mas nenhum registro atual atende às condições.</span>'}`;
-        } catch (error) {
-            result.style.display = 'block';
-            result.className = 'alert-rule-test-result error';
-            result.textContent = error.message;
-        }
-    };
-    window.crmSaveAlertRule = async () => {
-        try {
-            const draft = getAlertRuleDraftFromModal();
-            const validation = window.CRMAlertsEngine.validateRules([draft]);
-            if (!validation.valid) throw new Error(validation.error);
-            const existingIndex = state.alertRules.findIndex(rule => rule.id === draft.id);
-            const nextRules = state.alertRules.map(rule => ({ ...rule, conditions: rule.conditions.map(condition => ({ ...condition })) }));
-            if (existingIndex >= 0) nextRules[existingIndex] = draft;
-            else nextRules.push(draft);
-            await persistAlertRules(nextRules);
-            window.crmCloseAlertRuleModal();
-            showNotification('Regra salva e alertas recalculados.', 'success', 'Regra Atualizada');
-        } catch (error) {
-            showNotification(error.message, 'danger', 'Não foi possível salvar');
-        }
-    };
-    window.crmToggleAlertRule = async (ruleId, enabled) => {
-        const nextRules = state.alertRules.map(rule => rule.id === ruleId ? { ...rule, enabled } : { ...rule });
-        try {
-            await persistAlertRules(nextRules);
-            showNotification(`Regra ${enabled ? 'ativada' : 'desativada'} com sucesso.`, 'success', 'Alertas');
-        } catch (error) {
-            renderActiveView();
-            showNotification(error.message, 'danger', 'Não foi possível atualizar');
-        }
-    };
-    window.crmDuplicateAlertRule = async ruleId => {
-        const source = state.alertRules.find(rule => rule.id === ruleId);
-        if (!source) return;
-        const copy = {
-            ...source,
-            id: `${source.id.replace(/-[a-z0-9]+$/i, '').slice(0, 55)}-copia-${Date.now().toString(36)}`,
-            name: `${source.name} — cópia`,
-            system: false,
-            enabled: false,
-            conditions: source.conditions.map(condition => ({ ...condition }))
-        };
-        try {
-            await persistAlertRules([...state.alertRules, copy]);
-            showNotification('Regra duplicada e criada como inativa.', 'success', 'Alertas');
-        } catch (error) {
-            showNotification(error.message, 'danger', 'Não foi possível duplicar');
-        }
-    };
-    window.crmDeleteAlertRule = async ruleId => {
-        const rule = state.alertRules.find(item => item.id === ruleId);
-        if (!rule || rule.system) return;
-        if (!window.confirm(`Excluir a regra “${rule.name}”?`)) return;
-        try {
-            await persistAlertRules(state.alertRules.filter(item => item.id !== ruleId));
-            showNotification('Regra excluída.', 'success', 'Alertas');
-        } catch (error) {
-            showNotification(error.message, 'danger', 'Não foi possível excluir');
-        }
     };
     window.crmSearchProcesso = (query) => {
         state.processoSearch = query || '';
@@ -12508,7 +12245,6 @@
         const originalProcessoFilter = state.processoFilter;
         const originalEstampaFilter = state.estampaFilter;
         const originalAlertsPageLimit = state.alertsPageLimit;
-        const originalAlertsTab = state.alertsTab;
         let viewWasAdjustedForPrint = false;
 
         // PDFs executivos sempre usam miniaturas. A preferência visual da tela
@@ -12530,7 +12266,6 @@
             viewWasAdjustedForPrint = true;
         }
         if (state.activeSubmodule === 'alertas') {
-            state.alertsTab = 'active';
             state.alertsPageLimit = Number.MAX_SAFE_INTEGER;
             viewWasAdjustedForPrint = true;
         }
@@ -12597,7 +12332,6 @@
                 state.processoFilter = originalProcessoFilter;
                 state.estampaFilter = originalEstampaFilter;
                 state.alertsPageLimit = originalAlertsPageLimit;
-                state.alertsTab = originalAlertsTab;
                 renderActiveView();
             }
         };

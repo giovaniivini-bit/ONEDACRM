@@ -36,7 +36,7 @@ test('miniaturas do Setor 13 omitem campos redundantes e usam layout compacto', 
     assert.match(cardMarkup, /Prog\. Amostra/);
     assert.match(cardMarkup, /Semana Ped\./);
     assert.match(cardMarkup, /Total Peças/);
-    assert.match(css, /#setor13TableSection \.s13-photo-wrapper\s*\{[\s\S]*?height: 125px/);
+    assert.match(css, /#setor13TableSection \.s13-photo-wrapper\s*\{[\s\S]*?min-height: 260px/);
     assert.match(css, /#setor13TableSection \.s13-photo-placeholder\s*\{[\s\S]*?padding: 6px/);
     assert.match(css, /#setor13TableSection \.s13-photo-placeholder \.s13-placeholder-icon\s*\{[\s\S]*?font-size: 20px/);
     assert.match(css, /body\.print-setor13 #setor13TableSection \.s13-photo-wrapper\s*\{[\s\S]*?height: 105px/);

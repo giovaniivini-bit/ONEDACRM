@@ -12,8 +12,8 @@
 
 O diretório `data/` contém CSVs, snapshots e caches atualizados pela operação. Um deploy
 de código deve abortar se o commit remoto trouxer alterações inesperadas nesses arquivos.
-Também preserve `data/alert_rules.json`, que contém as regras personalizadas do módulo
-Alertas e não é versionado no Git.
+As regras do módulo Alertas são versionadas em `alerts-engine.js`; o arquivo legado
+`data/alert_rules.json`, caso exista, não é carregado pelo aplicativo.
 
 ## Atualização segura
 

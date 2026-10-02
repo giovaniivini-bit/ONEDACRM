@@ -57,11 +57,11 @@ test('serves health and blocks internal static files and malformed URLs', async 
 
 test('enforces method and admin authorization on write routes', async () => {
     assert.equal((await request({ route: '/api/sync' })).status, 405);
-    assert.equal((await request({ method: 'PUT', route: '/api/alert-rules', body: '{}' })).status, 401);
+    assert.equal((await request({ method: 'PUT', route: '/api/alert-rules', body: '{}' })).status, 405);
     assert.equal((await request({ method: 'POST', route: '/api/upload', body: 'csv' })).status, 401);
 });
 
-test('persists valid alert rules and reloads them', async () => {
+test('serves only the three code-owned alert rules', async () => {
     const rule = {
         id: 'route-test',
         name: 'Regra HTTP',
@@ -73,30 +73,21 @@ test('persists valid alert rules and reloads them', async () => {
         message: 'OF {op}',
         system: false
     };
-    const saved = await request({
+    fs.writeFileSync(rulesPath, JSON.stringify({ version: 2, rules: [rule] }), 'utf8');
+    const rejected = await request({
         method: 'PUT',
         route: '/api/alert-rules',
         headers: { 'Content-Type': 'application/json', 'X-CRM-Admin-Token': 'route-test-secret' },
         body: JSON.stringify({ rules: [rule] })
     });
-    assert.equal(saved.status, 200);
-    assert.equal(JSON.parse(saved.body).count, 1);
+    assert.equal(rejected.status, 405);
 
     const loaded = await request({ route: '/api/alert-rules' });
     assert.equal(loaded.status, 200);
-    assert.equal(JSON.parse(loaded.body).data[0].id, 'route-test');
-    const stored = JSON.parse(fs.readFileSync(rulesPath, 'utf8'));
-    assert.equal(stored.version, 2);
-    assert.equal(stored.rules[0].id, 'route-test');
-
-    const oldSystemRule = { ...rule, id: 'prazo-atrasado', name: 'Antiga', system: true };
-    fs.writeFileSync(rulesPath, JSON.stringify([oldSystemRule, rule]), 'utf8');
-    const migrated = JSON.parse((await request({ route: '/api/alert-rules' })).body).data;
-    assert.deepEqual(migrated.map(item => item.id), [
+    assert.deepEqual(JSON.parse(loaded.body).data.map(item => item.id), [
         'setor13-calendario',
         'setor01-limite-dias',
-        'malotes-parte-principal',
-        'route-test'
+        'malotes-parte-principal'
     ]);
 });
 
@@ -141,7 +132,7 @@ test('authenticates administrative writes with an HttpOnly session cookie', asyn
         headers: { 'Content-Type': 'application/json', Cookie: cookie, Origin: origin },
         body: JSON.stringify({ rules: [] })
     });
-    assert.equal(saved.status, 200);
+    assert.equal(saved.status, 405);
 
     const crossOrigin = await request({
         method: 'PUT',
@@ -149,7 +140,7 @@ test('authenticates administrative writes with an HttpOnly session cookie', asyn
         headers: { 'Content-Type': 'application/json', Cookie: cookie, Origin: 'https://evil.example' },
         body: JSON.stringify({ rules: [] })
     });
-    assert.equal(crossOrigin.status, 401);
+    assert.equal(crossOrigin.status, 405);
 
     const logout = await request({
         method: 'POST',
@@ -188,14 +179,14 @@ test('validates the industrial calendar before it can replace the cache', () => 
     }))), /inválido/);
 });
 
-test('rejects oversized rules and foreign CORS preflight', async () => {
+test('rejects alert-rule writes and foreign CORS preflight', async () => {
     const oversized = await request({
         method: 'PUT',
         route: '/api/alert-rules',
         headers: { 'X-CRM-Admin-Token': 'route-test-secret' },
         body: Buffer.alloc(256 * 1024 + 1, 120)
     });
-    assert.equal(oversized.status, 413);
+    assert.equal(oversized.status, 405);
 
     const foreign = await request({
         method: 'OPTIONS',
