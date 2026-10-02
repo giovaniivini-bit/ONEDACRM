@@ -4255,34 +4255,16 @@
                                                 </span>
                                             </div>
 
-                                            <!-- Linha 5: Grid de Metadados (Semana, Peças, Dias no Setor, Cliente) -->
-                                            <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 6px;"><div class="s13-meta-item">
-            <span class="s13-meta-label">OC / RIS</span>
-            ${(item.oc || '').trim().toUpperCase().startsWith('S') || !(item.oc || '').trim() ? `<span class="s13-meta-val" style="color: #f97316; font-weight: 800; background: rgba(249,115,22,0.15); padding: 1px 4px; border-radius: 4px;">SEM OC</span>` : `<span class="s13-meta-val" style="color: #94a3b8; font-weight: 700;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>${item.oc}</span>`}
-        </div>
+                                            <!-- Linha 5: Metadados compactos (padrão Setor 13) -->
+                                            <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 4px;">
                                                 <div class="s13-meta-item">
-                                                    <span class="s13-meta-label">Semana Entrega (BK)</span>
-                                                    <span class="s13-meta-val" style="color: #c084fc; font-weight: 700;" title="${item.pedDescPeriodo || item.pedPeriodo || '—'}">${item.pedDescPeriodo || item.pedPeriodo || '—'}</span>
-                                                </div>
-                                                <div class="s13-meta-item">
-                                                    <span class="s13-meta-label">Peças Pedido (AP)</span>
-                                                    <span class="s13-meta-val" style="color: #38bdf8; font-weight: 800;">${formatNumber(item.qtdeOriginal)}</span>
+                                                    <span class="s13-meta-label">OC / RIS</span>
+                                                    ${(item.oc || '').trim().toUpperCase().startsWith('S') || !(item.oc || '').trim() ? `<span class="s13-meta-val" style="color: #f97316; font-weight: 800; background: rgba(249,115,22,0.15); padding: 1px 4px; border-radius: 4px;">SEM OC</span>` : `<span class="s13-meta-val" style="color: #94a3b8; font-weight: 700;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>${item.oc}</span>`}
                                                 </div>
                                                 <div class="s13-meta-item">
                                                     <span class="s13-meta-label">Cliente</span>
                                                     <span class="s13-meta-val" title="${item.cliente || '—'}" style="color: #67e8f9; font-weight: 700;">${item.cliente || '—'}</span>
                                                 </div>
-                                                <div class="s13-meta-item">
-                                                    <span class="s13-meta-label">Marca / Grupo</span>
-                                                    <span class="s13-meta-val" title="${item.marca || item.tipoProduto || '—'}">${item.marca || item.tipoProduto || '—'}</span>
-                                                </div>
-                                            </div>
-
-                                            <!-- Linha 6: Botão de Ação Rápida -->
-                                            <div style="margin-top: 8px;">
-                                                <button class="s13-btn-action primary" onclick="window.crmOpenOpModal('${item.op}')" style="width: 100%;" title="Ver Detalhes 360° da OP">
-                                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Detalhes da OP
-                                                </button>
                                             </div>
                                         </div>
                                     </div>
