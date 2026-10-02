@@ -9,7 +9,7 @@ Leia [docs/GUIA-DO-CRM.md](docs/GUIA-DO-CRM.md) antes de alterar o sistema no An
 - arquitetura e arquivos importantes;
 - origem e sincronização das planilhas;
 - funcionamento das imagens locais, Google Drive e cache da VPS;
-- módulo de alertas e programação de regras operacionais;
+- módulo de alertas com regras operacionais versionadas no código;
 - módulos e telas existentes;
 - execução local, testes e publicação;
 - checklist seguro para realizar mudanças.
@@ -31,7 +31,7 @@ Copie `.env.example` para o mecanismo de variáveis usado no ambiente e defina
 `CRM_ADMIN_PASSWORD_HASH` na produção. O navegador abre o login somente ao executar
 uma ação administrativa; a senha é validada no servidor e nunca é armazenada no
 navegador. A sessão segura dura até 8 horas e protege sincronizações, imports, uploads
-e alterações nas regras de alertas.
+e outras operações administrativas.
 
 `CRM_ADMIN_TOKEN` existe apenas como recuperação temporária para automações antigas e
 deve permanecer fora do Git.

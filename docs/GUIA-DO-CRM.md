@@ -29,15 +29,15 @@ O projeto não utiliza React, banco SQL ou API externa própria. É uma aplicaç
 | `server.js` | Servidor HTTP, APIs, sincronização de planilhas, índice e entrega de imagens. |
 | `app.js` | Estado da aplicação, transformação dos dados, navegação e renderização das telas. |
 | `index.html` | Estrutura fixa, menu lateral e carregamento dos arquivos da interface. |
-| `style.css` | Identidade visual e layout responsivo. |
+| `style.css` | Identidade visual base, tema escuro e layout responsivo. |
+| `light-theme.css` | Camada semântica do tema claro, carregada após os estilos base. |
 | `data.js` | Fonte local de contingência usada quando necessário. |
 | `data/` | CSVs, índices e caches operacionais gerados pelo servidor. |
 | `images/` | Fotos estáticas que são publicadas junto com o CRM. |
 | `image_map.json` | Liga códigos/aliases de produtos aos arquivos da pasta `images/`. |
 | `drive-image-cache.js` | Proxy e cache persistente das imagens obtidas no Google Drive. |
-| `alerts-engine.js` | Motor puro que valida regras e cruza condições com os dados do CRM. |
 | `server-security.js` | Limites de requisição, autorização administrativa e cabeçalhos de segurança. |
-| `data/alert_rules.json` | Regras personalizadas salvas na VPS (dado operacional, fora do Git). |
+| `alerts-engine.js` | Motor das três regras oficiais de alertas, versionadas e revisadas com o código. |
 | `test/` | Testes automatizados do motor de alertas, segurança e cache de imagens. |
 
 ## 3. Como os dados das planilhas chegam ao CRM
@@ -126,7 +126,7 @@ node server.js
 ### 7.1 Login administrativo
 
 As consultas e telas continuam acessíveis normalmente. Operações que alteram dados —
-sincronização forçada, importação, upload e gravação de regras — exigem a variável
+sincronização forçada, importação e upload — exigem a variável
 `CRM_ADMIN_PASSWORD_HASH` na produção. O navegador solicita a senha na primeira operação
 administrativa, mas não a armazena. O servidor devolve uma sessão em cookie seguro,
 inacessível ao JavaScript, válida por até 8 horas. Recarregar a página preserva a
@@ -169,15 +169,20 @@ Não há alerta padrão de imagem ausente, prazo genérico ou permanência no Se
 desse calendário. Se a planilha e o snapshot estiverem indisponíveis, os alertas dos
 setores 13 e 01 ficam suspensos de forma explícita; o cruzamento de Malotes continua.
 
-Cada regra ainda permite definir prioridade, combinação E/OU, até oito condições e uma
-mensagem com campos dinâmicos. Antes de salvar, use **Testar regra** para conferir a
-quantidade de ocorrências e um exemplo. A tela monta 30 avisos por lote para preservar a
-fluidez em computadores mais modestos.
+As regras são definidas exclusivamente em `alerts-engine.js`, revisadas e publicadas
+junto com o código. A tela não permite criar, editar, desativar ou excluir regras. Isso
+evita que uma configuração salva na VPS substitua silenciosamente o comportamento
+oficial. O cálculo ocorre no navegador e não altera a planilha nem os dados operacionais.
 
-As regras ficam em `data/alert_rules.json`, atualmente no formato versionado
-`{"version": 2, "rules": [...]}`; preserve esse arquivo durante deploys. O cálculo ocorre
-no navegador e não altera a planilha nem os dados operacionais. Ao migrar do formato
-anterior, o CRM troca os padrões antigos, mas preserva regras personalizadas.
+Na própria tela, a aba **Regras vigentes** apresenta as três regras oficiais, suas
+fontes, condições e modelos de mensagem em modo somente leitura. Dessa forma, qualquer
+pessoa pode consultar o comportamento atual sem abrir o código e sem risco de alterá-lo.
+
+Quando todos os valores válidos da coluna E forem iguais, esse limite único também é
+aplicado aos registros do Setor 01 que chegam sem semana preenchida. Se a coluna E tiver
+limites divergentes, o CRM exige a semana para escolher a linha correta e não presume um
+valor. A tela monta 30 avisos por lote para preservar a fluidez em computadores mais
+modestos.
 
 Checks mínimos antes de publicar:
 
@@ -197,7 +202,7 @@ Validação manual obrigatória:
 3. Abrir uma foto no lightbox.
 4. Conferir a tela Imagens Ausentes.
 5. Sincronizar fotos e confirmar que os números são recalculados.
-6. Abrir Alertas, filtrar prioridades, testar uma regra e confirmar a persistência.
+6. Abrir Alertas, filtrar prioridades e confirmar as três regras oficiais.
 
 ## 8. Produção e publicação
 
@@ -211,7 +216,7 @@ Fluxo seguro:
 2. Enviar o commit ao GitHub.
 3. Fazer backup dos arquivos que serão substituídos na VPS.
 4. Atualizar o código em `/home/ubuntu/apps/ONEDACRM`.
-5. Não sobrescrever `.env`, `data/alert_rules.json`, caches ou snapshots de planilhas sem necessidade.
+5. Não sobrescrever `.env`, caches ou snapshots de planilhas sem necessidade.
 6. Reiniciar somente `oneda-crm-app` no PM2.
 7. Verificar APIs, imagens e telas no endereço público.
 

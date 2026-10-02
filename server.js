@@ -26,9 +26,6 @@ const FULL_DATA_PATH = path.join(DATA_DIR, 'full_dataset.csv');
 const DRIVE_IMAGES_PATH = path.join(DATA_DIR, 'drive_images.json');
 const STATIC_IMAGES_DIR = path.join(BASE_DIR, 'images');
 const STATIC_IMAGE_MAP_PATH = path.join(BASE_DIR, 'image_map.json');
-const ALERT_RULES_PATH = process.env.ALERT_RULES_PATH
-    ? path.resolve(process.env.ALERT_RULES_PATH)
-    : path.join(DATA_DIR, 'alert_rules.json');
 const ADMIN_TOKEN = String(process.env.CRM_ADMIN_TOKEN || '').trim();
 const ADMIN_PASSWORD_HASH = String(process.env.CRM_ADMIN_PASSWORD_HASH || '').trim();
 const CRM_PUBLIC_ORIGIN = String(process.env.CRM_PUBLIC_ORIGIN || '').trim();
@@ -49,14 +46,12 @@ const adminAuth = createAdminAuth({
     trustedProxyAddresses: CRM_TRUSTED_PROXY_IPS
 });
 const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE_TTL_MS) || 5 * 60_000);
-const PUBLIC_FILES = new Set(['index.html', 'style.css', 'app.js', 'alerts-engine.js']);
+const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js']);
 
 if (!ADMIN_PASSWORD_HASH) {
     console.warn('⚠️  CRM_ADMIN_PASSWORD_HASH não configurado: login administrativo por senha está indisponível.');
 }
 const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
-const RULES_BODY_LIMIT = 256 * 1024;
-const ALERT_RULESET_VERSION = 2;
 
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
 const GOOGLE_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
@@ -95,34 +90,9 @@ function atomicWriteFileSync(targetPath, content, encoding = 'utf8') {
 }
 
 function loadAlertRules() {
-    try {
-        if (fs.existsSync(ALERT_RULES_PATH)) {
-            const saved = JSON.parse(fs.readFileSync(ALERT_RULES_PATH, 'utf8'));
-            if (saved && saved.version === ALERT_RULESET_VERSION && Array.isArray(saved.rules)) {
-                const validation = alertsEngine.validateRules(saved.rules);
-                if (validation.valid) return saved.rules;
-                console.warn('[ALERTAS] Regras salvas inválidas; usando regras padrão:', validation.error);
-            } else {
-                const legacyRules = Array.isArray(saved) ? saved : (Array.isArray(saved?.rules) ? saved.rules : null);
-                const validation = alertsEngine.validateRules(legacyRules);
-                if (validation.valid) {
-                    const defaultIds = new Set(alertsEngine.DEFAULT_RULES.map(rule => rule.id));
-                    const customRules = alertsEngine.normalizeRules(legacyRules).filter(rule => !rule.system && !defaultIds.has(rule.id));
-                    return [...alertsEngine.cloneDefaults(), ...customRules];
-                }
-                console.warn('[ALERTAS] Regras legadas inválidas; usando regras padrão:', validation.error);
-            }
-        }
-    } catch (error) {
-        console.warn('[ALERTAS] Não foi possível ler as regras; usando padrões:', error.message);
-    }
+    // As regras operacionais são código versionado. Não carregamos mais regras
+    // editáveis da VPS, evitando divergência silenciosa entre ambientes.
     return alertsEngine.cloneDefaults();
-}
-
-function saveAlertRules(rules) {
-    const normalized = alertsEngine.normalizeRules(rules);
-    atomicWriteFileSync(ALERT_RULES_PATH, JSON.stringify({ version: ALERT_RULESET_VERSION, rules: normalized }, null, 2), 'utf8');
-    return normalized;
 }
 
 function validateCalendarRecords(records) {
@@ -838,20 +808,10 @@ async function requestHandler(req, res) {
             sendJson(res, 200, { success: true, data: loadAlertRules() });
             return;
         }
-        if (req.method === 'PUT') {
-            if (!requireAdmin(req, res)) return;
-            try {
-                const body = await readRequestBody(req, RULES_BODY_LIMIT);
-                const parsed = JSON.parse(body || '{}');
-                const saved = saveAlertRules(parsed.rules);
-                sendJson(res, 200, { success: true, count: saved.length, data: saved });
-            } catch (error) {
-                sendJson(res, error.statusCode || 400, { success: false, error: error.message });
-            }
-            return;
-        }
-        res.writeHead(405, { Allow: 'GET, PUT' });
-        res.end();
+        sendJson(res, 405, {
+            success: false,
+            error: 'As regras de alerta são versionadas no código e não podem ser alteradas pelo aplicativo.'
+        }, { Allow: 'GET' });
         return;
     }
     

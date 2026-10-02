@@ -1,0 +1,555 @@
+/*
+ * ONEDA CRM — tema claro semântico
+ *
+ * Esta folha é carregada depois do tema principal. Em vez de trocar cores
+ * hexadecimais isoladas, ela define superfícies, textos e estados completos.
+ * Assim, cada componente mantém contraste mesmo quando possui estilos inline.
+ */
+
+body.light-mode {
+    color-scheme: light;
+    --bg-base: #f4f7fb;
+    --bg-sidebar: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f8fafc;
+    --bg-input: #ffffff;
+    --bg-pill: #eef2f7;
+    --bg-pill-hover: #e2e8f0;
+    --bg-pill-active: #e0e7ff;
+    --border-base: #d8e0ea;
+    --border-subtle: #e7ecf2;
+    --border-hover: #aebaca;
+    --border-strong: #94a3b8;
+    --border-focus: #4f46e5;
+    --text-primary: #101828;
+    --text-secondary: #344054;
+    --text-muted: #667085;
+    --text-dim: #98a2b3;
+    --light-surface-soft: #f8fafc;
+    --light-surface-muted: #eef2f7;
+    --light-shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+    background: var(--bg-base);
+    color: var(--text-primary);
+}
+
+body.light-mode .app-layout,
+body.light-mode .main-content,
+body.light-mode .view-container,
+body.light-mode .module-view,
+body.light-mode .content-section,
+body.light-mode .cq-hierarchy-container {
+    background: var(--bg-base) !important;
+    color: var(--text-primary);
+}
+
+/* Estrutura, navegação e filtros */
+body.light-mode .top-header,
+body.light-mode .sub-toolbar,
+body.light-mode .sidebar,
+body.light-mode .sidebar-header,
+body.light-mode .sidebar-footer {
+    background: #ffffff !important;
+    border-color: var(--border-base) !important;
+}
+
+body.light-mode .nav-link:hover {
+    color: var(--text-primary);
+    background: #f1f5f9;
+}
+
+body.light-mode .nav-link.active {
+    color: #3730a3 !important;
+    background: #eef2ff !important;
+    box-shadow: inset 0 0 0 1px #c7d2fe;
+}
+
+body.light-mode .nav-link.active .nav-icon {
+    color: #4f46e5 !important;
+}
+
+body.light-mode .nav-badge {
+    color: #475467 !important;
+    background: #eef2f7 !important;
+    border-color: #d8e0ea !important;
+}
+
+body.light-mode .nav-badge.active-count {
+    color: #3730a3 !important;
+    background: #e0e7ff !important;
+    border-color: #c7d2fe !important;
+}
+
+body.light-mode .toolbar-dropdown-btn,
+body.light-mode .toolbar-pill-btn,
+body.light-mode .toolbar-search-pill input,
+body.light-mode .view-switcher-group,
+body.light-mode .filter-chip,
+body.light-mode select,
+body.light-mode input,
+body.light-mode textarea {
+    color: var(--text-primary);
+    background: #ffffff;
+    border-color: var(--border-base);
+}
+
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder {
+    color: #98a2b3;
+    opacity: 1;
+}
+
+body.light-mode .filter-chip:hover,
+body.light-mode .toolbar-pill-btn:hover,
+body.light-mode .toolbar-dropdown-btn:hover,
+body.light-mode .view-switch-btn:hover {
+    color: var(--text-primary);
+    background: #f1f5f9;
+    border-color: var(--border-hover);
+}
+
+body.light-mode .filter-chip.active,
+body.light-mode .view-switch-btn.active,
+body.light-mode .toolbar-pill-btn.active {
+    color: #3730a3 !important;
+    background: #e0e7ff !important;
+    border-color: #a5b4fc !important;
+}
+
+body.light-mode .alerts-tabs button.active {
+    color: #ffffff !important;
+    background: #6d28d9 !important;
+    border-color: #5b21b6 !important;
+}
+
+body.light-mode .filter-chip.active i,
+body.light-mode .view-switch-btn.active i,
+body.light-mode .toolbar-pill-btn.active i {
+    color: #4f46e5 !important;
+}
+
+/* Ações: texto sempre acompanha o fundo, inclusive contra estilos inline. */
+body.light-mode .btn {
+    min-height: 32px;
+    padding: 7px 12px;
+    border: 1px solid var(--border-base);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    background: #ffffff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+body.light-mode .btn:hover {
+    color: var(--text-primary);
+    background: #f8fafc;
+    border-color: var(--border-hover);
+}
+
+body.light-mode .btn.btn-glass,
+body.light-mode .btn.btn-ghost {
+    color: #344054 !important;
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+body.light-mode .btn.btn-glass:hover,
+body.light-mode .btn.btn-ghost:hover {
+    color: #101828 !important;
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+}
+
+body.light-mode .btn.btn-primary {
+    color: #ffffff !important;
+    background: #4f46e5 !important;
+    border-color: #4f46e5 !important;
+}
+
+body.light-mode .btn.btn-primary:hover {
+    background: #4338ca !important;
+    border-color: #4338ca !important;
+}
+
+body.light-mode .btn:disabled {
+    opacity: 0.52;
+    cursor: not-allowed;
+}
+
+body.light-mode .btn-primary-action,
+body.light-mode .btn-secondary-action,
+body.light-mode .btn-sync-images-action {
+    color: #ffffff !important;
+    border-color: transparent !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .btn-primary-action {
+    background: #4f46e5 !important;
+}
+
+body.light-mode .btn-primary-action:hover {
+    background: #4338ca !important;
+}
+
+body.light-mode .btn-secondary-action,
+body.light-mode .btn-sync-images-action {
+    background: #0369a1 !important;
+}
+
+body.light-mode .btn-secondary-action:hover,
+body.light-mode .btn-sync-images-action:hover {
+    background: #075985 !important;
+}
+
+body.light-mode .btn-primary-action i,
+body.light-mode .btn-secondary-action i,
+body.light-mode .btn-sync-images-action i {
+    color: #ffffff !important;
+}
+
+body.light-mode .btn-export-pdf {
+    color: #b42318 !important;
+    background: #fff1f0 !important;
+    border-color: #fda29b !important;
+}
+
+body.light-mode .btn-export-pdf i {
+    color: #b42318 !important;
+}
+
+/* Superfícies executivas */
+body.light-mode .kpi-card,
+body.light-mode .panel-card,
+body.light-mode .cq-macro-card,
+body.light-mode .table-card,
+body.light-mode .bar-chart-card,
+body.light-mode .exec-card,
+body.light-mode .feira-card,
+body.light-mode .hero-pie-chart-container,
+body.light-mode .macro-chart-card,
+body.light-mode .cq-bar-card,
+body.light-mode .cq-kpi-card,
+body.light-mode .cq-big-chart-card,
+body.light-mode .leadtime-kpi-card,
+body.light-mode .leadtime-chart-card,
+body.light-mode .alerts-panel,
+body.light-mode .admin-login-card {
+    color: var(--text-primary) !important;
+    background: #ffffff !important;
+    border-color: var(--border-base) !important;
+    box-shadow: var(--light-shadow-card) !important;
+}
+
+body.light-mode .alert-rule-info-block {
+    color: var(--text-primary) !important;
+    background: #f8fafc !important;
+    border-color: var(--border-base) !important;
+}
+
+body.light-mode .alert-rule-message-preview code,
+body.light-mode .alert-rule-code-id code {
+    color: #344054 !important;
+}
+
+body.light-mode .macro-chart-card:hover,
+body.light-mode .cq-bar-card:hover {
+    border-color: #a5b4fc !important;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.09) !important;
+}
+
+body.light-mode .macro-chart-card.future {
+    color: var(--text-muted) !important;
+    background: #f8fafc !important;
+    border-style: dashed !important;
+}
+
+body.light-mode .macro-sub-box,
+body.light-mode .macro-legend-pill,
+body.light-mode .donut-legend-card,
+body.light-mode .exec-status-row,
+body.light-mode .estampa-split-card-item,
+body.light-mode .cq-chart-row,
+body.light-mode .cq-legend-chip,
+body.light-mode .hero-status-subcard,
+body.light-mode .dist-item,
+body.light-mode .list-row,
+body.light-mode .kanban-card {
+    color: var(--text-primary) !important;
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: none !important;
+}
+
+body.light-mode .macro-sub-box:hover,
+body.light-mode .exec-status-row:hover,
+body.light-mode .estampa-split-card-item:hover,
+body.light-mode .cq-chart-row:hover,
+body.light-mode .cq-legend-chip:hover,
+body.light-mode .list-row:hover,
+body.light-mode .kanban-card:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-mode .hero-status-group-card.primary {
+    background: linear-gradient(180deg, #f0f9ff, #ffffff) !important;
+}
+
+body.light-mode .hero-status-group-card.danger {
+    background: linear-gradient(180deg, #fff1f2, #ffffff) !important;
+}
+
+body.light-mode .hero-bar-track,
+body.light-mode .progress-track {
+    background: #e2e8f0 !important;
+}
+
+/* Tipografia sobre superfícies claras */
+body.light-mode .macro-chart-title,
+body.light-mode .exec-card-title,
+body.light-mode .cq-bar-title,
+body.light-mode .panel-title,
+body.light-mode .kpi-value,
+body.light-mode .cq-kpi-value,
+body.light-mode .cq-legend-count,
+body.light-mode .exec-metrics-count,
+body.light-mode .s13-card-code,
+body.light-mode .s13-meta-val,
+body.light-mode .kanban-card-title,
+body.light-mode .donut-legend-label div,
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4 {
+    color: var(--text-primary) !important;
+}
+
+body.light-mode .exec-card-subtitle,
+body.light-mode .cq-bar-subtitle,
+body.light-mode .cq-kpi-label,
+body.light-mode .s13-card-description,
+body.light-mode .s13-card-desc,
+body.light-mode .s13-meta-label,
+body.light-mode .kpi-footer span,
+body.light-mode .kpi-header span,
+body.light-mode .cq-chart-row-label,
+body.light-mode .cq-chart-row-val,
+body.light-mode .pill-setor,
+body.light-mode .op-chip-code,
+body.light-mode .op-chip-days {
+    color: var(--text-muted) !important;
+}
+
+body.light-mode .pill-setor {
+    background: #eef2f7 !important;
+    border-color: #d8e0ea !important;
+}
+
+body.light-mode .pill-setor strong {
+    color: var(--text-primary) !important;
+}
+
+/* Gráficos SVG: rótulos escuros, anéis auxiliares suaves. */
+body.light-mode svg text[fill="#ffffff"],
+body.light-mode svg text[fill="#f8fafc"],
+body.light-mode svg text[fill="#f1f5f9"],
+body.light-mode svg text[fill="#e2e8f0"] {
+    fill: var(--text-primary) !important;
+}
+
+body.light-mode svg text[fill="#94a3b8"],
+body.light-mode svg text[fill="#cbd5e1"],
+body.light-mode svg text[fill="#64748b"] {
+    fill: var(--text-muted) !important;
+}
+
+body.light-mode circle[stroke="#121624"],
+body.light-mode circle[stroke="#334155"] {
+    stroke: #e2e8f0 !important;
+}
+
+body.light-mode circle[fill="#0f172a"] {
+    fill: #ffffff !important;
+}
+
+/* Tabelas e listas */
+body.light-mode .data-table,
+body.light-mode .data-table tbody,
+body.light-mode .data-table tr {
+    background: #ffffff !important;
+}
+
+body.light-mode .data-table th {
+    color: #344054 !important;
+    background: #f8fafc !important;
+    border-color: var(--border-base) !important;
+}
+
+body.light-mode .data-table td {
+    color: var(--text-primary) !important;
+    border-color: #e7ecf2 !important;
+}
+
+body.light-mode .data-table tr:hover {
+    background: #f8fafc !important;
+}
+
+/* Galerias e CQ */
+body.light-mode .s13-photo-card {
+    color: var(--text-primary) !important;
+    background: #ffffff !important;
+    border-color: var(--border-base) !important;
+    box-shadow: var(--light-shadow-card) !important;
+}
+
+body.light-mode .s13-photo-wrapper,
+body.light-mode .s13-photo-placeholder,
+body.light-mode .cq-product-media.image-unavailable::after {
+    color: var(--text-muted) !important;
+    background: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.light-mode .s13-search-box,
+body.light-mode .btn-group[style*="background: rgba(15, 23, 42"],
+body.light-mode [style*="background: rgba(15, 23, 42, 0.6)"] {
+    color: var(--text-primary) !important;
+    background: #ffffff !important;
+    border-color: var(--border-base) !important;
+}
+
+body.light-mode .s13-search-box input {
+    color: var(--text-primary) !important;
+    background: transparent !important;
+}
+
+body.light-mode .cq-week-group-block {
+    background: #ffffff !important;
+    border-color: #d8b4fe !important;
+    box-shadow: var(--light-shadow-card);
+}
+
+body.light-mode .s13-photo-tag:not([style*="background"]),
+body.light-mode .s13-photo-tag[style*="background: rgba(15, 23, 42"] {
+    color: #344054 !important;
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-mode .s13-photo-tag[style*="background: rgba(14, 165, 233"],
+body.light-mode .s13-photo-tag[style*="background: #0ea5e9"] {
+    background: #0369a1 !important;
+    color: #ffffff !important;
+}
+
+body.light-mode .s13-photo-tag[style*="background: #f59e0b"] {
+    background: #92400e !important;
+    color: #ffffff !important;
+}
+
+body.light-mode .s13-photo-tag[style*="background: #06b6d4"] {
+    background: #0e7490 !important;
+    color: #ffffff !important;
+}
+
+body.light-mode .s13-photo-tag[style*="background: #f43f5e"],
+body.light-mode .s13-photo-tag[style*="background: #e11d48"] {
+    background: #be123c !important;
+    color: #ffffff !important;
+}
+
+body.light-mode .s13-photo-tag[style*="background: #8b5cf6"] {
+    background: #6d28d9 !important;
+    color: #ffffff !important;
+}
+
+body.light-mode .s13-photo-tag[style*="background: rgba(236, 72, 153"] {
+    background: #be185d !important;
+    color: #ffffff !important;
+}
+
+body.light-mode .s13-photo-tag[style*="background: rgba(239, 68, 68"] {
+    background: #b91c1c !important;
+    color: #ffffff !important;
+}
+
+body.light-mode .s13-photo-tag[style*="background: #94a3b8"] {
+    background: #475569 !important;
+    color: #ffffff !important;
+}
+
+body.light-mode .s13-photo-tag[style*="background: rgba(0, 212, 255"] {
+    color: #021226 !important;
+}
+
+/* Badges usam fundos claros e texto saturado; faixas de status mantêm inversão. */
+body.light-mode .badge-cyan { background: #e0f2fe !important; color: #075985 !important; border-color: #7dd3fc !important; }
+body.light-mode .badge-emerald { background: #d1fae5 !important; color: #065f46 !important; border-color: #6ee7b7 !important; }
+body.light-mode .badge-amber { background: #fef3c7 !important; color: #92400e !important; border-color: #fcd34d !important; }
+body.light-mode .badge-rose { background: #ffe4e6 !important; color: #9f1239 !important; border-color: #fda4af !important; }
+body.light-mode .badge-purple { background: #f3e8ff !important; color: #6b21a8 !important; border-color: #d8b4fe !important; }
+body.light-mode .badge-pink { background: #fce7f3 !important; color: #9d174d !important; border-color: #f9a8d4 !important; }
+body.light-mode .badge-indigo { background: #e0e7ff !important; color: #3730a3 !important; border-color: #a5b4fc !important; }
+
+body.light-mode .badge-sub,
+body.light-mode .badge[style*="background: rgba(15, 23, 42"] {
+    color: #475467 !important;
+    background: #eef2f7 !important;
+    border-color: #d8e0ea !important;
+}
+
+body.light-mode .s13-photo-card > div:first-child:not(.s13-photo-wrapper),
+body.light-mode .alert-item [class*="status-band"] {
+    color: #ffffff;
+}
+
+/* Diálogos e notificações */
+body.light-mode .modal-card,
+body.light-mode .toast-item {
+    color: var(--text-primary) !important;
+    background: #ffffff !important;
+    border-color: var(--border-base) !important;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18) !important;
+}
+
+body.light-mode .toast-title {
+    color: var(--text-primary) !important;
+}
+
+body.light-mode .toast-message {
+    color: var(--text-muted) !important;
+}
+
+body.light-mode .global-alert-banner {
+    color: #075985 !important;
+    background: #e0f2fe !important;
+    border-color: #7dd3fc !important;
+}
+
+body.light-mode .admin-login-input {
+    color: var(--text-primary);
+    background: #ffffff;
+    border-color: var(--border-base);
+}
+
+/* Contraste de foco visível para teclado. */
+body.light-mode button:focus-visible,
+body.light-mode a:focus-visible,
+body.light-mode input:focus-visible,
+body.light-mode select:focus-visible,
+body.light-mode textarea:focus-visible {
+    outline: 3px solid rgba(79, 70, 229, 0.28);
+    outline-offset: 2px;
+}
+
+@media print {
+    body.light-mode {
+        --bg-base: #ffffff;
+    }
+}

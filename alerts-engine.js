@@ -220,13 +220,24 @@
         const now = options.now instanceof Date ? options.now : new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const calendar = buildCalendarIndex(calendarRecords);
+        const calendarLimits = Array.from(new Set(
+            Object.values(calendar)
+                .map(entry => entry.sector01MaxDays)
+                .filter(limit => Number.isFinite(limit))
+        ));
+        // O limite do Setor 01 vem da coluna E e, no calendário oficial, é
+        // único para todo o ciclo. Alguns pedidos chegam sem semana preenchida;
+        // nesse caso ainda é seguro usar o limite global quando todas as linhas
+        // válidas concordam. Se o calendário passar a ter limites diferentes,
+        // o fallback é desativado para não gerar alertas incorretos.
+        const sector01FallbackLimit = calendarLimits.length === 1 ? calendarLimits[0] : null;
         const source = Array.isArray(records) ? records : [];
         const enriched = source.map((record, index) => {
             const setor = normalizeSector(record.setor);
-            const week = normalizeWeek(record.semanaPedido || record.pedDescPeriodo);
+            const week = normalizeWeek(record.semanaPedido || record.pedDescPeriodo || record.pedPeriodo);
             const calendarEntry = calendar[week] || null;
             const days = parseNumber(record.diasParado);
-            const limit = calendarEntry?.sector01MaxDays;
+            const limit = calendarEntry?.sector01MaxDays ?? sector01FallbackLimit;
             return {
                 ...record,
                 setor,
