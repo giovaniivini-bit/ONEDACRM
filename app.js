@@ -3792,7 +3792,10 @@
         // - Layout base igual ao do Setor 43 / 05, 06, 12 (gráfico grande 50%/50% dividindo com informações)
         // - O gráfico deve trazer a SOMA DE PRODUTOS PENDENTES SEPARADO POR CLIENTE (C&A, Hering, Renner, etc.)
         // - Abaixo as imagens dos produtos + INFORMAÇÃO DA QUANTIDADE DE DIAS PENDENTES NESSE SETOR (destaque > 2 dias)
-        const s01Items = state.filteredData.filter(r => r.setor === '01' || r.setor === '1');
+        const relatedSectorMap = window.CRMSetor01RelatedSectors.buildMap(state.allData);
+        const s01Items = state.filteredData
+            .filter(r => r.setor === '01' || r.setor === '1')
+            .map(item => ({ ...item, ...window.CRMSetor01RelatedSectors.resolve(item, relatedSectorMap) }));
         const totalItems = s01Items.length;
         const totalPecas = s01Items.reduce((sum, r) => sum + r.qtdeOriginal, 0);
 
@@ -4170,28 +4173,10 @@
                                 const escapedDesc = (item.descricao || 'Produto').replace(/'/g, "\\'");
                                 const escapedCode = (item.codigo || '').replace(/'/g, "\\'");
 
-                                // Calcular pendências de Aviamento (X01, X02) e Cor (D01, D02)
-                                const relatedRows = state.allData.filter(r => r.codigo === item.codigo);
-                                const pendX01 = relatedRows.some(r => r.setor === 'X01');
-                                const pendX02 = relatedRows.some(r => r.setor === 'X02');
-                                const pendD01 = relatedRows.some(r => r.setor === 'D01');
-                                const pendD02 = relatedRows.some(r => r.setor === 'D02');
-
-                                let aviamentoHtml = '';
-                                if (pendX01) aviamentoHtml = `<span class="s13-photo-tag" style="top: auto; bottom: 8px; left: 8px; right: auto; background: rgba(16, 185, 129, 0.95); color: #fff; font-weight: 800; border: 1px solid #059669; z-index: 10;" title="Pendência Setor X01"><i class="fa-solid fa-triangle-exclamation"></i> SETOR X01</span>`;
-                                else if (pendX02) aviamentoHtml = `<span class="s13-photo-tag" style="top: auto; bottom: 8px; left: 8px; right: auto; background: rgba(225, 29, 72, 0.95); color: #fff; font-weight: 800; border: 1px solid #be123c; z-index: 10;" title="Pendência Setor X02"><i class="fa-solid fa-triangle-exclamation"></i> SETOR X02</span>`;
-
-                                let corHtml = '';
-                                if (pendD01) corHtml = `<span class="s13-photo-tag" style="top: auto; bottom: 8px; right: 8px; left: auto; background: rgba(16, 185, 129, 0.95); color: #fff; font-weight: 800; border: 1px solid #059669; z-index: 10;" title="Pendência Setor D01"><i class="fa-solid fa-triangle-exclamation"></i> SETOR D01</span>`;
-                                else if (pendD02) corHtml = `<span class="s13-photo-tag" style="top: auto; bottom: 8px; right: 8px; left: auto; background: rgba(225, 29, 72, 0.95); color: #fff; font-weight: 800; border: 1px solid #be123c; z-index: 10;" title="Pendência Setor D02"><i class="fa-solid fa-triangle-exclamation"></i> SETOR D02</span>`;
-                                
-
                                 return `
                                     <div class="s13-photo-card ${isCritico ? 'card-critico' : ''}">
                                         <!-- ÁREA DA FOTO -->
                                         <div class="s13-photo-wrapper">
-                                              ${aviamentoHtml}
-                                              ${corHtml}
                                             <!-- BADGE DO SETOR 01 NA FOTO -->
                                             <span class="s13-photo-tag" style="background: rgba(0, 212, 255, 0.92); color: #021226; font-weight: 900; top: 10px; left: 10px; border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.6); font-size: 11px; padding: 3px 8px;" title="Setor 01">
                                                 <i class="fa-solid fa-clock-rotate-left"></i> SETOR 01
@@ -4217,33 +4202,32 @@
                                             `}
                                         </div>
 
-                                        <!-- CORPO DO CARD COM INFORMAÇÕES COMPLETAS (PADRÃO SETOR 13) -->
+                                        <!-- CORPO DO CARD COM INFORMAÇÕES COMPLETAS -->
                                         <div class="s13-card-body">
-                                            <!-- Linha 1: Código, Etiqueta e OP -->
+                                            <!-- Linha 1: Código e OP -->
                                             <div class="s13-card-code-row">
                                                 <div class="s13-card-code" title="Código do Produto">${item.codigo}</div>
-                                                <div style="display: flex; gap: 4px; align-items: center;">
-                                                    ${item.etiqueta && item.etiqueta !== '—' ? `<span class="badge badge-sub" style="font-size: 9px; padding: 2px 4px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">ETQ ${item.etiqueta}</span>` : ''}
+                                                <div style="display: flex; align-items: center; gap: 4px;">
                                                     <span class="s13-card-op-badge" title="Ordem de Produção" onclick="window.crmOpenOpModal('${item.op}')" style="cursor: pointer;">OP ${item.op}</span>
                                                 </div>
                                             </div>
 
                                             <!-- Linha 2: Descrição -->
-                                            <div class="s13-card-description" title="${item.descricao}">
-                                                ${item.descricao || 'Produto sem descrição cadastrada'}
+                                            <div style="font-size: 12px; font-weight: 600; color: #e2e8f0; line-height: 1.35; max-height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="${item.descricao}">
+                                                ${item.descricao || 'Produto pendente no Setor 01'}
                                             </div>
 
-                                            <!-- Linha 3: Dias no Setor com Destaque -->
-                                            <div style="margin-top: 4px; margin-bottom: 4px;">
+                                            <!-- Linha 3: SUPER DESTAQUE DE DIAS PENDENTES NO SETOR 01 -->
+                                            <div style="margin-top: 6px; margin-bottom: 6px;">
                                                 ${isCritico ? `
-                                                    <div class="s13-dias-badge critico badge-pulse-red" style="background: rgba(239, 68, 68, 0.16); border: 1.5px solid #ef4444; color: #fca5a5; display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 6px;">
-                                                        <span style="font-size: 10px;"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; margin-right: 4px;"></i> <strong>PENDÊNCIA:</strong></span>
-                                                        <span style="font-weight: 900; color: #ffffff; background: #ef4444; padding: 1px 6px; border-radius: 4px; font-size: 10.5px;">${item.diasParado} DIAS</span>
+                                                    <div class="s13-dias-badge critico badge-pulse-red" style="background: rgba(239, 68, 68, 0.16); border: 1.5px solid #ef4444; color: #fca5a5; display: flex; align-items: center; justify-content: space-between; padding: 5px 10px; border-radius: 6px;">
+                                                        <span style="font-size: 11px;"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; margin-right: 4px;"></i> <strong>PENDÊNCIA NO SETOR:</strong></span>
+                                                        <span style="font-weight: 900; color: #ffffff; background: #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 11.5px;">${item.diasParado} DIAS</span>
                                                     </div>
                                                 ` : `
-                                                    <div class="s13-dias-badge normal" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 6px;">
-                                                        <span style="font-size: 10px;"><i class="fa-solid fa-clock" style="color: #10b981; margin-right: 4px;"></i> <strong>TEMPO NO SETOR:</strong></span>
-                                                        <span style="font-weight: 800; color: #ffffff; background: #059669; padding: 1px 6px; border-radius: 4px; font-size: 10.5px;">${item.diasParado} DIAS</span>
+                                                    <div class="s13-dias-badge normal" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; display: flex; align-items: center; justify-content: space-between; padding: 5px 10px; border-radius: 6px;">
+                                                        <span style="font-size: 11px;"><i class="fa-solid fa-clock" style="color: #10b981; margin-right: 4px;"></i> <strong>TEMPO NO SETOR:</strong></span>
+                                                        <span style="font-weight: 800; color: #ffffff; background: #059669; padding: 2px 8px; border-radius: 4px; font-size: 11.5px;">${item.diasParado} DIAS</span>
                                                     </div>
                                                 `}
                                             </div>
@@ -4255,16 +4239,54 @@
                                                 </span>
                                             </div>
 
-                                            <!-- Linha 5: Metadados compactos (padrão Setor 13) -->
-                                            <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 4px;">
+                                            <!-- Linha 5: Grid de Metadados (Semana, Peças, Dias no Setor, Cliente) -->
+                                            <div class="s13-card-meta-grid" style="grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 6px;"><div class="s13-meta-item">
+            <span class="s13-meta-label">OC / RIS</span>
+            ${(item.oc || '').trim().toUpperCase().startsWith('S') || !(item.oc || '').trim() ? `<span class="s13-meta-val" style="color: #f97316; font-weight: 800; background: rgba(249,115,22,0.15); padding: 1px 4px; border-radius: 4px;">SEM OC</span>` : `<span class="s13-meta-val" style="color: #94a3b8; font-weight: 700;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>${item.oc}</span>`}
+        </div>
                                                 <div class="s13-meta-item">
-                                                    <span class="s13-meta-label">OC / RIS</span>
-                                                    ${(item.oc || '').trim().toUpperCase().startsWith('S') || !(item.oc || '').trim() ? `<span class="s13-meta-val" style="color: #f97316; font-weight: 800; background: rgba(249,115,22,0.15); padding: 1px 4px; border-radius: 4px;">SEM OC</span>` : `<span class="s13-meta-val" style="color: #94a3b8; font-weight: 700;"><i class="fa-solid fa-file-invoice" style="margin-right:4px;"></i>${item.oc}</span>`}
+                                                    <span class="s13-meta-label">Semana Entrega (BK)</span>
+                                                    <span class="s13-meta-val" style="color: #c084fc; font-weight: 700;" title="${item.pedDescPeriodo || item.pedPeriodo || '—'}">${item.pedDescPeriodo || item.pedPeriodo || '—'}</span>
+                                                </div>
+                                                <div class="s13-meta-item">
+                                                    <span class="s13-meta-label">Peças Pedido (AP)</span>
+                                                    <span class="s13-meta-val" style="color: #38bdf8; font-weight: 800;">${formatNumber(item.qtdeOriginal)}</span>
                                                 </div>
                                                 <div class="s13-meta-item">
                                                     <span class="s13-meta-label">Cliente</span>
                                                     <span class="s13-meta-val" title="${item.cliente || '—'}" style="color: #67e8f9; font-weight: 700;">${item.cliente || '—'}</span>
                                                 </div>
+                                                <div class="s13-meta-item">
+                                                    <span class="s13-meta-label">Marca / Grupo</span>
+                                                    <span class="s13-meta-val" title="${item.marca || item.tipoProduto || '—'}">${item.marca || item.tipoProduto || '—'}</span>
+                                                </div>
+                                                <div class="s13-meta-item">
+                                                    <span class="s13-meta-label">Etiqueta</span>
+                                                    <span class="s13-meta-val" style="color: #60a5fa; font-weight: 800;">${item.etiqueta || '—'}</span>
+                                                </div>
+                                                <div class="s13-meta-item">
+                                                    <span class="s13-meta-label">Setor Aviamento</span>
+                                                    <span class="s01-sector-chip-list">
+                                                        ${item.setoresAviamento.length ? item.setoresAviamento.map(setor => `
+                                                            <span class="s01-sector-chip ${setor === 'X02' ? 'danger' : 'success'}">SETOR ${setor}</span>
+                                                        `).join('') : '<span class="s01-sector-chip empty">—</span>'}
+                                                    </span>
+                                                </div>
+                                                <div class="s13-meta-item">
+                                                    <span class="s13-meta-label">Setor Cor</span>
+                                                    <span class="s01-sector-chip-list">
+                                                        ${item.setoresCor.length ? item.setoresCor.map(setor => `
+                                                            <span class="s01-sector-chip ${setor === 'D02' ? 'danger' : 'success'}">SETOR ${setor}</span>
+                                                        `).join('') : '<span class="s01-sector-chip empty">—</span>'}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Linha 6: Botão de Ação Rápida -->
+                                            <div style="margin-top: 8px;">
+                                                <button class="s13-btn-action primary" onclick="window.crmOpenOpModal('${item.op}')" style="width: 100%;" title="Ver Detalhes 360° da OP">
+                                                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Detalhes da OP
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
