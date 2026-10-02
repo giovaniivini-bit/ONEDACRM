@@ -67,7 +67,10 @@
         leadtimeExternalData: null,
         missingImagesSearch: '',
         alertRules: [],
+        alertRulesSource: 'loading',
+        alertRulesError: '',
         activeAlerts: [],
+        alertsTab: 'active',
         alertsSearch: '',
         alertsSeverity: 'all',
         alertsCategory: 'all',
@@ -702,10 +705,17 @@
             const response = await fetch('/api/alert-rules');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const payload = await response.json();
-            state.alertRules = Array.isArray(payload.data) ? payload.data : window.CRMAlertsEngine.cloneDefaults();
+            if (!Array.isArray(payload.data)) throw new Error('A API não retornou uma lista de regras.');
+            const validation = window.CRMAlertsEngine.validateRules(payload.data);
+            if (!validation.valid) throw new Error(validation.error || 'A API retornou regras inválidas.');
+            state.alertRules = payload.data;
+            state.alertRulesSource = 'api';
+            state.alertRulesError = '';
         } catch (error) {
             console.warn('[ALERTAS] Usando regras padrão locais:', error.message);
             state.alertRules = window.CRMAlertsEngine.cloneDefaults();
+            state.alertRulesSource = 'fallback';
+            state.alertRulesError = error.message;
         } finally {
             state.alertsLoading = false;
             recalculateAlerts();
@@ -10643,11 +10653,46 @@
         return { key: fallbackKey, label: fallbackLabel };
     }
 
+    function formatAlertRuleCondition(condition) {
+        const fields = window.CRMAlertsEngine?.FIELD_DEFINITIONS || [];
+        const operators = window.CRMAlertsEngine?.OPERATORS || [];
+        const field = fields.find(item => item.value === condition?.field);
+        const operator = operators.find(item => item.value === condition?.operator);
+        const rawValue = String(condition?.value ?? '').trim();
+        const value = rawValue === 'true' ? 'sim' : rawValue === 'false' ? 'não' : rawValue;
+        return [field?.label || condition?.field, operator?.label || condition?.operator, value]
+            .filter(Boolean)
+            .join(' ');
+    }
+
+    function getAlertRuleSource(ruleId, calendarRecords) {
+        const calendar = window.CRMAlertsEngine?.buildCalendarIndex?.(calendarRecords || []) || {};
+        if (ruleId === 'setor13-calendario') {
+            const weekCount = Object.keys(calendar).length;
+            return `Calendário Industrial · coluna A (semana) + coluna B (data limite) · ${weekCount} semanas carregadas`;
+        }
+        if (ruleId === 'setor01-limite-dias') {
+            const limits = Array.from(new Set(Object.values(calendar)
+                .map(entry => entry.sector01MaxDays)
+                .filter(limit => Number.isFinite(limit))))
+                .sort((a, b) => a - b);
+            const currentLimit = limits.length === 1
+                ? `limite atual: ${limits[0]} ${limits[0] === 1 ? 'dia' : 'dias'}`
+                : (limits.length ? `limites atuais: ${limits.join(', ')} dias` : 'limite indisponível');
+            return `Calendário Industrial · coluna E (limite de dias) · ${currentLimit}`;
+        }
+        if (ruleId === 'malotes-parte-principal') {
+            return 'CRM · setores da parte principal e do malote';
+        }
+        return 'Dados oficiais do CRM';
+    }
+
     function renderAlertsView(container) {
         recalculateAlerts();
         updateAlertsBadges();
         const alerts = state.activeAlerts || [];
         const rules = state.alertRules || [];
+        const officialRules = state.alertRulesSource === 'api' ? rules : [];
         const calendarRecords = state.calendarExternalData?.records || [];
         const calendarAvailable = calendarRecords.length > 0;
         const calendarMode = calendarAvailable
@@ -10763,6 +10808,57 @@
             </div>
         `;
 
+        const rulesContent = `
+            <div class="alerts-rules-header">
+                <div>
+                    <h3>Regras vigentes</h3>
+                    <p>Consulta somente de leitura. Qualquer alteração é feita na programação, revisada e publicada como uma nova versão do CRM.</p>
+                </div>
+                <span class="badge badge-emerald"><i class="fa-solid fa-lock"></i> Somente leitura</span>
+            </div>
+            <div class="alerts-rules-list">
+                ${officialRules.length ? officialRules.map(rule => {
+                    const meta = severityMeta[rule.severity] || severityMeta.info;
+                    const conditions = Array.isArray(rule.conditions) ? rule.conditions : [];
+                    return `
+                        <article class="alert-rule-card ${rule.enabled === false ? 'disabled' : ''}">
+                            <span class="alert-rule-status-dot" style="background:${meta.color}; box-shadow:0 0 10px ${meta.color}88;"></span>
+                            <div class="alert-rule-main">
+                                <div class="alert-rule-title">
+                                    <strong>${escapeHtml(rule.name)}</strong>
+                                    <span class="badge badge-${meta.className}">${meta.label}</span>
+                                    <span class="badge ${rule.enabled === false ? 'badge-sub' : 'badge-emerald'}"><i class="fa-solid ${rule.enabled === false ? 'fa-circle-pause' : 'fa-circle-check'}"></i> ${rule.enabled === false ? 'Inativa no código' : 'Ativa'}</span>
+                                </div>
+                                <p>${escapeHtml(rule.description || '')}</p>
+                                <div class="alert-rule-info-grid">
+                                    <div class="alert-rule-info-block">
+                                        <span>Fonte oficial</span>
+                                        <strong>${escapeHtml(getAlertRuleSource(rule.id, calendarRecords))}</strong>
+                                    </div>
+                                    <div class="alert-rule-info-block">
+                                        <span>Quando dispara</span>
+                                        <strong>${escapeHtml(conditions.map(formatAlertRuleCondition).join(rule.match === 'any' ? ' OU ' : ' E ') || 'Condição definida no código')}</strong>
+                                    </div>
+                                    <div class="alert-rule-info-block alert-rule-message-preview">
+                                        <span>Mensagem gerada</span>
+                                        <code>${escapeHtml(rule.message || '')}</code>
+                                    </div>
+                                </div>
+                                <div class="alert-rule-code-id"><i class="fa-solid fa-code-branch"></i> Identificador: <code>${escapeHtml(rule.id)}</code></div>
+                            </div>
+                        </article>
+                    `;
+                }).join('') : `
+                    <div class="alerts-empty-state">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <h3>Consulta oficial indisponível</h3>
+                        <p>Os avisos continuam sendo calculados com a cópia local de contingência, mas esta aba não apresenta essa cópia como regra vigente. Tente recarregar a página.</p>
+                        ${state.alertRulesError ? `<small>${escapeHtml(state.alertRulesError)}</small>` : ''}
+                    </div>
+                `}
+            </div>
+        `;
+
         container.innerHTML = `
             <div class="module-view-header">
                 <div class="module-view-title-group">
@@ -10771,7 +10867,7 @@
                 </div>
                 <div class="alerts-header-actions">
                     <span class="badge ${calendarAvailable ? 'badge-cyan' : 'badge-rose'}"><i class="fa-solid fa-calendar-days"></i> Calendário ${calendarMode}</span>
-                    <span class="badge badge-sub">${rules.filter(rule => rule.enabled).length} regras oficiais</span>
+                    <span class="badge ${state.alertRulesSource === 'api' ? 'badge-sub' : 'badge-amber'}">${state.alertRulesSource === 'api' ? `${officialRules.filter(rule => rule.enabled).length} regras oficiais` : 'Regras em contingência'}</span>
                     <button class="btn btn-glass" onclick="window.crmRefreshAlerts()"><i class="fa-solid fa-arrows-rotate"></i> Recalcular</button>
                 </div>
             </div>
@@ -10787,11 +10883,12 @@
                 <div class="kpi-card cyan"><div class="kpi-header"><span class="kpi-label">Informativos</span><div class="kpi-icon"><i class="fa-solid fa-circle-info"></i></div></div><div class="kpi-value">${formatNumber(counts.info)}</div><div class="kpi-footer">Controle preventivo</div></div>
                 <div class="kpi-card purple"><div class="kpi-header"><span class="kpi-label">Total ativo</span><div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div></div><div class="kpi-value">${formatNumber(alerts.length)}</div><div class="kpi-footer">Atualizado agora</div></div>
             </div>
-            <div class="alerts-tabs">
-                <button class="active" type="button"><i class="fa-solid fa-bell"></i> Avisos ativos</button>
+            <div class="alerts-tabs" role="tablist" aria-label="Conteúdo dos alertas">
+                <button id="alertsTabActive" class="${state.alertsTab === 'active' ? 'active' : ''}" type="button" role="tab" aria-controls="alertsTabPanel" aria-selected="${state.alertsTab === 'active'}" onclick="window.crmSetAlertsTab('active')"><i class="fa-solid fa-bell"></i> Avisos ativos</button>
+                <button id="alertsTabRules" class="${state.alertsTab === 'rules' ? 'active' : ''}" type="button" role="tab" aria-controls="alertsTabPanel" aria-selected="${state.alertsTab === 'rules'}" onclick="window.crmSetAlertsTab('rules')"><i class="fa-solid fa-book-open"></i> Regras vigentes</button>
             </div>
-            <section class="panel-card alerts-panel">
-                ${state.alertsLoading ? '<div class="alerts-empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Carregando alertas...</p></div>' : activeContent}
+            <section id="alertsTabPanel" class="panel-card alerts-panel" role="tabpanel" aria-labelledby="${state.alertsTab === 'rules' ? 'alertsTabRules' : 'alertsTabActive'}">
+                ${state.alertsLoading ? '<div class="alerts-empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Carregando alertas...</p></div>' : (state.alertsTab === 'rules' ? rulesContent : activeContent)}
             </section>
         `;
         container.querySelectorAll('.js-alert-open-op').forEach(button => {
@@ -11620,6 +11717,10 @@
     window.crmFilterAlerts = severity => {
         state.alertsSeverity = ['critical', 'warning', 'info'].includes(severity) ? severity : 'all';
         state.alertsPageLimit = 30;
+        renderActiveView();
+    };
+    window.crmSetAlertsTab = tab => {
+        state.alertsTab = tab === 'rules' ? 'rules' : 'active';
         renderActiveView();
     };
     window.crmFilterAlertsCategory = category => {

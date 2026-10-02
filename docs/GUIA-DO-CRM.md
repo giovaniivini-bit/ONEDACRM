@@ -126,7 +126,7 @@ node server.js
 ### 7.1 Login administrativo
 
 As consultas e telas continuam acessíveis normalmente. Operações que alteram dados —
-sincronização forçada, importação, upload e gravação de regras — exigem a variável
+sincronização forçada, importação e upload — exigem a variável
 `CRM_ADMIN_PASSWORD_HASH` na produção. O navegador solicita a senha na primeira operação
 administrativa, mas não a armazena. O servidor devolve uma sessão em cookie seguro,
 inacessível ao JavaScript, válida por até 8 horas. Recarregar a página preserva a
@@ -173,6 +173,10 @@ As regras são definidas exclusivamente em `alerts-engine.js`, revisadas e publi
 junto com o código. A tela não permite criar, editar, desativar ou excluir regras. Isso
 evita que uma configuração salva na VPS substitua silenciosamente o comportamento
 oficial. O cálculo ocorre no navegador e não altera a planilha nem os dados operacionais.
+
+Na própria tela, a aba **Regras vigentes** apresenta as três regras oficiais, suas
+fontes, condições e modelos de mensagem em modo somente leitura. Dessa forma, qualquer
+pessoa pode consultar o comportamento atual sem abrir o código e sem risco de alterá-lo.
 
 Quando todos os valores válidos da coluna E forem iguais, esse limite único também é
 aplicado aos registros do Setor 01 que chegam sem semana preenchida. Se a coluna E tiver

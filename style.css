@@ -409,6 +409,65 @@ button.alert-item-image {
     font-size: 10px;
 }
 
+.alert-rule-card {
+    align-items: flex-start;
+}
+
+.alert-rule-status-dot {
+    margin-top: 6px;
+}
+
+.alert-rule-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.alert-rule-info-block {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    padding: 10px 11px;
+    border: 1px solid var(--border-base);
+    border-radius: 8px;
+    background: rgba(148, 163, 184, 0.06);
+}
+
+.alert-rule-info-block > span,
+.alert-rule-code-id {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.035em;
+}
+
+.alert-rule-info-block > strong {
+    color: var(--text-primary);
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+.alert-rule-message-preview {
+    grid-column: 1 / -1;
+}
+
+.alert-rule-message-preview code,
+.alert-rule-code-id code {
+    color: var(--text-secondary);
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 10.5px;
+    line-height: 1.5;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.alert-rule-code-id {
+    margin-top: 9px;
+    text-transform: none;
+}
+
 .alert-rule-actions {
     flex: 0 0 auto;
 }
@@ -525,6 +584,14 @@ button.alert-item-image {
     .alert-form-grid,
     .alert-condition-row {
         grid-template-columns: 1fr;
+    }
+
+    .alert-rule-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .alert-rule-message-preview {
+        grid-column: auto;
     }
 }
 

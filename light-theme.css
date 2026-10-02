@@ -116,6 +116,12 @@ body.light-mode .toolbar-pill-btn.active {
     border-color: #a5b4fc !important;
 }
 
+body.light-mode .alerts-tabs button.active {
+    color: #ffffff !important;
+    background: #6d28d9 !important;
+    border-color: #5b21b6 !important;
+}
+
 body.light-mode .filter-chip.active i,
 body.light-mode .view-switch-btn.active i,
 body.light-mode .toolbar-pill-btn.active i {
@@ -238,6 +244,17 @@ body.light-mode .admin-login-card {
     background: #ffffff !important;
     border-color: var(--border-base) !important;
     box-shadow: var(--light-shadow-card) !important;
+}
+
+body.light-mode .alert-rule-info-block {
+    color: var(--text-primary) !important;
+    background: #f8fafc !important;
+    border-color: var(--border-base) !important;
+}
+
+body.light-mode .alert-rule-message-preview code,
+body.light-mode .alert-rule-code-id code {
+    color: #344054 !important;
 }
 
 body.light-mode .macro-chart-card:hover,
