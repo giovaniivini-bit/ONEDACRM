@@ -4161,6 +4161,21 @@
                                 const escapedDesc = (item.descricao || 'Produto').replace(/'/g, "\\'");
                                 const escapedCode = (item.codigo || '').replace(/'/g, "\\'");
 
+                                // Calcular pendências de Aviamento (X01, X02) e Cor (D01, D02)
+                                const relatedRows = state.allData.filter(r => r.op === item.op);
+                                const pendX01 = relatedRows.some(r => r.setor === 'X01');
+                                const pendX02 = relatedRows.some(r => r.setor === 'X02');
+                                const pendD01 = relatedRows.some(r => r.setor === 'D01');
+                                const pendD02 = relatedRows.some(r => r.setor === 'D02');
+
+                                let aviamentoHtml = '';
+                                if (pendX01) aviamentoHtml = '<span class="badge badge-emerald" style="font-size: 9.5px; padding: 2px 5px;" title="Pendência Setor X01">SETOR X01</span>';
+                                else if (pendX02) aviamentoHtml = '<span class="badge badge-rose" style="font-size: 9.5px; padding: 2px 5px;" title="Pendência Setor X02">SETOR X02</span>';
+
+                                let corHtml = '';
+                                if (pendD01) corHtml = '<span class="badge badge-emerald" style="font-size: 9.5px; padding: 2px 5px;" title="Pendência Setor D01">SETOR D01</span>';
+                                else if (pendD02) corHtml = '<span class="badge badge-rose" style="font-size: 9.5px; padding: 2px 5px;" title="Pendência Setor D02">SETOR D02</span>';
+
                                 return `
                                     <div class="s13-photo-card ${isCritico ? 'card-critico' : ''}">
                                         <!-- ÁREA DA FOTO -->
@@ -4192,35 +4207,35 @@
 
                                         <!-- CORPO DO CARD COM INFORMAÇÕES COMPLETAS -->
                                         <div class="s13-card-body">
-                                            <!-- Linha 1: Código e OP + Badges de Etiqueta -->
+                                            <!-- Linha 1: Código e OP -->
                                             <div class="s13-card-code-row">
                                                 <div class="s13-card-code" title="Código do Produto">${item.codigo}</div>
-                                                <div style="display: flex; align-items: center; gap: 4px;">
-                                                    ${item.etiqueta && item.etiqueta !== '—' ? `
-                                                        <span class="badge badge-sub" style="font-size: 10.5px; padding: 2px 6px; color: #60a5fa; border-color: rgba(96, 165, 250, 0.3);" title="Etiqueta: ${item.etiqueta}">
-                                                            Etq ${item.etiqueta}
-                                                        </span>
-                                                    ` : ''}
-                                                    <span class="s13-card-op-badge" title="Ordem de Produção" onclick="window.crmOpenOpModal('${item.op}')" style="cursor: pointer;">OP ${item.op}</span>
-                                                </div>
+                                                <span class="s13-card-op-badge" title="Ordem de Produção" onclick="window.crmOpenOpModal('${item.op}')" style="cursor: pointer;">OP ${item.op}</span>
                                             </div>
 
                                             <!-- Linha 2: Descrição -->
-                                            <div style="font-size: 12px; font-weight: 600; color: #e2e8f0; line-height: 1.35; max-height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="${item.descricao}">
-                                                ${item.descricao || 'Produto pendente no Setor 01'}
+                                            <div class="s13-card-description" title="${item.descricao}">
+                                                ${item.descricao || 'Produto sem descrição cadastrada'}
                                             </div>
 
-                                            <!-- Linha 3: SUPER DESTAQUE DE DIAS PENDENTES NO SETOR 01 -->
-                                            <div style="margin-top: 6px; margin-bottom: 6px;">
+                                            <!-- Linha 3: ETIQUETA, AVIAMENTO, COR -->
+                                            <div style="display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap;">
+                                                ${item.etiqueta && item.etiqueta !== '—' ? `<span class="badge badge-sub" style="font-size: 9.5px; padding: 2px 5px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">ETIQUETA ${item.etiqueta}</span>` : ''}
+                                                ${aviamentoHtml}
+                                                ${corHtml}
+                                            </div>
+
+                                            <!-- Linha 4: Dias no Setor com Destaque -->
+                                            <div style="margin-top: 4px; margin-bottom: 4px;">
                                                 ${isCritico ? `
-                                                    <div class="s13-dias-badge critico badge-pulse-red" style="background: rgba(239, 68, 68, 0.16); border: 1.5px solid #ef4444; color: #fca5a5; display: flex; align-items: center; justify-content: space-between; padding: 5px 10px; border-radius: 6px;">
-                                                        <span style="font-size: 11px;"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; margin-right: 4px;"></i> <strong>PENDÊNCIA NO SETOR:</strong></span>
-                                                        <span style="font-weight: 900; color: #ffffff; background: #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 11.5px;">${item.diasParado} DIAS</span>
+                                                    <div class="s13-dias-badge critico badge-pulse-red" style="background: rgba(239, 68, 68, 0.16); border: 1.5px solid #ef4444; color: #fca5a5; display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 6px;">
+                                                        <span style="font-size: 10px;"><i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; margin-right: 4px;"></i> <strong>PENDÊNCIA:</strong></span>
+                                                        <span style="font-weight: 900; color: #ffffff; background: #ef4444; padding: 1px 6px; border-radius: 4px; font-size: 10.5px;">${item.diasParado} DIAS</span>
                                                     </div>
                                                 ` : `
-                                                    <div class="s13-dias-badge normal" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; display: flex; align-items: center; justify-content: space-between; padding: 5px 10px; border-radius: 6px;">
-                                                        <span style="font-size: 11px;"><i class="fa-solid fa-clock" style="color: #10b981; margin-right: 4px;"></i> <strong>TEMPO NO SETOR:</strong></span>
-                                                        <span style="font-weight: 800; color: #ffffff; background: #059669; padding: 2px 8px; border-radius: 4px; font-size: 11.5px;">${item.diasParado} DIAS</span>
+                                                    <div class="s13-dias-badge normal" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 6px;">
+                                                        <span style="font-size: 10px;"><i class="fa-solid fa-clock" style="color: #10b981; margin-right: 4px;"></i> <strong>TEMPO NO SETOR:</strong></span>
+                                                        <span style="font-weight: 800; color: #ffffff; background: #059669; padding: 1px 6px; border-radius: 4px; font-size: 10.5px;">${item.diasParado} DIAS</span>
                                                     </div>
                                                 `}
                                             </div>

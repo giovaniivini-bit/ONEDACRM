@@ -3399,57 +3399,68 @@ body {
 }
 
 /* Setor 13 — cards compactos no modo de miniaturas. Mantém o modo tabela completo. */
-#setor13TableSection .s13-photo-wrapper {
+#setor13TableSection .s13-photo-wrapper,
+#setor01GallerySection .s13-photo-wrapper {
     height: auto;
     aspect-ratio: auto;
     min-height: 260px; /* Imagem muito maior na proporção do card */
     flex-grow: 1; /* Absorve todo o espaço vazio vertical do grid */
 }
 
-#setor13TableSection .s13-photo-img {
+#setor13TableSection .s13-photo-img,
+#setor01GallerySection .s13-photo-img {
     padding: 3px;
 }
 
-#setor13TableSection .s13-photo-placeholder {
+#setor13TableSection .s13-photo-placeholder,
+#setor01GallerySection .s13-photo-placeholder {
     gap: 3px;
     padding: 6px;
 }
 
-#setor13TableSection .s13-photo-placeholder .s13-placeholder-icon {
+#setor13TableSection .s13-photo-placeholder,
+#setor01GallerySection .s13-photo-placeholder .s13-placeholder-icon {
     font-size: 20px;
 }
 
-#setor13TableSection .s13-photo-placeholder strong {
+#setor13TableSection .s13-photo-placeholder,
+#setor01GallerySection .s13-photo-placeholder strong {
     font-size: 10.5px !important;
 }
 
-#setor13TableSection .s13-photo-placeholder span {
+#setor13TableSection .s13-photo-placeholder,
+#setor01GallerySection .s13-photo-placeholder span {
     font-size: 8.5px !important;
 }
 
-#setor13TableSection .s13-photo-tag {
+#setor13TableSection .s13-photo-tag,
+#setor01GallerySection .s13-photo-tag {
     top: 5px;
     right: 5px;
     padding: 2px 6px;
     font-size: 9px;
 }
 
-#setor13TableSection .s13-card-body {
+#setor13TableSection .s13-card-body,
+#setor01GallerySection .s13-card-body {
     padding: 10px 12px;
     gap: 6px;
     flex-grow: 0; /* Para não empurrar e deixar área vazia, deixando compacto embaixo */
 }
 
-#setor13TableSection .s13-card-code {
+#setor13TableSection .s13-card-code,
+#setor01GallerySection .s13-card-code {
     font-size: 13px;
 }
 
-#setor13TableSection .s13-card-op-badge {
+#setor13TableSection .s13-card-op-badge,
+#setor01GallerySection .s13-card-op-badge {
     padding: 1px 6px;
     font-size: 9.5px;
 }
 
-#setor13TableSection .s13-card-description {
+#setor13TableSection .s13-card-description,
+#setor01GallerySection .s13-card-description {
     color: #e2e8f0;
     display: -webkit-box;
     overflow: hidden;
@@ -3461,33 +3472,39 @@ body {
     -webkit-line-clamp: 1;
 }
 
-#setor13TableSection .s13-dias-badge {
+#setor13TableSection .s13-dias-badge,
+#setor01GallerySection .s13-dias-badge {
     gap: 4px;
     padding: 2px 7px;
     font-size: 10px;
 }
 
-#setor13TableSection .s13-card-meta-grid {
+#setor13TableSection .s13-card-meta-grid,
+#setor01GallerySection .s13-card-meta-grid {
     gap: 3px 6px !important;
     margin-top: 1px;
     padding: 6px;
     font-size: 10px;
 }
 
-#setor13TableSection .s13-meta-item {
+#setor13TableSection .s13-meta-item,
+#setor01GallerySection .s13-meta-item {
     gap: 0;
 }
 
-#setor13TableSection .s13-meta-label {
+#setor13TableSection .s13-meta-label,
+#setor01GallerySection .s13-meta-label {
     font-size: 8.5px;
 }
 
-#setor13TableSection .s13-card-actions {
+#setor13TableSection .s13-card-actions,
+#setor01GallerySection .s13-card-actions {
     gap: 5px;
     padding-top: 5px;
 }
 
-#setor13TableSection .s13-btn-action {
+#setor13TableSection .s13-btn-action,
+#setor01GallerySection .s13-btn-action {
     gap: 4px;
     padding: 4px 6px;
     font-size: 9.5px;
@@ -5597,16 +5614,19 @@ body.light-mode .data-table tr:hover {
         zoom: 0.92 !important; /* encaixe horizontal elegante */
     }
 
-    body.print-setor13 #setor13TableSection .s13-photo-wrapper {
+    body.print-setor13 #setor13TableSection .s13-photo-wrapper,
+#setor01GallerySection .s13-photo-wrapper {
         height: 105px !important;
     }
 
-    body.print-setor13 #setor13TableSection .s13-card-body {
+    body.print-setor13 #setor13TableSection .s13-card-body,
+#setor01GallerySection .s13-card-body {
         padding: 7px !important;
         gap: 3px !important;
     }
 
-    body.print-setor13 #setor13TableSection .s13-photo-placeholder {
+    body.print-setor13 #setor13TableSection .s13-photo-placeholder,
+#setor01GallerySection .s13-photo-placeholder {
         gap: 2px !important;
         padding: 4px !important;
     }
