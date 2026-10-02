@@ -4171,24 +4171,27 @@
                                 const escapedCode = (item.codigo || '').replace(/'/g, "\\'");
 
                                 // Calcular pendências de Aviamento (X01, X02) e Cor (D01, D02)
-                                const relatedRows = state.allData.filter(r => r.op === item.op);
+                                const relatedRows = state.allData.filter(r => r.codigo === item.codigo);
                                 const pendX01 = relatedRows.some(r => r.setor === 'X01');
                                 const pendX02 = relatedRows.some(r => r.setor === 'X02');
                                 const pendD01 = relatedRows.some(r => r.setor === 'D01');
                                 const pendD02 = relatedRows.some(r => r.setor === 'D02');
 
                                 let aviamentoHtml = '';
-                                if (pendX01) aviamentoHtml = '<span class="badge badge-emerald" style="font-size: 9.5px; padding: 2px 5px;" title="Pendência Setor X01">SETOR X01</span>';
-                                else if (pendX02) aviamentoHtml = '<span class="badge badge-rose" style="font-size: 9.5px; padding: 2px 5px;" title="Pendência Setor X02">SETOR X02</span>';
+                                if (pendX01) aviamentoHtml = `<span class="s13-photo-tag" style="top: auto; bottom: 8px; left: 8px; right: auto; background: rgba(16, 185, 129, 0.95); color: #fff; font-weight: 800; border: 1px solid #059669; z-index: 10;" title="Pendência Setor X01"><i class="fa-solid fa-triangle-exclamation"></i> SETOR X01</span>`;
+                                else if (pendX02) aviamentoHtml = `<span class="s13-photo-tag" style="top: auto; bottom: 8px; left: 8px; right: auto; background: rgba(225, 29, 72, 0.95); color: #fff; font-weight: 800; border: 1px solid #be123c; z-index: 10;" title="Pendência Setor X02"><i class="fa-solid fa-triangle-exclamation"></i> SETOR X02</span>`;
 
                                 let corHtml = '';
-                                if (pendD01) corHtml = '<span class="badge badge-emerald" style="font-size: 9.5px; padding: 2px 5px;" title="Pendência Setor D01">SETOR D01</span>';
-                                else if (pendD02) corHtml = '<span class="badge badge-rose" style="font-size: 9.5px; padding: 2px 5px;" title="Pendência Setor D02">SETOR D02</span>';
+                                if (pendD01) corHtml = `<span class="s13-photo-tag" style="top: auto; bottom: 8px; right: 8px; left: auto; background: rgba(16, 185, 129, 0.95); color: #fff; font-weight: 800; border: 1px solid #059669; z-index: 10;" title="Pendência Setor D01"><i class="fa-solid fa-triangle-exclamation"></i> SETOR D01</span>`;
+                                else if (pendD02) corHtml = `<span class="s13-photo-tag" style="top: auto; bottom: 8px; right: 8px; left: auto; background: rgba(225, 29, 72, 0.95); color: #fff; font-weight: 800; border: 1px solid #be123c; z-index: 10;" title="Pendência Setor D02"><i class="fa-solid fa-triangle-exclamation"></i> SETOR D02</span>`;
+                                
 
                                 return `
                                     <div class="s13-photo-card ${isCritico ? 'card-critico' : ''}">
                                         <!-- ÁREA DA FOTO -->
                                         <div class="s13-photo-wrapper">
+                                              ${aviamentoHtml}
+                                              ${corHtml}
                                             <!-- BADGE DO SETOR 01 NA FOTO -->
                                             <span class="s13-photo-tag" style="background: rgba(0, 212, 255, 0.92); color: #021226; font-weight: 900; top: 10px; left: 10px; border-radius: 6px; box-shadow: 0 0 10px rgba(0, 212, 255, 0.6); font-size: 11px; padding: 3px 8px;" title="Setor 01">
                                                 <i class="fa-solid fa-clock-rotate-left"></i> SETOR 01
@@ -4214,12 +4217,15 @@
                                             `}
                                         </div>
 
-                                        <!-- CORPO DO CARD COM INFORMAÇÕES COMPLETAS -->
+                                        <!-- CORPO DO CARD COM INFORMAÇÕES COMPLETAS (PADRÃO SETOR 13) -->
                                         <div class="s13-card-body">
-                                            <!-- Linha 1: Código e OP -->
+                                            <!-- Linha 1: Código, Etiqueta e OP -->
                                             <div class="s13-card-code-row">
                                                 <div class="s13-card-code" title="Código do Produto">${item.codigo}</div>
-                                                <span class="s13-card-op-badge" title="Ordem de Produção" onclick="window.crmOpenOpModal('${item.op}')" style="cursor: pointer;">OP ${item.op}</span>
+                                                <div style="display: flex; gap: 4px; align-items: center;">
+                                                    ${item.etiqueta && item.etiqueta !== '—' ? `<span class="badge badge-sub" style="font-size: 9px; padding: 2px 4px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">ETQ ${item.etiqueta}</span>` : ''}
+                                                    <span class="s13-card-op-badge" title="Ordem de Produção" onclick="window.crmOpenOpModal('${item.op}')" style="cursor: pointer;">OP ${item.op}</span>
+                                                </div>
                                             </div>
 
                                             <!-- Linha 2: Descrição -->
@@ -4227,14 +4233,7 @@
                                                 ${item.descricao || 'Produto sem descrição cadastrada'}
                                             </div>
 
-                                            <!-- Linha 3: ETIQUETA, AVIAMENTO, COR -->
-                                            <div style="display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap;">
-                                                ${item.etiqueta && item.etiqueta !== '—' ? `<span class="badge badge-sub" style="font-size: 9.5px; padding: 2px 5px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">ETIQUETA ${item.etiqueta}</span>` : ''}
-                                                ${aviamentoHtml}
-                                                ${corHtml}
-                                            </div>
-
-                                            <!-- Linha 4: Dias no Setor com Destaque -->
+                                            <!-- Linha 3: Dias no Setor com Destaque -->
                                             <div style="margin-top: 4px; margin-bottom: 4px;">
                                                 ${isCritico ? `
                                                     <div class="s13-dias-badge critico badge-pulse-red" style="background: rgba(239, 68, 68, 0.16); border: 1.5px solid #ef4444; color: #fca5a5; display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 6px;">
