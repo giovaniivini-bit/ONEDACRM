@@ -21,7 +21,7 @@ test('tema claro possui tokens semânticos e superfícies executivas legíveis',
     assert.match(css, /\.alerts-tabs button\.active\s*\{[\s\S]*?background: #6d28d9 !important/);
     assert.doesNotMatch(css, /\.s13-photo-tag\[style\*="color: #ffffff"\]/);
     assert.match(css, /\.s13-photo-tag\[style\*="background: #f59e0b"\][\s\S]*?background: #92400e !important/);
-    assert.match(index, /light-theme\.css\?v=20261002-setor01-gallery-2/);
+    assert.match(index, /light-theme\.css\?v=20261003-images-showroom/);
     assert.match(server, /'light-theme\.css'/);
 });
 

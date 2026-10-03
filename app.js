@@ -56,6 +56,11 @@
         cqSearch: '',
         cqExternalData: null,
         cqViewAllMode: false,
+        aproveitamentoSearch: '',
+        aproveitamentoClient: 'all',
+        aproveitamentoPeriod: 'all',
+        aproveitamentoDateStart: '',
+        aproveitamentoDateEnd: '',
         // Cards por padrão: evita montar simultaneamente a grade de fotos e a
         // tabela completa (mais de 2 mil nós no CQ), que tornava o scroll pesado.
         cqDisplayMode: 'cards',
@@ -66,6 +71,7 @@
         leadtimeSearch: '',
         leadtimeExternalData: null,
         missingImagesSearch: '',
+        missingImagesTab: 'missing',
         alertRules: [],
         alertRulesSource: 'loading',
         alertRulesError: '',
@@ -102,6 +108,75 @@
     function renderAproveitamentoView(container) {
         const ext = state.aproveitamentoExternalData || { count: 0, records: [] };
         const rawRecords = ext.records || [];
+
+        const CLIENTES_APROVEITAMENTO = {
+            '01': 'C&A',
+            '02': 'Renner',
+            '03': 'Riachuelo',
+            '05': 'Centauro',
+            '13': 'Hering',
+            '15': 'Carrefour',
+            '21': 'Santa Marca'
+        };
+
+        function parseAproveitamentoDate(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return null;
+            const brMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            const date = brMatch
+                ? new Date(Number(brMatch[3]), Number(brMatch[2]) - 1, Number(brMatch[1]))
+                : isoMatch
+                    ? new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]))
+                    : new Date(raw);
+            if (Number.isNaN(date.getTime())) return null;
+            date.setHours(0, 0, 0, 0);
+            return date;
+        }
+
+        function getAproveitamentoProductCode(record) {
+            return String(record.PRODUTO || record.CODIGO || record.IMG_PRODUTO || '').trim();
+        }
+
+        function getAproveitamentoClient(record) {
+            const code = getAproveitamentoProductCode(record);
+            if (/^ON\./i.test(code)) return { prefix: 'ON', name: 'Showroom Oneda' };
+            const prefixMatch = code.match(/^(\d{2})\s*\./) || code.match(/^(\d{2})/);
+            const prefix = prefixMatch ? prefixMatch[1] : '';
+            return { prefix, name: CLIENTES_APROVEITAMENTO[prefix] || 'Outros' };
+        }
+
+        const validDates = rawRecords.map(r => parseAproveitamentoDate(r.DATA_CAD)).filter(Boolean);
+        const dataMaxDate = validDates.length
+            ? new Date(Math.max(...validDates.map(date => date.getTime())))
+            : null;
+        const activePeriod = state.aproveitamentoPeriod || 'all';
+        const activeCli = state.aproveitamentoClient || 'all';
+        let periodStart = null;
+        let periodEnd = dataMaxDate ? new Date(dataMaxDate) : null;
+
+        if (dataMaxDate && ['15d', '30d', '45d'].includes(activePeriod)) {
+            const days = Number(activePeriod.replace('d', ''));
+            periodStart = new Date(dataMaxDate);
+            periodStart.setDate(periodStart.getDate() - (days - 1));
+        } else if (dataMaxDate && activePeriod === '6m') {
+            periodStart = new Date(dataMaxDate);
+            periodStart.setMonth(periodStart.getMonth() - 6);
+        } else if (activePeriod === 'custom') {
+            periodStart = parseAproveitamentoDate(state.aproveitamentoDateStart);
+            periodEnd = parseAproveitamentoDate(state.aproveitamentoDateEnd);
+        } else {
+            periodEnd = null;
+        }
+
+        const filteredRecords = rawRecords.filter(record => {
+            const recordClient = getAproveitamentoClient(record).name;
+            if (activeCli !== 'all' && recordClient !== activeCli) return false;
+            const recordDate = parseAproveitamentoDate(record.DATA_CAD);
+            if (periodStart && (!recordDate || recordDate < periodStart)) return false;
+            if (periodEnd && (!recordDate || recordDate > periodEnd)) return false;
+            return true;
+        });
         
         let totalCount = 0;
         let compCount = 0;
@@ -117,22 +192,23 @@
         
         function parseCost(c) {
             if (!c) return 0;
-            let str = String(c).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+            let str = String(c).replace(/[R$\s]/g, '');
+            if (str.includes(',')) str = str.replace(/\./g, '').replace(',', '.');
             return parseFloat(str) || 0;
         }
         
         // Filtering
-        const searchQ = (state.cqSearch || '').toLowerCase().trim();
-        const activeCli = state.cqFilter && state.cqFilter.field === 'cliente' ? state.cqFilter.value : null;
+        const searchQ = (state.aproveitamentoSearch || '').toLowerCase().trim();
         
-        rawRecords.forEach(r => {
-            const cliente = (r.CLIENTE || r['CLIENTE'] || r['Cliente'] || 'OUTROS').trim();
-            const prefixo = (r.PREFIXO || r['PREFIXO'] || '').trim();
+        filteredRecords.forEach(r => {
+            const clientInfo = getAproveitamentoClient(r);
+            const cliente = clientInfo.name;
+            const prefixo = clientInfo.prefix;
             const pedido = (r.PEDIDO || r['PEDIDO'] || '').trim().toUpperCase();
             let grupoRaw = r.DESC_GRUPO || r['DESC_GRUPO'] || '';
             let macro = grupoRaw.split('(')[0].trim();
             if (!macro) macro = (r.MACRO_CATEGORIA || r['MACRO_CATEGORIA'] || 'OUTROS').trim();
-            const custoRaw = r.CUSTO_PRODUTO || r['CUSTO_PRODUTO'] || '0';
+            const custoRaw = r.PRECO_VENDA || r['PRECO_VENDA'] || '0';
             const custo = parseCost(custoRaw);
             
             const isComprado = (pedido === 'S');
@@ -179,17 +255,11 @@
         const monthNames = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
         let minDate = new Date(8640000000000000);
         let maxDate = new Date(-8640000000000000);
-        rawRecords.forEach(r => {
-            let dStr = r.DATA_CAD || r['DATA_CAD'];
-            if (dStr && dStr.includes('/')) {
-                let parts = dStr.split('/');
-                if (parts.length >= 3) {
-                    let date = new Date(parts[2], parts[1]-1, parts[0]);
-                    if (!isNaN(date)) {
-                        if (date < minDate) minDate = date;
-                        if (date > maxDate) maxDate = date;
-                    }
-                }
+        filteredRecords.forEach(r => {
+            const date = parseAproveitamentoDate(r.DATA_CAD);
+            if (date) {
+                if (date < minDate) minDate = date;
+                if (date > maxDate) maxDate = date;
             }
         });
         let periodText = "";
@@ -214,14 +284,11 @@
         });
         
         // Grid Data
-        const filteredGrid = rawRecords.filter(r => {
+        const filteredGrid = filteredRecords.filter(r => {
             if (searchQ) {
                 const s = searchQ;
-                const match = (r.CODIGO || '').toLowerCase().includes(s) || (r.DESCRICAO || '').toLowerCase().includes(s);
+                const match = getAproveitamentoProductCode(r).toLowerCase().includes(s) || String(r.DESCRICAO || '').toLowerCase().includes(s);
                 if (!match) return false;
-            }
-            if (activeCli) {
-                if ((r.CLIENTE || 'OUTROS').trim() !== activeCli) return false;
             }
             return true;
         });
@@ -254,7 +321,7 @@
             else paretoPathD += ` L ${cx} ${py}`;
             
             return `
-                <g style="cursor:pointer;" onclick="window.crmFilterCQ({ field: 'cliente', value: '${c.name}' })">
+                <g style="cursor:pointer;" onclick="window.crmSetAproveitamentoClient('${c.name}')">
                     <rect x="${cx - colW/2}" y="${pad.top + drawH - hComp}" width="${colW}" height="${hComp}" fill="#10b981" />
                     <rect x="${cx - colW/2}" y="${pad.top + drawH - hComp - hNao}" width="${colW}" height="${hNao}" fill="#f43f5e" />
                     
@@ -326,17 +393,59 @@
                 <div class="header-main-title" style="margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; display:flex; justify-content: space-between; align-items:center;">
                     <div>
                         <h2 style="font-size: 24px; font-weight: 800; color: #f8fafc; margin: 0; text-transform: uppercase;">APROVEITAMENTO AMOSTRAS ${periodText ? periodText : ''}</h2>
-                        <div style="font-size: 14px; color: #94a3b8; margin-top: 4px;">Setor 01F • Análise de Conversão e Custos por Cliente</div>
+                        <div style="font-size: 14px; color: #94a3b8; margin-top: 4px;">Setor 01F • Análise de Conversão e Ticket por Cliente</div>
                     </div>
                     <div style="display:flex; gap:12px;">
-                        ${activeCli ? `
-                        <button onclick="window.crmFilterCQ({field:'cliente', value:null})" class="badge badge-purple" style="border:none; cursor:pointer;">
+                        ${activeCli !== 'all' ? `
+                        <button onclick="window.crmSetAproveitamentoClient('all')" class="badge badge-purple" style="border:none; cursor:pointer;">
                             <i class="fa-solid fa-times"></i> Limpar Filtro: ${activeCli}
                         </button>
                         ` : ''}
                         <button onclick="window.print()" class="btn btn-primary" style="font-size:13px; font-weight:bold;">
                             <i class="fa-solid fa-file-pdf"></i> Exportar PDF
                         </button>
+                    </div>
+                </div>
+
+                <div class="cq-macro-card" style="padding:16px; margin-bottom:24px; display:flex; flex-wrap:wrap; gap:16px; align-items:flex-end;">
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label style="font-size:11px; color:#94a3b8; font-weight:800; text-transform:uppercase;">Prazo</label>
+                        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                            ${[
+                                ['all', 'Todo o período'],
+                                ['15d', '15 dias'],
+                                ['30d', '30 dias'],
+                                ['45d', '45 dias'],
+                                ['6m', '6 meses'],
+                                ['custom', 'Personalizado']
+                            ].map(([value, label]) => `
+                                <button onclick="window.crmSetAproveitamentoPeriod('${value}')" class="exec-action-btn ${activePeriod === value ? 'active' : ''}" style="padding:7px 11px;">${label}</button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ${activePeriod === 'custom' ? `
+                        <div style="display:flex; gap:8px; align-items:flex-end;">
+                            <label style="display:flex; flex-direction:column; gap:6px; font-size:11px; color:#94a3b8; font-weight:800; text-transform:uppercase;">
+                                De
+                                <input type="date" value="${state.aproveitamentoDateStart || ''}" onchange="window.crmSetAproveitamentoCustomDate('start', this.value)" style="padding:7px 10px; border-radius:6px; border:1px solid rgba(255,255,255,.12); background:#0b1220; color:#e2e8f0;">
+                            </label>
+                            <label style="display:flex; flex-direction:column; gap:6px; font-size:11px; color:#94a3b8; font-weight:800; text-transform:uppercase;">
+                                Até
+                                <input type="date" value="${state.aproveitamentoDateEnd || ''}" onchange="window.crmSetAproveitamentoCustomDate('end', this.value)" style="padding:7px 10px; border-radius:6px; border:1px solid rgba(255,255,255,.12); background:#0b1220; color:#e2e8f0;">
+                            </label>
+                        </div>
+                    ` : ''}
+                    <label style="display:flex; flex-direction:column; gap:6px; min-width:220px; margin-left:auto;">
+                        <span style="font-size:11px; color:#94a3b8; font-weight:800; text-transform:uppercase;">Cliente</span>
+                        <select onchange="window.crmSetAproveitamentoClient(this.value)" style="padding:8px 10px; border-radius:6px; border:1px solid rgba(255,255,255,.12); background:#0b1220; color:#e2e8f0;">
+                            <option value="all" ${activeCli === 'all' ? 'selected' : ''}>Todos os clientes</option>
+                            ${Object.values(CLIENTES_APROVEITAMENTO).map(name => `<option value="${name}" ${activeCli === name ? 'selected' : ''}>${name}</option>`).join('')}
+                            <option value="Showroom Oneda" ${activeCli === 'Showroom Oneda' ? 'selected' : ''}>Showroom Oneda</option>
+                            <option value="Outros" ${activeCli === 'Outros' ? 'selected' : ''}>Outros</option>
+                        </select>
+                    </label>
+                    <div style="font-size:12px; color:#64748b; width:100%;">
+                        ${dataMaxDate ? `Períodos rápidos calculados até ${dataMaxDate.toLocaleDateString('pt-BR')}, a data mais recente da planilha.` : 'Nenhuma data válida encontrada na coluna DATA_CAD.'}
                     </div>
                 </div>
 
@@ -370,20 +479,20 @@
 
                     <div class="kpi-card" style="border-color: rgba(148, 163, 184, 0.45); background: linear-gradient(135deg, rgba(148, 163, 184, 0.12) 0%, rgba(13, 16, 26, 0.9) 100%);">
                         <div class="kpi-header">
-                            <span class="kpi-label" style="color: #94a3b8; font-weight: 800; letter-spacing: 0.5px;">CUSTO MÉDIO GERAL</span>
+                            <span class="kpi-label" style="color: #94a3b8; font-weight: 800; letter-spacing: 0.5px;">PREÇO MÉDIO DE VENDA</span>
                             <div class="kpi-icon" style="color: #94a3b8;"><i class="fa-solid fa-money-bill-wave"></i></div>
                         </div>
                         <div class="kpi-value" style="font-size: 36px; font-weight: 900; color: #ffffff; line-height: 1.1; margin-top: 8px;">
                             ${formatBRL(avgGeral)}
                         </div>
                         <div class="kpi-footer">
-                            <span style="font-weight: 600; color: var(--text-secondary);">Ticket Médio Total (Todas as peças)</span>
+                            <span style="font-weight: 600; color: var(--text-secondary);">Ticket médio em PRECO_VENDA</span>
                         </div>
                     </div>
 
                     <div class="kpi-card" style="border-color: rgba(244, 63, 94, 0.45); background: linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, rgba(13, 16, 26, 0.9) 100%);">
                         <div class="kpi-header">
-                            <span class="kpi-label" style="color: #f43f5e; font-weight: 800; letter-spacing: 0.5px;">DIFERENÇA DE CUSTO</span>
+                            <span class="kpi-label" style="color: #f43f5e; font-weight: 800; letter-spacing: 0.5px;">DIFERENÇA DE TICKET</span>
                             <div class="kpi-icon" style="color: #f43f5e;"><i class="fa-solid fa-scale-unbalanced"></i></div>
                         </div>
                         <div class="kpi-value" style="font-size: 16px; font-weight: 700; color: #ffffff; line-height: 1.4; margin-top: 4px;">
@@ -391,7 +500,7 @@
                             Não Comp.: <span style="color: #f43f5e; font-size:18px;">${formatBRL(avgNao)}</span>
                         </div>
                         <div class="kpi-footer">
-                            <span style="font-weight: 700; color: #fbbf24; background: rgba(251,191,36,0.1); padding: 2px 6px; border-radius: 4px;">${diffCustos > 0 ? `Comprados custam ${diffCustos.toFixed(1)}% a menos` : `Comprados custam ${Math.abs(diffCustos).toFixed(1)}% a mais`}</span>
+                            <span style="font-weight: 700; color: #fbbf24; background: rgba(251,191,36,0.1); padding: 2px 6px; border-radius: 4px;">${diffCustos > 0 ? `Ticket dos comprados é ${diffCustos.toFixed(1)}% menor` : `Ticket dos comprados é ${Math.abs(diffCustos).toFixed(1)}% maior`}</span>
                         </div>
                     </div>
                 </div>
@@ -432,9 +541,9 @@
                                     <th style="padding: 10px 8px;">Rede</th>
                                     <th style="text-align:right; padding: 10px 8px;">Volume Total</th>
                                     <th style="text-align:right; padding: 10px 8px;">Conversão</th>
-                                    <th style="text-align:right; padding: 10px 8px;">Custo (Geral)</th>
-                                    <th style="text-align:right; color:#10b981; padding: 10px 8px;">Custo Comprados (S)</th>
-                                    <th style="text-align:right; color:#f43f5e; padding: 10px 8px;">Custo Não Comp. (N)</th>
+                                    <th style="text-align:right; padding: 10px 8px;">Ticket (Geral)</th>
+                                    <th style="text-align:right; color:#10b981; padding: 10px 8px;">Ticket Comprados (S)</th>
+                                    <th style="text-align:right; color:#f43f5e; padding: 10px 8px;">Ticket Não Comp. (N)</th>
                                     <th style="text-align:right; color:#fbbf24; padding: 10px 8px;">Variação (N vs S)</th>
                                 </tr>
                             </thead>
@@ -444,7 +553,7 @@
                                     const avgS = c.qComp > 0 ? c.sumComp/c.qComp : 0;
                                     const avgN = c.qNao > 0 ? c.sumNao/c.qNao : 0;
                                     return `
-                                    <tr style="cursor:pointer; border-bottom: 1px solid rgba(255,255,255,0.05);" onclick="window.crmFilterCQ({field:'cliente', value:'${c.name}'})">
+                                    <tr style="cursor:pointer; border-bottom: 1px solid rgba(255,255,255,0.05);" onclick="window.crmSetAproveitamentoClient('${c.name}')">
                                         <td style="padding: 12px 8px;"><strong>${c.name}</strong> <span style="font-size:10px; color:#64748b; margin-left:6px;">(${c.prefix})</span></td>
                                         <td style="text-align:right; padding: 12px 8px;">${c.total}</td>
                                         <td style="text-align:right; padding: 12px 8px; color:${c.comp/c.total > 0.3 ? '#10b981' : '#f43f5e'}; font-weight:bold;">${((c.comp/c.total)*100).toFixed(1)}%</td>
@@ -486,7 +595,7 @@
                                 ${finalMacros.map((m, i) => `
                                     <div style="display:flex; justify-content:space-between; align-items:center; font-size: 12px; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px; border-left: 3px solid ${macroColors[i % macroColors.length]};">
                                         <div style="display:flex; flex-direction:column; gap:2px; overflow:hidden;">
-                                            <strong style="color:#e2e8f0; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" title="${m.name}">${m.name}</strong>
+                                            <strong style="color:#e2e8f0; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" title="${escapeHtml(m.name)}">${escapeHtml(m.name)}</strong>
                                             <span style="color:#0ea5e9; font-weight:700; font-size:10px;">Representa: ${((m.total / totalCount) * 100).toFixed(1)}%</span>
                                         </div>
                                         <div style="color:#94a3b8; font-weight:600; text-align:right;">
@@ -518,7 +627,7 @@
                                     <th style="padding:10px;">DESCRIÇÃO</th>
                                     <th style="padding:10px;">CATEGORIA</th>
                                     <th style="padding:10px; text-align:center;">STATUS</th>
-                                    <th style="padding:10px; text-align:right;">CUSTO</th>
+                                    <th style="padding:10px; text-align:right;">PREÇO VENDA</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -526,16 +635,16 @@
                                     const isC = (r.PEDIDO || '').toUpperCase() === 'S';
                                     return `
                                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                            <td style="padding:10px; font-family:monospace; color:#38bdf8;">${r.CODIGO}</td>
-                                            <td style="padding:10px; font-weight:600; color:#e2e8f0;">${r.CLIENTE}</td>
-                                            <td style="padding:10px; color:#cbd5e1;">${r.DESCRICAO}</td>
-                                            <td style="padding:10px; color:#94a3b8;">${r.MACRO_CATEGORIA}</td>
+                                            <td style="padding:10px; font-family:monospace; color:#38bdf8;">${escapeHtml(getAproveitamentoProductCode(r))}</td>
+                                            <td style="padding:10px; font-weight:600; color:#e2e8f0;">${getAproveitamentoClient(r).name}</td>
+                                            <td style="padding:10px; color:#cbd5e1;">${escapeHtml(r.DESCRICAO || '-')}</td>
+                                            <td style="padding:10px; color:#94a3b8;">${escapeHtml(String(r.DESC_GRUPO || '').split('(')[0].trim() || r.MACRO_CATEGORIA || '-')}</td>
                                             <td style="padding:10px; text-align:center;">
                                                 <span style="padding:4px 8px; border-radius:4px; font-weight:bold; font-size:10px; background:${isC ? 'rgba(16,185,129,0.2)' : 'rgba(244,63,94,0.2)'}; color:${isC ? '#34d399' : '#fb7185'};">
                                                     ${isC ? 'COMPRADO' : 'NÃO COMP.'}
                                                 </span>
                                             </td>
-                                            <td style="padding:10px; text-align:right; color:#e2e8f0;">${r.CUSTO_PRODUTO || '-'}</td>
+                                            <td style="padding:10px; text-align:right; color:#e2e8f0;">${escapeHtml(r.PRECO_VENDA || '-')}</td>
                                         </tr>
                                     `;
                                 }).join('')}
@@ -551,10 +660,10 @@
         
         const searchEl = document.getElementById('cqSearchInput');
         if (searchEl) {
-            searchEl.value = state.cqSearch || '';
+            searchEl.value = state.aproveitamentoSearch || '';
             searchEl.addEventListener('keyup', (e) => {
                 if (e.key === 'Enter') {
-                    window.crmFilterCQ({ field: 'search', value: e.target.value });
+                    window.crmSearchAproveitamento(e.target.value);
                 }
             });
         }
@@ -10991,14 +11100,22 @@
     function renderMissingImagesView(container) {
         const products = getImageCoverageProducts();
         const missingProducts = products.filter(product => !product.hasImage);
+        const showingAllImages = state.missingImagesTab === 'all';
+        const sourceProducts = showingAllImages ? products : missingProducts;
         const query = String(state.missingImagesSearch || '').toLowerCase().trim();
-        const visibleProducts = missingProducts.filter(product => {
+        const visibleProducts = sourceProducts.filter(product => {
             if (!query) return true;
             return [product.codigo, product.descricao, product.cliente, product.marca, ...product.ops, ...product.setores]
                 .some(value => String(value || '').toLowerCase().includes(query));
         });
         const withImages = products.length - missingProducts.length;
         const coverage = products.length ? Math.round((withImages / products.length) * 100) : 0;
+        const emptyTitle = sourceProducts.length
+            ? 'Nenhum produto encontrado nessa busca'
+            : (products.length ? 'Todos os produtos possuem imagem' : 'Nenhum produto válido encontrado');
+        const emptyDescription = sourceProducts.length
+            ? 'Tente outro código, OP, cliente, marca ou setor.'
+            : (products.length ? 'O índice de imagens cobre todos os produtos atuais do CRM.' : 'Carregue ou sincronize os dados do CRM para montar a lista de imagens necessárias.');
 
         container.innerHTML = `
             <div class="module-view-header">
@@ -11007,6 +11124,11 @@
                     <p class="module-view-description">Produtos existentes no CRM que ainda não possuem uma imagem reconhecida na pasta local ou no Google Drive.</p>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    ${showingAllImages ? `
+                        <button class="btn btn-primary js-copy-all-image-names" onclick="window.crmCopyAllImageFilenames()" ${products.length ? '' : 'disabled'}>
+                            <i class="fa-regular fa-copy"></i> Copiar lista
+                        </button>
+                    ` : ''}
                     <button class="btn btn-secondary-action btn-sync-images-action" onclick="window.crmSyncImages()">
                         <i class="fa-solid fa-arrows-rotate"></i> Sincronizar Fotos
                     </button>
@@ -11039,11 +11161,22 @@
                 </div>
             </div>
 
-            <div class="table-card" style="border-top: 3px solid #f59e0b;">
+            <div class="alerts-tabs missing-images-tabs">
+                <button class="${showingAllImages ? '' : 'active'}" onclick="window.crmSetMissingImagesTab('missing')">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Imagens Ausentes
+                    <span class="badge badge-amber">${missingProducts.length}</span>
+                </button>
+                <button class="${showingAllImages ? 'active' : ''}" onclick="window.crmSetMissingImagesTab('all')">
+                    <i class="fa-solid fa-images"></i> Imagens Totais do App
+                    <span class="badge badge-cyan">${products.length}</span>
+                </button>
+            </div>
+
+            <div class="table-card" style="border-top: 3px solid ${showingAllImages ? '#0ea5e9' : '#f59e0b'};">
                 <div class="table-toolbar" style="gap: 14px; flex-wrap: wrap;">
                     <div class="table-title-group">
-                        <h3 class="table-title"><i class="fa-solid fa-list-check" style="color: #fbbf24;"></i> Produtos aguardando imagem</h3>
-                        <span class="badge badge-amber">${visibleProducts.length} de ${missingProducts.length}</span>
+                        <h3 class="table-title"><i class="fa-solid ${showingAllImages ? 'fa-photo-film' : 'fa-list-check'}" style="color: ${showingAllImages ? '#38bdf8' : '#fbbf24'};"></i> ${showingAllImages ? 'Todas as imagens necessárias no app' : 'Produtos aguardando imagem'}</h3>
+                        <span class="badge ${showingAllImages ? 'badge-cyan' : 'badge-amber'}">${visibleProducts.length} de ${sourceProducts.length}</span>
                     </div>
                     <div class="s13-search-box" style="min-width: min(100%, 340px);">
                         <i class="fa-solid fa-magnifying-glass"></i>
@@ -11055,8 +11188,8 @@
                 ${visibleProducts.length === 0 ? `
                     <div style="text-align: center; padding: 48px 20px; color: var(--text-muted);">
                         <i class="fa-solid ${missingProducts.length ? 'fa-magnifying-glass' : 'fa-circle-check'}" style="font-size: 38px; color: ${missingProducts.length ? '#94a3b8' : '#34d399'}; margin-bottom: 12px;"></i>
-                        <h4 style="color: #e2e8f0; margin-bottom: 6px;">${missingProducts.length ? 'Nenhum produto encontrado nessa busca' : 'Todos os produtos possuem imagem'}</h4>
-                        <p>${missingProducts.length ? 'Tente outro código, OP, cliente, marca ou setor.' : 'O índice de imagens cobre todos os produtos atuais do CRM.'}</p>
+                        <h4 style="color: #e2e8f0; margin-bottom: 6px;">${emptyTitle}</h4>
+                        <p>${emptyDescription}</p>
                     </div>
                 ` : `
                     <div class="table-responsive">
@@ -11068,6 +11201,7 @@
                                     <th>Cliente / Marca</th>
                                     <th>OPs</th>
                                     <th>Setores atuais</th>
+                                    ${showingAllImages ? '<th>Status da imagem</th>' : ''}
                                     <th>Arquivo esperado</th>
                                 </tr>
                             </thead>
@@ -11082,6 +11216,7 @@
                                         </td>
                                         <td>${escapeHtml(product.ops.slice(0, 5).join(', '))}${product.ops.length > 5 ? ` <span class="badge badge-sub">+${product.ops.length - 5}</span>` : ''}</td>
                                         <td>${product.setores.map(setor => `<span class="badge badge-sub" style="margin: 2px;">${escapeHtml(setor)}</span>`).join('') || '—'}</td>
+                                        ${showingAllImages ? `<td><span class="badge ${product.hasImage ? 'badge-emerald' : 'badge-amber'}"><i class="fa-solid ${product.hasImage ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${product.hasImage ? 'Disponível' : 'Precisa atualizar'}</span></td>` : ''}
                                         <td><code style="color: #38bdf8;">${escapeHtml(product.codigo)}.jpg</code></td>
                                     </tr>
                                 `).join('')}
@@ -12125,6 +12260,27 @@
     };
 
 
+    window.crmSetAproveitamentoPeriod = (period) => {
+        state.aproveitamentoPeriod = period || 'all';
+        renderActiveView();
+    };
+
+    window.crmSetAproveitamentoClient = (client) => {
+        state.aproveitamentoClient = client || 'all';
+        renderActiveView();
+    };
+
+    window.crmSetAproveitamentoCustomDate = (boundary, value) => {
+        if (boundary === 'start') state.aproveitamentoDateStart = value || '';
+        if (boundary === 'end') state.aproveitamentoDateEnd = value || '';
+        renderActiveView();
+    };
+
+    window.crmSearchAproveitamento = (query) => {
+        state.aproveitamentoSearch = query || '';
+        renderActiveView();
+    };
+
     window.crmFilterCQ = (filter) => {
         if (!filter) {
             state.cqFilter = null;
@@ -12303,6 +12459,57 @@
     window.crmSearchMissingImages = (query) => {
         state.missingImagesSearch = String(query || '');
         renderActiveView();
+    };
+
+    window.crmSetMissingImagesTab = (tab) => {
+        state.missingImagesTab = tab === 'all' ? 'all' : 'missing';
+        state.missingImagesSearch = '';
+        renderActiveView();
+    };
+
+    async function copyImageText(text, successMessage) {
+        let copied = false;
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+                copied = true;
+            }
+        } catch (error) {
+            copied = false;
+        }
+
+        if (!copied) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            textarea.style.pointerEvents = 'none';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                copied = document.execCommand('copy');
+            } catch (error) {
+                copied = false;
+            } finally {
+                textarea.remove();
+            }
+        }
+
+        if (copied) {
+            showNotification(successMessage, 'success', 'Copiado');
+        } else {
+            showNotification('Não foi possível copiar automaticamente. Verifique a permissão da área de transferência.', 'warning', 'Cópia não realizada');
+        }
+    }
+
+    window.crmCopyAllImageFilenames = () => {
+        const filenames = getImageCoverageProducts().map(product => `${product.codigo}.jpg`);
+        if (!filenames.length) {
+            showNotification('Nenhuma imagem necessária foi encontrada.', 'info', 'Lista vazia');
+            return;
+        }
+        copyImageText(filenames.join('\n'), `${filenames.length} nomes de imagens copiados para a área de transferência.`);
     };
 
     window.crmExportMissingImagesCSV = () => {

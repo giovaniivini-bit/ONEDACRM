@@ -172,6 +172,24 @@
     background: rgba(109, 40, 217, 0.45);
 }
 
+.missing-images-tabs {
+    margin: 2px 0 14px;
+}
+
+.missing-images-tabs button {
+    gap: 7px;
+}
+
+.missing-images-tabs .badge {
+    margin-left: 2px;
+}
+
+.missing-image-copy-btn {
+    padding: 5px 8px;
+    font-size: 10.5px;
+    white-space: nowrap;
+}
+
 .alerts-panel {
     padding: 16px;
 }
