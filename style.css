@@ -3491,6 +3491,21 @@ body {
     flex-grow: 1; /* Absorve todo o espaço vazio vertical do grid */
 }
 
+/* Setor 01: cada linha mantém a mesma moldura, independentemente de a foto
+   original ser horizontal ou vertical. O conteúdo continua sem cortes. */
+#setor01GallerySection .s13-photo-wrapper {
+    height: 260px;
+    min-height: 260px;
+    flex: 0 0 260px;
+    aspect-ratio: auto;
+}
+
+#setor01GallerySection .s13-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 :is(#setor13TableSection, #setor01GallerySection) .s13-photo-img {
     padding: 3px;
 }

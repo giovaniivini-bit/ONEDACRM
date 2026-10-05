@@ -408,6 +408,57 @@ body.light-mode .s13-photo-card {
     box-shadow: var(--light-shadow-card) !important;
 }
 
+body.light-mode #setor01GallerySection .s13-card-body {
+    color: var(--text-primary) !important;
+    background: #ffffff !important;
+}
+
+body.light-mode #setor01GallerySection .s13-card-description {
+    color: #344054 !important;
+}
+
+body.light-mode #setor01GallerySection .s13-card-op-badge {
+    color: #344054 !important;
+    background: #eef2f7 !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-mode #setor01GallerySection .s13-meta-label {
+    color: #475467 !important;
+}
+
+body.light-mode #setor01GallerySection .s13-meta-val {
+    color: #101828 !important;
+}
+
+body.light-mode #setor01GallerySection .s01-sector-chip.danger {
+    color: #991b1b !important;
+    background: #fee2e2 !important;
+    border-color: #f87171 !important;
+}
+
+body.light-mode #setor01GallerySection .s01-sector-chip.success {
+    color: #065f46 !important;
+    background: #d1fae5 !important;
+    border-color: #34d399 !important;
+}
+
+body.light-mode #setor01GallerySection .s01-sector-chip.empty {
+    color: #475467 !important;
+    background: #eef2f7 !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-mode #setor01GallerySection .s13-dias-badge.critico {
+    color: #991b1b !important;
+    background: #fff1f2 !important;
+}
+
+body.light-mode #setor01GallerySection .s13-dias-badge.normal {
+    color: #065f46 !important;
+    background: #ecfdf5 !important;
+}
+
 body.light-mode .s13-photo-wrapper,
 body.light-mode .s13-photo-placeholder,
 body.light-mode .cq-product-media.image-unavailable::after {

@@ -4323,7 +4323,7 @@
                                             </div>
 
                                             <!-- Linha 2: Descrição -->
-                                            <div style="font-size: 12px; font-weight: 600; color: #e2e8f0; line-height: 1.35; max-height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="${item.descricao}">
+                                            <div class="s13-card-description" style="font-size: 12px; font-weight: 600; color: #e2e8f0; line-height: 1.35; max-height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="${item.descricao}">
                                                 ${item.descricao || 'Produto pendente no Setor 01'}
                                             </div>
 

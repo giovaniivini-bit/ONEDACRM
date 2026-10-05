@@ -9,6 +9,8 @@ test('miniaturas do Setor 01 reutilizam a geometria do Setor 13', () => {
     const css = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 
     assert.match(css, /:is\(#setor13TableSection, #setor01GallerySection\) \.s13-photo-wrapper\s*\{[\s\S]*?min-height: 260px/);
+    assert.match(css, /#setor01GallerySection \.s13-photo-wrapper\s*\{[\s\S]*?height: 260px;[\s\S]*?min-height: 260px;[\s\S]*?flex: 0 0 260px/);
+    assert.match(css, /#setor01GallerySection \.s13-photo-img\s*\{[\s\S]*?object-fit: contain/);
     assert.match(css, /:is\(#setor13TableSection, #setor01GallerySection\) \.s13-card-body/);
     assert.match(css, /:is\(#setor13TableSection, #setor01GallerySection\) \.s13-card-meta-grid/);
 });
@@ -43,4 +45,5 @@ test('cards do Setor 01 exibem etiqueta e pendências de aviamento e cor', () =>
     assert.match(app, /setor === 'D01' \? 'danger badge-pulse-red' : 'success'/);
     assert.match(app, /id="setor01TableSection" style="[^"]*\$\{state\.setor01ViewMode === 'table' \? '' : 'display: none;'\}/);
     assert.match(app, /state\.setor01ViewMode === 'table' \? 'setor01TableSection' : 'setor01GallerySection'/);
+    assert.match(app, /class="s13-card-description"/);
 });

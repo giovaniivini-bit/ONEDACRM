@@ -22,6 +22,6 @@ test('controle de imagens possui aba total, status e cópia de nomes esperados',
     assert.match(app, /document\.execCommand\('copy'\)/);
     assert.match(app, /Nenhum produto válido encontrado/);
     assert.match(app, /Carregue ou sincronize os dados do CRM/);
-    assert.match(index, /style\.css\?v=20261003-images-showroom/);
-    assert.match(index, /app\.js\?v=20261003-images-showroom/);
+    assert.match(index, /style\.css\?v=20261005-setor01-uniform/);
+    assert.match(index, /app\.js\?v=20261005-setor01-uniform/);
 });
