@@ -5765,3 +5765,77 @@ body.light-mode .data-table tr:hover {
         break-inside: avoid !important;
     }
 }
+/* ==========================================================================
+   PROG FEIRA — fluxo paralelo de amostras, custo e tingimento
+   ========================================================================== */
+.prog-feira-view { --border-color:var(--border-base); --bg-elevated:var(--bg-surface); --bg-panel:var(--bg-surface); --shadow-sm:0 3px 14px rgba(0,0,0,.14); display: flex; flex-direction: column; gap: 18px; width:calc(100vw - var(--sidebar-width) - 48px); max-width:100%; min-width:0; overflow:hidden; box-sizing:border-box; }
+.sidebar.collapsed ~ .main-content .prog-feira-view { width:calc(100vw - var(--sidebar-collapsed-width) - 48px); }
+.prog-feira-header { align-items: flex-start; gap: 18px; min-width:0; }
+.prog-feira-header h2 i { color: #38bdf8; margin-right: 8px; }
+.prog-feira-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; min-width:0; max-width:100%; }
+.prog-feira-source { color: #86efac; font-size: 11px; font-weight: 700; padding: 7px 10px; border: 1px solid rgba(34,197,94,.25); background: rgba(34,197,94,.08); border-radius: 8px; }
+.prog-feira-source.cached { color: #fbbf24; border-color: rgba(245,158,11,.25); background: rgba(245,158,11,.08); }
+.prog-feira-kpis { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; min-width:0; }
+.prog-feira-kpis article { min-height: 105px; padding: 16px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); box-shadow: var(--shadow-sm); display:flex; flex-direction:column; gap:4px; }
+.prog-feira-kpis span { color: var(--text-secondary); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.prog-feira-kpis strong { color: var(--text-primary); font: 800 28px/1.1 'Outfit',sans-serif; }
+.prog-feira-kpis small { color: var(--text-muted); font-size: 11px; }
+.prog-feira-kpis .des { border-top: 3px solid #2563eb; }
+.prog-feira-kpis .ready { border-top: 3px solid #10b981; }
+.prog-feira-flow { display: flex; overflow-x: auto; max-width:100%; gap: 6px; padding: 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; }
+.prog-feira-flow-step { flex:0 0 86px; min-width: 86px; border: 1px solid var(--border-color); background: var(--bg-elevated); color: var(--text-secondary); border-radius: 8px; padding: 8px 7px; display: grid; grid-template-columns: 1fr auto; gap: 2px 5px; text-align:left; cursor:pointer; transition:.18s ease; }
+.prog-feira-flow-step:hover,.prog-feira-flow-step.active { border-color:#38bdf8; background:rgba(14,165,233,.12); transform:translateY(-1px); }
+.prog-feira-flow-step strong { color:#38bdf8; font-size:12px; }
+.prog-feira-flow-step span { grid-column:1/-1; min-height:24px; font-size:8px; line-height:1.3; font-weight:700; text-transform:uppercase; }
+.prog-feira-flow-step em { color:var(--text-primary); font-size:11px; font-style:normal; font-weight:800; }
+.prog-feira-toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:12px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; }
+.prog-feira-search { flex:1 1 340px; display:flex; align-items:center; gap:8px; min-width:240px; padding:8px 11px; color:var(--text-muted); background:var(--bg-elevated); border:1px solid var(--border-color); border-radius:8px; }
+.prog-feira-search input { width:100%; border:0; outline:0; background:transparent; color:var(--text-primary); font-size:12px; }
+.prog-feira-toolbar select { min-height:34px; padding:6px 30px 6px 10px; border:1px solid var(--border-color); border-radius:8px; background:var(--bg-elevated); color:var(--text-primary); font-size:11px; font-weight:700; }
+.prog-feira-blue-dot { width:8px; height:8px; border-radius:50%; background:#2563eb; box-shadow:0 0 8px rgba(37,99,235,.8); }
+.prog-feira-legend { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:0 3px; color:var(--text-secondary); font-size:10px; }
+.prog-feira-legend span { display:inline-flex; align-items:center; gap:5px; }
+.prog-feira-legend span i { width:12px; height:12px; border-radius:3px; }
+.prog-feira-legend-des { margin-left:auto; font-weight:800; color:#60a5fa; }
+.prog-feira-legend-des i { background:#2563eb; }
+.prog-feira-sector { border:1px solid var(--border-color); background:var(--bg-panel); border-radius:14px; overflow:hidden; }
+.prog-feira-sector>header { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 15px; border-bottom:1px solid var(--border-color); background:var(--bg-card); }
+.prog-feira-sector>header div { display:flex; align-items:center; gap:9px; }
+.prog-feira-sector>header strong { color:#38bdf8; font:800 15px 'Outfit',sans-serif; }
+.prog-feira-sector>header span { color:var(--text-primary); font-size:12px; font-weight:800; text-transform:uppercase; }
+.prog-feira-sector>header em { color:var(--text-muted); font-size:10px; font-style:normal; font-weight:700; }
+.prog-feira-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; padding:12px; align-items:start; }
+.prog-feira-card { position:relative; min-width:0; overflow:hidden; border:2px solid var(--ting-color,#64748b); border-radius:11px; background:var(--bg-card); box-shadow:0 5px 16px rgba(2,6,23,.15); }
+.prog-feira-des-ribbon { height:26px; display:flex; align-items:center; justify-content:center; gap:6px; background:#2563eb; color:#fff; font-size:10px; font-weight:900; letter-spacing:.035em; }
+.prog-feira-card-top { height:31px; padding:0 9px; display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--text-primary); border-bottom:1px solid var(--border-color); font:800 11px 'Outfit',sans-serif; }
+.prog-feira-card-top span:last-child { color:var(--text-muted); font-size:9px; }
+.prog-feira-media { position:relative; height:220px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:var(--bg-elevated); border-bottom:1px solid var(--border-color); }
+.prog-feira-image { width:100%; height:100%; object-fit:contain; cursor:zoom-in; }
+.prog-feira-image-empty { display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--text-muted); font-size:10px; }
+.prog-feira-image-empty i { font-size:40px; opacity:.35; }
+.prog-feira-delivery { position:absolute; top:8px; right:8px; min-width:62px; padding:5px 7px; background:rgba(255,255,255,.94); color:#dc2626; border:1px solid rgba(220,38,38,.2); border-radius:7px; text-align:center; box-shadow:0 3px 10px rgba(0,0,0,.2); }
+.prog-feira-delivery small { display:block; color:#7f1d1d; font-size:7px; font-weight:900; letter-spacing:.08em; }
+.prog-feira-delivery strong { font:900 19px/1 'Outfit',sans-serif; }
+.prog-feira-card-body { padding:10px; }
+.prog-feira-status-row { display:flex; justify-content:space-between; align-items:flex-start; gap:6px; }
+.prog-feira-sector-badge,.prog-feira-ting-badge { display:inline-flex; padding:4px 6px; border-radius:5px; font-size:8px; line-height:1.25; font-weight:900; text-transform:uppercase; }
+.prog-feira-sector-badge { max-width:62%; color:#38bdf8; background:rgba(14,165,233,.1); }
+.prog-feira-ting-badge { color:var(--text-primary); border:1px solid var(--ting-color); background:color-mix(in srgb,var(--ting-color) 12%,transparent); }
+.prog-feira-program { margin-top:8px; padding:6px 8px; border-radius:6px; background:var(--bg-elevated); color:var(--text-primary); font-size:9px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.prog-feira-program i { color:#a78bfa; margin-right:5px; }
+.prog-feira-card dl { display:grid; grid-template-columns:1fr 1fr; gap:7px 10px; margin:9px 0 0; }
+.prog-feira-card dl div { min-width:0; }
+.prog-feira-card dt { color:var(--text-muted); font-size:7px; font-weight:800; text-transform:uppercase; }
+.prog-feira-card dd { margin:2px 0 0; color:var(--text-primary); font-size:9px; font-weight:700; overflow-wrap:anywhere; }
+.prog-feira-history { margin-top:9px; border-top:1px solid var(--border-color); padding-top:8px; }
+.prog-feira-history summary { color:#38bdf8; font-size:9px; font-weight:800; cursor:pointer; }
+.prog-feira-history>div { display:flex; gap:5px; overflow-x:auto; padding-top:8px; }
+.prog-feira-history-step { min-width:48px; padding:4px; text-align:center; border:1px solid var(--border-color); border-radius:5px; color:var(--text-muted); background:var(--bg-elevated); }
+.prog-feira-history-step.done { border-color:rgba(16,185,129,.4); }
+.prog-feira-history-step.current { color:#fff; border-color:#38bdf8; background:#0369a1; }
+.prog-feira-history-step strong,.prog-feira-history-step small { display:block; font-size:7px; }
+.prog-feira-history-empty { color:var(--text-muted); font-size:8px; }
+@media (max-width:1400px) { .prog-feira-kpis{grid-template-columns:repeat(3,minmax(0,1fr));} .prog-feira-grid{grid-template-columns:repeat(3,minmax(0,1fr));} .prog-feira-header{flex-wrap:wrap;} .prog-feira-header-actions{width:100%;justify-content:flex-start;} }
+@media (max-width:1050px) { .prog-feira-kpis{grid-template-columns:repeat(2,1fr);} .prog-feira-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:1024px) { .prog-feira-view,.sidebar.collapsed ~ .main-content .prog-feira-view{width:calc(100vw - 48px);} }
+@media (max-width:680px) { .prog-feira-view,.sidebar.collapsed ~ .main-content .prog-feira-view{width:calc(100vw - 32px);} .prog-feira-kpis,.prog-feira-grid{grid-template-columns:1fr;} .prog-feira-media{height:250px;} .prog-feira-header-actions{justify-content:flex-start;} }

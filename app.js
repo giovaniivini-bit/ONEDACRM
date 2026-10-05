@@ -49,6 +49,11 @@
         rotativosViewMode: 'grid',
         rotativosExternalData: null,
         calendarExternalData: null,
+        progFeiraExternalData: null,
+        progFeiraSearch: '',
+        progFeiraSector: 'all',
+        progFeiraTing: 'all',
+        progFeiraDesOnly: false,
         rotativosActiveTab: 'drive',
         rotativosDriveFilter: null,
         rotativosDriveSearch: '', // 'grid' (4 fotos por linha) ou 'table',
@@ -98,6 +103,7 @@
         'malotes',
         'cores-aviamentos',
         'cores-pendentes',
+        'prog-feira',
         'imagens-ausentes'
     ]);
 
@@ -845,14 +851,15 @@
                     return response.ok ? payload : payload;
                 }).catch(() => null);
             };
-            const [coresRes, avRes, cqRes, ltRes, rotRes, apRes, calendarRes] = await Promise.all([
+            const [coresRes, avRes, cqRes, ltRes, rotRes, apRes, calendarRes, progFeiraRes] = await Promise.all([
                 requestExternal('cores'),
                 requestExternal('aviamentos'),
                 requestExternal('cq'),
                 requestExternal('leadtime'),
                 requestExternal('rotativos'),
                 requestExternal('aproveitamento'),
-                requestExternal('calendar')
+                requestExternal('calendar'),
+                requestExternal('prog_feira')
             ]);
             if (coresRes && coresRes.success) {
                 state.coresExternalData = coresRes;
@@ -875,8 +882,11 @@
             if (calendarRes && calendarRes.success) {
                 state.calendarExternalData = calendarRes;
             }
+            if (progFeiraRes && progFeiraRes.success) {
+                state.progFeiraExternalData = progFeiraRes;
+            }
             updateSidebarBadges();
-            if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'alertas', 'geral'].includes(state.activeSubmodule)) {
+            if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'alertas', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
             }
         } catch (e) {
@@ -1734,6 +1744,13 @@
         const bFeira = document.getElementById('badge-feira');
         if (bFeira) bFeira.textContent = sFeira;
 
+        const bProgFeira = document.getElementById('badge-prog-feira');
+        if (bProgFeira) {
+            const records = state.progFeiraExternalData?.records || [];
+            const products = window.CRMProgFeira ? window.CRMProgFeira.buildProducts(records) : [];
+            bProgFeira.textContent = products.length || '--';
+        }
+
         const bCQ = document.getElementById('badge-cq');
         if (bCQ) {
             const cqCount = (state.cqExternalData && state.cqExternalData.count) || (state.cqExternalData && state.cqExternalData.records && state.cqExternalData.records.length) || 0;
@@ -1772,6 +1789,7 @@
         else if (state.activeSubmodule === 'rotativos') label = 'Rotativos (Setor 43)';
         else if (state.activeSubmodule === 'malotes') label = 'Malotes (Setores 88 e 83)';
         else if (state.activeSubmodule === 'feira') label = 'Feira & Protótipos';
+        else if (state.activeSubmodule === 'prog-feira') label = 'Prog Feira';
         else if (state.activeSubmodule === 'andamento-cq') label = 'Andamento do CQ (Qualidade)';
         else if (state.activeSubmodule === 'aproveitamento') label = 'Aproveitamento de Amostras';
         else if (state.activeSubmodule === 'leadtime') label = 'Leadtime Produtivo (Setor 13)';
@@ -1840,6 +1858,9 @@
             // Estilo Amostras
             case 'feira':
                 renderFeiraView(container);
+                break;
+            case 'prog-feira':
+                renderProgFeiraView(container);
                 break;
             // Configurações
             case 'sync':
@@ -10071,6 +10092,136 @@
     // =========================================================================
     // 7. MÓDULO ESTILO AMOSTRAS - FEIRA & PROTÓTIPOS (FLUXO D36)
     // =========================================================================
+    function renderProgFeiraView(container) {
+        const source = state.progFeiraExternalData || { records: [], isLive: false, timestamp: null };
+        const api = window.CRMProgFeira;
+        if (!api) {
+            container.innerHTML = '<div class="empty-state"><h3>Módulo Prog Feira indisponível</h3><p>Atualize a página para carregar os componentes do módulo.</p></div>';
+            return;
+        }
+
+        const allProducts = api.buildProducts(source.records || []);
+        const search = String(state.progFeiraSearch || '').trim().toLowerCase();
+        const products = allProducts.filter(item => {
+            if (state.progFeiraSector !== 'all' && item.sector !== state.progFeiraSector) return false;
+            if (state.progFeiraTing !== 'all' && item.ting !== state.progFeiraTing) return false;
+            if (state.progFeiraDesOnly && !item.isDes) return false;
+            if (!search) return true;
+            return [item.codigo, item.numero, item.sector, item.sectorLabel, item.program, item.prints, item.notes]
+                .some(value => String(value || '').toLowerCase().includes(search));
+        });
+        const groups = api.groupBySector(products);
+        const desCount = allProducts.filter(item => item.isDes).length;
+        const readyCount = allProducts.filter(item => item.sector === '01F').length;
+        const cancelledCount = allProducts.filter(item => item.sector === '01Z').length;
+        const currentSectors = api.groupBySector(allProducts);
+        const syncText = source.timestamp
+            ? new Date(source.timestamp).toLocaleString('pt-BR')
+            : 'ainda não sincronizado';
+
+        const renderImage = item => {
+            const info = getProductImage(item.imageCode || item.codigo, item.numero);
+            if (!info.hasImage) {
+                return `<div class="prog-feira-image-empty"><i class="fa-solid fa-shirt"></i><span>Sem imagem mapeada</span></div>`;
+            }
+            const title = escapeHtml(item.codigo);
+            const subtitle = escapeHtml(`OP ${item.numero || '—'} • ${item.sector} • Entrega ${item.delivery || '—'}`);
+            return `<img class="prog-feira-image js-prog-feira-image" src="${escapeHtml(info.thumbUrl)}" alt="Produto ${title}" loading="lazy" decoding="async" data-fallback-src="${escapeHtml(info.proxyUrl || '')}" data-large-url="${escapeHtml(info.largeUrl || info.thumbUrl)}" data-image-title="${title}" data-image-subtitle="${subtitle}" data-large-fallback="${escapeHtml(info.largeFallbackUrl || '')}">`;
+        };
+
+        const renderHistory = item => {
+            if (!item.history.length) return '<span class="prog-feira-history-empty">Histórico ainda não informado</span>';
+            return item.history.map(step => `
+                <span class="prog-feira-history-step ${step.pending ? 'current' : 'done'}" title="${escapeHtml(step.label || step.sector)}">
+                    <strong>${escapeHtml(step.sector)}</strong><small>${escapeHtml(step.date || '—')}</small>
+                </span>
+            `).join('');
+        };
+
+        container.innerHTML = `
+            <section class="prog-feira-view">
+                <div class="module-view-header prog-feira-header">
+                    <div class="module-view-title-group">
+                        <h2><i class="fa-solid fa-route"></i> Prog Feira</h2>
+                        <p class="module-view-description">Andamento das amostras com entrega, tingimento e pendência de custo em visão paralela.</p>
+                    </div>
+                    <div class="prog-feira-header-actions">
+                        <span class="prog-feira-source ${source.isLive === false ? 'cached' : ''}"><i class="fa-solid fa-cloud"></i> ${source.isLive === false ? 'Cache local' : 'Planilha ao vivo'} • ${escapeHtml(syncText)}</span>
+                        <a class="btn btn-glass" href="https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/edit" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive"></i> Abrir planilha</a>
+                        <button class="btn btn-primary" onclick="window.crmSyncProgFeira()"><i class="fa-solid fa-arrows-rotate"></i> Atualizar</button>
+                    </div>
+                </div>
+
+                <div class="prog-feira-kpis">
+                    <article><span>Referências ativas</span><strong>${formatNumber(allProducts.length - cancelledCount)}</strong><small>${formatNumber(allProducts.length)} no relatório</small></article>
+                    <article><span>Setores com pendência</span><strong>${formatNumber(currentSectors.length)}</strong><small>Fluxo D36</small></article>
+                    <article class="des"><span>Pendentes em custo DES</span><strong>${formatNumber(desCount)}</strong><small>Identificados pela tarja azul</small></article>
+                    <article class="ready"><span>Peças prontas</span><strong>${formatNumber(readyCount)}</strong><small>Setor 01F</small></article>
+                </div>
+
+                <div class="prog-feira-flow" aria-label="Fluxo de desenvolvimento de amostras">
+                    ${api.FLOW.map(step => {
+                        const count = allProducts.filter(item => item.sector === step.code).length;
+                        return `<button class="prog-feira-flow-step ${state.progFeiraSector === step.code ? 'active' : ''}" onclick="window.crmFilterProgFeiraSector('${step.code}')" title="Filtrar ${escapeHtml(step.label)}"><strong>${step.code}</strong><span>${escapeHtml(step.label)}</span><em>${count}</em></button>`;
+                    }).join('')}
+                </div>
+
+                <div class="prog-feira-toolbar">
+                    <label class="prog-feira-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" value="${escapeHtml(state.progFeiraSearch)}" placeholder="Buscar produto, OP, programação, estampa ou observação..." oninput="window.crmSearchProgFeira(this.value)"></label>
+                    <select onchange="window.crmFilterProgFeiraSector(this.value)" aria-label="Filtrar setor"><option value="all">Todos os setores</option>${currentSectors.map(group => `<option value="${escapeHtml(group.sector)}" ${state.progFeiraSector === group.sector ? 'selected' : ''}>${escapeHtml(group.sector)} — ${escapeHtml(group.label)} (${group.items.length})</option>`).join('')}</select>
+                    <select onchange="window.crmFilterProgFeiraTing(this.value)" aria-label="Filtrar tingimento"><option value="all">Todos os tingimentos</option>${Object.entries(api.TINGIMENTO).map(([code, info]) => `<option value="${code}" ${state.progFeiraTing === code ? 'selected' : ''}>${code} — ${escapeHtml(info.label)}</option>`).join('')}</select>
+                    <button class="filter-chip ${state.progFeiraDesOnly ? 'active' : ''}" onclick="window.crmToggleProgFeiraDes()"><span class="prog-feira-blue-dot"></span> Somente custo DES (${desCount})</button>
+                    ${(state.progFeiraSector !== 'all' || state.progFeiraTing !== 'all' || state.progFeiraDesOnly || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
+                </div>
+
+                <div class="prog-feira-legend">
+                    <strong>Cor da borda:</strong>${Object.entries(api.TINGIMENTO).map(([code, info]) => `<span><i style="background:${info.color}"></i>${code} — ${escapeHtml(info.label)}</span>`).join('')}
+                    <span class="prog-feira-legend-des"><i></i> Tarja azul — custo pendente em DES</span>
+                </div>
+
+                ${groups.length ? groups.map(group => `
+                    <section class="prog-feira-sector">
+                        <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}</span></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
+                        <div class="prog-feira-grid">
+                            ${group.items.map(item => `
+                                <article class="prog-feira-card" style="--ting-color:${item.tingInfo.color}">
+                                    ${item.isDes ? '<div class="prog-feira-des-ribbon"><i class="fa-solid fa-calculator"></i> DES • CUSTO PENDENTE</div>' : ''}
+                                    <div class="prog-feira-card-top"><span>${escapeHtml(item.codigo)}</span><span>OP ${escapeHtml(item.numero || '—')}</span></div>
+                                    <div class="prog-feira-media">${renderImage(item)}<div class="prog-feira-delivery"><small>ENTREGA</small><strong>${escapeHtml(item.delivery || '—')}</strong></div></div>
+                                    <div class="prog-feira-card-body">
+                                        <div class="prog-feira-status-row"><span class="prog-feira-sector-badge">${escapeHtml(item.sector)} • ${escapeHtml(item.sectorLabel)}</span><span class="prog-feira-ting-badge" style="--ting-color:${item.tingInfo.color}">${escapeHtml(item.ting)} • ${escapeHtml(item.tingInfo.label)}</span></div>
+                                        ${item.program ? `<div class="prog-feira-program"><i class="fa-solid fa-layer-group"></i>${escapeHtml(item.program)}</div>` : ''}
+                                        <dl><div><dt>Movimentação</dt><dd>${escapeHtml(item.movementDate || '—')}</dd></div><div><dt>Estampas</dt><dd>${escapeHtml(item.prints || '—')}</dd></div><div><dt>Observação</dt><dd>${escapeHtml(item.notes || '—')}</dd></div><div><dt>Quantidade pendente</dt><dd>${formatNumber(item.quantity)}</dd></div></dl>
+                                        <details class="prog-feira-history"><summary><i class="fa-solid fa-timeline"></i> Histórico do fluxo</summary><div>${renderHistory(item)}</div></details>
+                                    </div>
+                                </article>
+                            `).join('')}
+                        </div>
+                    </section>
+                `).join('') : `
+                    <div class="empty-state"><i class="fa-solid fa-filter-circle-xmark"></i><h3>Nenhuma referência encontrada</h3><p>${allProducts.length ? 'Ajuste ou limpe os filtros aplicados.' : 'A planilha ainda não forneceu produtos válidos. Clique em Atualizar.'}</p></div>
+                `}
+            </section>
+        `;
+
+        container.querySelectorAll('.js-prog-feira-image').forEach(image => {
+            image.addEventListener('error', () => {
+                if (image.dataset.fallback !== '1' && image.dataset.fallbackSrc) {
+                    image.dataset.fallback = '1';
+                    image.src = image.dataset.fallbackSrc;
+                    return;
+                }
+                image.closest('.prog-feira-media')?.classList.add('image-unavailable');
+            });
+            image.addEventListener('click', () => window.crmOpenImageLightbox(
+                image.dataset.largeUrl || image.src,
+                image.dataset.imageTitle || '',
+                image.dataset.imageSubtitle || '',
+                image.dataset.largeFallback || ''
+            ));
+        });
+    }
+
     function renderFeiraView(container) {
         // Regra do Usuário:
         // - trazer APENAS os produtos que estão no fluxo D36 (coluna AX)
@@ -12117,6 +12268,51 @@
         }
         state.rotativosActiveTab = 'drive';
         renderActiveView();
+    };
+
+    let progFeiraSearchTimer = null;
+    window.crmSearchProgFeira = query => {
+        state.progFeiraSearch = query || '';
+        clearTimeout(progFeiraSearchTimer);
+        progFeiraSearchTimer = setTimeout(renderActiveView, 180);
+    };
+
+    window.crmFilterProgFeiraSector = sector => {
+        state.progFeiraSector = sector && sector !== state.progFeiraSector ? sector : 'all';
+        renderActiveView();
+    };
+
+    window.crmFilterProgFeiraTing = ting => {
+        state.progFeiraTing = ting || 'all';
+        renderActiveView();
+    };
+
+    window.crmToggleProgFeiraDes = () => {
+        state.progFeiraDesOnly = !state.progFeiraDesOnly;
+        renderActiveView();
+    };
+
+    window.crmClearProgFeiraFilters = () => {
+        state.progFeiraSearch = '';
+        state.progFeiraSector = 'all';
+        state.progFeiraTing = 'all';
+        state.progFeiraDesOnly = false;
+        renderActiveView();
+    };
+
+    window.crmSyncProgFeira = async () => {
+        showNotification('Atualizando a programação de feira...', 'info', 'Prog Feira');
+        try {
+            const response = await adminFetch('/api/external-sheet?type=prog_feira&refresh=1', { method: 'POST' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.success) throw new Error(payload.error || `HTTP ${response.status}`);
+            state.progFeiraExternalData = payload;
+            updateSidebarBadges();
+            renderActiveView();
+            showNotification(`${window.CRMProgFeira.buildProducts(payload.records || []).length} referências atualizadas.`, 'success', 'Prog Feira');
+        } catch (error) {
+            showNotification(`Não foi possível atualizar: ${error.message}`, 'warning', 'Prog Feira');
+        }
     };
 
     let rotativosDriveSearchDebounceTimer = null;

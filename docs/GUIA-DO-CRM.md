@@ -16,6 +16,7 @@ O CRM consolida informações de produção e controle da Oneda. A interface pos
 - rotativos;
 - malotes dos setores 88 e 83;
 - feira e protótipos;
+- programação de feira com fluxo paralelo de amostras, custo e tingimento;
 - andamento do Controle de Qualidade;
 - alertas operacionais programáveis;
 - sincronização, calendário e controle de imagens ausentes.
@@ -38,6 +39,7 @@ O projeto não utiliza React, banco SQL ou API externa própria. É uma aplicaç
 | `drive-image-cache.js` | Proxy e cache persistente das imagens obtidas no Google Drive. |
 | `server-security.js` | Limites de requisição, autorização administrativa e cabeçalhos de segurança. |
 | `alerts-engine.js` | Motor das três regras oficiais de alertas, versionadas e revisadas com o código. |
+| `prog-feira.js` | Normalização e consolidação das linhas TIPO 1/2/3 da Programação Feira. |
 | `test/` | Testes automatizados do motor de alertas, segurança e cache de imagens. |
 
 ## 3. Como os dados das planilhas chegam ao CRM
@@ -51,6 +53,23 @@ O projeto não utiliza React, banco SQL ou API externa própria. É uma aplicaç
 Algumas planilhas auxiliares mantêm snapshots em `data/*_external.json`. Esses arquivos são dados operacionais, não código. Uma alteração visual ou funcional não deve sobrescrevê-los na VPS por acidente.
 
 Se uma planilha estiver temporariamente indisponível, o CRM pode continuar usando o último cache válido. Por isso, um valor antigo na tela nem sempre significa problema no frontend; primeiro verifique a sincronização.
+
+### 3.1 Programação Feira
+
+O módulo **Estilo Amostras → Prog Feira** lê a planilha
+`1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s` e mantém o snapshot
+`data/prog_feira_external.json`. Na exportação do ERP, `CODIGO` é o número do produto
+usado para localizar a imagem e a coluna chamada `OP` contém, na prática, o setor atual.
+`FICHA` é a data prevista de entrega.
+
+As linhas são consolidadas por número interno e código do produto: `TIPO 1` informa a
+situação atual, `TIPO 2` informa a programação/coleção e `TIPO 3` forma o histórico do
+fluxo. Nunca conte as três linhas como três produtos. O setor `1E2` pode chegar formatado
+como `1,00E+02` pelo Google Sheets e é normalizado no frontend.
+
+A borda do cartão segue `SETOR_TING` (`M00` a `M03`). A tarja azul aparece somente
+quando `SETOR_FLUXO_EM` for exatamente `DES`; os demais estágios de custo não recebem
+realce. O botão **Atualizar** exige sessão administrativa e força nova leitura da planilha.
 
 ## 4. Como as imagens funcionam
 

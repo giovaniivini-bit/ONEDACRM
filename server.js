@@ -46,7 +46,7 @@ const adminAuth = createAdminAuth({
     trustedProxyAddresses: CRM_TRUSTED_PROXY_IPS
 });
 const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE_TTL_MS) || 5 * 60_000);
-const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js']);
+const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'prog-feira.js']);
 
 if (!ADMIN_PASSWORD_HASH) {
     console.warn('⚠️  CRM_ADMIN_PASSWORD_HASH não configurado: login administrativo por senha está indisponível.');
@@ -145,6 +145,26 @@ function validateCalendarRecords(records) {
         throw new Error('Calendário Industrial inválido: semanas, datas ou limites estão ausentes.');
     }
     return validRows;
+}
+
+const PROG_FEIRA_PUBLIC_FIELDS = [
+    'NUMERO', 'CODIGO', 'IMG_PRODUTO', 'OP', 'SETOR', 'ORDEM',
+    'DT_SAIDA', 'TIPO', 'QTDE_PEND', 'ESTAMPAS', 'OBS',
+    'SETOR_TING', 'SETOR_FLUXO_EM', 'FICHA'
+];
+
+function sanitizeProgFeiraRecords(records) {
+    const validRows = (Array.isArray(records) ? records : []).filter(record => {
+        const codigo = String(record?.CODIGO || '').trim();
+        const tipo = Number(String(record?.TIPO || '').trim());
+        return codigo && [1, 2, 3].includes(tipo);
+    });
+    if (!validRows.some(record => Number(String(record.TIPO || '').trim()) === 1)) {
+        throw new Error('A planilha Prog Feira não contém produtos atuais (TIPO 1) válidos');
+    }
+    return validRows.map(record => Object.fromEntries(
+        PROG_FEIRA_PUBLIC_FIELDS.map(field => [field, String(record[field] == null ? '' : record[field]).trim()])
+    ));
 }
 
 // O mesmo modelo comprovado do Studeoneda: imagens versionadas em /images e
@@ -1014,6 +1034,14 @@ async function requestHandler(req, res) {
                 url: 'https://docs.google.com/spreadsheets/d/1T9u4hGeKPPJyKix62u--mudStz3R22RlIrDkqk0ViBg/export?format=csv&gid=0',
                 cacheFile: path.join(DATA_DIR, 'calendar_external.json'),
                 targetColIndex: 4 // Coluna E (limite de dias do Setor 01)
+            },
+            prog_feira: {
+                name: 'Programação Feira',
+                id: '1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s',
+                gid: '0',
+                url: 'https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/export?format=csv&gid=0',
+                cacheFile: path.join(DATA_DIR, 'prog_feira_external.json'),
+                targetColIndex: 0
             }
         };
 
@@ -1028,6 +1056,10 @@ async function requestHandler(req, res) {
                     if (type === 'calendar') {
                         const validCachedRows = validateCalendarRecords(cachedData?.records);
                         cachedData = { ...cachedData, count: validCachedRows.length, records: validCachedRows };
+                    }
+                    if (type === 'prog_feira') {
+                        const safeCachedRows = sanitizeProgFeiraRecords(cachedData?.records);
+                        cachedData = { ...cachedData, count: safeCachedRows.length, records: safeCachedRows };
                     }
                 } catch (e) {
                     if (type === 'calendar') console.warn(`[CALENDÁRIO] Cache ignorado: ${e.message}`);
@@ -1045,6 +1077,22 @@ async function requestHandler(req, res) {
                 // Tenta baixar da nuvem Google Sheets
                 const csvText = await fetchGoogleSheetCSV(cfg.url);
                 const records = parseCSV(csvText);
+
+                if (type === 'prog_feira') {
+                    const progRows = sanitizeProgFeiraRecords(records);
+                    const payload = {
+                        success: true,
+                        type: 'prog_feira',
+                        title: cfg.name,
+                        count: progRows.length,
+                        records: progRows,
+                        timestamp: new Date().toISOString(),
+                        isLive: true
+                    };
+                    atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
+                    sendJson(res, 200, payload);
+                    return;
+                }
 
                 if (type === 'calendar') {
                     const calendarRows = validateCalendarRecords(records);
@@ -1373,4 +1421,4 @@ function startServers() {
 
 if (require.main === module) startServers();
 
-module.exports = { requestHandler, startServers, validateCalendarRecords, findLocalImagePath };
+module.exports = { requestHandler, startServers, validateCalendarRecords, sanitizeProgFeiraRecords, findLocalImagePath };

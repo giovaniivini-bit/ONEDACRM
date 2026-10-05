@@ -11,7 +11,7 @@ process.env.CRM_ADMIN_TOKEN = 'route-test-secret';
 process.env.CRM_ADMIN_PASSWORD_HASH = encodePasswordHash('Senha administrativa para rotas!');
 process.env.ALERT_RULES_PATH = rulesPath;
 
-const { requestHandler, validateCalendarRecords } = require('../server');
+const { requestHandler, validateCalendarRecords, sanitizeProgFeiraRecords } = require('../server');
 
 let server;
 let port;
@@ -177,6 +177,23 @@ test('validates the industrial calendar before it can replace the cache', () => 
         ...row,
         'quantidade dias aceitaveis para ficar pendente setor 01': '99 dias'
     }))), /inválido/);
+});
+
+test('projects Prog Feira records and rejects exports without current TIPO 1 rows', () => {
+    const sanitized = sanitizeProgFeiraRecords([{
+        NUMERO: '77826', CODIGO: '01.11.00.7904', OP: '01E', TIPO: '1', FICHA: '09/10',
+        PRECO_VENDA: '99,90', PRECO_COM: '45,00', COD_CLIENTE: 'B41', ID: 'interno'
+    }]);
+    assert.equal(sanitized.length, 1);
+    assert.equal(sanitized[0].CODIGO, '01.11.00.7904');
+    assert.equal(sanitized[0].FICHA, '09/10');
+    assert.equal(Object.hasOwn(sanitized[0], 'PRECO_VENDA'), false);
+    assert.equal(Object.hasOwn(sanitized[0], 'PRECO_COM'), false);
+    assert.equal(Object.hasOwn(sanitized[0], 'COD_CLIENTE'), false);
+    assert.throws(() => sanitizeProgFeiraRecords([
+        { NUMERO: '77826', CODIGO: '01.11.00.7904', TIPO: '2' },
+        { NUMERO: '77826', CODIGO: '01.11.00.7904', TIPO: '3' }
+    ]), /TIPO 1/);
 });
 
 test('rejects alert-rule writes and foreign CORS preflight', async () => {
