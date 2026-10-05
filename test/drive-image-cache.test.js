@@ -54,3 +54,53 @@ test('limits concurrent downloads and prunes the disk cache', async t => {
     assert.ok(peak <= 2);
     assert.ok(cachedFiles.length <= 2);
 });
+
+test('manual invalidation removes cached Drive thumbnails so replacements are downloaded', async t => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'crm-img-test-'));
+    t.after(() => fs.rm(dir, { recursive: true, force: true }));
+    let current = 'old-image';
+    let calls = 0;
+    const proxy = createDriveImageProxy(dir, async () => {
+        calls++;
+        return { type: 'image/jpeg', buffer: Buffer.from(current) };
+    });
+    const first = response(); await proxy('replace_id_12345', first);
+    current = 'new-image';
+    const cached = response(); await proxy('replace_id_12345', cached);
+    assert.equal(cached.body.toString(), 'old-image');
+
+    await proxy.invalidate(new Set(['replace_id_12345']));
+    const refreshed = response(); await proxy('replace_id_12345', refreshed);
+    assert.equal(refreshed.body.toString(), 'new-image');
+    assert.equal(calls, 2);
+});
+
+test('invalidation during an old download prevents it from repopulating the cache', async t => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'crm-img-test-'));
+    t.after(() => fs.rm(dir, { recursive: true, force: true }));
+    let releaseOld;
+    let calls = 0;
+    const proxy = createDriveImageProxy(dir, async () => {
+        calls++;
+        if (calls === 1) {
+            await new Promise(resolve => { releaseOld = resolve; });
+            return { type: 'image/jpeg', buffer: Buffer.from('old-image') };
+        }
+        return { type: 'image/jpeg', buffer: Buffer.from('new-image') };
+    });
+
+    const oldResponse = response();
+    const oldRequest = proxy('replace_id_12345', oldResponse);
+    while (!releaseOld) await new Promise(resolve => setImmediate(resolve));
+    await proxy.invalidate(new Set(['replace_id_12345']));
+    const newResponse = response();
+    await proxy('replace_id_12345', newResponse);
+    releaseOld();
+    await oldRequest;
+
+    const cached = response();
+    await proxy('replace_id_12345', cached);
+    assert.equal(newResponse.body.toString(), 'new-image');
+    assert.equal(cached.body.toString(), 'new-image');
+    assert.equal(calls, 2);
+});

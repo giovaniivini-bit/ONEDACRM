@@ -47,6 +47,7 @@ function createDriveImageProxy(directory, download = downloadImage, options = {}
     let activeDownloads = 0;
     const downloadQueue = [];
     let prunePromise = Promise.resolve();
+    let cacheGeneration = 0;
 
     function withDownloadSlot(task) {
         return new Promise((resolve, reject) => {
@@ -93,18 +94,21 @@ function createDriveImageProxy(directory, download = downloadImage, options = {}
             throw new Error('Drive temporarily unavailable');
         }
         if (!pending.has(key)) {
+            const requestGeneration = cacheGeneration;
             const promise = (async () => {
                 try {
                     const entry = await withDownloadSlot(() => download(`https://drive.google.com/thumbnail?id=${id}&sz=${size}`));
                     entry.saved = Date.now();
                     entry.etag = '"' + crypto.createHash('sha256').update(entry.buffer).digest('hex') + '"';
-                    try {
-                        await fs.mkdir(directory, { recursive: true });
-                        const temp = filename + '.tmp';
-                        await fs.writeFile(temp, JSON.stringify({ type: entry.type, saved: entry.saved, etag: entry.etag, body: entry.buffer.toString('base64') }));
-                        await fs.rename(temp, filename);
-                        prunePromise = prunePromise.then(pruneCache, pruneCache);
-                    } catch (_) { /* A disk-cache failure must not hide a valid downloaded photo. */ }
+                    if (requestGeneration === cacheGeneration) {
+                        try {
+                            await fs.mkdir(directory, { recursive: true });
+                            const temp = filename + '.tmp';
+                            await fs.writeFile(temp, JSON.stringify({ type: entry.type, saved: entry.saved, etag: entry.etag, body: entry.buffer.toString('base64') }));
+                            await fs.rename(temp, filename);
+                            prunePromise = prunePromise.then(pruneCache, pruneCache);
+                        } catch (_) { /* A disk-cache failure must not hide a valid downloaded photo. */ }
+                    }
                     failures.delete(key);
                     return entry;
                 } catch (error) {
@@ -112,13 +116,15 @@ function createDriveImageProxy(directory, download = downloadImage, options = {}
                     failures.set(key, Date.now() + 60000);
                     if (cached) return cached;
                     throw error;
-                } finally { pending.delete(key); }
+                } finally {
+                    if (pending.get(key) === promise) pending.delete(key);
+                }
             })();
             pending.set(key, promise);
         }
         return pending.get(key);
     }
-    return async (id, res, size = 'w600', req = { headers: {} }) => {
+    const proxy = async (id, res, size = 'w600', req = { headers: {} }) => {
         if (!/^[A-Za-z0-9_-]{10,100}$/.test(id) || !['w600', 'w1200'].includes(size)) {
             res.writeHead(400, { 'Cache-Control': 'no-store' }); res.end('Invalid image request'); return;
         }
@@ -133,5 +139,23 @@ function createDriveImageProxy(directory, download = downloadImage, options = {}
             res.end('Imagem temporariamente indisponível');
         }
     };
+
+    proxy.invalidate = async ids => {
+        cacheGeneration += 1;
+        failures.clear();
+        const allowedIds = ids ? new Set(Array.from(ids, String)) : null;
+        const matchesId = name => !allowedIds || Array.from(allowedIds).some(id => name.startsWith(`${id}-`));
+        for (const key of pending.keys()) {
+            if (matchesId(key)) pending.delete(key);
+        }
+        let names;
+        try { names = await fs.readdir(directory); } catch (_) { return; }
+        await Promise.all(names.filter(name => {
+            if (!name.endsWith('.json')) return false;
+            return matchesId(name);
+        }).map(name => fs.unlink(path.join(directory, name)).catch(() => {})));
+    };
+
+    return proxy;
 }
 module.exports = { createDriveImageProxy, downloadImage };

@@ -903,7 +903,8 @@
 
         const formatEntry = (found) => {
             const filename = found.filename || `${found.base}.jpg`;
-            const localUrl = `/api/image-file?file=${encodeURIComponent(filename)}`;
+            const versionSuffix = found.version ? `&v=${encodeURIComponent(found.version)}` : '';
+            const localUrl = `/api/image-file?file=${encodeURIComponent(filename)}${versionSuffix}`;
             const bundledThumbUrl = typeof found.thumbUrl === 'string' && found.thumbUrl.startsWith('/images/')
                 ? found.thumbUrl
                 : null;
@@ -911,10 +912,10 @@
                 ? found.largeUrl
                 : null;
             const driveThumbUrl = found.id
-                ? `/api/proxy-image?id=${encodeURIComponent(found.id)}&sz=w600`
+                ? `/api/proxy-image?id=${encodeURIComponent(found.id)}&sz=w600${versionSuffix}`
                 : null;
             const driveLargeUrl = found.id
-                ? `/api/proxy-image?id=${encodeURIComponent(found.id)}&sz=w1200`
+                ? `/api/proxy-image?id=${encodeURIComponent(found.id)}&sz=w1200${versionSuffix}`
                 : null;
             const placeholderUrl = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22420%22 height=%22315%22 viewBox=%220 0 420 315%22%3E%3Crect width=%22420%22 height=%22315%22 fill=%22%23111827%22/%3E%3Ctext x=%22210%22 y=%22158%22 fill=%22%2394a3b8%22 font-family=%22Arial%22 font-size=%2216%22 text-anchor=%22middle%22%3EImagem indispon%C3%ADvel%3C/text%3E%3C/svg%3E';
             const isLocal = found.isLocal !== false;
