@@ -16,6 +16,7 @@ const {
     requestIsSameOrigin,
     applySecurityHeaders
 } = require('./server-security');
+const { sanitizeImageMap, imageEntryMatchesKey } = require('./image-coverage');
 
 const PORT = process.env.PORT || 3000;
 const ALT_PORT = 8080;
@@ -208,8 +209,8 @@ function loadBundledImageIndex() {
             map[base.toUpperCase()] = entry;
         });
 
-        // Os aliases do Studeoneda são aplicados por último e têm prioridade
-        // sobre a inferência automática pelo nome do arquivo.
+        // Aliases antigos só são aceitos quando preservam integralmente a
+        // identidade do produto. Sufixos são produtos diferentes.
         Object.entries(filenameMap).forEach(([key, rawFilename]) => {
             const filename = path.basename(String(rawFilename || ''));
             if (!filename || !/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(filename)) return;
@@ -218,7 +219,7 @@ function loadBundledImageIndex() {
             if (!fs.existsSync(fullPath)) return;
 
             const entry = entriesByFilename.get(filename.toUpperCase());
-            if (!entry) return;
+            if (!entry || !imageEntryMatchesKey(key, entry)) return;
 
             map[String(key).toUpperCase()] = entry;
             map[filename.toUpperCase()] = entry;
@@ -242,7 +243,7 @@ let driveImagesCache = loadBundledImageIndex();
 try {
     const saved = JSON.parse(fs.readFileSync(DRIVE_IMAGES_PATH, 'utf8'));
     if (saved.map && saved.list) {
-        const mergedMap = { ...saved.map };
+        const mergedMap = sanitizeImageMap(saved.map);
         Object.entries(driveImagesCache.map).forEach(([key, bundledEntry]) => {
             const remoteEntry = saved.map[key];
             mergedMap[key] = {
@@ -252,7 +253,7 @@ try {
                 driveUrl: remoteEntry?.driveUrl || bundledEntry.driveUrl
             };
         });
-        driveImagesCache = { ...saved, map: mergedMap };
+        driveImagesCache = { ...saved, map: sanitizeImageMap(mergedMap) };
     }
 } catch (_) { /* First boot: the local index is already available. */ }
 
@@ -589,18 +590,6 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
         index[stripped] = entry;
         index[entry.filename.toUpperCase()] = entry;
 
-        // Variações estritas de sufixo no nome do arquivo (ex: 01.18.00.7861-1 -> 01.18.00.7861)
-        const rootDash = upper.replace(/-\d+$/, '');
-        if (rootDash && !index[rootDash]) {
-            index[rootDash] = entry;
-            index[rootDash.replace(/[^A-Z0-9]/g, '')] = entry;
-        }
-
-        const rootLetter = upper.replace(/[A-Z]$/, '');
-        if (rootLetter && !index[rootLetter]) {
-            index[rootLetter] = entry;
-            index[rootLetter.replace(/[^A-Z0-9]/g, '')] = entry;
-        }
     });
 
     // Descobertas de rede/Drive complementam o mapa versionado, mas nunca
@@ -621,7 +610,7 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
         count: mergedList.length,
         timestamp: new Date().toISOString(),
         source: 'bundled-static-images+drive',
-        map: mergedMap,
+        map: sanitizeImageMap(mergedMap),
         list: mergedList
     };
 

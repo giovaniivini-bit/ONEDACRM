@@ -9,6 +9,50 @@
         return String(value == null ? '' : value).trim();
     }
 
+    function normalizeImageIdentity(value) {
+        return text(value)
+            .toUpperCase()
+            .replace(/\.(JPE?G|PNG|WEBP|GIF|SVG)$/i, '')
+            .replace(/[^A-Z0-9]/g, '');
+    }
+
+    function imageEntryMatchesKey(key, entry) {
+        if (!entry || typeof entry !== 'object') return false;
+        const entryIdentity = normalizeImageIdentity(entry.base || entry.filename);
+        return Boolean(entryIdentity) && normalizeImageIdentity(key) === entryIdentity;
+    }
+
+    function sanitizeImageMap(imageMap) {
+        const map = imageMap && typeof imageMap === 'object' ? imageMap : {};
+        return Object.fromEntries(
+            Object.entries(map).filter(([key, entry]) => imageEntryMatchesKey(key, entry))
+        );
+    }
+
+    function resolveImageEntry(imageMap, code, op) {
+        const map = imageMap && typeof imageMap === 'object' ? imageMap : {};
+        const upper = text(code).toUpperCase();
+        const stripped = upper.replace(/[^A-Z0-9]/g, '');
+        const opValue = text(op).toUpperCase();
+        const opClean = opValue.replace(/^0+/, '');
+        const candidates = [
+            upper,
+            stripped,
+            upper ? `${upper}.JPG` : '',
+            upper ? `${upper}.PNG` : '',
+            upper ? `${upper}.JPEG` : '',
+            opValue,
+            opClean,
+            opValue ? `OP${opValue}` : '',
+            opValue ? `OP_${opValue}` : ''
+        ];
+
+        for (const key of new Set(candidates.filter(Boolean))) {
+            if (map[key] && imageEntryMatchesKey(key, map[key])) return map[key];
+        }
+        return null;
+    }
+
     function buildImageCoverageProducts(sources = {}, options = {}) {
         const products = new Map();
         const checkImage = typeof options.checkImage === 'function' ? options.checkImage : () => false;
@@ -95,5 +139,11 @@
         })).sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }) || a.imageCode.localeCompare(b.imageCode, undefined, { numeric: true }));
     }
 
-    return { buildImageCoverageProducts };
+    return {
+        buildImageCoverageProducts,
+        resolveImageEntry,
+        normalizeImageIdentity,
+        imageEntryMatchesKey,
+        sanitizeImageMap
+    };
 });

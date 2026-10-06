@@ -1,6 +1,48 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { buildImageCoverageProducts } = require('../image-coverage');
+const {
+    buildImageCoverageProducts,
+    resolveImageEntry,
+    sanitizeImageMap
+} = require('../image-coverage');
+
+test('resolve imagens somente pelo código completo, sem herdar foto do produto-base', () => {
+    const base = { filename: '21.19.00.0007.jpg' };
+    const variant = { filename: '21.19.00.0007A.jpg' };
+    const map = {
+        '21.19.00.0007': base,
+        '2119000007': base,
+        '21.19.00.0007A': variant,
+        '2119000007A': variant
+    };
+
+    assert.equal(resolveImageEntry(map, '21.19.00.0007'), base);
+    assert.equal(resolveImageEntry(map, '21.19.00.0007A'), variant);
+    assert.equal(resolveImageEntry({ '21.19.00.0007': base }, '21.19.00.0007A'), null);
+    assert.equal(resolveImageEntry({ '21.19.00.0007': base }, '21.19.00.00071'), null);
+    assert.equal(resolveImageEntry({ '2119000007A': variant }, '21.19.00.0007A'), variant);
+    assert.equal(resolveImageEntry({ '21.19.00.0007A': base }, '21.19.00.0007A'), null);
+    const opImage = { filename: '78357.jpg', base: '78357' };
+    assert.equal(resolveImageEntry({ '78357': opImage }, '21.19.00.0007A', '78357'), opImage);
+});
+
+test('remove aliases antigos do cache sem remover equivalências de pontuação', () => {
+    const base = { filename: '21.19.00.0007.jpg', base: '21.19.00.0007' };
+    const variant = { filename: '21.19.00.0007A.jpg', base: '21.19.00.0007A' };
+    const clean = sanitizeImageMap({
+        '21.19.00.0007': base,
+        '2119000007': base,
+        '21.19.00.0007.JPG': base,
+        '21.19.00.0007A': base,
+        '2119000007A': variant
+    });
+
+    assert.equal(clean['21.19.00.0007'], base);
+    assert.equal(clean['2119000007'], base);
+    assert.equal(clean['21.19.00.0007.JPG'], base);
+    assert.equal(clean['2119000007A'], variant);
+    assert.equal(clean['21.19.00.0007A'], undefined);
+});
 
 test('includes current Prog Feira products such as ON.17.0156 and ignores history rows', () => {
     const products = buildImageCoverageProducts({

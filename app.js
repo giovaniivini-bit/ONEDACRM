@@ -908,8 +908,6 @@
 
         if (!codigo && !op) return { hasImage: false };
         const map = state.driveImages || {};
-        const upper = codigo.toUpperCase();
-        const stripped = upper.replace(/[^A-Z0-9]/g, '');
 
         const formatEntry = (found) => {
             const filename = found.filename || `${found.base}.jpg`;
@@ -943,37 +941,8 @@
             };
         };
 
-        // 1. Busca exata por código completo ou código sem pontuação
-        if (upper && map[upper]) return formatEntry(map[upper]);
-        if (stripped && map[stripped]) return formatEntry(map[stripped]);
-        if (upper && map[upper + '.JPG']) return formatEntry(map[upper + '.JPG']);
-        if (upper && map[upper + '.PNG']) return formatEntry(map[upper + '.PNG']);
-        if (upper && map[upper + '.JPEG']) return formatEntry(map[upper + '.JPEG']);
-
-        // 2. Busca exata pelo número completo da OP (se o arquivo foi nomeado exatamente com a OP)
-        if (op) {
-            const opClean = op.replace(/^0+/, '');
-            if (map[op]) return formatEntry(map[op]);
-            if (opClean && map[opClean]) return formatEntry(map[opClean]);
-            if (map['OP' + op]) return formatEntry(map['OP' + op]);
-            if (map['OP_' + op]) return formatEntry(map['OP_' + op]);
-        }
-
-        // 3. Variação estrita de letra final no código (ex: produto 01.14.00.7032A buscando 01.14.00.7032)
-        const rootLetter = upper.replace(/[A-Z]$/, '');
-        if (rootLetter && rootLetter !== upper && rootLetter.length >= 8) {
-            if (map[rootLetter]) return formatEntry(map[rootLetter]);
-            if (map[rootLetter.replace(/[^A-Z0-9]/g, '')]) return formatEntry(map[rootLetter.replace(/[^A-Z0-9]/g, '')]);
-        }
-
-        const rootDash = upper.replace(/-\d+$/, '');
-        if (rootDash && rootDash !== upper && rootDash.length >= 8) {
-            if (map[rootDash]) return formatEntry(map[rootDash]);
-            if (map[rootDash.replace(/[^A-Z0-9]/g, '')]) return formatEntry(map[rootDash.replace(/[^A-Z0-9]/g, '')]);
-        }
-
-        // Se não possuir correspondência exata, NÃO sugerir parecido
-        return { hasImage: false };
+        const found = window.CRMImageCoverage?.resolveImageEntry(map, codigo, op);
+        return found ? formatEntry(found) : { hasImage: false };
     }
 
     // Helper de Normalização de Chaves para Resolução Dinâmica de Colunas
