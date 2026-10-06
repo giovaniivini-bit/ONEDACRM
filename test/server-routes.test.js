@@ -49,6 +49,9 @@ after(async () => {
 
 test('serves health and blocks internal static files and malformed URLs', async () => {
     assert.equal((await request({ route: '/api/health' })).status, 200);
+    const coverageScript = await request({ route: '/image-coverage.js' });
+    assert.equal(coverageScript.status, 200);
+    assert.match(coverageScript.body, /buildImageCoverageProducts/);
     assert.equal((await request({ route: '/server.js' })).status, 404);
     assert.equal((await request({ route: '/data/full_dataset.csv' })).status, 404);
     assert.equal((await request({ route: '/%E0%A4%A' })).status, 400);

@@ -886,7 +886,7 @@
                 state.progFeiraExternalData = progFeiraRes;
             }
             updateSidebarBadges();
-            if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'alertas', 'geral'].includes(state.activeSubmodule)) {
+            if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
             }
         } catch (e) {
@@ -1256,70 +1256,16 @@
     }
 
     function getImageCoverageProducts() {
-        const products = new Map();
-
-        const checkImage = (codigo, op) => {
-            const img = getProductImage(codigo, op);
-            return Boolean(img && img.hasImage);
-        };
-
-        const registerProduct = (rawCode, desc, cliente, marca, setor, op) => {
-            const codigo = String(rawCode || '').trim();
-            if (!codigo || codigo === '—' || codigo === '-' || codigo === 'N/A') return;
-
-            const key = codigo.toUpperCase();
-            if (!products.has(key)) {
-                products.set(key, {
-                    codigo,
-                    descricao: desc || 'Sem descrição',
-                    cliente: cliente || 'Não informado',
-                    marca: marca || 'Não informada',
-                    setores: new Set(),
-                    ops: new Set(),
-                    hasImage: false
-                });
-            }
-
-            const product = products.get(key);
-            if (setor) product.setores.add(String(setor));
-            if (op) product.ops.add(String(op));
-            if (desc && (!product.descricao || product.descricao === 'Sem descrição')) {
-                product.descricao = desc;
-            }
-            if (cliente && (!product.cliente || product.cliente === 'Não informado')) {
-                product.cliente = cliente;
-            }
-            if (!product.hasImage) product.hasImage = checkImage(codigo, op);
-        };
-
-        // 1. Produção Principal (121 colunas)
-        (state.allData || []).forEach(item => {
-            registerProduct(item.codigo, item.descricao || item.descGrupoProd, item.cliente, item.marca, item.setor, item.op);
+        if (!window.CRMImageCoverage) return [];
+        return window.CRMImageCoverage.buildImageCoverageProducts({
+            main: state.allData || [],
+            cq: state.cqExternalData?.records || [],
+            rotativos: state.rotativosExternalData?.records || [],
+            progFeira: state.progFeiraExternalData?.records || []
+        }, {
+            checkImage: (codigo, op) => Boolean(getProductImage(codigo, op).hasImage),
+            buildProgProducts: window.CRMProgFeira?.buildProducts
         });
-
-        // 2. Andamento do CQ
-        const cqExt = state.cqExternalData || {};
-        (cqExt.records || []).forEach(cq => {
-            const code = cq.CODIGO || cq.IMG_PRODUTO || cq.ART_CLI;
-            const op = cq.NUMERO || cq.OFS || cq.ORDEM;
-            registerProduct(code, `Amostra CQ: ${cq.DESC_AMOSTRA || cq.STATUS || ''}`, cq.REPRESENTANTE || 'CQ', 'CQ', 'Andamento CQ', op);
-        });
-
-        // 3. Rotativos (Setor 43)
-        const rotExt = state.rotativosExternalData || {};
-        (rotExt.records || []).forEach(rot => {
-            const code = rot.produto || rot.PRODUTO || rot.CODIGO || rot.REFERENCIA;
-            const op = rot.OP || rot.ORDEM || rot.NUMERO || '';
-            registerProduct(code, rot.obs || rot.DESCRICAO || 'Rotativo', rot.CLIENTE || 'Rotativos', 'Rotativo', '43 (Rotativos)', op);
-        });
-
-        return Array.from(products.values())
-            .map(product => ({
-                ...product,
-                setores: Array.from(product.setores).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
-                ops: Array.from(product.ops).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-            }))
-            .sort((a, b) => a.codigo.localeCompare(b.codigo, undefined, { numeric: true }));
     }
 
     function recalculateAlerts() {
@@ -11396,7 +11342,7 @@
                                         <td>${escapeHtml(product.ops.slice(0, 5).join(', '))}${product.ops.length > 5 ? ` <span class="badge badge-sub">+${product.ops.length - 5}</span>` : ''}</td>
                                         <td>${product.setores.map(setor => `<span class="badge badge-sub" style="margin: 2px;">${escapeHtml(setor)}</span>`).join('') || '—'}</td>
                                         ${showingAllImages ? `<td><span class="badge ${product.hasImage ? 'badge-emerald' : 'badge-amber'}"><i class="fa-solid ${product.hasImage ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${product.hasImage ? 'Disponível' : 'Precisa atualizar'}</span></td>` : ''}
-                                        <td><code style="color: #38bdf8;">${escapeHtml(product.codigo)}.jpg</code></td>
+                                        <td><code style="color: #38bdf8;">${escapeHtml(product.imageCode || product.codigo)}.jpg</code></td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -12728,7 +12674,7 @@
     }
 
     window.crmCopyAllImageFilenames = () => {
-        const filenames = getImageCoverageProducts().map(product => `${product.codigo}.jpg`);
+        const filenames = [...new Set(getImageCoverageProducts().map(product => `${product.imageCode || product.codigo}.jpg`))];
         if (!filenames.length) {
             showNotification('Nenhuma imagem necessária foi encontrada.', 'info', 'Lista vazia');
             return;
@@ -12757,7 +12703,7 @@
                 product.marca,
                 product.ops.join(', '),
                 product.setores.join(', '),
-                `${product.codigo}.jpg`
+                `${product.imageCode || product.codigo}.jpg`
             ])
         ];
         const csv = '\uFEFF' + rows.map(row => row.map(escapeCsv).join(';')).join('\r\n');

@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test test/drive-image-cache.test.js test/image-refresh.test.js test/alerts-engine.test.js test/alerts-view.test.js test/images-view.test.js test/aproveitamento-view.test.js test/light-theme.test.js test/admin-auth.test.js test/server-security.test.js test/server-routes.test.js test/pdf-layout.test.js test/setor01-gallery.test.js test/prog-feira.test.js test/mobile-sidebar.test.js"
+    "test": "node --test test/drive-image-cache.test.js test/image-refresh.test.js test/alerts-engine.test.js test/alerts-view.test.js test/images-view.test.js test/image-coverage.test.js test/aproveitamento-view.test.js test/light-theme.test.js test/admin-auth.test.js test/server-security.test.js test/server-routes.test.js test/pdf-layout.test.js test/setor01-gallery.test.js test/prog-feira.test.js test/mobile-sidebar.test.js"
   },
   "keywords": [
     "crm",
