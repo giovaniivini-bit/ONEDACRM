@@ -14,8 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- CSS Estilo Corporativo Sério -->
-    <link rel="stylesheet" href="style.css?v=20261005-prog-feira-2">
-    <link rel="stylesheet" href="light-theme.css?v=20261005-prog-feira-2">
+    <link rel="stylesheet" href="style.css?v=20261005-mobile-sidebar-1">
+    <link rel="stylesheet" href="light-theme.css?v=20261005-mobile-sidebar-1">
 </head>
 <body>
     <div class="app-layout">
@@ -215,6 +215,8 @@
             </div>
         </aside>
 
+        <button class="sidebar-mobile-overlay" id="sidebarMobileOverlay" type="button" aria-label="Fechar menu lateral"></button>
+
         <!-- ========================================================================= -->
         <!-- MAIN CONTENT                                                              -->
         <!-- ========================================================================= -->
@@ -222,6 +224,9 @@
             <!-- 1. Top Header Fiel ao Print (Pipeline, Ideias, Novidades 3, Avatar) -->
             <header class="top-header">
                 <div class="header-title-area">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Abrir menu lateral" aria-controls="sidebar" aria-expanded="false">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
                     <h1 class="header-main-title" id="pageMainTitle">Pipeline de Atividades</h1>
                 </div>
 
@@ -381,7 +386,7 @@
     </script>
     <script src="alerts-engine.js?v=20261003-images-showroom"></script>
     <script src="setor01-related-sectors.js?v=20261003-images-showroom"></script>
-    <script src="prog-feira.js?v=20261005-prog-feira-2"></script>
-    <script src="app.js?v=20261005-prog-feira-2"></script>
+    <script src="prog-feira.js?v=20261005-mobile-sidebar-1"></script>
+    <script src="app.js?v=20261005-mobile-sidebar-1"></script>
 </body>
 </html>

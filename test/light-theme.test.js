@@ -24,7 +24,7 @@ test('tema claro possui tokens semânticos e superfícies executivas legíveis',
     assert.match(css, /#setor01GallerySection \.s13-card-description[\s\S]*?color: #344054 !important/);
     assert.match(css, /#setor01GallerySection \.s13-card-op-badge[\s\S]*?color: #344054 !important/);
     assert.match(css, /#setor01GallerySection \.s01-sector-chip\.danger[\s\S]*?color: #991b1b !important/);
-    assert.match(index, /light-theme\.css\?v=20261005-prog-feira-2/);
+    assert.match(index, /light-theme\.css\?v=20261005-mobile-sidebar-1/);
     assert.match(server, /'light-theme\.css'/);
 });
 

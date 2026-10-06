@@ -1522,19 +1522,45 @@
         // Recolhimento do Menu Lateral
         const sidebar = document.getElementById('sidebar');
         const collapseBtn = document.getElementById('sidebarCollapseBtn');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebarMobileOverlay = document.getElementById('sidebarMobileOverlay');
+        const closeMobileSidebar = () => {
+            if (!sidebar || !mobileMenuBtn) return;
+            sidebar.classList.remove('mobile-open');
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            mobileMenuBtn.setAttribute('aria-label', 'Abrir menu lateral');
+        };
         if (collapseBtn) {
             collapseBtn.addEventListener('click', () => {
+                if (window.innerWidth <= 1024) {
+                    closeMobileSidebar();
+                    return;
+                }
                 sidebar.classList.toggle('collapsed');
             });
         }
 
         // Toggle Mobile
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         if (mobileMenuBtn) {
             mobileMenuBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('mobile-open');
+                sidebar.classList.remove('collapsed');
+                const isOpen = sidebar.classList.toggle('mobile-open');
+                mobileMenuBtn.setAttribute('aria-expanded', String(isOpen));
+                mobileMenuBtn.setAttribute('aria-label', isOpen ? 'Fechar menu lateral' : 'Abrir menu lateral');
             });
         }
+        if (sidebarMobileOverlay) {
+            sidebarMobileOverlay.addEventListener('click', closeMobileSidebar);
+        }
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeMobileSidebar();
+        });
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 1024) closeMobileSidebar();
+        });
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', closeMobileSidebar);
+        });
 
         // Filtro de Busca do Topo
         const searchInput = document.getElementById('headerSearchInput');
