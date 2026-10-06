@@ -70,6 +70,37 @@
         return date;
     }
 
+    function parseMovementDate(value, now = new Date()) {
+        const raw = text(value);
+        let day;
+        let month;
+        let year;
+        let match = raw.match(/^(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?$/);
+        if (match) {
+            day = Number(match[1]);
+            month = Number(match[2]);
+            year = match[3] ? Number(match[3]) : now.getFullYear();
+        } else {
+            match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+            if (!match) return null;
+            year = Number(match[1]);
+            month = Number(match[2]);
+            day = Number(match[3]);
+        }
+        if (year < 100) year += 2000;
+        let date = new Date(year, month - 1, day, 12, 0, 0);
+        if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+        return date;
+    }
+
+    function calculateDaysInSector(value, now = new Date()) {
+        const movement = parseMovementDate(value, now);
+        if (!movement || Number.isNaN(now?.getTime?.())) return null;
+        const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+        const movementUtc = Date.UTC(movement.getFullYear(), movement.getMonth(), movement.getDate());
+        return Math.max(0, Math.floor((todayUtc - movementUtc) / 86400000));
+    }
+
     function buildProducts(records, now = new Date()) {
         const rows = Array.isArray(records) ? records.filter(Boolean) : [];
         const current = new Map();
@@ -104,6 +135,7 @@
             const itemHistory = (history.get(key) || []).sort((a, b) => {
                 return (FLOW_BY_CODE.get(a.sector)?.order || 999) - (FLOW_BY_CODE.get(b.sector)?.order || 999);
             });
+            const movementDate = field(record, 'DT_SAIDA');
             return {
                 key,
                 numero: field(record, 'NUMERO'),
@@ -112,7 +144,8 @@
                 sector,
                 sectorLabel: field(record, 'SETOR') || flowInfo?.label || sector,
                 sectorOrder: flowInfo?.order || Number(field(record, 'ORDEM')) || 999,
-                movementDate: field(record, 'DT_SAIDA'),
+                movementDate,
+                daysInSector: calculateDaysInSector(movementDate, now),
                 delivery: deliveryRaw,
                 deliverySort,
                 isDes: field(record, 'SETOR_FLUXO_EM').toUpperCase() === 'DES',
@@ -143,5 +176,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { FLOW, TINGIMENTO, normalizeSector, parseDelivery, buildProducts, groupBySector };
+    return { FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

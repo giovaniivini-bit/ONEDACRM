@@ -5876,6 +5876,10 @@ body.light-mode .data-table tr:hover {
 .prog-feira-sector-badge,.prog-feira-ting-badge { display:inline-flex; padding:4px 6px; border-radius:5px; font-size:8px; line-height:1.25; font-weight:900; text-transform:uppercase; }
 .prog-feira-sector-badge { max-width:62%; color:#38bdf8; background:rgba(14,165,233,.1); }
 .prog-feira-ting-badge { color:var(--text-primary); border:1px solid var(--ting-color); background:color-mix(in srgb,var(--ting-color) 12%,transparent); }
+.prog-feira-days { margin-top:8px; display:flex; align-items:center; gap:5px; width:max-content; max-width:100%; padding:5px 8px; border:1px solid rgba(16,185,129,.28); border-radius:6px; color:#6ee7b7; background:rgba(16,185,129,.09); font-size:9px; font-weight:800; }
+.prog-feira-days.late { color:#fca5a5; border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1); }
+.prog-feira-days.unknown { color:var(--text-muted); border-color:var(--border-color); background:var(--bg-elevated); }
+.prog-feira-days strong { color:inherit; font-size:11px; }
 .prog-feira-program { margin-top:8px; padding:6px 8px; border-radius:6px; background:var(--bg-elevated); color:var(--text-primary); font-size:9px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .prog-feira-program i { color:#a78bfa; margin-right:5px; }
 .prog-feira-card dl { display:grid; grid-template-columns:1fr 1fr; gap:7px 10px; margin:9px 0 0; }

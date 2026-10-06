@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeSector, parseDelivery, buildProducts, groupBySector } = require('../prog-feira');
+const fs = require('node:fs');
+const path = require('node:path');
+const { normalizeSector, parseDelivery, calculateDaysInSector, buildProducts, groupBySector } = require('../prog-feira');
 
 test('normalizes the spreadsheet scientific notation used for sector 1E2', () => {
     assert.equal(normalizeSector('1,00E+02'), '1E2');
@@ -22,7 +24,30 @@ test('builds one product from TIPO 1, 2 and 3 without tripling totals', () => {
     assert.equal(products[0].program, 'T51A - RNA');
     assert.equal(products[0].delivery, '09/10');
     assert.equal(products[0].isDes, true);
+    assert.equal(products[0].daysInSector, 4);
     assert.equal(products[0].history.length, 2);
+});
+
+test('calculates elapsed calendar days in the current sector safely', () => {
+    const now = new Date(2026, 9, 5, 23, 30);
+    assert.equal(calculateDaysInSector('02/10/2026', now), 3);
+    assert.equal(calculateDaysInSector('2026-10-04', now), 1);
+    assert.equal(calculateDaysInSector('06/10/2026', now), 0);
+    assert.equal(calculateDaysInSector('31/12/26', now), 0);
+    assert.equal(calculateDaysInSector('31/12', now), 0);
+    assert.equal(calculateDaysInSector('2026-10-04junk', now), null);
+    assert.equal(calculateDaysInSector('data inválida', now), null);
+});
+
+test('renders the elapsed days on every Prog Feira card', () => {
+    const app = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+    const css = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
+    const lightCss = fs.readFileSync(path.join(__dirname, '..', 'light-theme.css'), 'utf8');
+    assert.match(app, /prog-feira-days/);
+    assert.match(app, /no setor atual/);
+    assert.match(css, /\.prog-feira-days\.late/);
+    assert.match(lightCss, /body\.light-mode \.prog-feira-days\.late/);
+    assert.match(lightCss, /color:\s*#b91c1c/);
 });
 
 test('groups products by the D36 sector order and parses delivery dates', () => {

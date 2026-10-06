@@ -33,6 +33,24 @@ body.light-mode {
     color: var(--text-primary);
 }
 
+body.light-mode .prog-feira-days {
+    color: #047857;
+    border-color: rgba(4, 120, 87, 0.32);
+    background: rgba(5, 150, 105, 0.1);
+}
+
+body.light-mode .prog-feira-days.late {
+    color: #b91c1c;
+    border-color: rgba(185, 28, 28, 0.3);
+    background: rgba(220, 38, 38, 0.09);
+}
+
+body.light-mode .prog-feira-days.unknown {
+    color: #475569;
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
 body.light-mode .app-layout,
 body.light-mode .main-content,
 body.light-mode .view-container,
