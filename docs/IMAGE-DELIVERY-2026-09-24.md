@@ -61,3 +61,18 @@ The 170 files present in the synchronized source folder but absent from the CRM
 snapshot were copied into `images/` for publication, including
 `01.18.36.0570.jpg`. A complete automatic cloud sync remains dependent on a
 future authenticated Google Drive API integration.
+
+## Follow-up — 2026-10-06
+
+The same public-folder limitation affected the new Prog Feira products. The
+VPS indexed 635 files, but exact images such as `ON.19.0166.jpg` through
+`ON.19.0169.jpg`, `ON.19.0193.jpg`, and `ON.19.0194.jpg` were present only in
+the locally synchronized Drive folder and were absent from the public HTML
+listing.
+
+The 93 files present in that synchronized folder but missing from the CRM
+snapshot were imported into `images/`. A comparison against the current Prog
+Feira sheet then found 38 current products and zero missing images. The
+**Sincronizar Fotos** button still cannot guarantee full discovery of future
+files until authenticated Drive API access is available; the repository image
+snapshot remains the reliable production source in the meantime.

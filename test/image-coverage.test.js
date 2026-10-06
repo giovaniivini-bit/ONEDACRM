@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const {
     buildImageCoverageProducts,
     resolveImageEntry,
@@ -42,6 +44,24 @@ test('remove aliases antigos do cache sem remover equivalências de pontuação'
     assert.equal(clean['21.19.00.0007.JPG'], base);
     assert.equal(clean['2119000007A'], variant);
     assert.equal(clean['21.19.00.0007A'], undefined);
+});
+
+test('inclui as imagens atuais do Prog Feira relatadas como ausentes', () => {
+    const codes = [
+        'ON.19.0166',
+        'ON.19.0167',
+        'ON.19.0168',
+        'ON.19.0169',
+        'ON.19.0193',
+        'ON.19.0194'
+    ];
+
+    codes.forEach(code => {
+        const filename = path.join(__dirname, '..', 'images', `${code}.jpg`);
+        const image = fs.readFileSync(filename);
+        assert.ok(image.length > 10_000, `${code} deve possuir uma imagem real`);
+        assert.deepEqual(Array.from(image.subarray(0, 2)), [0xff, 0xd8], `${code} deve ser JPEG`);
+    });
 });
 
 test('includes current Prog Feira products such as ON.17.0156 and ignores history rows', () => {
