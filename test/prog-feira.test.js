@@ -53,6 +53,7 @@ test('renders the elapsed days on every Prog Feira card', () => {
 test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () => {
     const app = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
     const css = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
     assert.match(app, /index \+= 8/);
     assert.match(app, /prog-feira-sector prog-feira-print-page/);
@@ -60,6 +61,8 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
     assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
+    assert.match(html, /style\.css\?v=20261006-prog-feira-a4-1/);
+    assert.match(html, /app\.js\?v=20261006-prog-feira-a4-1/);
 });
 
 test('groups products by the D36 sector order and parses delivery dates', () => {
