@@ -1248,8 +1248,12 @@
             // silenciosa para evitar um pico falso de alertas no primeiro paint.
             hasImage: state.imagesLoaded ? Boolean(getProductImage(item).hasImage) : true
         }));
+        const cqAlertRecords = window.CRMAlertsEngine.buildCQAlertRecords(
+            state.cqExternalData?.records || [],
+            { now: new Date() }
+        );
         const operationalRecords = window.CRMAlertsEngine.buildOperationalAlertRecords(
-            records,
+            [...records, ...cqAlertRecords],
             state.calendarExternalData?.records || [],
             { now: new Date() }
         );
@@ -6033,14 +6037,10 @@
             return '';
         }
 
-        // Helper de normalização das 4 situações solicitadas
+        // Helper compartilhado com o motor de alertas para que relatório e
+        // avisos interpretem DESC_AMOSTRA exatamente da mesma forma.
         function normalizeCQSituacao(s) {
-            const norm = (s || '').trim().toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-            if (norm.includes('REENVIADO')) return 'REENVIADO CQ';
-            if (norm === 'ENVIADO') return 'ENVIADO';
-            if (norm.includes('EXPIRANDO')) return 'EXPIRANDO VIGÊNCIA';
-            if (norm.includes('PRODUCAO') || norm.includes('PRODUC')) return 'AMOSTRAS EM PRODUÇÃO';
-            return null; // Não faz parte das 4 situações pendentes
+            return window.CRMAlertsEngine?.normalizeCQStatus(s) || null;
         }
 
         // Helper de Cliente por Prefixo do Código (Coluna E)
@@ -6093,10 +6093,20 @@
                 gradId: 'gradProducaoCQ',
                 label: 'Amostras em Produção',
                 icon: 'fa-scissors'
+            },
+            'REPROVADO': {
+                color: '#ef4444',
+                lightColor: '#fca5a5',
+                bg: 'rgba(239, 68, 68, 0.2)',
+                border: '#ef4444',
+                gradId: 'gradReprovadoCQ',
+                label: 'Reprovado',
+                icon: 'fa-circle-xmark',
+                critical: true
             }
         };
 
-        const targetSituacoes = ['REENVIADO CQ', 'ENVIADO', 'EXPIRANDO VIGÊNCIA', 'AMOSTRAS EM PRODUÇÃO'];
+        const targetSituacoes = ['REPROVADO', 'REENVIADO CQ', 'ENVIADO', 'EXPIRANDO VIGÊNCIA', 'AMOSTRAS EM PRODUÇÃO'];
 
         // Normalização e enriquecimento dos registros
         const normalizedRecords = rawRecords.map((r, idx) => {
@@ -6167,6 +6177,7 @@
 
         // Contadores por Situação
         const sitCounts = {
+            'REPROVADO': 0,
             'REENVIADO CQ': 0,
             'ENVIADO': 0,
             'EXPIRANDO VIGÊNCIA': 0,
@@ -6195,6 +6206,7 @@
                 periodo: w,
                 total: 0,
                 bySit: {
+                    'REPROVADO': 0,
                     'REENVIADO CQ': 0,
                     'ENVIADO': 0,
                     'EXPIRANDO VIGÊNCIA': 0,
@@ -6370,7 +6382,7 @@
                 </div>
             </div>
 
-            <!-- CARDS DE KPIS EXECUTIVOS DAS 4 SITUAÇÕES -->
+            <!-- CARDS DE KPIS EXECUTIVOS DAS 5 SITUAÇÕES -->
             <div class="cq-kpi-grid">
                 <!-- TOTAL PENDENTES -->
                 <div class="cq-kpi-card">
@@ -6380,7 +6392,19 @@
                     <div class="cq-kpi-info">
                         <div class="cq-kpi-label">Total Pedidos Pendentes</div>
                         <div class="cq-kpi-value">${totalPendingCount} <span style="font-size: 14px; font-weight: 600; color: #94a3b8;">OFs</span></div>
-                        <div class="cq-kpi-sub"><i class="fa-solid fa-layer-group"></i> Em 4 situações de controle</div>
+                        <div class="cq-kpi-sub"><i class="fa-solid fa-layer-group"></i> Em 5 situações de controle</div>
+                    </div>
+                </div>
+
+                <!-- REPROVADO — STATUS CRÍTICO -->
+                <div class="cq-kpi-card ${sitCounts['REPROVADO'] > 0 ? 'cq-reprovado-pulse' : ''}" style="border-color: #ef4444; cursor: pointer;" onclick="window.crmFilterCQ({ field: 'situacao', value: 'REPROVADO' })" title="Filtrar amostras reprovadas">
+                    <div class="cq-kpi-icon" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5;">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </div>
+                    <div class="cq-kpi-info">
+                        <div class="cq-kpi-label">Reprovado</div>
+                        <div class="cq-kpi-value" style="color: #fca5a5;">${sitCounts['REPROVADO']} <span style="font-size: 14px; font-weight: 600; color: #fca5a5;">OFs</span></div>
+                        <div class="cq-kpi-sub" style="color: #fca5a5;"><i class="fa-solid fa-triangle-exclamation"></i> Ação crítica imediata</div>
                     </div>
                 </div>
 
@@ -6492,8 +6516,15 @@
                                     <div style="color: #ef4444; font-weight: 900; font-size: 18px;">${totalAllCount > 0 ? ((totalPendingCount / totalAllCount) * 100).toFixed(1) : 0}%</div>
                                 </div>
                                 
-                                <!-- Breakdown das 4 situa��es -->
+                                <!-- Breakdown das 5 situações -->
                                 <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div class="${sitCounts['REPROVADO'] > 0 ? 'cq-reprovado-pulse' : ''}" style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; border: 1px solid rgba(239,68,68,.7); border-radius: 7px; padding: 8px; background: rgba(239,68,68,.12);">
+                                        <div style="display: flex; align-items: center; gap: 8px; color: #fca5a5;">
+                                            <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 8px #ef4444;"></span>
+                                            <span>Reprovado</span>
+                                        </div>
+                                        <strong style="color: #ffffff;">${sitCounts['REPROVADO'] || 0} <span style="color: #fca5a5; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['REPROVADO'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
+                                    </div>
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                                         <div style="display: flex; align-items: center; gap: 8px; color: #fbbf24;">
                                             <span style="width: 10px; height: 10px; border-radius: 50%; background: #fbbf24; box-shadow: 0 0 6px #fbbf24;"></span>
@@ -6541,7 +6572,7 @@
                             <span>Distribuição de OFs Pendentes no CQ por Semana (Coluna N) e Situação (Coluna I)</span>
                         </h3>
                         <p class="leadtime-chart-subtitle">
-                            Colunas Empilhadas por Semana de CQ | Divisão por Situações: Reenviado CQ, Enviado, Expirando Vigência e Amostras em Produção
+                            Colunas empilhadas por Semana de CQ | Situações: Reprovado, Reenviado CQ, Enviado, Expirando Vigência e Amostras em Produção
                         </p>
                     </div>
                     <span class="badge badge-cyan" style="font-size: 11.5px; padding: 4px 10px;">
@@ -6552,7 +6583,11 @@
                 <!-- SVG DUAL-AXIS CHART -->
                 <svg viewBox="0 0 ${svgW} ${svgH}" class="cq-big-svg">
                     <defs>
-                        <!-- Gradientes das 4 Situações -->
+                        <!-- Gradientes das 5 Situações -->
+                        <linearGradient id="gradReprovadoCQ" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ff6b6b" stop-opacity="1"/>
+                            <stop offset="100%" stop-color="#dc2626" stop-opacity="0.9"/>
+                        </linearGradient>
                         <linearGradient id="gradReenviadoCQ" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.95"/>
                             <stop offset="100%" stop-color="#d97706" stop-opacity="0.8"/>
@@ -6602,7 +6637,7 @@
                             const isSitSelected = state.cqFilter && state.cqFilter.field === 'situacao' && state.cqFilter.value === sitKey;
 
                             return `
-                                <rect x="${barX}" y="${segY}" width="${barW}" height="${Math.max(segH, 3)}"
+                                <rect class="${sitKey === 'REPROVADO' ? 'cq-reprovado-svg-pulse' : ''}" x="${barX}" y="${segY}" width="${barW}" height="${Math.max(segH, 3)}"
                                     fill="url(#${meta.gradId})"
                                     opacity="${(isWeekSelected || isSitSelected) ? '1' : '0.9'}"
                                     rx="4"
@@ -6670,7 +6705,7 @@
                     </text>
                 </svg>
 
-                <!-- LEGENDA INTERATIVA DAS 4 SITUAÇÕES -->
+                <!-- LEGENDA INTERATIVA DAS 5 SITUAÇÕES -->
                 <div class="leadtime-legend-bar" style="border-top-color: rgba(56, 189, 248, 0.15);">
                     ${targetSituacoes.map(sitKey => {
                         const meta = situacaoMeta[sitKey];
@@ -6678,7 +6713,7 @@
                         const isSelected = state.cqFilter && state.cqFilter.field === 'situacao' && state.cqFilter.value === sitKey;
 
                         return `
-                            <div class="cq-legend-chip ${isSelected ? 'active' : ''}" style="cursor: pointer; ${isSelected ? `border-color: ${meta.color}; background: ${meta.bg};` : ''}" onclick="window.crmFilterCQ({ field: 'situacao', value: '${sitKey}' })" title="Filtrar ${meta.label}">
+                            <div class="cq-legend-chip ${isSelected ? 'active' : ''} ${sitKey === 'REPROVADO' && count > 0 ? 'cq-reprovado-pulse' : ''}" style="cursor: pointer; ${isSelected ? `border-color: ${meta.color}; background: ${meta.bg};` : ''}" onclick="window.crmFilterCQ({ field: 'situacao', value: '${sitKey}' })" title="Filtrar ${meta.label}">
                                 <span class="cq-legend-dot" style="background: ${meta.color}; box-shadow: 0 0 8px ${meta.color};"></span>
                                 <span style="font-weight: 700; color: #f1f5f9;">${meta.label}</span>
                                 <span class="cq-legend-count" style="color: ${meta.lightColor}; font-size: 13px;">${count} OFs</span>
@@ -6807,7 +6842,7 @@
                                                 <div class="cq-sit-group-block" style="width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 6px; box-sizing: border-box;">
                                                     <!-- SUB-CABEÇALHO DA SITUAÇÃO -->
                                                     <div class="cq-sit-subheading" style="width: 100%; display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                                                        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 900; color: ${meta.color}; background: ${meta.bg}; border: 1.5px solid ${meta.border}; padding: 5px 14px; border-radius: 6px; box-shadow: 0 0 10px ${meta.color}33; text-transform: uppercase; cursor: pointer;" onclick="window.crmFilterCQ({ field: 'situacao', value: '${sKey}' })" title="Filtrar ${meta.label}">
+                                                        <span class="${sKey === 'REPROVADO' ? 'cq-reprovado-pulse' : ''}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 900; color: ${meta.color}; background: ${meta.bg}; border: 1.5px solid ${meta.border}; padding: 5px 14px; border-radius: 6px; box-shadow: 0 0 10px ${meta.color}33; text-transform: uppercase; cursor: pointer;" onclick="window.crmFilterCQ({ field: 'situacao', value: '${sKey}' })" title="Filtrar ${meta.label}">
                                                             <i class="fa-solid ${meta.icon}"></i> [${meta.label.toUpperCase()}]
                                                         </span>
                                                         <span style="font-size: 12px; color: #94a3b8; font-weight: 700;">
@@ -6823,11 +6858,11 @@
                                                             const escapedCode = (item.codigo || '').replace(/'/g, "\\'");
 
                                                             return `
-                                                                <div class="s13-photo-card card-critico" style="border-color: ${meta.border || 'rgba(56, 189, 248, 0.35)'};">
+                                                                <div class="s13-photo-card card-critico ${item.sitNorm === 'REPROVADO' ? 'cq-reprovado-pulse' : ''}" style="border-color: ${meta.border || 'rgba(56, 189, 248, 0.35)'};">
                                                                     <!-- ÁREA DA FOTO -->
                                                                     <div class="s13-photo-wrapper cq-product-media" style="aspect-ratio: 4/3; width: 100%; height: 210px; background: #090b10; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                                                                         <!-- BADGE DA SITUAÇÃO NO TOPO ESQUERDO -->
-                                                                        <span class="s13-photo-tag" style="background: ${meta.color}; color: #ffffff; font-weight: 800; top: 10px; left: 10px; border-radius: 6px; box-shadow: 0 0 10px ${meta.color}88; font-size: 10.5px; padding: 3px 8px; cursor: pointer;" onclick="event.stopPropagation(); window.crmFilterCQ({ field: 'situacao', value: '${item.sitNorm || item.descAmostra}' })" title="Filtrar situação ${item.descAmostra}">
+                                                                        <span class="s13-photo-tag ${item.sitNorm === 'REPROVADO' ? 'cq-reprovado-pulse' : ''}" style="background: ${meta.color}; color: #ffffff; font-weight: 800; top: 10px; left: 10px; border-radius: 6px; box-shadow: 0 0 10px ${meta.color}88; font-size: 10.5px; padding: 3px 8px; cursor: pointer;" onclick="event.stopPropagation(); window.crmFilterCQ({ field: 'situacao', value: '${item.sitNorm || item.descAmostra}' })" title="Filtrar situação ${item.descAmostra}">
                                                                             <i class="fa-solid ${meta.icon}"></i> ${item.descAmostra}
                                                                         </span>
 
@@ -6942,7 +6977,7 @@
                                     const isCritico = item.diasCQ > 4;
 
                                     return `
-                                        <tr class="${isCritico ? 'row-danger' : ''}">
+                                        <tr class="${item.sitNorm === 'REPROVADO' ? 'row-danger cq-reprovado-row' : isCritico ? 'row-danger' : ''}">
                                             <td class="table-op-cell">
                                                 <span style="font-family: monospace; font-weight: 800; color: #38bdf8; font-size: 13.5px;">${item.of}</span>
                                             </td>
@@ -6961,7 +6996,7 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="badge" style="background: ${meta.bg || 'rgba(15,23,42,0.8)'}; border: 1px solid ${meta.color}; color: ${meta.color}; font-weight: 800; cursor: pointer;" onclick="window.crmFilterCQ({ field: 'situacao', value: '${item.sitNorm || item.descAmostra}' })" title="Filtrar situação ${item.descAmostra}">
+                                                <span class="badge ${item.sitNorm === 'REPROVADO' ? 'cq-reprovado-pulse' : ''}" style="background: ${meta.bg || 'rgba(15,23,42,0.8)'}; border: 1px solid ${meta.color}; color: ${meta.color}; font-weight: 800; cursor: pointer;" onclick="window.crmFilterCQ({ field: 'situacao', value: '${item.sitNorm || item.descAmostra}' })" title="Filtrar situação ${item.descAmostra}">
                                                     ${item.descAmostra}
                                                 </span>
                                             </td>
@@ -10871,6 +10906,9 @@
         if (ruleId === 'setor13-calendario') {
             return { key: 'modelagem', label: 'Modelagem' };
         }
+        if (ruleId === 'cq-amostra-reprovada') {
+            return { key: 'cq', label: 'Controle de Qualidade' };
+        }
 
         const fallbackLabel = String(alert?.title || 'Outros alertas').trim();
         const fallbackKey = `regra:${String(alert?.ruleId || fallbackLabel)
@@ -10912,6 +10950,9 @@
         }
         if (ruleId === 'malotes-parte-principal') {
             return 'CRM · setores da parte principal e do malote';
+        }
+        if (ruleId === 'cq-amostra-reprovada') {
+            return 'Andamento do CQ · coluna DESC_AMOSTRA + data de reprovação em OBSERVACAO';
         }
         return 'Dados oficiais do CRM';
     }

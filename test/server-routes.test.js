@@ -64,7 +64,7 @@ test('enforces method and admin authorization on write routes', async () => {
     assert.equal((await request({ method: 'POST', route: '/api/upload', body: 'csv' })).status, 401);
 });
 
-test('serves only the three code-owned alert rules', async () => {
+test('serves only the four code-owned alert rules', async () => {
     const rule = {
         id: 'route-test',
         name: 'Regra HTTP',
@@ -90,7 +90,8 @@ test('serves only the three code-owned alert rules', async () => {
     assert.deepEqual(JSON.parse(loaded.body).data.map(item => item.id), [
         'setor13-calendario',
         'setor01-limite-dias',
-        'malotes-parte-principal'
+        'malotes-parte-principal',
+        'cq-amostra-reprovada'
     ]);
 });
 

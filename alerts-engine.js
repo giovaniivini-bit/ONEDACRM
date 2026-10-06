@@ -24,6 +24,8 @@
         { value: 'setor13CalendarLate', label: 'Setor 13 fora do calendário', type: 'boolean' },
         { value: 'setor01DaysLate', label: 'Setor 01 acima do limite de dias', type: 'boolean' },
         { value: 'maloteCrossAlert', label: 'Malote com parte principal em 20/26', type: 'boolean' },
+        { value: 'setorCQReprovado', label: 'Amostra reprovada no CQ', type: 'boolean' },
+        { value: 'diasReprovado', label: 'Dias com amostra reprovada', type: 'number' },
         { value: 'deadlineSetor13', label: 'Data limite do Setor 13', type: 'date' },
         { value: 'setor01LimitDays', label: 'Limite de dias do Setor 01', type: 'number' },
         { value: 'primarySector', label: 'Setor da parte principal', type: 'text' },
@@ -75,6 +77,17 @@
             match: 'all',
             conditions: [{ field: 'maloteCrossAlert', operator: 'equals', value: 'true' }],
             message: 'MALOTES, pedido {op}: parte principal no setor {primarySector}, malote no setor {maloteSetor}.',
+            system: true
+        },
+        {
+            id: 'cq-amostra-reprovada',
+            name: 'Amostra reprovada no CQ',
+            description: 'Identifica na coluna DESC_AMOSTRA as OFs com situação REPROVADO e calcula o tempo desde a reprovação.',
+            enabled: true,
+            severity: 'critical',
+            match: 'all',
+            conditions: [{ field: 'setorCQReprovado', operator: 'equals', value: 'true' }],
+            message: 'SETOR CQ, OF {op} está com SIT AMOSTRA REPROVADA, pertence à semana {semanaPedido}, está reprovado há {diasReprovado} dias.',
             system: true
         }
     ]);
@@ -214,6 +227,72 @@
         if (raw === '083') return '83';
         if (raw === '088') return '88';
         return raw;
+    }
+
+    function normalizeCQStatus(value) {
+        const normalized = String(value ?? '').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (normalized === 'REPROVADO') return 'REPROVADO';
+        if (normalized.includes('REENVIADO')) return 'REENVIADO CQ';
+        if (normalized === 'ENVIADO') return 'ENVIADO';
+        if (normalized.includes('EXPIRANDO')) return 'EXPIRANDO VIGÊNCIA';
+        if (normalized.includes('PRODUCAO') || normalized.includes('PRODUC')) return 'AMOSTRAS EM PRODUÇÃO';
+        return null;
+    }
+
+    function getRecordField(record, names, fallbackIndex) {
+        if (!record || typeof record !== 'object') return '';
+        const wanted = new Set(names.map(normalizeKey));
+        for (const [key, value] of Object.entries(record)) {
+            const text = String(value ?? '').trim();
+            if (wanted.has(normalizeKey(key)) && text) return text;
+        }
+        if (fallbackIndex === undefined) return '';
+        return String(Object.values(record)[fallbackIndex] ?? '').trim();
+    }
+
+    function getCQRejectionDate(observation) {
+        const text = String(observation ?? '');
+        const matches = text.matchAll(/reprovad[oa][^\r\n]*?(?:dia\s*:?[\s-]*|em\s*:?[\s-]*)?(\d{1,2}\/\d{1,2}\/\d{2,4})/gi);
+        const validDates = Array.from(matches, match => parseDate(match[1])).filter(Boolean);
+        if (!validDates.length) return null;
+        return validDates.reduce((latest, date) => date > latest ? date : latest);
+    }
+
+    function calculateElapsedDays(date, now = new Date()) {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+        const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 86400000));
+    }
+
+    function buildCQAlertRecords(records, options = {}) {
+        const now = options.now instanceof Date ? options.now : new Date();
+        return (Array.isArray(records) ? records : []).flatMap((record, index) => {
+            const descAmostra = getRecordField(record, ['DESC_AMOSTRA', 'SITUACAO', 'SITUAÇÃO', 'AMOSTRA'], 8);
+            if (normalizeCQStatus(descAmostra) !== 'REPROVADO') return [];
+            const op = getRecordField(record, ['NUMERO', 'OF', 'OP', 'PEDIDO'], 1) || `CQ-${index + 1}`;
+            const codigo = getRecordField(record, ['CODIGO', 'CÓDIGO', 'PRODUTO', 'REFERENCIA'], 4);
+            const semanaPedido = normalizeWeek(getRecordField(record, ['PERIODO', 'SEMANA', 'SEM'], 13))
+                || getRecordField(record, ['PERIODO', 'DESC_PERIODO', 'SEMANA'], 13);
+            const observation = getRecordField(record, ['OBSERVACAO', 'OBSERVAÇÃO', 'OBS'], 9);
+            const rejectionDate = getCQRejectionDate(observation);
+            const calculatedDays = calculateElapsedDays(rejectionDate, now);
+            const rawDays = parseNumber(getRecordField(record, ['DIAS', 'DIAS_CQ', 'TEMPO'], 21));
+            const diasReprovado = calculatedDays ?? (rawDays !== null && rawDays >= 0 ? rawDays : null);
+            return [{
+                op,
+                codigo,
+                descricao: getRecordField(record, ['PRODUTO_DESC', 'DESCRICAO', 'DESCRIÇÃO', 'ART_CLI'], 3),
+                setor: 'CQ',
+                semanaPedido,
+                statusCQ: 'REPROVADO',
+                setorCQReprovado: true,
+                diasReprovado: diasReprovado ?? '—',
+                diasParado: diasReprovado ?? '',
+                dataReprovacao: formatPtBrDate(rejectionDate),
+                alertEntityKey: `cq-reprovado:${op}:${codigo || index}`
+            }];
+        });
     }
 
     function buildOperationalAlertRecords(records, calendarRecords, options = {}) {
@@ -395,6 +474,10 @@
         DEFAULT_RULES,
         cloneDefaults,
         normalizeWeek,
+        normalizeCQStatus,
+        getCQRejectionDate,
+        calculateElapsedDays,
+        buildCQAlertRecords,
         parseIndustrialDate,
         buildCalendarIndex,
         buildOperationalAlertRecords,

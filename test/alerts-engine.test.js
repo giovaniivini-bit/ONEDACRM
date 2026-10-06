@@ -96,6 +96,45 @@ test('creates a malote alert only for main sectors 20 and 26', () => {
     assert.equal(alerts[0].record.maloteSetor, '83');
 });
 
+test('creates a critical CQ alert from DESC_AMOSTRA and calculates rejected days from observation', () => {
+    const cqRecords = engine.buildCQAlertRecords([{
+        NUMERO: '62034',
+        CODIGO: '01.18.07.0692',
+        DESC_AMOSTRA: 'Reprovado',
+        PERIODO: '2646',
+        DIAS: '-46301',
+        OBSERVACAO: 'Reprovado em 01/10/2026\nEnviado dia 24/09/2026'
+    }], { now: new Date(2026, 9, 6, 14) });
+
+    assert.equal(cqRecords.length, 1);
+    assert.equal(cqRecords[0].setorCQReprovado, true);
+    assert.equal(cqRecords[0].diasReprovado, 5);
+    assert.equal(cqRecords[0].semanaPedido, '2646');
+    const operational = engine.buildOperationalAlertRecords(cqRecords, [], { now: new Date(2026, 9, 6, 14) });
+    const alerts = engine.evaluateRecords(operational, engine.cloneDefaults(), { now: new Date(2026, 9, 6, 14) });
+    assert.equal(alerts.length, 1);
+    assert.equal(alerts[0].ruleId, 'cq-amostra-reprovada');
+    assert.equal(alerts[0].severity, 'critical');
+    assert.equal(alerts[0].message, 'SETOR CQ, OF 62034 está com SIT AMOSTRA REPROVADA, pertence à semana 2646, está reprovado há 5 dias.');
+});
+
+test('CQ alert requires exact rejected status and uses the latest valid rejection date', () => {
+    assert.equal(engine.normalizeCQStatus('Não reprovado'), null);
+    assert.equal(engine.normalizeCQStatus('Reprovado cancelado'), null);
+    assert.equal(engine.normalizeCQStatus('Reprovada'), null);
+    assert.equal(engine.buildCQAlertRecords([{ DESC_AMOSTRA: 'Não reprovado', NUMERO: '1' }]).length, 0);
+
+    const latest = engine.getCQRejectionDate([
+        'Reprovado dia: 01/09/26',
+        'Reprovado dia: 31/02/2026',
+        'Reprovado em 05/10/2026'
+    ].join('\n'));
+    assert.equal(latest.getFullYear(), 2026);
+    assert.equal(latest.getMonth(), 9);
+    assert.equal(latest.getDate(), 5);
+    assert.equal(engine.calculateElapsedDays(latest, new Date(2026, 9, 6, 14)), 1);
+});
+
 test('does not duplicate generic custom alerts when a record also matches the malote crossing', () => {
     const records = engine.buildOperationalAlertRecords([
         { op: '10', codigo: 'A', setor: '20', diasParado: 5 },
