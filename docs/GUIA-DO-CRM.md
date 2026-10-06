@@ -193,8 +193,11 @@ As seis regras operacionais são:
    pendência de aviamento.
 6. **PEND. PRODUTO — cor:** cruza registros da mesma OF. O alerta crítico aparece quando
    a OF está simultaneamente em `D01` e em um setor produtivo entre `02`, `03`, `04`,
-   `05G` ou `05`. A mensagem informa o setor produtivo, a semana e a urgência da
-   pendência de cor.
+   `05G` ou `05`. A mensagem informa o código completo do produto, o setor produtivo, a
+   semana e a previsão encontrada nas colunas `PRODUTO` e `PREVISÃO` do módulo COR.
+   Quando o produto possui várias cores, as datas distintas são apresentadas em ordem
+   cronológica; códigos com sufixos diferentes não compartilham previsões. Sem data
+   válida, o alerta informa `não informada`.
 
 Os setores produtivos das regras 5 e 6 são lidos dos dados sincronizados do CRM. Portanto,
 quando a planilha operacional passar a incluir `02`, `03`, `04`, `05G` e `CM1`, os novos

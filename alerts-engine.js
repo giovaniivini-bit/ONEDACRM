@@ -33,7 +33,8 @@
         { value: 'primarySector', label: 'Setor da parte principal', type: 'text' },
         { value: 'maloteSetor', label: 'Setor do malote', type: 'text' },
         { value: 'productionSector', label: 'Setor atual da produção', type: 'text' },
-        { value: 'pendencySector', label: 'Setor da pendência', type: 'text' }
+        { value: 'pendencySector', label: 'Setor da pendência', type: 'text' },
+        { value: 'colorForecast', label: 'Previsão da cor', type: 'text' }
     ]);
 
     const OPERATORS = Object.freeze([
@@ -113,7 +114,7 @@
             severity: 'critical',
             match: 'all',
             conditions: [{ field: 'productionCorAlert', operator: 'equals', value: 'true' }],
-            message: 'PEND COR na produção, OF {op} está no setor {productionSector}, pertence à semana {semanaPedido}; precisa resolver a cor com urgência.',
+            message: 'PEND COR na produção, Produto {codigo} está no setor {productionSector}, pertence à semana {semanaPedido}; previsão COR {colorForecast}.',
             system: true
         }
     ]);
@@ -291,6 +292,44 @@
         return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 86400000));
     }
 
+    function normalizeProductCode(value) {
+        return String(value ?? '')
+            .trim()
+            .toUpperCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^A-Z0-9]/g, '');
+    }
+
+    function buildColorForecastIndex(records) {
+        const forecastsByProduct = new Map();
+        (Array.isArray(records) ? records : []).forEach(record => {
+            const product = getRecordField(record, ['PRODUTO', 'PRODUTO / REF', 'PRODUTO_REF', 'REFERENCIA', 'CÓDIGO', 'CODIGO'], 2);
+            const forecast = getRecordField(record, ['PREVISÃO', 'PREVISAO', 'DATA PREVISÃO', 'DATA PREVISAO'], 10);
+            const productKey = normalizeProductCode(product);
+            const normalizedForecast = String(forecast ?? '').trim();
+            const hasStrictDateFormat = /^(?:\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{1,2}-\d{1,2})$/.test(normalizedForecast);
+            if (!hasStrictDateFormat) return;
+            const forecastDate = parseDate(normalizedForecast);
+            if (!productKey || !forecastDate) return;
+            if (!forecastsByProduct.has(productKey)) forecastsByProduct.set(productKey, new Set());
+            forecastsByProduct.get(productKey).add(formatPtBrDate(forecastDate));
+        });
+
+        const index = new Map();
+        forecastsByProduct.forEach((values, productKey) => {
+            index.set(productKey, Array.from(values).sort((left, right) => {
+                const leftDate = parseDate(left);
+                const rightDate = parseDate(right);
+                if (leftDate && rightDate) return leftDate - rightDate;
+                if (leftDate) return -1;
+                if (rightDate) return 1;
+                return left.localeCompare(right, 'pt-BR', { numeric: true });
+            }));
+        });
+        return index;
+    }
+
     function buildCQAlertRecords(records, options = {}) {
         const now = options.now instanceof Date ? options.now : new Date();
         return (Array.isArray(records) ? records : []).flatMap((record, index) => {
@@ -325,6 +364,7 @@
         const now = options.now instanceof Date ? options.now : new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const calendar = buildCalendarIndex(calendarRecords);
+        const colorForecasts = buildColorForecastIndex(options.colorRecords);
         const calendarLimits = Array.from(new Set(
             Object.values(calendar)
                 .map(entry => entry.sector01MaxDays)
@@ -387,13 +427,15 @@
                 pendingSector: 'X01',
                 productionSectors: new Set(['02', '03', '04', '05G', 'CM1']),
                 flag: 'productionAviamentoAlert',
-                entityPrefix: 'pend-produto-aviamento'
+                entityPrefix: 'pend-produto-aviamento',
+                matchByProduct: false
             },
             {
                 pendingSector: 'D01',
                 productionSectors: new Set(['02', '03', '04', '05G', '05']),
                 flag: 'productionCorAlert',
-                entityPrefix: 'pend-produto-cor'
+                entityPrefix: 'pend-produto-cor',
+                matchByProduct: true
             }
         ];
 
@@ -418,27 +460,96 @@
                 const productionRecords = productionByOrder.get(orderKey) || [];
                 if (!productionRecords.length) return;
 
-                const targetIndex = pendingIndexes[0];
-                const pendingRecord = resultRecords[targetIndex];
-                const productionSectors = Array.from(new Set(productionRecords.map(record => record.setor))).sort();
-                const productionWeeks = Array.from(new Set(
-                    productionRecords.map(record => normalizeWeek(record.semanaPedido)).filter(Boolean)
-                )).sort();
-                const representative = productionRecords[0];
+                if (!config.matchByProduct) {
+                    const targetIndex = pendingIndexes[0];
+                    const pendingRecord = resultRecords[targetIndex];
+                    const productionSectors = Array.from(new Set(productionRecords.map(record => record.setor))).sort();
+                    const productionWeeks = Array.from(new Set(
+                        productionRecords.map(record => normalizeWeek(record.semanaPedido)).filter(Boolean)
+                    )).sort();
+                    const representative = productionRecords[0];
+                    resultRecords[targetIndex] = {
+                        ...pendingRecord,
+                        op: String(representative.op || pendingRecord.op || '').trim(),
+                        codigo: representative.codigo || pendingRecord.codigo || '',
+                        descricao: representative.descricao || pendingRecord.descricao,
+                        cliente: representative.cliente || pendingRecord.cliente,
+                        setor: productionSectors.join('/'),
+                        productionSector: productionSectors.join('/'),
+                        pendencySector: config.pendingSector,
+                        semanaPedido: productionWeeks.join('/') || '—',
+                        colorForecast: '',
+                        [config.flag]: true,
+                        alertEntityKey: `${config.entityPrefix}:${orderKey}`
+                    };
+                    return;
+                }
 
-                resultRecords[targetIndex] = {
-                    ...pendingRecord,
-                    op: String(representative.op || pendingRecord.op || '').trim(),
-                    codigo: representative.codigo || pendingRecord.codigo,
-                    descricao: representative.descricao || pendingRecord.descricao,
-                    cliente: representative.cliente || pendingRecord.cliente,
-                    setor: productionSectors.join('/'),
-                    productionSector: productionSectors.join('/'),
-                    pendencySector: config.pendingSector,
-                    semanaPedido: productionWeeks.join('/') || '—',
-                    [config.flag]: true,
-                    alertEntityKey: `${config.entityPrefix}:${orderKey}`
-                };
+                const productionByProduct = new Map();
+                const productionWithoutCode = [];
+                productionRecords.forEach(record => {
+                    const productKey = normalizeProductCode(record.codigo);
+                    if (!productKey) {
+                        productionWithoutCode.push(record);
+                        return;
+                    }
+                    if (!productionByProduct.has(productKey)) productionByProduct.set(productKey, []);
+                    productionByProduct.get(productKey).push(record);
+                });
+                const pendingByProduct = new Map();
+                pendingIndexes.forEach(index => {
+                    const productKey = normalizeProductCode(enriched[index].codigo);
+                    if (!productKey) return;
+                    if (!pendingByProduct.has(productKey)) pendingByProduct.set(productKey, []);
+                    pendingByProduct.get(productKey).push(index);
+                });
+
+                // Fallback simétrico e inequívoco: se a produção não informou código,
+                // mas D01 possui exatamente um produto completo, usamos esse código.
+                if (productionByProduct.size === 0 && productionWithoutCode.length && pendingByProduct.size === 1) {
+                    const [onlyPendingProductKey] = pendingByProduct.keys();
+                    productionByProduct.set(onlyPendingProductKey, productionWithoutCode);
+                }
+
+                productionByProduct.forEach((productRecords, productKey) => {
+                    let matchingPendingIndexes = pendingByProduct.get(productKey) || [];
+                    // Compatibilidade com fontes antigas: quando a OF possui um único
+                    // produto, uma linha pendente sem código ainda pode ser cruzada com
+                    // segurança. Com vários produtos, não fazemos associação por palpite.
+                    const onlyPendingHasNoCode = pendingIndexes.length === 1
+                        && !normalizeProductCode(enriched[pendingIndexes[0]].codigo);
+                    if (!matchingPendingIndexes.length && productionByProduct.size === 1 && onlyPendingHasNoCode) {
+                        matchingPendingIndexes = pendingIndexes;
+                    }
+                    if (!matchingPendingIndexes.length) return;
+
+                    const targetIndex = matchingPendingIndexes[0];
+                    const pendingRecord = resultRecords[targetIndex];
+                    const productionSectors = Array.from(new Set(productRecords.map(record => record.setor))).sort();
+                    const productionWeeks = Array.from(new Set(
+                        productRecords.map(record => normalizeWeek(record.semanaPedido)).filter(Boolean)
+                    )).sort();
+                    const representative = productRecords[0];
+                    const productCode = representative.codigo || pendingRecord.codigo || '';
+                    const colorForecast = config.flag === 'productionCorAlert'
+                        ? (colorForecasts.get(productKey) || []).join(' / ') || 'não informada'
+                        : '';
+
+                    resultRecords[targetIndex] = {
+                        ...pendingRecord,
+                        op: String(representative.op || pendingRecord.op || '').trim(),
+                        codigo: productCode,
+                        descricao: representative.descricao || pendingRecord.descricao,
+                        cliente: representative.cliente || pendingRecord.cliente,
+                        setor: productionSectors.join('/'),
+                        productionSector: productionSectors.join('/'),
+                        pendencySector: config.pendingSector,
+                        semanaPedido: productionWeeks.join('/') || '—',
+                        colorForecast,
+                        [config.flag]: true,
+                        alertEntityKey: `${config.entityPrefix}:${orderKey}:${productKey}`
+                    };
+                });
             });
         });
 
@@ -572,6 +683,8 @@
         normalizeCQStatus,
         getCQRejectionDate,
         calculateElapsedDays,
+        normalizeProductCode,
+        buildColorForecastIndex,
         buildCQAlertRecords,
         parseIndustrialDate,
         buildCalendarIndex,

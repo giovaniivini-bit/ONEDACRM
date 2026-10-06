@@ -101,8 +101,8 @@ test('creates PEND. PRODUTO alerts only when the same OF has production and X01 
         { op: '70001', codigo: 'AVI', setor: '05g', semanaPedido: '11 - SEM 46 - 2026' },
         { op: '70001', codigo: 'AVI', setor: 'X01', semanaPedido: '2645', alertEntityKey: 'linha-x01-a' },
         { op: '70001', codigo: 'AVI-ALT', setor: 'x01', semanaPedido: '2644', alertEntityKey: 'linha-x01-b' },
-        { op: '70002', codigo: 'COR', setor: '05', semanaPedido: '2647' },
-        { op: '70002', codigo: 'COR', setor: 'D01', semanaPedido: '' },
+        { op: '70002', codigo: '13.16.00.0676A', setor: '05', semanaPedido: '2647' },
+        { op: '70002', codigo: '13.16.00.0676A', setor: 'D01', semanaPedido: '' },
         { op: '70003', codigo: 'CM1-AVI', setor: 'CM1', semanaPedido: '2648' },
         { op: '70003', codigo: 'CM1-AVI', setor: 'X01', semanaPedido: '2648' },
         { op: '70004', codigo: 'SEM-PROD', setor: 'X01', semanaPedido: '2648' },
@@ -116,7 +116,13 @@ test('creates PEND. PRODUTO alerts only when the same OF has production and X01 
         { op: '70008', codigo: 'SETOR-03', setor: 'D01', semanaPedido: '' },
         { op: '70009', codigo: 'SETOR-04', setor: '04', semanaPedido: '2651' },
         { op: '70009', codigo: 'SETOR-04', setor: 'X01', semanaPedido: '' }
-    ], []);
+    ], [], { colorRecords: [
+        { PRODUTO: '13.16.00.0676A', PREVISÃO: '14/10/2026', COR: 'PURPLE POTION' },
+        { PRODUTO: '13.16.00.0676A', PREVISÃO: '24/09/2026', COR: 'LIZARD' },
+        { PRODUTO: '13.16.00.0676A', PREVISÃO: '14/10/2026', COR: 'BLACK BEAUTY' },
+        { PRODUTO: '13.16.00.0676', PREVISÃO: '01/01/2027', COR: 'OUTRA REFERÊNCIA' },
+        { PRODUTO: 'SETOR-03', PREVISÃO: '-', COR: 'SEM PREVISÃO' }
+    ] });
     const pendRules = engine.cloneDefaults().filter(rule => rule.id.startsWith('pend-produto-'));
     const alerts = engine.evaluateRecords(records, pendRules);
 
@@ -135,13 +141,97 @@ test('creates PEND. PRODUTO alerts only when the same OF has production and X01 
     assert.equal(aviamento.record.semanaPedido, '2646');
     assert.equal(aviamento.message, 'PEND AVIAMENTO na produção, OF 70001 está no setor 05G, pertence à semana 2646; precisa resolver o aviamento com urgência.');
     const cor = alerts.find(alert => alert.op === '70002');
-    assert.equal(cor.message, 'PEND COR na produção, OF 70002 está no setor 05, pertence à semana 2647; precisa resolver a cor com urgência.');
+    assert.equal(cor.record.colorForecast, '24/09/2026 / 14/10/2026');
+    assert.equal(cor.message, 'PEND COR na produção, Produto 13.16.00.0676A está no setor 05, pertence à semana 2647; previsão COR 24/09/2026 / 14/10/2026.');
     assert.equal(alerts.some(alert => ['70004', '70005', '70006'].includes(alert.op)), false);
     assert.equal(alerts.filter(alert => alert.op === '70001').length, 1);
     assert.equal(alerts.find(alert => alert.op === '70007').record.productionSector, '02');
     assert.equal(alerts.find(alert => alert.op === '70007').record.semanaPedido, '2649');
     assert.equal(alerts.find(alert => alert.op === '70008').record.productionSector, '03');
+    assert.equal(alerts.find(alert => alert.op === '70008').record.colorForecast, 'não informada');
     assert.equal(alerts.find(alert => alert.op === '70009').record.productionSector, '04');
+});
+
+test('color forecast index matches the complete product code and ignores invalid placeholders', () => {
+    const index = engine.buildColorForecastIndex([
+        { 'PRODUTO / REF': '21.19.00.0007', PREVISÃO: '10/10/2026' },
+        { 'PRODUTO / REF': '21.19.00.0007A', PREVISÃO: '11/10/2026' },
+        { 'PRODUTO / REF': '21.19.00.0007A', PREVISÃO: '#VALUE!' },
+        { 'PRODUTO / REF': '21.19.00.0007A', PREVISÃO: '—' },
+        { 'PRODUTO / REF': '21.19.00.0007A', PREVISÃO: 'APÓS APROVAÇÃO' },
+        { 'PRODUTO / REF': '21.19.00.0007A', PREVISÃO: '31/02/2026' },
+        { 'PRODUTO / REF': '21.19.00.0007A', PREVISÃO: '0' },
+        { 'PRODUTO / REF': '21.19.00.0007A', PREVISÃO: '1' },
+        { 'PRODUTO / REF': '21.19.00.0007A', PREVISÃO: '12' }
+    ]);
+
+    assert.deepEqual(index.get(engine.normalizeProductCode('21.19.00.0007')), ['10/10/2026']);
+    assert.deepEqual(index.get(engine.normalizeProductCode('21.19.00.0007A')), ['11/10/2026']);
+});
+
+test('PEND. PRODUTO — Cor keeps separate forecasts for multiple products in the same OF', () => {
+    const records = engine.buildOperationalAlertRecords([
+        { op: '72000', codigo: 'PROD.A', setor: '02', semanaPedido: '2646' },
+        { op: '72000', codigo: 'PROD.B', setor: '03', semanaPedido: '2647' },
+        { op: '72000', codigo: 'PROD.A', setor: 'D01', semanaPedido: '' },
+        { op: '72000', codigo: 'PROD.B', setor: 'D01', semanaPedido: '' }
+    ], [], { colorRecords: [
+        { PRODUTO: 'PROD.A', PREVISÃO: '01/11/2026' },
+        { PRODUTO: 'PROD.B', PREVISÃO: '02/11/2026' }
+    ] });
+    const rule = engine.cloneDefaults().find(item => item.id === 'pend-produto-cor');
+    const alerts = engine.evaluateRecords(records, [rule]);
+
+    assert.equal(alerts.length, 2);
+    assert.deepEqual(alerts.map(alert => alert.codigo).sort(), ['PROD.A', 'PROD.B']);
+    assert.match(alerts.find(alert => alert.codigo === 'PROD.A').message, /semana 2646; previsão COR 01\/11\/2026/);
+    assert.match(alerts.find(alert => alert.codigo === 'PROD.B').message, /semana 2647; previsão COR 02\/11\/2026/);
+});
+
+test('PEND. PRODUTO — Aviamento remains one consolidated alert per OF', () => {
+    const records = engine.buildOperationalAlertRecords([
+        { op: '73000', codigo: 'PROD.A', setor: '02', semanaPedido: '2646' },
+        { op: '73000', codigo: 'PROD.B', setor: '03', semanaPedido: '2647' },
+        { op: '73000', codigo: 'PROD.A', setor: 'X01', semanaPedido: '' },
+        { op: '73000', codigo: 'PROD.B', setor: 'X01', semanaPedido: '' }
+    ], []);
+    const rule = engine.cloneDefaults().find(item => item.id === 'pend-produto-aviamento');
+    const alerts = engine.evaluateRecords(records, [rule]);
+
+    assert.equal(alerts.length, 1);
+    assert.equal(alerts[0].record.productionSector, '02/03');
+    assert.equal(alerts[0].record.semanaPedido, '2646/2647');
+});
+
+test('PEND. PRODUTO — Cor never guesses across explicit mismatched product codes', () => {
+    const records = engine.buildOperationalAlertRecords([
+        { op: '74000', codigo: 'PROD.A', setor: '02', semanaPedido: '2646' },
+        { op: '74000', codigo: 'PROD.B', setor: 'D01', semanaPedido: '2646' }
+    ], [], { colorRecords: [{ PRODUTO: 'PROD.A', PREVISÃO: '01/11/2026' }] });
+    const rule = engine.cloneDefaults().find(item => item.id === 'pend-produto-cor');
+    assert.equal(engine.evaluateRecords(records, [rule]).length, 0);
+});
+
+test('PEND. PRODUTO — Cor uses the sole D01 product when production code is absent', () => {
+    const records = engine.buildOperationalAlertRecords([
+        { op: '75000', codigo: '', setor: '02', semanaPedido: '2646' },
+        { op: '75000', codigo: 'PROD.C', setor: 'D01', semanaPedido: '2646' }
+    ], [], { colorRecords: [{ PRODUTO: 'PROD.C', PREVISÃO: '03/11/2026' }] });
+    const rule = engine.cloneDefaults().find(item => item.id === 'pend-produto-cor');
+    const alerts = engine.evaluateRecords(records, [rule]);
+
+    assert.equal(alerts.length, 1);
+    assert.equal(alerts[0].codigo, 'PROD.C');
+    assert.match(alerts[0].message, /Produto PROD\.C.*previsão COR 03\/11\/2026/);
+});
+
+test('color forecast positional fallback reads the real PREVISÃO column index', () => {
+    const row = {
+        A: 'MULTICOLOR', B: 'ANA', C: 'PROD.X', D: 'COLEÇÃO', E: 'DESENVOLVIMENTO',
+        F: '19-0000', G: 'COR', H: 'BASE', I: 'SOLICITAÇÃO', J: '01/10/2026', K: '15/10/2026'
+    };
+    const index = engine.buildColorForecastIndex([row]);
+    assert.deepEqual(index.get(engine.normalizeProductCode('PROD.X')), ['15/10/2026']);
 });
 
 test('PEND. PRODUTO exposes all production sectors and weeks when the same OF is divergent', () => {

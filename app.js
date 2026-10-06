@@ -1012,10 +1012,12 @@
             }
             const descSetor = getField(r, ['Desc Setor', 'Descrio Setor', 'Descrição Setor', 'Descricao Setor']);
 
-            // Chave de Consolidação por OF / Setor:
+            // Chave de Consolidação por OF / Setor / Produto:
             // Regra do Usuário: Quando tiver vários registros na planilha (partes, tamanhos 1, 2, 3, 4, 5, etc.),
-            // somar a quantidade e considerar como 1 única OF (quando pendente no mesmo setor).
-            const productKey = `${op}__${setor || 'SEM_SETOR'}`;
+            // somar a quantidade apenas quando pertencem ao mesmo produto. Códigos completos
+            // distintos na mesma OF/setor precisam permanecer separados para imagens e alertas.
+            const normalizedProductKey = String(codigo || 'SEM_CODIGO').trim().toUpperCase();
+            const productKey = `${op}__${setor || 'SEM_SETOR'}__${normalizedProductKey}`;
 
             if (!groups.has(productKey)) {
                 // 2. STATUS DE MODELAGEM (Coluna: Descrição do Local) - Informação mais completa (se estiver em branco sinalizar!)
@@ -1255,7 +1257,10 @@
         const operationalRecords = window.CRMAlertsEngine.buildOperationalAlertRecords(
             [...records, ...cqAlertRecords],
             state.calendarExternalData?.records || [],
-            { now: new Date() }
+            {
+                now: new Date(),
+                colorRecords: state.coresExternalData?.records || []
+            }
         );
         state.activeAlerts = window.CRMAlertsEngine.evaluateRecords(operationalRecords, state.alertRules);
         return state.activeAlerts;
@@ -10961,7 +10966,7 @@
             return 'CRM · mesma OF nos setores 02/03/04/05G/CM1 e X01';
         }
         if (ruleId === 'pend-produto-cor') {
-            return 'CRM · mesma OF nos setores 02/03/04/05G/05 e D01';
+            return 'CRM · mesma OF nos setores 02/03/04/05G/05 e D01 + módulo COR · colunas PRODUTO e PREVISÃO';
         }
         return 'Dados oficiais do CRM';
     }

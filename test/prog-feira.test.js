@@ -61,8 +61,8 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
     assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
-    assert.match(html, /style\.css\?v=20261006-pend-produto-1/);
-    assert.match(html, /app\.js\?v=20261006-pend-produto-1/);
+    assert.match(html, /style\.css\?v=20261006-cor-previsao-1/);
+    assert.match(html, /app\.js\?v=20261006-cor-previsao-1/);
 });
 
 test('groups products by the D36 sector order and parses delivery dates', () => {
