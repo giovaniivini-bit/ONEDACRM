@@ -38,6 +38,8 @@ test('filtro de tipo é dinâmico e o PDF respeita o conjunto filtrado', () => {
     assert.match(app, /ruleId === 'setor01-limite-dias'/);
     assert.match(app, /ruleId === 'malotes-parte-principal'/);
     assert.match(app, /ruleId === 'cq-amostra-reprovada'/);
+    assert.match(app, /ruleId === 'pend-produto-aviamento'/);
+    assert.match(app, /ruleId === 'pend-produto-cor'/);
     assert.doesNotMatch(app, /\['05', '06', '12', '13'\]\.includes\(setor\)/);
     assert.match(app, /new Map\(\)\)\.values\(\)/);
     assert.match(app, /getAlertCategory\(alert\)\.key !== state\.alertsCategory/);
@@ -66,9 +68,9 @@ test('filtro de tipo é dinâmico e o PDF respeita o conjunto filtrado', () => {
     assert.match(app, /alertas: 'print-alertas'/);
     assert.match(css, /body\.print-alertas \.alerts-panel\s*\{[\s\S]*?break-inside: auto !important/);
     assert.match(css, /body\.print-alertas \.alert-item\s*\{[\s\S]*?min-height: 26mm !important[\s\S]*?break-inside: avoid !important/);
-    assert.match(index, /style\.css\?v=20261006-cq-reprovado-1/);
+    assert.match(index, /style\.css\?v=20261006-pend-produto-1/);
     assert.match(index, /light-theme\.css\?v=20261006-exact-image-code-1/);
-    assert.match(index, /app\.js\?v=20261006-cq-reprovado-1/);
+    assert.match(index, /app\.js\?v=20261006-pend-produto-1/);
 });
 
 test('andamento CQ inclui REPROVADO como situação crítica vermelha e piscante', () => {
@@ -84,5 +86,5 @@ test('andamento CQ inclui REPROVADO como situação crítica vermelha e piscante
     assert.match(app, /buildCQAlertRecords/);
     assert.match(css, /@keyframes cqRejectedPulse/);
     assert.match(css, /\.cq-reprovado-pulse/);
-    assert.match(index, /alerts-engine\.js\?v=20261006-cq-reprovado-1/);
+    assert.match(index, /alerts-engine\.js\?v=20261006-pend-produto-1/);
 });

@@ -96,6 +96,69 @@ test('creates a malote alert only for main sectors 20 and 26', () => {
     assert.equal(alerts[0].record.maloteSetor, '83');
 });
 
+test('creates PEND. PRODUTO alerts only when the same OF has production and X01 or D01', () => {
+    const records = engine.buildOperationalAlertRecords([
+        { op: '70001', codigo: 'AVI', setor: '05g', semanaPedido: '11 - SEM 46 - 2026' },
+        { op: '70001', codigo: 'AVI', setor: 'X01', semanaPedido: '2645', alertEntityKey: 'linha-x01-a' },
+        { op: '70001', codigo: 'AVI-ALT', setor: 'x01', semanaPedido: '2644', alertEntityKey: 'linha-x01-b' },
+        { op: '70002', codigo: 'COR', setor: '05', semanaPedido: '2647' },
+        { op: '70002', codigo: 'COR', setor: 'D01', semanaPedido: '' },
+        { op: '70003', codigo: 'CM1-AVI', setor: 'CM1', semanaPedido: '2648' },
+        { op: '70003', codigo: 'CM1-AVI', setor: 'X01', semanaPedido: '2648' },
+        { op: '70004', codigo: 'SEM-PROD', setor: 'X01', semanaPedido: '2648' },
+        { op: '70005', codigo: 'CM1-COR', setor: 'CM1', semanaPedido: '2648' },
+        { op: '70005', codigo: 'CM1-COR', setor: 'D01', semanaPedido: '2648' },
+        { op: '70006', codigo: '05-AVI', setor: '05', semanaPedido: '2648' },
+        { op: '70006', codigo: '05-AVI', setor: 'X01', semanaPedido: '2648' },
+        { op: ' 70007 ', codigo: 'SETOR-02', setor: '2', semanaPedido: '2649' },
+        { op: '70007', codigo: 'SETOR-02', setor: 'X01', semanaPedido: '2601' },
+        { op: '70008', codigo: 'SETOR-03', setor: '03', semanaPedido: '2650' },
+        { op: '70008', codigo: 'SETOR-03', setor: 'D01', semanaPedido: '' },
+        { op: '70009', codigo: 'SETOR-04', setor: '04', semanaPedido: '2651' },
+        { op: '70009', codigo: 'SETOR-04', setor: 'X01', semanaPedido: '' }
+    ], []);
+    const pendRules = engine.cloneDefaults().filter(rule => rule.id.startsWith('pend-produto-'));
+    const alerts = engine.evaluateRecords(records, pendRules);
+
+    assert.equal(alerts.length, 6);
+    assert.deepEqual(alerts.map(alert => alert.ruleId).sort(), [
+        'pend-produto-aviamento',
+        'pend-produto-aviamento',
+        'pend-produto-aviamento',
+        'pend-produto-aviamento',
+        'pend-produto-cor',
+        'pend-produto-cor'
+    ]);
+    const aviamento = alerts.find(alert => alert.op === '70001');
+    assert.equal(aviamento.record.productionSector, '05G');
+    assert.equal(aviamento.record.pendencySector, 'X01');
+    assert.equal(aviamento.record.semanaPedido, '2646');
+    assert.equal(aviamento.message, 'PEND AVIAMENTO na produção, OF 70001 está no setor 05G, pertence à semana 2646; precisa resolver o aviamento com urgência.');
+    const cor = alerts.find(alert => alert.op === '70002');
+    assert.equal(cor.message, 'PEND COR na produção, OF 70002 está no setor 05, pertence à semana 2647; precisa resolver a cor com urgência.');
+    assert.equal(alerts.some(alert => ['70004', '70005', '70006'].includes(alert.op)), false);
+    assert.equal(alerts.filter(alert => alert.op === '70001').length, 1);
+    assert.equal(alerts.find(alert => alert.op === '70007').record.productionSector, '02');
+    assert.equal(alerts.find(alert => alert.op === '70007').record.semanaPedido, '2649');
+    assert.equal(alerts.find(alert => alert.op === '70008').record.productionSector, '03');
+    assert.equal(alerts.find(alert => alert.op === '70009').record.productionSector, '04');
+});
+
+test('PEND. PRODUTO exposes all production sectors and weeks when the same OF is divergent', () => {
+    const records = engine.buildOperationalAlertRecords([
+        { op: '71000', codigo: 'A', setor: '02', semanaPedido: '2646' },
+        { op: '71000', codigo: 'A', setor: '05G', semanaPedido: '2647' },
+        { op: '71000', codigo: 'A', setor: 'X01', semanaPedido: '2601' }
+    ], []);
+    const rule = engine.cloneDefaults().find(item => item.id === 'pend-produto-aviamento');
+    const alerts = engine.evaluateRecords(records, [rule]);
+
+    assert.equal(alerts.length, 1);
+    assert.equal(alerts[0].record.productionSector, '02/05G');
+    assert.equal(alerts[0].record.semanaPedido, '2646/2647');
+    assert.match(alerts[0].message, /setor 02\/05G, pertence à semana 2646\/2647/);
+});
+
 test('creates a critical CQ alert from DESC_AMOSTRA and calculates rejected days from observation', () => {
     const cqRecords = engine.buildCQAlertRecords([{
         NUMERO: '62034',

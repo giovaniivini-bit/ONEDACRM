@@ -10909,6 +10909,9 @@
         if (ruleId === 'cq-amostra-reprovada') {
             return { key: 'cq', label: 'Controle de Qualidade' };
         }
+        if (ruleId === 'pend-produto-aviamento' || ruleId === 'pend-produto-cor') {
+            return { key: 'pend-produto', label: 'Pend. Produto' };
+        }
 
         const fallbackLabel = String(alert?.title || 'Outros alertas').trim();
         const fallbackKey = `regra:${String(alert?.ruleId || fallbackLabel)
@@ -10953,6 +10956,12 @@
         }
         if (ruleId === 'cq-amostra-reprovada') {
             return 'Andamento do CQ · coluna DESC_AMOSTRA + data de reprovação em OBSERVACAO';
+        }
+        if (ruleId === 'pend-produto-aviamento') {
+            return 'CRM · mesma OF nos setores 02/03/04/05G/CM1 e X01';
+        }
+        if (ruleId === 'pend-produto-cor') {
+            return 'CRM · mesma OF nos setores 02/03/04/05G/05 e D01';
         }
         return 'Dados oficiais do CRM';
     }

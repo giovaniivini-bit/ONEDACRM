@@ -25,11 +25,15 @@
         { value: 'setor01DaysLate', label: 'Setor 01 acima do limite de dias', type: 'boolean' },
         { value: 'maloteCrossAlert', label: 'Malote com parte principal em 20/26', type: 'boolean' },
         { value: 'setorCQReprovado', label: 'Amostra reprovada no CQ', type: 'boolean' },
+        { value: 'productionAviamentoAlert', label: 'Produção com pendência de aviamento', type: 'boolean' },
+        { value: 'productionCorAlert', label: 'Produção com pendência de cor', type: 'boolean' },
         { value: 'diasReprovado', label: 'Dias com amostra reprovada', type: 'number' },
         { value: 'deadlineSetor13', label: 'Data limite do Setor 13', type: 'date' },
         { value: 'setor01LimitDays', label: 'Limite de dias do Setor 01', type: 'number' },
         { value: 'primarySector', label: 'Setor da parte principal', type: 'text' },
-        { value: 'maloteSetor', label: 'Setor do malote', type: 'text' }
+        { value: 'maloteSetor', label: 'Setor do malote', type: 'text' },
+        { value: 'productionSector', label: 'Setor atual da produção', type: 'text' },
+        { value: 'pendencySector', label: 'Setor da pendência', type: 'text' }
     ]);
 
     const OPERATORS = Object.freeze([
@@ -88,6 +92,28 @@
             match: 'all',
             conditions: [{ field: 'setorCQReprovado', operator: 'equals', value: 'true' }],
             message: 'SETOR CQ, OF {op} está com SIT AMOSTRA REPROVADA, pertence à semana {semanaPedido}, está reprovado há {diasReprovado} dias.',
+            system: true
+        },
+        {
+            id: 'pend-produto-aviamento',
+            name: 'PEND. PRODUTO — Aviamento',
+            description: 'Cruza OFs na produção (02, 03, 04, 05G ou CM1) com pendência simultânea no setor X01.',
+            enabled: true,
+            severity: 'critical',
+            match: 'all',
+            conditions: [{ field: 'productionAviamentoAlert', operator: 'equals', value: 'true' }],
+            message: 'PEND AVIAMENTO na produção, OF {op} está no setor {productionSector}, pertence à semana {semanaPedido}; precisa resolver o aviamento com urgência.',
+            system: true
+        },
+        {
+            id: 'pend-produto-cor',
+            name: 'PEND. PRODUTO — Cor',
+            description: 'Cruza OFs na produção (02, 03, 04, 05G ou 05) com pendência simultânea no setor D01.',
+            enabled: true,
+            severity: 'critical',
+            match: 'all',
+            conditions: [{ field: 'productionCorAlert', operator: 'equals', value: 'true' }],
+            message: 'PEND COR na produção, OF {op} está no setor {productionSector}, pertence à semana {semanaPedido}; precisa resolver a cor com urgência.',
             system: true
         }
     ]);
@@ -222,7 +248,7 @@
     }
 
     function normalizeSector(value) {
-        const raw = String(value ?? '').trim();
+        const raw = String(value ?? '').trim().toUpperCase();
         if (/^\d$/.test(raw)) return `0${raw}`;
         if (raw === '083') return '83';
         if (raw === '088') return '88';
@@ -326,6 +352,8 @@
                 setor13CalendarLate: setor === '13' && Boolean(calendarEntry?.sector13Date && today > calendarEntry.sector13Date),
                 setor01DaysLate: setor === '01' && limit !== null && limit !== undefined && days !== null && days > limit,
                 maloteCrossAlert: false,
+                productionAviamentoAlert: false,
+                productionCorAlert: false,
                 alertEntityKey: record.alertEntityKey || `registro:${record.op || index}:${record.codigo || ''}:${setor}`
             };
         });
@@ -337,17 +365,84 @@
             mainSectorsByOp.get(record.op).add(record.setor);
         });
 
-        return enriched.map(record => {
-            if (!record.op || !['83', '88'].includes(record.setor)) return record;
-            const primarySectors = Array.from(mainSectorsByOp.get(record.op) || []).sort();
-            if (primarySectors.length === 0) return record;
-            return {
-                ...record,
-                primarySector: primarySectors.join('/'),
-                maloteSetor: record.setor,
-                maloteCrossAlert: true
-            };
+        const resultRecords = enriched.map(record => {
+            let result = record;
+            if (record.op && ['83', '88'].includes(record.setor)) {
+                const primarySectors = Array.from(mainSectorsByOp.get(record.op) || []).sort();
+                if (primarySectors.length > 0) {
+                    result = {
+                        ...result,
+                        primarySector: primarySectors.join('/'),
+                        maloteSetor: record.setor,
+                        maloteCrossAlert: true
+                    };
+                }
+            }
+            return result;
         });
+
+        const normalizeOrderKey = value => String(value ?? '').trim().toUpperCase();
+        const productionAlertConfigs = [
+            {
+                pendingSector: 'X01',
+                productionSectors: new Set(['02', '03', '04', '05G', 'CM1']),
+                flag: 'productionAviamentoAlert',
+                entityPrefix: 'pend-produto-aviamento'
+            },
+            {
+                pendingSector: 'D01',
+                productionSectors: new Set(['02', '03', '04', '05G', '05']),
+                flag: 'productionCorAlert',
+                entityPrefix: 'pend-produto-cor'
+            }
+        ];
+
+        productionAlertConfigs.forEach(config => {
+            const productionByOrder = new Map();
+            const pendingIndexesByOrder = new Map();
+
+            enriched.forEach((record, index) => {
+                const orderKey = normalizeOrderKey(record.op);
+                if (!orderKey) return;
+                if (config.productionSectors.has(record.setor)) {
+                    if (!productionByOrder.has(orderKey)) productionByOrder.set(orderKey, []);
+                    productionByOrder.get(orderKey).push(record);
+                }
+                if (record.setor === config.pendingSector) {
+                    if (!pendingIndexesByOrder.has(orderKey)) pendingIndexesByOrder.set(orderKey, []);
+                    pendingIndexesByOrder.get(orderKey).push(index);
+                }
+            });
+
+            pendingIndexesByOrder.forEach((pendingIndexes, orderKey) => {
+                const productionRecords = productionByOrder.get(orderKey) || [];
+                if (!productionRecords.length) return;
+
+                const targetIndex = pendingIndexes[0];
+                const pendingRecord = resultRecords[targetIndex];
+                const productionSectors = Array.from(new Set(productionRecords.map(record => record.setor))).sort();
+                const productionWeeks = Array.from(new Set(
+                    productionRecords.map(record => normalizeWeek(record.semanaPedido)).filter(Boolean)
+                )).sort();
+                const representative = productionRecords[0];
+
+                resultRecords[targetIndex] = {
+                    ...pendingRecord,
+                    op: String(representative.op || pendingRecord.op || '').trim(),
+                    codigo: representative.codigo || pendingRecord.codigo,
+                    descricao: representative.descricao || pendingRecord.descricao,
+                    cliente: representative.cliente || pendingRecord.cliente,
+                    setor: productionSectors.join('/'),
+                    productionSector: productionSectors.join('/'),
+                    pendencySector: config.pendingSector,
+                    semanaPedido: productionWeeks.join('/') || '—',
+                    [config.flag]: true,
+                    alertEntityKey: `${config.entityPrefix}:${orderKey}`
+                };
+            });
+        });
+
+        return resultRecords;
     }
 
     function compareCondition(record, condition, now = new Date()) {

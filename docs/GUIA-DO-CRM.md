@@ -38,7 +38,7 @@ O projeto não utiliza React, banco SQL ou API externa própria. É uma aplicaç
 | `image_map.json` | Liga códigos/aliases de produtos aos arquivos da pasta `images/`. |
 | `drive-image-cache.js` | Proxy e cache persistente das imagens obtidas no Google Drive. |
 | `server-security.js` | Limites de requisição, autorização administrativa e cabeçalhos de segurança. |
-| `alerts-engine.js` | Motor das quatro regras oficiais de alertas, versionadas e revisadas com o código. |
+| `alerts-engine.js` | Motor das seis regras oficiais de alertas, versionadas e revisadas com o código. |
 | `prog-feira.js` | Normalização e consolidação das linhas TIPO 1/2/3 da Programação Feira. |
 | `test/` | Testes automatizados do motor de alertas, segurança e cache de imagens. |
 
@@ -172,7 +172,7 @@ Essa é a única planilha de referência para os limites do módulo. O servidor 
 `Página1` (`gid=0`) e mantém um snapshot em `data/calendar_external.json`, usado somente
 quando o Google Sheets fica temporariamente indisponível.
 
-As quatro regras operacionais são:
+As seis regras operacionais são:
 
 1. **Setor 13:** a coluna A informa a semana e a coluna B, a data limite. Se a data atual
    for posterior ao limite e o pedido continuar no setor 13, o aviso informa OF, semana e
@@ -187,6 +187,19 @@ As quatro regras operacionais são:
    status atual é `REPROVADO`, gera alerta crítico com OF, semana (`PERIODO`) e dias desde
    a data mais recente de reprovação registrada em `OBSERVACAO`. O campo `DIAS` é usado
    somente como contingência quando não existe uma data válida na observação.
+5. **PEND. PRODUTO — aviamento:** cruza registros da mesma OF. O alerta crítico aparece
+   quando a OF está simultaneamente em `X01` e em um setor produtivo entre `02`, `03`,
+   `04`, `05G` ou `CM1`. A mensagem informa o setor produtivo, a semana e a urgência da
+   pendência de aviamento.
+6. **PEND. PRODUTO — cor:** cruza registros da mesma OF. O alerta crítico aparece quando
+   a OF está simultaneamente em `D01` e em um setor produtivo entre `02`, `03`, `04`,
+   `05G` ou `05`. A mensagem informa o setor produtivo, a semana e a urgência da
+   pendência de cor.
+
+Os setores produtivos das regras 5 e 6 são lidos dos dados sincronizados do CRM. Portanto,
+quando a planilha operacional passar a incluir `02`, `03`, `04`, `05G` e `CM1`, os novos
+cruzamentos entram em funcionamento automaticamente após **Sincronizar Sheets**, sem
+necessidade de editar a regra.
 
 Não há alerta padrão de imagem ausente, prazo genérico ou permanência no Setor 13 fora
 desse calendário. Se a planilha e o snapshot estiverem indisponíveis, os alertas dos
@@ -197,7 +210,7 @@ junto com o código. A tela não permite criar, editar, desativar ou excluir reg
 evita que uma configuração salva na VPS substitua silenciosamente o comportamento
 oficial. O cálculo ocorre no navegador e não altera a planilha nem os dados operacionais.
 
-Na própria tela, a aba **Regras vigentes** apresenta as quatro regras oficiais, suas
+Na própria tela, a aba **Regras vigentes** apresenta as seis regras oficiais, suas
 fontes, condições e modelos de mensagem em modo somente leitura. Dessa forma, qualquer
 pessoa pode consultar o comportamento atual sem abrir o código e sem risco de alterá-lo.
 
@@ -225,7 +238,7 @@ Validação manual obrigatória:
 3. Abrir uma foto no lightbox.
 4. Conferir a tela Imagens Ausentes.
 5. Sincronizar fotos e confirmar que os números são recalculados.
-6. Abrir Alertas, filtrar prioridades e confirmar as quatro regras oficiais.
+6. Abrir Alertas, filtrar prioridades e confirmar as seis regras oficiais.
 
 ## 8. Produção e publicação
 
