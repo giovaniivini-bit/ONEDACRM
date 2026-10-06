@@ -76,3 +76,17 @@ Feira sheet then found 38 current products and zero missing images. The
 **Sincronizar Fotos** button still cannot guarantee full discovery of future
 files until authenticated Drive API access is available; the repository image
 snapshot remains the reliable production source in the meantime.
+
+### Incremental public-index hardening
+
+The public-folder scan now combines the previous sort windows with three
+additional windows (`sort=3`, `sort=11` and `sort=19`). In the 2026-10-06
+diagnostic this expanded public discovery from roughly 50 visible filenames to
+162 and included the six reported Prog Feira files. Cloud IDs already discovered
+are retained between scans, including IDs previously attached as fallback to a
+mounted local image. This reduces sporadic disappearances without requiring the
+company PC to connect to the VPS.
+
+This remains a best-effort public HTML index rather than an official complete
+Drive listing. Authenticated Drive API access is still the future option for a
+strict 100% cloud inventory.

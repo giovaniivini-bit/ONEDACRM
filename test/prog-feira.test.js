@@ -50,6 +50,18 @@ test('renders the elapsed days on every Prog Feira card', () => {
     assert.match(lightCss, /color:\s*#b91c1c/);
 });
 
+test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () => {
+    const app = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+    const css = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
+
+    assert.match(app, /index \+= 8/);
+    assert.match(app, /prog-feira-sector prog-feira-print-page/);
+    assert.match(app, /'prog-feira': 'print-prog-feira'/);
+    assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+    assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
+    assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
+});
+
 test('groups products by the D36 sector order and parses delivery dates', () => {
     const products = buildProducts([
         { NUMERO: '2', CODIGO: 'B', OP: '02B', SETOR: 'CORTE AMOSTRAS', TIPO: '1', FICHA: '05/10' },

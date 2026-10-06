@@ -10079,6 +10079,34 @@
             `).join('');
         };
 
+        const renderProductCard = item => `
+            <article class="prog-feira-card" style="--ting-color:${item.tingInfo.color}">
+                ${item.isDes ? '<div class="prog-feira-des-ribbon"><i class="fa-solid fa-calculator"></i> DES • CUSTO PENDENTE</div>' : ''}
+                <div class="prog-feira-card-top"><span>${escapeHtml(item.codigo)}</span><span>OP ${escapeHtml(item.numero || '—')}</span></div>
+                <div class="prog-feira-media">${renderImage(item)}<div class="prog-feira-delivery"><small>ENTREGA</small><strong>${escapeHtml(item.delivery || '—')}</strong></div></div>
+                <div class="prog-feira-card-body">
+                    <div class="prog-feira-status-row"><span class="prog-feira-sector-badge">${escapeHtml(item.sector)} • ${escapeHtml(item.sectorLabel)}</span><span class="prog-feira-ting-badge" style="--ting-color:${item.tingInfo.color}">${escapeHtml(item.ting)} • ${escapeHtml(item.tingInfo.label)}</span></div>
+                    <div class="prog-feira-days ${item.daysInSector == null ? 'unknown' : item.daysInSector > 2 ? 'late' : ''}"><i class="fa-regular fa-clock"></i> ${item.daysInSector == null ? 'Data de entrada não informada' : `<strong>${formatNumber(item.daysInSector)}</strong> ${item.daysInSector === 1 ? 'dia' : 'dias'} no setor atual`}</div>
+                    ${item.program ? `<div class="prog-feira-program"><i class="fa-solid fa-layer-group"></i>${escapeHtml(item.program)}</div>` : ''}
+                    <dl><div><dt>Movimentação</dt><dd>${escapeHtml(item.movementDate || '—')}</dd></div><div><dt>Estampas</dt><dd>${escapeHtml(item.prints || '—')}</dd></div><div><dt>Observação</dt><dd>${escapeHtml(item.notes || '—')}</dd></div><div><dt>Quantidade pendente</dt><dd>${formatNumber(item.quantity)}</dd></div></dl>
+                    <details class="prog-feira-history"><summary><i class="fa-solid fa-timeline"></i> Histórico do fluxo</summary><div>${renderHistory(item)}</div></details>
+                </div>
+            </article>
+        `;
+
+        const renderSectorPages = group => {
+            const pages = [];
+            for (let index = 0; index < group.items.length; index += 8) {
+                pages.push(group.items.slice(index, index + 8));
+            }
+            return pages.map((items, pageIndex) => `
+                <section class="prog-feira-sector prog-feira-print-page" data-sector="${escapeHtml(group.sector)}">
+                    <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}${pageIndex ? ' • continuação' : ''}</span></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
+                    <div class="prog-feira-grid">${items.map(renderProductCard).join('')}</div>
+                </section>
+            `).join('');
+        };
+
         container.innerHTML = `
             <section class="prog-feira-view">
                 <div class="module-view-header prog-feira-header">
@@ -10120,27 +10148,7 @@
                     <span class="prog-feira-legend-des"><i></i> Tarja azul — custo pendente em DES</span>
                 </div>
 
-                ${groups.length ? groups.map(group => `
-                    <section class="prog-feira-sector">
-                        <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}</span></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
-                        <div class="prog-feira-grid">
-                            ${group.items.map(item => `
-                                <article class="prog-feira-card" style="--ting-color:${item.tingInfo.color}">
-                                    ${item.isDes ? '<div class="prog-feira-des-ribbon"><i class="fa-solid fa-calculator"></i> DES • CUSTO PENDENTE</div>' : ''}
-                                    <div class="prog-feira-card-top"><span>${escapeHtml(item.codigo)}</span><span>OP ${escapeHtml(item.numero || '—')}</span></div>
-                                    <div class="prog-feira-media">${renderImage(item)}<div class="prog-feira-delivery"><small>ENTREGA</small><strong>${escapeHtml(item.delivery || '—')}</strong></div></div>
-                                    <div class="prog-feira-card-body">
-                                        <div class="prog-feira-status-row"><span class="prog-feira-sector-badge">${escapeHtml(item.sector)} • ${escapeHtml(item.sectorLabel)}</span><span class="prog-feira-ting-badge" style="--ting-color:${item.tingInfo.color}">${escapeHtml(item.ting)} • ${escapeHtml(item.tingInfo.label)}</span></div>
-                                        <div class="prog-feira-days ${item.daysInSector == null ? 'unknown' : item.daysInSector > 2 ? 'late' : ''}"><i class="fa-regular fa-clock"></i> ${item.daysInSector == null ? 'Data de entrada não informada' : `<strong>${formatNumber(item.daysInSector)}</strong> ${item.daysInSector === 1 ? 'dia' : 'dias'} no setor atual`}</div>
-                                        ${item.program ? `<div class="prog-feira-program"><i class="fa-solid fa-layer-group"></i>${escapeHtml(item.program)}</div>` : ''}
-                                        <dl><div><dt>Movimentação</dt><dd>${escapeHtml(item.movementDate || '—')}</dd></div><div><dt>Estampas</dt><dd>${escapeHtml(item.prints || '—')}</dd></div><div><dt>Observação</dt><dd>${escapeHtml(item.notes || '—')}</dd></div><div><dt>Quantidade pendente</dt><dd>${formatNumber(item.quantity)}</dd></div></dl>
-                                        <details class="prog-feira-history"><summary><i class="fa-solid fa-timeline"></i> Histórico do fluxo</summary><div>${renderHistory(item)}</div></details>
-                                    </div>
-                                </article>
-                            `).join('')}
-                        </div>
-                    </section>
-                `).join('') : `
+                ${groups.length ? groups.map(renderSectorPages).join('') : `
                     <div class="empty-state"><i class="fa-solid fa-filter-circle-xmark"></i><h3>Nenhuma referência encontrada</h3><p>${allProducts.length ? 'Ajuste ou limpe os filtros aplicados.' : 'A planilha ainda não forneceu produtos válidos. Clique em Atualizar.'}</p></div>
                 `}
             </section>
@@ -12776,6 +12784,7 @@
             'print-estampa',
             'print-malotes',
             'print-alertas',
+            'print-prog-feira',
             'print-gallery-report'
         ];
         document.body.classList.remove(...printModeClasses);
@@ -12786,6 +12795,7 @@
             estampa: 'print-estampa',
             malotes: 'print-malotes'
             ,alertas: 'print-alertas'
+            ,'prog-feira': 'print-prog-feira'
         }[state.activeSubmodule];
         if (activePrintClass) {
             document.body.classList.add(activePrintClass, 'print-gallery-report');

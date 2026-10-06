@@ -56,6 +56,16 @@ const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
 
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
 const GOOGLE_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
+const DRIVE_FOLDER_SORT_PARAMS = [
+    '',
+    '?sort=13&direction=d',
+    '?sort=13&direction=a',
+    '?sort=7&direction=d',
+    '?sort=7&direction=a',
+    '?sort=3&direction=a',
+    '?sort=11&direction=a',
+    '?sort=19&direction=a'
+];
 
 function sendJson(res, statusCode, payload, extraHeaders = {}) {
     res.writeHead(statusCode, {
@@ -464,6 +474,43 @@ async function scanLocalImageFolders() {
     return localCount;
 }
 
+function seedCachedCloudImages(allFiles, cachedIndex) {
+    (cachedIndex?.list || []).forEach(entry => {
+        const filename = path.basename(String(entry?.filename || ''));
+        if (!filename || !entry?.id) return;
+        const upper = filename.toUpperCase();
+        if (allFiles.has(upper)) return;
+        const syncVersion = entry.version || driveImagesCache?.version || Date.now();
+        allFiles.set(upper, {
+            ...entry,
+            filename,
+            isLocal: false,
+            isBundledStatic: false,
+            thumbUrl: `/api/proxy-image?id=${encodeURIComponent(entry.id)}&sz=w600&v=${syncVersion}`,
+            proxyUrl: `/api/proxy-image?id=${encodeURIComponent(entry.id)}&sz=w600&v=${syncVersion}`,
+            largeUrl: `/api/proxy-image?id=${encodeURIComponent(entry.id)}&sz=w1200&v=${syncVersion}`,
+            driveUrl: `https://drive.google.com/file/d/${entry.id}/view`
+        });
+    });
+    return allFiles;
+}
+
+function mergeCloudImageEntry(allFiles, cloudEntry) {
+    const upper = String(cloudEntry?.filename || '').toUpperCase();
+    if (!upper) return allFiles;
+    const existing = allFiles.get(upper);
+    if (!existing || existing.isBundledStatic || existing.isLocal === false) {
+        allFiles.set(upper, cloudEntry);
+        return allFiles;
+    }
+
+    // Uma pasta operacional realmente montada na máquina continua sendo a
+    // fonte principal; o ID do Drive fica disponível apenas como fallback.
+    if (!existing.id) existing.id = cloudEntry.id;
+    existing.driveUrl = cloudEntry.driveUrl;
+    return allFiles;
+}
+
 // Download/index images from Google Drive folder + local folders (Hybrid Sync)
 async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
     console.log('[DRIVE] Iniciando sincronização profunda de imagens (Local + Google Drive Cloud)...');
@@ -507,12 +554,16 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
         });
     }
 
+    // A página pública do Drive expõe apenas janelas parciais. Preservar os
+    // arquivos em nuvem já descobertos evita que desapareçam do índice quando
+    // deixam de fazer parte da janela atual.
+    seedCachedCloudImages(allFiles, driveImagesCache);
+
     // 2. Escanear Google Drive Cloud (caso existam novos arquivos não sincronizados localmente)
     const folderIdMatch = folderUrl.match(/folders\/([a-zA-Z0-9_-]+)/);
     const folderId = folderIdMatch ? folderIdMatch[1] : '1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
-    const sortParams = ['', '?sort=13&direction=d', '?sort=13&direction=a', '?sort=7&direction=d', '?sort=7&direction=a'];
 
-    for (const sp of sortParams) {
+    for (const sp of DRIVE_FOLDER_SORT_PARAMS) {
         const targetUrl = `https://drive.google.com/drive/folders/${folderId}${sp}`;
         try {
             const html = await new Promise((resolve, reject) => {
@@ -557,19 +608,7 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
                                         largeUrl: `/api/proxy-image?id=${encodeURIComponent(fileId)}&sz=w1200&v=${syncVersion}`,
                                         driveUrl: `https://drive.google.com/file/d/${fileId}/view`
                                     };
-                                if (!allFiles.has(upper)) {
-                                    allFiles.set(upper, cloudEntry);
-                                } else {
-                                    // A versão atual do Drive substitui imagens antigas
-                                    // empacotadas no deploy. Diretórios operacionais
-                                    // continuam tendo prioridade como fonte local.
-                                    const existing = allFiles.get(upper);
-                                    if (existing.isBundledStatic) allFiles.set(upper, cloudEntry);
-                                    else {
-                                        if (!existing.id) existing.id = fileId;
-                                        existing.driveUrl = cloudEntry.driveUrl;
-                                    }
-                                }
+                                mergeCloudImageEntry(allFiles, cloudEntry);
                             }
                         });
                     }
@@ -1410,4 +1449,13 @@ function startServers() {
 
 if (require.main === module) startServers();
 
-module.exports = { requestHandler, startServers, validateCalendarRecords, sanitizeProgFeiraRecords, findLocalImagePath };
+module.exports = {
+    requestHandler,
+    startServers,
+    validateCalendarRecords,
+    sanitizeProgFeiraRecords,
+    findLocalImagePath,
+    seedCachedCloudImages,
+    mergeCloudImageEntry,
+    DRIVE_FOLDER_SORT_PARAMS
+};

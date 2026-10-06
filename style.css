@@ -5823,7 +5823,7 @@ body.light-mode .data-table tr:hover {
 /* ==========================================================================
    PROG FEIRA — fluxo paralelo de amostras, custo e tingimento
    ========================================================================== */
-.prog-feira-view { --border-color:var(--border-base); --bg-elevated:var(--bg-surface); --bg-panel:var(--bg-surface); --shadow-sm:0 3px 14px rgba(0,0,0,.14); display: flex; flex-direction: column; gap: 18px; width:calc(100vw - var(--sidebar-width) - 48px); max-width:100%; min-width:0; overflow:hidden; box-sizing:border-box; }
+.prog-feira-view { --border-color:var(--border-base); --bg-elevated:var(--bg-surface); --bg-panel:var(--bg-surface); --shadow-sm:0 3px 14px rgba(0,0,0,.14); display: flex; flex-direction: column; gap: 28px; width:calc(100vw - var(--sidebar-width) - 48px); max-width:100%; min-width:0; overflow:hidden; box-sizing:border-box; }
 .sidebar.collapsed ~ .main-content .prog-feira-view { width:calc(100vw - var(--sidebar-collapsed-width) - 48px); }
 .prog-feira-header { align-items: flex-start; gap: 18px; min-width:0; }
 .prog-feira-header h2 i { color: #38bdf8; margin-right: 8px; }
@@ -5853,7 +5853,7 @@ body.light-mode .data-table tr:hover {
 .prog-feira-legend span i { width:12px; height:12px; border-radius:3px; }
 .prog-feira-legend-des { margin-left:auto; font-weight:800; color:#60a5fa; }
 .prog-feira-legend-des i { background:#2563eb; }
-.prog-feira-sector { border:1px solid var(--border-color); background:var(--bg-panel); border-radius:14px; overflow:hidden; }
+.prog-feira-sector { border:1px solid var(--border-color); background:var(--bg-panel); border-radius:14px; overflow:hidden; box-shadow:0 10px 28px rgba(2,6,23,.16); }
 .prog-feira-sector>header { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 15px; border-bottom:1px solid var(--border-color); background:var(--bg-card); }
 .prog-feira-sector>header div { display:flex; align-items:center; gap:9px; }
 .prog-feira-sector>header strong { color:#38bdf8; font:800 15px 'Outfit',sans-serif; }
@@ -5894,7 +5894,58 @@ body.light-mode .data-table tr:hover {
 .prog-feira-history-step.current { color:#fff; border-color:#38bdf8; background:#0369a1; }
 .prog-feira-history-step strong,.prog-feira-history-step small { display:block; font-size:7px; }
 .prog-feira-history-empty { color:var(--text-muted); font-size:8px; }
-@media (max-width:1400px) { .prog-feira-kpis{grid-template-columns:repeat(3,minmax(0,1fr));} .prog-feira-grid{grid-template-columns:repeat(3,minmax(0,1fr));} .prog-feira-header{flex-wrap:wrap;} .prog-feira-header-actions{width:100%;justify-content:flex-start;} }
+@media (max-width:1400px) { .prog-feira-kpis{grid-template-columns:repeat(3,minmax(0,1fr));} .prog-feira-header{flex-wrap:wrap;} .prog-feira-header-actions{width:100%;justify-content:flex-start;} }
 @media (max-width:1050px) { .prog-feira-kpis{grid-template-columns:repeat(2,1fr);} .prog-feira-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
 @media (max-width:1024px) { .prog-feira-view,.sidebar.collapsed ~ .main-content .prog-feira-view{width:calc(100vw - 48px);} }
 @media (max-width:680px) { .prog-feira-view,.sidebar.collapsed ~ .main-content .prog-feira-view{width:calc(100vw - 32px);} .prog-feira-kpis,.prog-feira-grid{grid-template-columns:1fr;} .prog-feira-media{height:250px;} .prog-feira-header-actions{justify-content:flex-start;} }
+
+@media print {
+    body.print-prog-feira .main-content { padding:5mm 7mm !important; }
+    body.print-prog-feira .prog-feira-view { display:block !important; width:100% !important; max-width:none !important; overflow:visible !important; }
+    body.print-prog-feira .prog-feira-header,
+    body.print-prog-feira .prog-feira-kpis,
+    body.print-prog-feira .prog-feira-flow,
+    body.print-prog-feira .prog-feira-toolbar,
+    body.print-prog-feira .prog-feira-legend { display:none !important; }
+    body.print-prog-feira .prog-feira-print-page {
+        display:block !important;
+        min-height:190mm !important;
+        max-height:190mm !important;
+        margin:0 !important;
+        border-radius:0 !important;
+        overflow:hidden !important;
+        box-shadow:none !important;
+        page-break-after:always !important;
+        break-after:page !important;
+        page-break-inside:avoid !important;
+        break-inside:avoid-page !important;
+    }
+    body.print-prog-feira .prog-feira-print-page:last-child { page-break-after:auto !important; break-after:auto !important; }
+    body.print-prog-feira .prog-feira-sector>header { height:10mm !important; padding:1.5mm 3mm !important; box-sizing:border-box !important; }
+    body.print-prog-feira .prog-feira-sector>header strong { font-size:12px !important; }
+    body.print-prog-feira .prog-feira-sector>header span { font-size:10px !important; }
+    body.print-prog-feira .prog-feira-grid {
+        display:grid !important;
+        grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+        grid-template-rows:repeat(2,86mm) !important;
+        gap:2mm !important;
+        padding:2mm !important;
+        align-items:stretch !important;
+    }
+    body.print-prog-feira .prog-feira-card { height:86mm !important; border-radius:1.5mm !important; box-shadow:none !important; break-inside:avoid !important; }
+    body.print-prog-feira .prog-feira-des-ribbon { height:5mm !important; font-size:7px !important; }
+    body.print-prog-feira .prog-feira-card-top { height:5mm !important; padding:0 2mm !important; font-size:8px !important; }
+    body.print-prog-feira .prog-feira-media { height:43mm !important; }
+    body.print-prog-feira .prog-feira-delivery { top:1.5mm !important; right:1.5mm !important; min-width:12mm !important; padding:1mm !important; }
+    body.print-prog-feira .prog-feira-delivery strong { font-size:13px !important; }
+    body.print-prog-feira .prog-feira-card-body { padding:1.5mm 2mm !important; }
+    body.print-prog-feira .prog-feira-sector-badge,
+    body.print-prog-feira .prog-feira-ting-badge { padding:.7mm 1mm !important; font-size:6px !important; }
+    body.print-prog-feira .prog-feira-days { margin-top:1mm !important; padding:.7mm 1mm !important; font-size:7px !important; }
+    body.print-prog-feira .prog-feira-days strong { font-size:8px !important; }
+    body.print-prog-feira .prog-feira-program { margin-top:1mm !important; padding:.7mm 1mm !important; font-size:7px !important; }
+    body.print-prog-feira .prog-feira-card dl { gap:1mm 2mm !important; margin-top:1mm !important; }
+    body.print-prog-feira .prog-feira-card dt { font-size:5px !important; }
+    body.print-prog-feira .prog-feira-card dd { margin-top:0 !important; font-size:6px !important; line-height:1.15 !important; }
+    body.print-prog-feira .prog-feira-history { display:none !important; }
+}
