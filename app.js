@@ -10912,32 +10912,7 @@
     // CONFIGURAÇÕES & CALENDÁRIO
     // =========================================================================
     function getAlertCategory(alert) {
-        const ruleId = String(alert?.ruleId || '').toLocaleLowerCase('pt-BR');
-
-        if (ruleId === 'malotes-parte-principal') {
-            return { key: 'malote', label: 'Malote' };
-        }
-        if (ruleId === 'setor01-limite-dias') {
-            return { key: 'setor01', label: 'Pedido Setor 01' };
-        }
-        if (ruleId === 'setor13-calendario') {
-            return { key: 'modelagem', label: 'Modelagem' };
-        }
-        if (ruleId === 'cq-amostra-reprovada') {
-            return { key: 'cq', label: 'Controle de Qualidade' };
-        }
-        if (ruleId === 'pend-produto-aviamento' || ruleId === 'pend-produto-cor' || ruleId === 'prog-feira-limite-setor') {
-            return { key: 'pend-produto', label: 'Pend. Produto' };
-        }
-
-        const fallbackLabel = String(alert?.title || 'Outros alertas').trim();
-        const fallbackKey = `regra:${String(alert?.ruleId || fallbackLabel)
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLocaleLowerCase('pt-BR')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '') || 'outros'}`;
-        return { key: fallbackKey, label: fallbackLabel };
+        return window.CRMAlertsEngine.getAlertCategory(alert);
     }
 
     function formatAlertRuleCondition(condition) {

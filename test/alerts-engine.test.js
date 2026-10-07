@@ -79,6 +79,22 @@ test('does not guess a Prog Feira limit when the calendar has conflicting values
     assert.equal(records.length, 0);
 });
 
+test('classifies Prog Feira separately from PEND. PRODUTO alerts', () => {
+    assert.deepEqual(engine.getAlertCategory({ ruleId: 'pend-produto-aviamento' }), {
+        key: 'pend-produto', label: 'Pend. Produto'
+    });
+    assert.deepEqual(engine.getAlertCategory({ ruleId: 'pend-produto-cor' }), {
+        key: 'pend-produto', label: 'Pend. Produto'
+    });
+    assert.deepEqual(engine.getAlertCategory({ ruleId: 'prog-feira-limite-setor' }), {
+        key: 'prog-feira', label: 'Feira / Amostras'
+    });
+    assert.notEqual(
+        engine.getAlertCategory({ ruleId: 'prog-feira-limite-setor' }).key,
+        engine.getAlertCategory({ ruleId: 'pend-produto-cor' }).key
+    );
+});
+
 test('creates only the three requested operational alert types', () => {
     const calendarRows = [{
         SEMANA: '2645',

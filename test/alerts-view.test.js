@@ -29,18 +29,20 @@ test('alertas exibem a imagem do pedido como primeiro conteúdo do cartão', () 
 
 test('filtro de tipo é dinâmico e o PDF respeita o conjunto filtrado', () => {
     const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const engine = fs.readFileSync(path.join(root, 'alerts-engine.js'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
     const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
     assert.match(app, /alertsCategory: 'all'/);
     assert.match(app, /function getAlertCategory\(alert\)/);
-    assert.match(app, /ruleId === 'setor13-calendario'/);
-    assert.match(app, /ruleId === 'setor01-limite-dias'/);
-    assert.match(app, /ruleId === 'malotes-parte-principal'/);
-    assert.match(app, /ruleId === 'cq-amostra-reprovada'/);
-    assert.match(app, /ruleId === 'pend-produto-aviamento'/);
-    assert.match(app, /ruleId === 'pend-produto-cor'/);
-    assert.match(app, /ruleId === 'prog-feira-limite-setor'/);
+    assert.match(engine, /ruleId === 'setor13-calendario'/);
+    assert.match(engine, /ruleId === 'setor01-limite-dias'/);
+    assert.match(engine, /ruleId === 'malotes-parte-principal'/);
+    assert.match(engine, /ruleId === 'cq-amostra-reprovada'/);
+    assert.match(engine, /ruleId === 'pend-produto-aviamento'/);
+    assert.match(engine, /ruleId === 'pend-produto-cor'/);
+    assert.match(engine, /ruleId === 'prog-feira-limite-setor'/);
+    assert.match(app, /CRMAlertsEngine\.getAlertCategory\(alert\)/);
     assert.match(app, /buildProgFeiraAlertRecords/);
     assert.match(app, /const productKey = `\$\{op\}__\$\{setor \|\| 'SEM_SETOR'\}__\$\{normalizedProductKey\}`/);
     assert.doesNotMatch(app, /\['05', '06', '12', '13'\]\.includes\(setor\)/);
@@ -73,7 +75,7 @@ test('filtro de tipo é dinâmico e o PDF respeita o conjunto filtrado', () => {
     assert.match(css, /body\.print-alertas \.alert-item\s*\{[\s\S]*?min-height: 26mm !important[\s\S]*?break-inside: avoid !important/);
     assert.match(index, /style\.css\?v=20261006-cor-previsao-1/);
     assert.match(index, /light-theme\.css\?v=20261006-exact-image-code-1/);
-    assert.match(index, /app\.js\?v=20261007-prog-feira-alert-1/);
+    assert.match(index, /app\.js\?v=20261007-prog-feira-alert-tab-1/);
 });
 
 test('andamento CQ inclui REPROVADO como situação crítica vermelha e piscante', () => {
@@ -89,5 +91,5 @@ test('andamento CQ inclui REPROVADO como situação crítica vermelha e piscante
     assert.match(app, /buildCQAlertRecords/);
     assert.match(css, /@keyframes cqRejectedPulse/);
     assert.match(css, /\.cq-reprovado-pulse/);
-    assert.match(index, /alerts-engine\.js\?v=20261007-prog-feira-alert-1/);
+    assert.match(index, /alerts-engine\.js\?v=20261007-prog-feira-alert-tab-1/);
 });
