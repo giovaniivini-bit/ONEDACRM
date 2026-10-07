@@ -1250,19 +1250,31 @@
             // silenciosa para evitar um pico falso de alertas no primeiro paint.
             hasImage: state.imagesLoaded ? Boolean(getProductImage(item).hasImage) : true
         }));
+        const now = new Date();
         const cqAlertRecords = window.CRMAlertsEngine.buildCQAlertRecords(
             state.cqExternalData?.records || [],
-            { now: new Date() }
+            { now }
         );
         const operationalRecords = window.CRMAlertsEngine.buildOperationalAlertRecords(
             [...records, ...cqAlertRecords],
             state.calendarExternalData?.records || [],
             {
-                now: new Date(),
+                now,
                 colorRecords: state.coresExternalData?.records || []
             }
         );
-        state.activeAlerts = window.CRMAlertsEngine.evaluateRecords(operationalRecords, state.alertRules);
+        const progFeiraProducts = window.CRMProgFeira?.buildProducts?.(
+            state.progFeiraExternalData?.records || [],
+            now
+        ) || [];
+        const progFeiraAlertRecords = window.CRMAlertsEngine.buildProgFeiraAlertRecords(
+            progFeiraProducts,
+            state.calendarExternalData?.records || []
+        );
+        state.activeAlerts = window.CRMAlertsEngine.evaluateRecords(
+            [...operationalRecords, ...progFeiraAlertRecords],
+            state.alertRules
+        );
         return state.activeAlerts;
     }
 
@@ -10914,7 +10926,7 @@
         if (ruleId === 'cq-amostra-reprovada') {
             return { key: 'cq', label: 'Controle de Qualidade' };
         }
-        if (ruleId === 'pend-produto-aviamento' || ruleId === 'pend-produto-cor') {
+        if (ruleId === 'pend-produto-aviamento' || ruleId === 'pend-produto-cor' || ruleId === 'prog-feira-limite-setor') {
             return { key: 'pend-produto', label: 'Pend. Produto' };
         }
 
@@ -10967,6 +10979,13 @@
         }
         if (ruleId === 'pend-produto-cor') {
             return 'CRM · mesma OF nos setores 02/03/04/05G/05 e D01 + módulo COR · colunas PRODUTO e PREVISÃO';
+        }
+        if (ruleId === 'prog-feira-limite-setor') {
+            const limits = window.CRMAlertsEngine?.buildSectorLimitIndex?.(calendarRecords || []) || {};
+            const summary = (window.CRMAlertsEngine?.PROG_FEIRA_LIMIT_SECTORS || [])
+                .map(sector => `${sector}: ${Number.isFinite(limits[sector]) ? `${limits[sector]}d` : '—'}`)
+                .join(' · ');
+            return `Prog Feira · DT_SAIDA + Calendário Industrial · ${summary}`;
         }
         return 'Dados oficiais do CRM';
     }

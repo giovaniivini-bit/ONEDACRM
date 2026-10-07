@@ -11,15 +11,23 @@ test('default alert rules are valid and cloned independently', () => {
 });
 
 test('builds the industrial calendar using columns A, B and E', () => {
-    const calendar = engine.buildCalendarIndex([{
+    const rows = [{
         SEMANA: '2645',
         'Data limite para setor 13': '24/set.',
         'data setor 20 - CORTE iniciar': '28/set.',
         'data limite para liberar pendência de estampa': '25/set.',
-        'quantidade dias aceitaveis para ficar pendente setor 01': '2 dias'
-    }]);
+        'quantidade dias aceitaveis para ficar pendente setor 01': '2 dias',
+        'quantidade dias SETOR 01A': '7 dias',
+        'quantidade dias SETOR 02B': '7 dias'
+    }, {
+        SEMANA: '2646',
+        'Data limite para setor 13': '01/out.'
+    }];
+    const calendar = engine.buildCalendarIndex(rows);
     assert.equal(calendar['2645'].sector13Deadline, '24/09/2026');
     assert.equal(calendar['2645'].sector01MaxDays, 2);
+    assert.equal(calendar['2646'].sector01MaxDays, 2);
+    assert.deepEqual(engine.buildSectorLimitIndex(rows), { '01': 2, '01A': 7, '02B': 7 });
     assert.equal(engine.normalizeWeek('11 - SEM 45 - 2026'), '2645');
     assert.equal(engine.normalizeWeek('01 - SEM 02 - 2027'), '2702');
     assert.equal(engine.normalizeWeek('2645'), '2645');
@@ -27,6 +35,48 @@ test('builds the industrial calendar using columns A, B and E', () => {
     assert.equal(firstIndustrialDeadline.getFullYear(), 2025);
     assert.equal(firstIndustrialDeadline.getMonth(), 10);
     assert.equal(firstIndustrialDeadline.getDate(), 20);
+});
+
+test('creates Prog Feira alerts only above the configured limit for eligible sectors', () => {
+    const calendarRows = [{
+        SEMANA: '2601',
+        'Data limite para setor 13': '20/nov.',
+        'quantidade dias aceitaveis para ficar pendente setor 01': '2 dias',
+        'quantidade dias SETOR 01A': '7 dias',
+        'quantidade dias SETOR 01B': '7 dias',
+        'quantidade dias SETOR 1B2': '5 dias',
+        'quantidade dias SETOR 02M': '3 dias',
+        'quantidade dias SETOR 02B': '7 dias',
+        'quantidade dias SETOR 01C': '3 dias',
+        'quantidade dias SETOR 01E': '4 dias',
+        'quantidade dias SETOR 1E2': '4 dias',
+        'quantidade dias SETOR 02C': '3 dias'
+    }];
+    const records = engine.buildProgFeiraAlertRecords([
+        { key: '1|PROD.A', numero: '1', codigo: 'PROD.A', sector: '01A', sectorLabel: 'Desenho', daysInSector: 8 },
+        { key: '2|PROD.B', numero: '2', codigo: 'PROD.B', sector: '02B', sectorLabel: 'Corte', daysInSector: 7 },
+        { key: '3|PROD.C', numero: '3', codigo: 'PROD.C', sector: '02M', sectorLabel: '02M', daysInSector: 4 },
+        { key: '4|PROD.D', numero: '4', codigo: 'PROD.D', sector: '01F', sectorLabel: 'Peças prontas', daysInSector: 99 },
+        { key: '5|PROD.E', numero: '5', codigo: 'PROD.E', sector: '01C', sectorLabel: 'Arte final', daysInSector: null }
+    ], calendarRows);
+    const rule = engine.cloneDefaults().find(item => item.id === 'prog-feira-limite-setor');
+    const alerts = engine.evaluateRecords(records, [rule]);
+
+    assert.equal(alerts.length, 2);
+    assert.deepEqual(alerts.map(alert => alert.codigo).sort(), ['PROD.A', 'PROD.C']);
+    assert.equal(alerts.find(alert => alert.codigo === 'PROD.A').message,
+        'Produto PROD.A no fluxo de FEIRA / AMOSTRAS está pendente no setor 01A, acima da quantidade de dias desejada, que é de 7 dias.');
+    assert.equal(alerts.find(alert => alert.codigo === 'PROD.C').record.flowSectorLimitDays, 3);
+});
+
+test('does not guess a Prog Feira limit when the calendar has conflicting values', () => {
+    const records = engine.buildProgFeiraAlertRecords([
+        { key: '1|PROD.A', numero: '1', codigo: 'PROD.A', sector: '01A', daysInSector: 20 }
+    ], [
+        { 'quantidade dias SETOR 01A': '7 dias' },
+        { 'quantidade dias SETOR 01A': '8 dias' }
+    ]);
+    assert.equal(records.length, 0);
 });
 
 test('creates only the three requested operational alert types', () => {

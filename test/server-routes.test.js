@@ -64,7 +64,7 @@ test('enforces method and admin authorization on write routes', async () => {
     assert.equal((await request({ method: 'POST', route: '/api/upload', body: 'csv' })).status, 401);
 });
 
-test('serves only the six code-owned alert rules', async () => {
+test('serves only the seven code-owned alert rules', async () => {
     const rule = {
         id: 'route-test',
         name: 'Regra HTTP',
@@ -93,7 +93,8 @@ test('serves only the six code-owned alert rules', async () => {
         'malotes-parte-principal',
         'cq-amostra-reprovada',
         'pend-produto-aviamento',
-        'pend-produto-cor'
+        'pend-produto-cor',
+        'prog-feira-limite-setor'
     ]);
 });
 
@@ -168,21 +169,51 @@ test('validates the industrial calendar before it can replace the cache', () => 
         'Data limite para setor 13': '24/set.',
         'data setor 20 -  CORTE iniciar': '',
         'data limite para liberar pendência de estampa': '',
-        'quantidade dias aceitaveis para ficar pendente setor 01': '2 dias'
+        'quantidade dias aceitaveis para ficar pendente setor 01': '',
+        'quantidade dias SETOR  01A': '',
+        'quantidade dias SETOR  01B': '',
+        'quantidade dias SETOR 1B2': '',
+        'quantidade dias SETOR 02M': '',
+        'quantidade dias SETOR 02B': '',
+        'quantidade dias SETOR 01C': '',
+        'quantidade dias SETOR 01E': '',
+        'quantidade dias SETOR 1E2': '',
+        'Quantidade dias SETOR 02C': ''
     }));
-    assert.equal(validateCalendarRecords(validRows).length, 40);
-    assert.throws(() => validateCalendarRecords(validRows.slice(0, 3)), /incompleto/);
-    assert.throws(() => validateCalendarRecords(validRows.map(row => ({ ...row, 'Data limite para setor 13': '' }))), /inválido/);
-    assert.throws(() => validateCalendarRecords(validRows.map((row, index) => ({
+    const limitRow = {
+        SEMANA: '',
+        'Data limite para setor 13': '',
+        'data setor 20 -  CORTE iniciar': '',
+        'data limite para liberar pendência de estampa': '',
+        'quantidade dias aceitaveis para ficar pendente setor 01': '2 dias',
+        'quantidade dias SETOR  01A': '7 dias',
+        'quantidade dias SETOR  01B': '7 dias',
+        'quantidade dias SETOR 1B2': '5 dias',
+        'quantidade dias SETOR 02M': '3 dias',
+        'quantidade dias SETOR 02B': '7 dias',
+        'quantidade dias SETOR 01C': '3 dias',
+        'quantidade dias SETOR 01E': '4 dias',
+        'quantidade dias SETOR 1E2': '4 dias',
+        'Quantidade dias SETOR 02C': '3 dias'
+    };
+    const calendarRows = [...validRows, limitRow];
+    assert.equal(validateCalendarRecords(calendarRows).length, 41);
+    assert.deepEqual(validateCalendarRecords(calendarRows).at(-1), limitRow);
+    const embeddedLimitRows = validRows.map((row, index) => index === 0 ? {
+        ...row,
+        ...Object.fromEntries(Object.entries(limitRow).slice(4))
+    } : row);
+    assert.equal(validateCalendarRecords(embeddedLimitRows).length, 40);
+    assert.throws(() => validateCalendarRecords([...validRows.slice(0, 3), limitRow]), /incompleto/);
+    assert.throws(() => validateCalendarRecords([...validRows.map(row => ({ ...row, 'Data limite para setor 13': '' })), limitRow]), /inválido/);
+    assert.throws(() => validateCalendarRecords([...validRows.map((row, index) => ({
         ...row,
         SEMANA: `99${String(index + 1).padStart(2, '0')}`,
-        'Data limite para setor 13': 'arquivo indisponivel',
-        'quantidade dias aceitaveis para ficar pendente setor 01': 'erro 999'
-    }))), /inválido/);
-    assert.throws(() => validateCalendarRecords(validRows.map(row => ({
-        ...row,
-        'quantidade dias aceitaveis para ficar pendente setor 01': '99 dias'
-    }))), /inválido/);
+        'Data limite para setor 13': 'arquivo indisponivel'
+    })), limitRow]), /inválido/);
+    assert.throws(() => validateCalendarRecords([...validRows, { ...limitRow, 'quantidade dias SETOR 02B': '' }]), /inválido/);
+    assert.throws(() => validateCalendarRecords([...validRows, limitRow, { ...limitRow }]), /inválido/);
+    assert.throws(() => validateCalendarRecords([...validRows, { ...limitRow, INESPERADO: 'conteúdo' }]), /inválido/);
 });
 
 test('projects Prog Feira records and rejects exports without current TIPO 1 rows', () => {

@@ -27,6 +27,7 @@
         { value: 'setorCQReprovado', label: 'Amostra reprovada no CQ', type: 'boolean' },
         { value: 'productionAviamentoAlert', label: 'Produção com pendência de aviamento', type: 'boolean' },
         { value: 'productionCorAlert', label: 'Produção com pendência de cor', type: 'boolean' },
+        { value: 'progFeiraSectorLate', label: 'Feira / Amostras acima do limite do setor', type: 'boolean' },
         { value: 'diasReprovado', label: 'Dias com amostra reprovada', type: 'number' },
         { value: 'deadlineSetor13', label: 'Data limite do Setor 13', type: 'date' },
         { value: 'setor01LimitDays', label: 'Limite de dias do Setor 01', type: 'number' },
@@ -34,7 +35,8 @@
         { value: 'maloteSetor', label: 'Setor do malote', type: 'text' },
         { value: 'productionSector', label: 'Setor atual da produção', type: 'text' },
         { value: 'pendencySector', label: 'Setor da pendência', type: 'text' },
-        { value: 'colorForecast', label: 'Previsão da cor', type: 'text' }
+        { value: 'colorForecast', label: 'Previsão da cor', type: 'text' },
+        { value: 'flowSectorLimitDays', label: 'Limite de dias do setor de Feira / Amostras', type: 'number' }
     ]);
 
     const OPERATORS = Object.freeze([
@@ -116,8 +118,22 @@
             conditions: [{ field: 'productionCorAlert', operator: 'equals', value: 'true' }],
             message: 'PEND COR na produção, Produto {codigo} está no setor {productionSector}, pertence à semana {semanaPedido}; previsão COR {colorForecast}.',
             system: true
+        },
+        {
+            id: 'prog-feira-limite-setor',
+            name: 'PEND. PRODUTO — Feira / Amostras',
+            description: 'Compara os dias no setor atual do Prog Feira com o limite oficial do Calendário Industrial.',
+            enabled: true,
+            severity: 'warning',
+            match: 'all',
+            conditions: [{ field: 'progFeiraSectorLate', operator: 'equals', value: 'true' }],
+            message: 'Produto {codigo} no fluxo de FEIRA / AMOSTRAS está pendente no setor {setor}, acima da quantidade de dias desejada, que é de {flowSectorLimitDays} dias.',
+            system: true
         }
     ]);
+
+    const PROG_FEIRA_LIMIT_SECTORS = Object.freeze(['01A', '01B', '1B2', '02M', '02B', '01C', '01E', '1E2', '02C']);
+    const CALENDAR_LIMIT_SECTORS = Object.freeze(['01', ...PROG_FEIRA_LIMIT_SECTORS]);
 
     const ALLOWED_FIELDS = new Set(FIELD_DEFINITIONS.map(field => field.value));
     const ALLOWED_OPERATORS = new Set(OPERATORS.map(operator => operator.value));
@@ -230,6 +246,7 @@
     }
 
     function buildCalendarIndex(calendarRecords) {
+        const sectorLimits = buildSectorLimitIndex(calendarRecords);
         const index = {};
         (calendarRecords || []).forEach(row => {
             const week = normalizeWeek(getCalendarCell(row, ['SEMANA'], 0));
@@ -237,15 +254,70 @@
             const sector13Raw = getCalendarCell(row, ['Data limite para setor 13'], 1);
             const sector13Date = parseIndustrialDate(sector13Raw, week);
             const limitRaw = getCalendarCell(row, ['quantidade dias aceitaveis para ficar pendente setor 01'], 4);
-            const limitMatch = limitRaw.match(/\d+/);
+            const rowLimit = parseLimitDays(limitRaw);
             index[week] = {
                 week,
                 sector13Date,
                 sector13Deadline: formatPtBrDate(sector13Date),
-                sector01MaxDays: limitMatch ? Number(limitMatch[0]) : null
+                sector01MaxDays: rowLimit ?? sectorLimits['01'] ?? null
             };
         });
         return index;
+    }
+
+    function parseLimitDays(value) {
+        const match = String(value ?? '').trim().match(/^(\d{1,2})\s*(?:dias?)?$/i);
+        const limit = match ? Number(match[1]) : NaN;
+        return Number.isInteger(limit) && limit >= 0 && limit <= 30 ? limit : null;
+    }
+
+    function buildSectorLimitIndex(calendarRecords) {
+        const valuesBySector = new Map();
+        (Array.isArray(calendarRecords) ? calendarRecords : []).forEach(row => {
+            Object.entries(row || {}).forEach(([header, rawValue]) => {
+                const normalizedHeader = normalizeKey(header);
+                let sector = '';
+                if (normalizedHeader === 'quantidadediasaceitaveisparaficarpendentesetor01') {
+                    sector = '01';
+                } else {
+                    const match = normalizedHeader.match(/^quantidadediassetor(01a|01b|1b2|02m|02b|01c|01e|1e2|02c|m00|m02)$/i);
+                    sector = match ? match[1].toUpperCase() : '';
+                }
+                if (!sector) return;
+                const limit = parseLimitDays(rawValue);
+                if (limit === null) return;
+                if (!valuesBySector.has(sector)) valuesBySector.set(sector, new Set());
+                valuesBySector.get(sector).add(limit);
+            });
+        });
+        const limits = {};
+        valuesBySector.forEach((values, sector) => {
+            if (values.size === 1) limits[sector] = Array.from(values)[0];
+        });
+        return limits;
+    }
+
+    function buildProgFeiraAlertRecords(products, calendarRecords) {
+        const sectorLimits = buildSectorLimitIndex(calendarRecords);
+        const eligibleSectors = new Set(PROG_FEIRA_LIMIT_SECTORS);
+        return (Array.isArray(products) ? products : []).flatMap((product, index) => {
+            const setor = normalizeSector(product?.sector);
+            const days = parseNumber(product?.daysInSector);
+            const limit = sectorLimits[setor];
+            if (!eligibleSectors.has(setor) || days === null || !Number.isFinite(limit) || days <= limit) return [];
+            const codigo = String(product?.codigo || '').trim();
+            const op = String(product?.numero || '').trim();
+            return [{
+                op,
+                codigo,
+                descricao: product?.sectorLabel || '',
+                setor,
+                diasParado: days,
+                flowSectorLimitDays: limit,
+                progFeiraSectorLate: true,
+                alertEntityKey: `prog-feira-limite:${product?.key || `${op}:${codigo}:${setor}:${index}`}`
+            }];
+        });
     }
 
     function normalizeSector(value) {
@@ -678,6 +750,8 @@
         FIELD_DEFINITIONS,
         OPERATORS,
         DEFAULT_RULES,
+        PROG_FEIRA_LIMIT_SECTORS,
+        CALENDAR_LIMIT_SECTORS,
         cloneDefaults,
         normalizeWeek,
         normalizeCQStatus,
@@ -688,6 +762,8 @@
         buildCQAlertRecords,
         parseIndustrialDate,
         buildCalendarIndex,
+        buildSectorLimitIndex,
+        buildProgFeiraAlertRecords,
         buildOperationalAlertRecords,
         compareCondition,
         interpolate,

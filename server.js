@@ -120,7 +120,8 @@ function validateCalendarRecords(records) {
     const expectedHeaders = [
         ['semana', 0],
         ['datalimiteparasetor13', 1],
-        ['quantidadediasaceitaveisparaficarpendentesetor01', 4]
+        ['quantidadediasaceitaveisparaficarpendentesetor01', 4],
+        ['quantidadediassetor02b', 9]
     ];
     expectedHeaders.forEach(([expected, index]) => {
         if (normalizeHeader(keys[index]) !== expected) {
@@ -142,20 +143,32 @@ function validateCalendarRecords(records) {
         if (cycleYear < currentYear - 2 || cycleYear > currentYear + 2 || weekNumber < 1 || weekNumber > 53) return false;
 
         const deadline = alertsEngine.parseIndustrialDate(String(values[1] || '').trim(), week);
-        const limitMatch = String(values[4] || '').trim().match(/^(\d{1,2})\s*(?:dias?)?$/i);
-        const limit = limitMatch ? Number(limitMatch[1]) : NaN;
-        if (!deadline || !Number.isInteger(limit) || limit < 0 || limit > 30) return false;
+        if (!deadline) return false;
 
         seenWeeks.add(week);
         cycleYears.add(cycleYear);
         weekNumbers.push(weekNumber);
         return true;
     });
+    const validRowSet = new Set(validRows);
+    const limitOnlyRows = contentRows.filter(row => {
+        const values = Object.values(row);
+        if (values.slice(0, 4).some(value => String(value || '').trim())) return false;
+        const rowLimits = alertsEngine.buildSectorLimitIndex([row]);
+        const nonEmptyLimitCells = values.slice(4).filter(value => String(value || '').trim()).length;
+        return alertsEngine.CALENDAR_LIMIT_SECTORS.every(sector => Number.isFinite(rowLimits[sector]))
+            && Object.keys(rowLimits).length === nonEmptyLimitCells;
+    });
+    const limitOnlyRowSet = new Set(limitOnlyRows);
+    const hasUnexpectedRows = contentRows.some(row => !validRowSet.has(row) && !limitOnlyRowSet.has(row));
     const coversAnnualCycle = weekNumbers.length > 0 && Math.min(...weekNumbers) <= 2 && Math.max(...weekNumbers) >= 40;
-    if (validRows.length < 40 || validRows.length !== contentRows.length || cycleYears.size !== 1 || !coversAnnualCycle) {
+    const sectorLimits = alertsEngine.buildSectorLimitIndex(records);
+    const hasRequiredLimits = alertsEngine.CALENDAR_LIMIT_SECTORS.every(sector => Number.isFinite(sectorLimits[sector]));
+    if (validRows.length < 40 || cycleYears.size !== 1 || !coversAnnualCycle || !hasRequiredLimits
+        || hasUnexpectedRows || limitOnlyRows.length > 1) {
         throw new Error('Calendário Industrial inválido: semanas, datas ou limites estão ausentes.');
     }
-    return validRows;
+    return contentRows.filter(row => validRowSet.has(row) || limitOnlyRowSet.has(row));
 }
 
 const PROG_FEIRA_PUBLIC_FIELDS = [
