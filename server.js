@@ -9,6 +9,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { createDriveImageProxy } = require('./drive-image-cache');
+const { fetchEmbeddedFolder, fetchDriveHtml } = require('./drive-folder-list');
 const alertsEngine = require('./alerts-engine');
 const { createAdminAuth } = require('./admin-auth');
 const {
@@ -525,13 +526,22 @@ function mergeCloudImageEntry(allFiles, cloudEntry) {
 }
 
 // Download/index images from Google Drive folder + local folders (Hybrid Sync)
-async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
+let driveSyncInFlight = null;
+function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
+    if (!driveSyncInFlight) {
+        driveSyncInFlight = buildGoogleDriveImages(folderUrl).finally(() => { driveSyncInFlight = null; });
+    }
+    return driveSyncInFlight;
+}
+
+async function buildGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
     console.log('[DRIVE] Iniciando sincronização profunda de imagens (Local + Google Drive Cloud)...');
     const syncVersion = Date.now().toString(36);
     
     // 1. Escanear diretórios locais / Google Drive Desktop / Compartilhamento de Rede
     await scanLocalImageFolders();
     const allFiles = new Map();
+    const refreshedDriveIds = new Set();
 
     for (const [upperFilename, fullPath] of localImageFilesMap.entries()) {
         const baseName = path.basename(fullPath).replace(/\.(?:jpg|jpeg|png|webp|gif|svg)$/i, '').trim();
@@ -579,25 +589,7 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
     for (const sp of DRIVE_FOLDER_SORT_PARAMS) {
         const targetUrl = `https://drive.google.com/drive/folders/${folderId}${sp}`;
         try {
-            const html = await new Promise((resolve, reject) => {
-                https.get(targetUrl, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-                    }
-                }, (res) => {
-                    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                        return https.get(res.headers.location, r2 => {
-                            let d = '';
-                            r2.on('data', c => d += c);
-                            r2.on('end', () => resolve(d));
-                        }).on('error', reject);
-                    }
-                    let d = '';
-                    res.on('data', c => d += c);
-                    res.on('end', () => resolve(d));
-                }).on('error', reject);
-            });
+            const html = await fetchDriveHtml(targetUrl);
 
             const s36Match = html.match(/window\['_DRIVE_ivd'\]\s*=\s*'([\s\S]*?)';/);
             if (s36Match) {
@@ -608,6 +600,7 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
                         parsed[0].forEach(item => {
                             if (Array.isArray(item) && typeof item[0] === 'string' && typeof item[2] === 'string') {
                                 const fileId = item[0];
+                                refreshedDriveIds.add(fileId);
                                 const filename = item[2];
                                 const upper = filename.toUpperCase();
                                 const baseName = filename.replace(/\.(?:jpg|jpeg|png|webp|gif|svg)$/i, '').trim();
@@ -630,6 +623,26 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
         } catch (err) {
             console.warn(`[DRIVE] Aviso ao consultar ordenação ${sp}:`, err.message);
         }
+    }
+
+    // A listagem incorporada inclui arquivos que as janelas da página principal omitem.
+    try {
+        const entries = await fetchEmbeddedFolder(folderId);
+        for (const entry of entries) {
+            refreshedDriveIds.add(entry.id);
+            mergeCloudImageEntry(allFiles, {
+                ...entry,
+                base: entry.filename.replace(/\.(jpg|jpeg|png|webp|gif)$/i, '').trim(),
+                isLocal: false,
+                version: syncVersion,
+                thumbUrl: `/api/proxy-image?id=${encodeURIComponent(entry.id)}&sz=w600&v=${syncVersion}`,
+                largeUrl: `/api/proxy-image?id=${encodeURIComponent(entry.id)}&sz=w1200&v=${syncVersion}`,
+                driveUrl: `https://drive.google.com/file/d/${entry.id}/view`
+            });
+        }
+        console.log(`[DRIVE] Listagem incorporada: ${entries.length} imagens encontradas.`);
+    } catch (error) {
+        console.warn('[DRIVE] Listagem incorporada indisponível:', error.message);
     }
 
     const list = Array.from(allFiles.values());
@@ -666,6 +679,8 @@ async function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
         list: mergedList
     };
 
+    // Atualizar também os bytes: uma substituição no Drive pode manter o mesmo ID.
+    if (refreshedDriveIds.size) await proxyGoogleDriveImage.invalidate(refreshedDriveIds);
     driveImagesCache = result;
     refreshKnownDriveImageIds();
     try {
@@ -942,6 +957,7 @@ async function requestHandler(req, res) {
     
     // API: Obter Mapeamento de Imagens do Google Drive
     if (pathname === '/api/drive-images') {
+        res.setHeader('Cache-Control', 'no-store');
         const force = parsedUrl.searchParams.get('refresh') === '1';
         if (force && req.method !== 'POST') {
             res.writeHead(405, { Allow: 'GET, POST' });
@@ -949,11 +965,9 @@ async function requestHandler(req, res) {
             return;
         }
         if (force && !requireAdmin(req, res)) return;
-        if (force || !driveImagesCache || driveImagesCache.count === 0) {
-            const invalidateCache = force && proxyGoogleDriveImage.invalidate
-                ? proxyGoogleDriveImage.invalidate(knownDriveImageIds)
-                : Promise.resolve();
-            invalidateCache.then(() => fetchGoogleDriveImages()).then(indexData => {
+        const imageIndexExpired = Date.now() - Date.parse(driveImagesCache?.timestamp || '') > EXTERNAL_CACHE_TTL_MS;
+        if (force || !driveImagesCache || driveImagesCache.count === 0 || imageIndexExpired) {
+            fetchGoogleDriveImages().then(indexData => {
                 res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
                 res.end(JSON.stringify({ success: true, count: indexData.count, data: toPublicDriveImages(indexData) }));
             }).catch(err => {
@@ -1009,6 +1023,7 @@ async function requestHandler(req, res) {
 
     // API: Obter Dados de Planilhas Externas (Cores e Aviamentos do Drive)
     if (pathname === '/api/external-sheet') {
+        res.setHeader('Cache-Control', 'no-store');
         const type = (parsedUrl.searchParams.get('type') || 'aviamentos').toLowerCase();
         const force = parsedUrl.searchParams.get('refresh') === '1' && req.method === 'POST';
         if (!['GET', 'POST'].includes(req.method)) {
@@ -1354,8 +1369,8 @@ async function requestHandler(req, res) {
             const dataJsContent = `// Gerado automaticamente pelo sync do CRM\nwindow.CRM_EMBEDDED_DATA = ${JSON.stringify(originalRecords)};\n`;
             atomicWriteFileSync(path.join(BASE_DIR, 'data.js'), dataJsContent, 'utf8');
 
-            // Sincroniza também as imagens da pasta do Drive em segundo plano
-            fetchGoogleDriveImages().catch(e => console.warn('[SYNC DRIVE IMG ERROR]', e.message));
+            // Aguarda o índice atualizado antes de confirmar a sincronização.
+            await fetchGoogleDriveImages();
             
             console.log(`[SYNC] Sincronização concluída com sucesso! ${originalRecords.length} registros atualizados.`);
 

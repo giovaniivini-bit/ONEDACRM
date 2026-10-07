@@ -11,6 +11,40 @@ const {
 } = require('../server');
 
 const root = path.resolve(__dirname, '..');
+const { parseEmbeddedFolder } = require('../drive-folder-list');
+
+test('partial sheet failure still applies fresh Prog Feira data and reports the failed source', async () => {
+    const vm = require('node:vm');
+    const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const start = app.indexOf('async function loadExternalSheets(');
+    const end = app.indexOf('function getProductImage(', start);
+    const state = { activeSubmodule: 'prog-feira', progFeiraExternalData: { records: [{ CODIGO: 'OLD' }] } };
+    let renders = 0;
+    const context = vm.createContext({
+        state, window: { location: { protocol: 'https:' } }, console: { warn() {} },
+        updateSidebarBadges() {}, renderActiveView() { renders++; },
+        adminFetch: async url => ({ ok: !url.includes('type=cq'), json: async () => url.includes('type=cq')
+            ? { success: false, error: 'Fonte CQ indisponível' }
+            : { success: true, isLive: true, records: [{ CODIGO: 'NEW' }] } })
+    });
+    vm.runInContext(app.slice(start, end), context);
+    await assert.rejects(context.loadExternalSheets(true), /Atualização parcial: cq/);
+    assert.equal(state.progFeiraExternalData.records[0].CODIGO, 'NEW');
+    assert.equal(renders, 1);
+});
+
+test('embedded Drive listing discovers exact product filenames beyond the main page window', () => {
+    const html = '<div class="flip-entry" id="entry-photo579"><div><a><div class="flip-entry-title">01.16.42.0579.jpg</div></a></div></div>' +
+        '<div class="flip-entry" id="entry-photo578"><div class="flip-entry-title">01.16.42.0578.jpg</div></div>' +
+        '<div class="flip-entry" id="entry-variant"><div class="flip-entry-title">01.16.42.0579A.jpg</div></div>' +
+        '<div class="flip-entry" id="entry-document"><div class="flip-entry-title">notes.pdf</div></div>';
+    assert.deepEqual(parseEmbeddedFolder(html), [
+        { id: 'photo579', filename: '01.16.42.0579.jpg' },
+        { id: 'photo578', filename: '01.16.42.0578.jpg' },
+        { id: 'variant', filename: '01.16.42.0579A.jpg' }
+    ]);
+    assert.deepEqual(parseEmbeddedFolder('<html>Login required</html>'), []);
+});
 
 test('Drive replacement wins over bundled image and URLs are versioned', () => {
     const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
@@ -18,7 +52,7 @@ test('Drive replacement wins over bundled image and URLs are versioned', () => {
 
     assert.match(server, /existing\.isBundledStatic \|\| existing\.isLocal === false/);
     assert.match(server, /mergedMap\[key\] = remoteEntry \|\| bundledEntry/);
-    assert.match(server, /proxyGoogleDriveImage\.invalidate\(knownDriveImageIds\)/);
+    assert.match(server, /if \(refreshedDriveIds\.size\) await proxyGoogleDriveImage\.invalidate\(refreshedDriveIds\)/);
     assert.match(server, /`\/images\/\$\{encodeURIComponent\(origFilename\)\}\?v=/);
     assert.match(server, /\[\.\.\.bundledIndex\.list, \.\.\.list\]/);
     assert.match(app, /found\.version \? `&v=/);

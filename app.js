@@ -682,6 +682,17 @@
         loadDriveImages();
         loadExternalSheets();
         loadAlertRules();
+        let refreshing = false;
+        let lastRefresh = 0;
+        const refreshOpenView = async () => {
+            if (document.hidden || refreshing || Date.now() - lastRefresh < 30000) return;
+            refreshing = true;
+            lastRefresh = Date.now();
+            try { await Promise.all([loadDriveImages(), loadExternalSheets()]); }
+            finally { refreshing = false; }
+        };
+        window.setInterval(refreshOpenView, 60000);
+        document.addEventListener('visibilitychange', refreshOpenView);
     });
 
     // =========================================================================
@@ -733,6 +744,7 @@
             if (!res.ok) return;
             const json = await res.json();
             if (json.success && json.data && json.data.map) {
+                if (JSON.stringify(state.driveImages) === JSON.stringify(json.data.map)) return;
                 state.driveImages = json.data.map;
                 state.imagesLoaded = true;
                 updateSidebarBadges();
@@ -842,14 +854,17 @@
     // Carregamento assíncrono das planilhas externas do Drive (Cores, Aviamentos e CQ)
     async function loadExternalSheets(force = false) {
         if (!window.location.protocol.startsWith('http')) return;
+        const previousRecords = JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
+        const failures = [];
         try {
             const requestExternal = type => {
                 const url = `/api/external-sheet?type=${type}${force ? '&refresh=1' : ''}`;
                 const request = force ? adminFetch(url, { method: 'POST' }) : fetch(url);
                 return request.then(async response => {
                     const payload = await response.json().catch(() => null);
-                    return response.ok ? payload : payload;
-                }).catch(() => null);
+                    if (!response.ok || !payload?.success || (force && payload.isLive === false)) throw new Error(payload?.error || `Falha ao atualizar ${type}`);
+                    return payload;
+                }).catch(error => { failures.push(`${type}: ${error.message}`); return null; });
             };
             const [coresRes, avRes, cqRes, ltRes, rotRes, apRes, calendarRes, progFeiraRes] = await Promise.all([
                 requestExternal('cores'),
@@ -885,12 +900,15 @@
             if (progFeiraRes && progFeiraRes.success) {
                 state.progFeiraExternalData = progFeiraRes;
             }
+            const changed = previousRecords !== JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
             updateSidebarBadges();
-            if (['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
+            if ((changed || force) && ['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
             }
+            if (force && failures.length) throw new Error(`Atualização parcial: ${failures.join('; ')}`);
         } catch (e) {
             console.warn('[EXTERNAL SHEETS] Erro ao carregar planilhas externas:', e.message);
+            if (force) throw e;
         }
     }
 
@@ -11802,6 +11820,7 @@
             if (!json.success) throw new Error(json.error || 'Erro desconhecido retornado pelo servidor');
 
             await loadCRMData('full');
+            await Promise.all([loadExternalSheets(true), loadDriveImages()]);
             showNotification(`Planilha atualizada com sucesso! ${formatNumber(json.count)} registros carregados diretamente do Google Drive.`, 'success', 'Sincronização Concluída');
             updateSystemStatus('Online (Sincronizado)', true);
         } catch (e) {

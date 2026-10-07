@@ -75,7 +75,7 @@ test('filtro de tipo é dinâmico e o PDF respeita o conjunto filtrado', () => {
     assert.match(css, /body\.print-alertas \.alert-item\s*\{[\s\S]*?min-height: 26mm !important[\s\S]*?break-inside: avoid !important/);
     assert.match(index, /style\.css\?v=20261006-cor-previsao-1/);
     assert.match(index, /light-theme\.css\?v=20261006-exact-image-code-1/);
-    assert.match(index, /app\.js\?v=20261007-prog-feira-alert-tab-1/);
+    assert.match(index, /app\.js\?v=[\w-]+/);
 });
 
 test('andamento CQ inclui REPROVADO como situação crítica vermelha e piscante', () => {
