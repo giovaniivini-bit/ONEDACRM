@@ -127,7 +127,7 @@
             severity: 'warning',
             match: 'all',
             conditions: [{ field: 'progFeiraSectorLate', operator: 'equals', value: 'true' }],
-            message: 'Produto {codigo} no fluxo de FEIRA / AMOSTRAS está pendente no setor {setor}, acima da quantidade de dias desejada, que é de {flowSectorLimitDays} dias.',
+            message: 'Produto {codigo} no fluxo de FEIRA / AMOSTRAS está pendente no setor {setor} há {diasParado} dias, acima da quantidade de dias desejada, que é de {flowSectorLimitDays} dias.',
             system: true
         }
     ]);

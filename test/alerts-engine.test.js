@@ -65,7 +65,7 @@ test('creates Prog Feira alerts only above the configured limit for eligible sec
     assert.equal(alerts.length, 2);
     assert.deepEqual(alerts.map(alert => alert.codigo).sort(), ['PROD.A', 'PROD.C']);
     assert.equal(alerts.find(alert => alert.codigo === 'PROD.A').message,
-        'Produto PROD.A no fluxo de FEIRA / AMOSTRAS está pendente no setor 01A, acima da quantidade de dias desejada, que é de 7 dias.');
+        'Produto PROD.A no fluxo de FEIRA / AMOSTRAS está pendente no setor 01A há 8 dias, acima da quantidade de dias desejada, que é de 7 dias.');
     assert.equal(alerts.find(alert => alert.codigo === 'PROD.C').record.flowSectorLimitDays, 3);
 });
 
