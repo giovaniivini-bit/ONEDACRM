@@ -88,6 +88,15 @@ O CRM usa um modelo híbrido.
 1. O usuário adiciona a imagem à pasta do Drive usada pelo CRM.
 2. O nome do arquivo deve usar o código completo do produto, por exemplo `01.16.00.7930.jpg`.
 3. O botão **Sincronizar Fotos** solicita `/api/drive-images?refresh=1`.
+
+### Pasta sincronizada (Syncthing)
+
+- No PC da empresa, a origem é `C:\ONEDA\Fotos-CRM` e funciona como **somente envio**.
+- Na VPS, a recepção é `/home/ubuntu/data/oneda-crm/images` e funciona como **somente recebimento**.
+- O CRM monitora essa pasta da VPS e refaz automaticamente o índice após arquivos novos ou substituídos.
+- Arquivos dessa pasta têm prioridade sobre cópias empacotadas e imagens antigas do Drive.
+- O navegador consulta o índice de imagens a cada 15 segundos enquanto a aba está visível.
+- O Google Drive permanece como contingência: quando um nome não existir na pasta sincronizada, o índice antigo continua disponível.
 4. Sem uma API autenticada, o Google entrega à VPS somente uma parte da listagem da pasta pública. Portanto, esse botão atualiza os arquivos que a VPS consegue enxergar, mas não garante descobrir todo o acervo.
 5. Quando o arquivo foi descoberto e possui ID, a VPS busca a miniatura pelo proxy `/api/proxy-image`.
 6. A resposta válida é guardada em `data/drive_thumbnail_cache/`.

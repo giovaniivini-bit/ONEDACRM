@@ -692,6 +692,9 @@
             finally { refreshing = false; }
         };
         window.setInterval(refreshOpenView, 60000);
+        window.setInterval(() => {
+            if (!document.hidden) loadDriveImages();
+        }, 15000);
         document.addEventListener('visibilitychange', refreshOpenView);
     });
 

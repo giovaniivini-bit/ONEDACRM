@@ -5,6 +5,9 @@ const os = require('node:os');
 const path = require('node:path');
 const {
     findLocalImagePath,
+    scanLocalImageFolders,
+    imageFileVersion,
+    buildLocalOnlyImageIndex,
     seedCachedCloudImages,
     mergeCloudImageEntry,
     DRIVE_FOLDER_SORT_PARAMS
@@ -127,4 +130,59 @@ test('operational image replaces bundled copy with the same product filename', t
     });
     assert.equal(selected, currentDriveImage);
     assert.equal(fs.readFileSync(selected, 'utf8'), 'new-drive-image');
+});
+
+test('synced folder has absolute priority and keeps similar product codes distinct', async t => {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'crm-synced-source-'));
+    t.after(() => fs.rmSync(temp, { recursive: true, force: true }));
+    const syncedDir = path.join(temp, 'synced');
+    const fallbackDir = path.join(temp, 'fallback');
+    fs.mkdirSync(syncedDir);
+    fs.mkdirSync(fallbackDir);
+
+    const exact = '21.19.00.0007.jpg';
+    const variant = '21.19.00.0007A.jpg';
+    fs.writeFileSync(path.join(syncedDir, exact), 'synced-exact');
+    fs.writeFileSync(path.join(syncedDir, variant), 'synced-variant');
+    fs.writeFileSync(path.join(fallbackDir, exact), 'newer-but-stale');
+    const future = new Date(Date.now() + 60_000);
+    fs.utimesSync(path.join(fallbackDir, exact), future, future);
+
+    await scanLocalImageFolders([syncedDir, fallbackDir], syncedDir);
+    assert.equal(fs.readFileSync(findLocalImagePath(exact, { knownDirs: [], staticImagesDir: syncedDir, cacheDir: syncedDir }), 'utf8'), 'synced-exact');
+    assert.equal(fs.readFileSync(findLocalImagePath(variant, { knownDirs: [], staticImagesDir: syncedDir, cacheDir: syncedDir }), 'utf8'), 'synced-variant');
+
+    const index = await buildLocalOnlyImageIndex({
+        dirs: [syncedDir, fallbackDir],
+        syncedDir,
+        cachedIndex: { list: [
+            { id: 'drive-fallback', filename: 'CLOUD.jpg', base: 'CLOUD', isLocal: false },
+            { id: 'exact-drive-fallback', filename: exact, base: exact.replace('.jpg', ''), isLocal: false }
+        ] }
+    });
+    assert.equal(index.map[exact.replace('.jpg', '').toUpperCase()].fullPath, path.join(syncedDir, exact));
+    assert.equal(index.map['21.19.00.0007A'].fullPath, path.join(syncedDir, variant));
+    assert.equal(index.map.CLOUD.id, 'drive-fallback');
+    assert.equal(index.map['21.19.00.0007'].id, 'exact-drive-fallback');
+});
+
+test('local image version changes when the file is replaced', t => {
+    const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'crm-image-version-'));
+    t.after(() => fs.rmSync(temp, { recursive: true, force: true }));
+    const filename = path.join(temp, 'product.jpg');
+    fs.writeFileSync(filename, 'version-one');
+    const first = imageFileVersion(fs.statSync(filename));
+    fs.writeFileSync(filename, 'version-two-is-different');
+    const second = imageFileVersion(fs.statSync(filename));
+    assert.notEqual(second, first);
+});
+
+test('browser polls the lightweight image index independently of sheet refresh', () => {
+    const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const server = fs.readFileSync(path.join(root, 'server.js'), 'utf8');
+    assert.match(app, /setInterval\(\(\) => \{\s*if \(!document\.hidden\) loadDriveImages\(\);\s*\}, 15000\)/);
+    assert.match(server, /refreshLocalImageIndex\(\)\.catch/);
+    assert.doesNotMatch(server, /setTimeout\(\(\) => \{\s*fetchGoogleDriveImages\(\)/);
+    assert.match(server, /do \{[\s\S]*?while \(localImageRefreshQueued\)/);
+    assert.match(server, /scheduleSyncedImageWatcherRetry\(\)/);
 });

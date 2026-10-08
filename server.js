@@ -28,6 +28,9 @@ const FULL_DATA_PATH = path.join(DATA_DIR, 'full_dataset.csv');
 const DRIVE_IMAGES_PATH = path.join(DATA_DIR, 'drive_images.json');
 const STATIC_IMAGES_DIR = path.join(BASE_DIR, 'images');
 const STATIC_IMAGE_MAP_PATH = path.join(BASE_DIR, 'image_map.json');
+const SYNCED_IMAGES_DIR = path.resolve(process.env.CRM_SYNC_IMAGES_DIR || (
+    process.platform === 'win32' ? 'C:/ONEDA/Fotos-CRM' : '/home/ubuntu/data/oneda-crm/images'
+));
 const ADMIN_TOKEN = String(process.env.CRM_ADMIN_TOKEN || '').trim();
 const ADMIN_PASSWORD_HASH = String(process.env.CRM_ADMIN_PASSWORD_HASH || '').trim();
 const CRM_PUBLIC_ORIGIN = String(process.env.CRM_PUBLIC_ORIGIN || '').trim();
@@ -321,7 +324,7 @@ const MIME_TYPES = {
 // Simple & robust CSV Parser
 function parseCSV(csvText) {
     if (!csvText) return [];
-    
+
     // Remove BOM if present
     if (csvText.charCodeAt(0) === 0xFEFF) {
         csvText = csvText.slice(1);
@@ -429,6 +432,7 @@ function fetchGoogleSheetCSV(url = GOOGLE_SHEET_CSV_URL, maxRedirects = 5) {
 }
 
 const KNOWN_LOCAL_IMAGE_DIRS = [
+    SYNCED_IMAGES_DIR,
     '//192.168.0.6/ti/Arquivos/Imagens/Produto',
     '//192.168.0.6/ti/Arquivos/Imagens',
     'T:/Arquivos/Imagens/Produto',
@@ -452,12 +456,22 @@ if (!fs.existsSync(IMAGE_CACHE_DIR)) {
 const localImageRamCache = new Map(); // upperFilename -> { buffer, contentType, etag, mtimeMs, size }
 const MAX_RAM_CACHE_ENTRIES = 600;
 
+function isSyncedImagePath(filePath, syncedDir = SYNCED_IMAGES_DIR) {
+    if (!filePath) return false;
+    const relative = path.relative(path.resolve(syncedDir), path.resolve(filePath));
+    return relative === '' || (!relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+}
+
+function imageFileVersion(stat) {
+    return `${Math.round(stat.mtimeMs)}-${Math.round(stat.ctimeMs)}-${stat.size}`;
+}
+
 
 // Scan local folders for images with newest mtime priority
-async function scanLocalImageFolders() {
+async function scanLocalImageFolders(dirs = KNOWN_LOCAL_IMAGE_DIRS, syncedDir = SYNCED_IMAGES_DIR) {
     localImageFilesMap.clear();
     let localCount = 0;
-    for (const dir of KNOWN_LOCAL_IMAGE_DIRS) {
+    for (const dir of dirs) {
         try {
             const files = await fs.promises.readdir(dir);
             for (const f of files) {
@@ -470,6 +484,11 @@ async function scanLocalImageFolders() {
                     } else {
                         try {
                             const existingPath = localImageFilesMap.get(upper);
+                            if (isSyncedImagePath(existingPath, syncedDir)) continue;
+                            if (isSyncedImagePath(fullPath, syncedDir)) {
+                                localImageFilesMap.set(upper, fullPath);
+                                continue;
+                            }
                             const [curStat, existingStat] = await Promise.all([
                                 fs.promises.stat(fullPath),
                                 fs.promises.stat(existingPath)
@@ -493,7 +512,14 @@ function seedCachedCloudImages(allFiles, cachedIndex) {
         const filename = path.basename(String(entry?.filename || ''));
         if (!filename || !entry?.id) return;
         const upper = filename.toUpperCase();
-        if (allFiles.has(upper)) return;
+        if (allFiles.has(upper)) {
+            const localEntry = allFiles.get(upper);
+            if (localEntry?.isLocal && !localEntry.id) {
+                localEntry.id = entry.id;
+                localEntry.driveUrl = entry.driveUrl || `https://drive.google.com/file/d/${entry.id}/view`;
+            }
+            return;
+        }
         const syncVersion = entry.version || driveImagesCache?.version || Date.now();
         allFiles.set(upper, {
             ...entry,
@@ -525,23 +551,12 @@ function mergeCloudImageEntry(allFiles, cloudEntry) {
     return allFiles;
 }
 
-// Download/index images from Google Drive folder + local folders (Hybrid Sync)
-let driveSyncInFlight = null;
-function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
-    if (!driveSyncInFlight) {
-        driveSyncInFlight = buildGoogleDriveImages(folderUrl).finally(() => { driveSyncInFlight = null; });
-    }
-    return driveSyncInFlight;
-}
-
-async function buildGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
-    console.log('[DRIVE] Iniciando sincronização profunda de imagens (Local + Google Drive Cloud)...');
-    const syncVersion = Date.now().toString(36);
-    
-    // 1. Escanear diretórios locais / Google Drive Desktop / Compartilhamento de Rede
-    await scanLocalImageFolders();
+async function collectLocalImageEntries(options = {}) {
+    const dirs = options.dirs || KNOWN_LOCAL_IMAGE_DIRS;
+    const syncedDir = options.syncedDir || SYNCED_IMAGES_DIR;
+    const syncVersion = options.syncVersion || Date.now().toString(36);
+    await scanLocalImageFolders(dirs, syncedDir);
     const allFiles = new Map();
-    const refreshedDriveIds = new Set();
 
     for (const [upperFilename, fullPath] of localImageFilesMap.entries()) {
         const baseName = path.basename(fullPath).replace(/\.(?:jpg|jpeg|png|webp|gif|svg)$/i, '').trim();
@@ -551,14 +566,9 @@ async function buildGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
             relativeStaticPath !== '..' &&
             !relativeStaticPath.startsWith(`..${path.sep}`) &&
             !path.isAbsolute(relativeStaticPath);
-        let mtime = 0;
-        let fileSize = 0;
-        try {
-            const stat = await fs.promises.stat(fullPath);
-            mtime = Math.round(stat.mtimeMs);
-            fileSize = stat.size;
-        } catch(e) {}
-        const version = mtime ? `${mtime}-${fileSize}` : syncVersion;
+        let fileVersion = '';
+        try { fileVersion = imageFileVersion(await fs.promises.stat(fullPath)); } catch (_) {}
+        const version = fileVersion || syncVersion;
         const vParam = `&v=${version}`;
         const localAssetUrl = isBundledStatic
             ? `/images/${encodeURIComponent(origFilename)}?v=${encodeURIComponent(version)}`
@@ -570,12 +580,78 @@ async function buildGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
             isLocal: true,
             isBundledStatic,
             version,
-            fullPath: fullPath,
+            fullPath,
             thumbUrl: localAssetUrl,
             largeUrl: localAssetUrl,
-            driveUrl: `https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA`
+            driveUrl: GOOGLE_DRIVE_FOLDER_URL
         });
     }
+    return allFiles;
+}
+
+function finalizeImageIndex(allFiles, source) {
+    const list = Array.from(allFiles.values());
+    const index = {};
+    list.forEach(entry => {
+        const upper = entry.base.toUpperCase();
+        index[upper] = entry;
+        index[upper.replace(/[^A-Z0-9]/g, '')] = entry;
+        index[entry.filename.toUpperCase()] = entry;
+    });
+
+    const bundledIndex = loadBundledImageIndex();
+    const mergedMap = { ...index };
+    Object.entries(bundledIndex.map).forEach(([key, bundledEntry]) => {
+        const remoteEntry = index[key] || index[String(bundledEntry.filename || '').toUpperCase()];
+        mergedMap[key] = remoteEntry || bundledEntry;
+    });
+    const mergedListByFilename = new Map();
+    [...bundledIndex.list, ...list].forEach(entry => {
+        mergedListByFilename.set(String(entry.filename || '').toUpperCase(), entry);
+    });
+    const mergedList = Array.from(mergedListByFilename.values());
+    return {
+        count: mergedList.length,
+        timestamp: new Date().toISOString(),
+        source,
+        map: sanitizeImageMap(mergedMap),
+        list: mergedList
+    };
+}
+
+function publishImageIndex(result) {
+    driveImagesCache = result;
+    refreshKnownDriveImageIds();
+    try {
+        fs.writeFileSync(DRIVE_IMAGES_PATH, JSON.stringify(result, null, 2), 'utf8');
+    } catch (error) {
+        console.warn('[IMG] Aviso ao salvar drive_images.json:', error.message);
+    }
+    return result;
+}
+
+// Download/index images from Google Drive folder + local folders (Hybrid Sync)
+let driveSyncInFlight = null;
+function fetchGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
+    if (!driveSyncInFlight) {
+        driveSyncInFlight = (async () => {
+            // Um refresh local já iniciado deve terminar antes do snapshot profundo.
+            // Eventos locais que chegarem durante este sync serão enfileirados pela
+            // própria refreshLocalImageIndex e aplicados assim que ele terminar.
+            if (localImageRefreshInFlight) await localImageRefreshInFlight;
+            return buildGoogleDriveImages(folderUrl);
+        })().finally(() => { driveSyncInFlight = null; });
+    }
+    return driveSyncInFlight;
+}
+
+async function buildGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
+    console.log('[DRIVE] Iniciando sincronização profunda de imagens (Local + Google Drive Cloud)...');
+    const syncVersion = Date.now().toString(36);
+
+    // 1. Escanear diretórios locais / Google Drive Desktop / Compartilhamento de Rede
+    const allFiles = await collectLocalImageEntries({ syncVersion });
+    const refreshedDriveIds = new Set();
 
     // A página pública do Drive expõe apenas janelas parciais. Preservar os
     // arquivos em nuvem já descobertos evita que desapareçam do índice quando
@@ -645,56 +721,95 @@ async function buildGoogleDriveImages(folderUrl = GOOGLE_DRIVE_FOLDER_URL) {
         console.warn('[DRIVE] Listagem incorporada indisponível:', error.message);
     }
 
-    const list = Array.from(allFiles.values());
-
-    const index = {};
-    list.forEach(entry => {
-        const upper = entry.base.toUpperCase();
-        const stripped = upper.replace(/[^A-Z0-9]/g, '');
-        index[upper] = entry;
-        index[stripped] = entry;
-        index[entry.filename.toUpperCase()] = entry;
-
-    });
-
-    // Descobertas de rede/Drive complementam o mapa versionado, mas nunca
-    // substituem aliases curados nem as imagens estáticas comprovadas.
-    const bundledIndex = loadBundledImageIndex();
-    const mergedMap = { ...index };
-    Object.entries(bundledIndex.map).forEach(([key, bundledEntry]) => {
-        const remoteEntry = index[key] || index[String(bundledEntry.filename || '').toUpperCase()];
-        mergedMap[key] = remoteEntry || bundledEntry;
-    });
-    const mergedListByFilename = new Map();
-    [...bundledIndex.list, ...list].forEach(entry => {
-        mergedListByFilename.set(String(entry.filename || '').toUpperCase(), entry);
-    });
-    const mergedList = Array.from(mergedListByFilename.values());
-
-    const result = {
-        count: mergedList.length,
-        timestamp: new Date().toISOString(),
-        source: 'bundled-static-images+drive',
-        map: sanitizeImageMap(mergedMap),
-        list: mergedList
-    };
+    const result = finalizeImageIndex(allFiles, 'bundled-static-images+drive');
 
     // Atualizar também os bytes: uma substituição no Drive pode manter o mesmo ID.
     if (refreshedDriveIds.size) await proxyGoogleDriveImage.invalidate(refreshedDriveIds);
-    driveImagesCache = result;
-    refreshKnownDriveImageIds();
-    try {
-        fs.writeFileSync(DRIVE_IMAGES_PATH, JSON.stringify(result, null, 2), 'utf8');
-    } catch (e) {
-        console.warn('[DRIVE] Aviso ao salvar drive_images.json:', e.message);
-    }
+    publishImageIndex(result);
 
-    console.log(`[DRIVE] Sincronização profunda concluída: ${mergedList.length} fotos indexadas com sucesso!`);
+    console.log(`[DRIVE] Sincronização profunda concluída: ${result.count} fotos indexadas com sucesso!`);
     return result;
 }
 
 // Proxy para thumbnails do Google Drive (evita bloqueios ou restrições de terceiros)
 const proxyGoogleDriveImage = createDriveImageProxy(path.join(DATA_DIR, 'drive_thumbnail_cache'));
+
+let syncedImageWatcher = null;
+let syncedImageRefreshTimer = null;
+let syncedImageWatcherRetryTimer = null;
+let localImageRefreshInFlight = null;
+let localImageRefreshQueued = false;
+
+async function buildLocalOnlyImageIndex(options = {}) {
+    const allFiles = await collectLocalImageEntries(options);
+    seedCachedCloudImages(allFiles, options.cachedIndex || driveImagesCache);
+    return finalizeImageIndex(allFiles, 'bundled-static-images+syncthing+drive-cache');
+}
+
+function refreshLocalImageIndex() {
+    if (driveSyncInFlight) {
+        localImageRefreshQueued = true;
+        return driveSyncInFlight.then(() => refreshLocalImageIndex());
+    }
+    if (localImageRefreshInFlight) {
+        localImageRefreshQueued = true;
+        return localImageRefreshInFlight;
+    }
+    localImageRefreshInFlight = (async () => {
+        let result;
+        do {
+            localImageRefreshQueued = false;
+            result = publishImageIndex(await buildLocalOnlyImageIndex());
+        } while (localImageRefreshQueued);
+        console.log(`[IMG SYNC] Índice local atualizado: ${result.count} fotos disponíveis.`);
+        return result;
+    })().finally(() => { localImageRefreshInFlight = null; });
+    return localImageRefreshInFlight;
+}
+
+function scheduleSyncedImageWatcherRetry() {
+    clearTimeout(syncedImageWatcherRetryTimer);
+    syncedImageWatcherRetryTimer = setTimeout(startSyncedImageWatcher, 30_000);
+    syncedImageWatcherRetryTimer.unref?.();
+}
+
+function startSyncedImageWatcher() {
+    if (syncedImageWatcher) return syncedImageWatcher;
+    if (!fs.existsSync(SYNCED_IMAGES_DIR)) {
+        scheduleSyncedImageWatcherRetry();
+        return null;
+    }
+    try {
+        syncedImageWatcher = fs.watch(SYNCED_IMAGES_DIR, { persistent: false }, (eventType, rawFilename) => {
+            const filename = String(rawFilename || '');
+            if (eventType === 'rename' && !fs.existsSync(SYNCED_IMAGES_DIR)) {
+                syncedImageWatcher?.close();
+                syncedImageWatcher = null;
+                scheduleSyncedImageWatcherRetry();
+                return;
+            }
+            if (filename && !/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(filename)) return;
+            clearTimeout(syncedImageRefreshTimer);
+            syncedImageRefreshTimer = setTimeout(() => {
+                refreshLocalImageIndex().catch(error => {
+                    console.warn('[IMG SYNC] Falha ao atualizar índice após mudança local:', error.message);
+                });
+            }, 1500);
+            syncedImageRefreshTimer.unref?.();
+        });
+        syncedImageWatcher.on('error', error => {
+            console.warn('[IMG SYNC] Monitor da pasta sincronizada interrompido:', error.message);
+            syncedImageWatcher?.close();
+            syncedImageWatcher = null;
+            scheduleSyncedImageWatcherRetry();
+        });
+        console.log(`[IMG SYNC] Monitorando pasta sincronizada: ${SYNCED_IMAGES_DIR}`);
+    } catch (error) {
+        console.warn('[IMG SYNC] Não foi possível monitorar a pasta sincronizada:', error.message);
+        scheduleSyncedImageWatcherRetry();
+    }
+    return syncedImageWatcher;
+}
 
 function findLocalImagePath(filename, sources = {}) {
     const cleanFilename = path.basename(String(filename || ''));
@@ -736,7 +851,7 @@ function serveLocalImageFile(filename, req, res) {
     }
     const currentStat = fs.statSync(targetPath);
     const previous = localImageRamCache.get(upper);
-    if (previous && (previous.path !== targetPath || previous.mtimeMs !== Math.round(currentStat.mtimeMs) || previous.size !== currentStat.size)) {
+    if (previous && (previous.path !== targetPath || previous.version !== imageFileVersion(currentStat))) {
         localImageRamCache.delete(upper);
     }
     const fromLocalCache = targetPath === localCachedPath;
@@ -773,7 +888,8 @@ function serveLocalImageFile(filename, req, res) {
         const stat = fs.statSync(targetPath);
         const mtimeMs = Math.round(stat.mtimeMs);
         const size = stat.size;
-        const etag = `W/"${mtimeMs.toString(36)}-${size.toString(36)}"`;
+        const version = imageFileVersion(stat);
+        const etag = `W/"${Buffer.from(version).toString('base64url')}"`;
         const ext = path.extname(targetPath).toLowerCase();
         const contentType = MIME_TYPES[ext] || 'image/jpeg';
 
@@ -802,7 +918,7 @@ function serveLocalImageFile(filename, req, res) {
                 const firstKey = localImageRamCache.keys().next().value;
                 localImageRamCache.delete(firstKey);
             }
-            localImageRamCache.set(upper, { buffer, contentType, etag, mtimeMs, size, path: targetPath });
+            localImageRamCache.set(upper, { buffer, contentType, etag, mtimeMs, size, version, path: targetPath });
         }
 
         res.writeHead(200, {
@@ -1457,6 +1573,7 @@ function startServers() {
 
         // Sincronizar imagens do Drive em segundo plano na inicialização
         fetchGoogleDriveImages().catch(e => console.warn('[DRIVE] Aviso no sync inicial:', e.message));
+        startSyncedImageWatcher();
     });
 
     // Iniciar servidor secundário na porta 8080
@@ -1485,5 +1602,12 @@ module.exports = {
     findLocalImagePath,
     seedCachedCloudImages,
     mergeCloudImageEntry,
+    scanLocalImageFolders,
+    isSyncedImagePath,
+    imageFileVersion,
+    buildLocalOnlyImageIndex,
+    refreshLocalImageIndex,
+    startSyncedImageWatcher,
+    SYNCED_IMAGES_DIR,
     DRIVE_FOLDER_SORT_PARAMS
 };
