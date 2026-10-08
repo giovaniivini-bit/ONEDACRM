@@ -18,6 +18,8 @@ O diagnóstico estrutural e o backlog técnico desta rodada estão em
 [docs/AUDITORIA-ARQUITETURA-2026-09.md](docs/AUDITORIA-ARQUITETURA-2026-09.md).
 O procedimento de publicação, verificação e rollback está em
 [docs/DEPLOY.md](docs/DEPLOY.md).
+O procedimento operacional das fotos está em
+[docs/SINCRONIZACAO-DE-IMAGENS.md](docs/SINCRONIZACAO-DE-IMAGENS.md).
 
 ## Execução local
 

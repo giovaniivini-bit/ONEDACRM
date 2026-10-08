@@ -75,49 +75,57 @@ realce. O botão **Atualizar** exige sessão administrativa e força nova leitur
 
 O CRM usa um modelo híbrido.
 
-### 4.1 Imagens estáticas na VPS
+### 4.1 Imagens sincronizadas do PC para a VPS
+
+- A pasta oficial de entrada no PC da empresa é `C:\ONEDA\Fotos-CRM`.
+- O Syncthing envia automaticamente os arquivos para
+  `/home/ubuntu/data/oneda-crm/images` na VPS.
+- O PC está configurado como **somente envio** e a VPS como **somente recebimento**.
+- O CRM monitora a pasta da VPS, atualiza o índice automaticamente e o navegador consulta
+  esse índice a cada 15 segundos enquanto a aba está visível.
+- Arquivos novos e substituições não precisam de commit, GitHub, deploy ou botão no CRM.
+- Uma imagem sincronizada sempre vence uma cópia antiga, inclusive quando a extensão mudou
+  entre `.jpg`, `.jpeg` e `.png`.
+
+### 4.2 Imagens estáticas publicadas com o aplicativo
 
 - Ficam em `/home/ubuntu/apps/ONEDACRM/images/` na produção.
 - São versionadas no repositório dentro de `images/`.
 - `image_map.json` relaciona códigos de produto a arquivos.
 - São servidas em `/images/NOME-DO-ARQUIVO`.
-- É o caminho mais rápido, pois não depende do Google Drive durante a visualização.
+- Permanecem como acervo legado e contingência; a pasta Syncthing tem prioridade.
 
-### 4.2 Imagens existentes somente no Google Drive
+### 4.3 Imagens existentes somente no Google Drive
 
 1. O usuário adiciona a imagem à pasta do Drive usada pelo CRM.
 2. O nome do arquivo deve usar o código completo do produto, por exemplo `01.16.00.7930.jpg`.
 3. O botão **Sincronizar Fotos** solicita `/api/drive-images?refresh=1`.
 
-### Pasta sincronizada (Syncthing)
-
-- No PC da empresa, a origem é `C:\ONEDA\Fotos-CRM` e funciona como **somente envio**.
-- Na VPS, a recepção é `/home/ubuntu/data/oneda-crm/images` e funciona como **somente recebimento**.
-- O CRM monitora essa pasta da VPS e refaz automaticamente o índice após arquivos novos ou substituídos.
-- Arquivos dessa pasta têm prioridade sobre cópias empacotadas e imagens antigas do Drive.
-- O navegador consulta o índice de imagens a cada 15 segundos enquanto a aba está visível.
-- O Google Drive permanece como contingência: quando um nome não existir na pasta sincronizada, o índice antigo continua disponível.
 4. Sem uma API autenticada, o Google entrega à VPS somente uma parte da listagem da pasta pública. Portanto, esse botão atualiza os arquivos que a VPS consegue enxergar, mas não garante descobrir todo o acervo.
 5. Quando o arquivo foi descoberto e possui ID, a VPS busca a miniatura pelo proxy `/api/proxy-image`.
 6. A resposta válida é guardada em `data/drive_thumbnail_cache/`.
 7. Os acessos seguintes usam o cache local da VPS.
 
-O botão de sincronização não copia arquivos para `images/` e não deve ser tratado como uma varredura completa. Enquanto não houver Google Drive API autenticada, o fluxo confiável usado pelo CRM e pelo Studeoneda é copiar as imagens da pasta sincronizada do Drive no computador para `images/`, versioná-las no GitHub e publicá-las na VPS.
+O botão de sincronização não copia arquivos para a pasta Syncthing e não deve ser tratado
+como uma varredura completa. O Google Drive permanece como contingência durante a
+transição, mas o fluxo operacional oficial é colocar a foto em `C:\ONEDA\Fotos-CRM`.
 
-### 4.3 Fallback
+### 4.4 Prioridade e fallback
 
-- A interface tenta primeiro a imagem local quando ela existe.
+- A interface tenta primeiro a imagem recebida pelo Syncthing.
+- Depois tenta outras imagens locais publicadas com o aplicativo.
 - Se o arquivo local falhar e houver ID do Drive, tenta o proxy do Drive.
 - A ampliação também tenta a fonte alternativa antes do placeholder.
 - Se nenhuma fonte funcionar, a interface mostra “Imagem indisponível” ou “Sem foto na pasta”.
 
-### 4.4 Tela Imagens Ausentes
+### 4.5 Tela Imagens Ausentes
 
 Em **Gestão & Dados → Imagens Ausentes**, o CRM lista códigos de produtos atuais sem correspondência no índice de imagens. A tela permite:
 
 - pesquisar por código, OP, cliente, marca ou setor;
 - ver o nome de arquivo esperado;
-- sincronizar novamente o Drive;
+- copiar de uma vez os nomes esperados para preparar o lote de fotos;
+- sincronizar novamente o índice do Drive como contingência;
 - exportar as pendências em CSV.
 
 ## 5. Regras para novas imagens
@@ -126,9 +134,13 @@ Em **Gestão & Dados → Imagens Ausentes**, o CRM lista códigos de produtos at
 - O nome deve conter o código exato: `CODIGO.jpg`.
 - Preserve sufixos: um produto `01.16.00.7930A` deve usar `01.16.00.7930A.jpg`.
 - Evite nomes genéricos como `foto nova.jpg`.
-- Aguarde o Google Drive para computador concluir a sincronização local.
-- Copie os novos arquivos para `images/`, publique a versão no GitHub/VPS e confira **Imagens Ausentes**.
-- O botão **Sincronizar Fotos** pode localizar arquivos públicos adicionais, mas não substitui essa publicação enquanto a API oficial não estiver configurada.
+- Copie ou substitua o arquivo em `C:\ONEDA\Fotos-CRM`.
+- Mantenha o Syncthing aberto no PC; ele inicia automaticamente com o Windows.
+- Aguarde alguns segundos e confira o produto no CRM. Não é necessário publicar o código.
+- Confira **Imagens Ausentes**; o item atendido deve sair da lista após a atualização do índice.
+- O botão **Sincronizar Fotos** atua somente na contingência do Drive e não é necessário
+  para as imagens colocadas na pasta oficial.
+- Consulte o procedimento completo em `docs/SINCRONIZACAO-DE-IMAGENS.md`.
 
 ## 6. Estabilidade visual das fotos
 
@@ -254,7 +266,7 @@ Validação manual obrigatória:
 2. Rolar uma grade longa sem piscadas ou blocos pretos.
 3. Abrir uma foto no lightbox.
 4. Conferir a tela Imagens Ausentes.
-5. Sincronizar fotos e confirmar que os números são recalculados.
+5. Copiar uma foto de teste para a pasta sincronizada e confirmar que os números são recalculados.
 6. Abrir Alertas, filtrar prioridades e confirmar as sete regras oficiais.
 
 ## 8. Produção e publicação
@@ -291,7 +303,7 @@ Antes de aceitar a alteração, confirme:
 ## 10. Limitações atuais e próximos passos
 
 - A leitura do Google Drive não usa ainda uma API autenticada oficial.
-- A listagem pública do Drive é parcial; imagens novas só ficam garantidas quando são espelhadas em `images/` e publicadas.
+- A listagem pública do Drive é parcial; por isso, novas imagens devem entrar pela pasta Syncthing.
 - Os dados continuam dependentes de planilhas e seus formatos de colunas.
 - O deploy na VPS é manual e depende de acesso SSH.
 - O CRM ainda não possui contas e perfis por usuário; o login administrativo protege as
@@ -299,8 +311,8 @@ Antes de aceitar a alteração, confirme:
 
 Evoluções recomendadas:
 
-1. integração autenticada com Google Drive API;
-2. espelhamento em segundo plano das novas imagens para a VPS;
+1. monitoramento e aviso de falhas do Syncthing dentro do CRM;
+2. backup periódico da pasta de imagens recebida pela VPS;
 3. CI/CD com publicação reproduzível;
-4. testes automatizados das telas e da correspondência produto-imagem;
-5. monitoramento de falhas de sincronização.
+4. testes automatizados adicionais das telas e da correspondência produto-imagem;
+5. remoção futura da dependência do Drive depois do período de contingência.
