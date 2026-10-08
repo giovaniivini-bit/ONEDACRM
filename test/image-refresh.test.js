@@ -144,7 +144,9 @@ test('synced folder has absolute priority and keeps similar product codes distin
     const variant = '21.19.00.0007A.jpg';
     fs.writeFileSync(path.join(syncedDir, exact), 'synced-exact');
     fs.writeFileSync(path.join(syncedDir, variant), 'synced-variant');
+    fs.writeFileSync(path.join(syncedDir, '01.13.42.0518.jpg'), 'synced-jpg');
     fs.writeFileSync(path.join(fallbackDir, exact), 'newer-but-stale');
+    fs.writeFileSync(path.join(fallbackDir, '01.13.42.0518.png'), 'old-png-other-extension');
     const future = new Date(Date.now() + 60_000);
     fs.utimesSync(path.join(fallbackDir, exact), future, future);
 
@@ -157,13 +159,17 @@ test('synced folder has absolute priority and keeps similar product codes distin
         syncedDir,
         cachedIndex: { list: [
             { id: 'drive-fallback', filename: 'CLOUD.jpg', base: 'CLOUD', isLocal: false },
-            { id: 'exact-drive-fallback', filename: exact, base: exact.replace('.jpg', ''), isLocal: false }
+            { id: 'exact-drive-fallback', filename: exact, base: exact.replace('.jpg', ''), isLocal: false },
+            { id: 'cross-extension-fallback', filename: '01.13.42.0518.png', base: '01.13.42.0518', isLocal: false }
         ] }
     });
     assert.equal(index.map[exact.replace('.jpg', '').toUpperCase()].fullPath, path.join(syncedDir, exact));
     assert.equal(index.map['21.19.00.0007A'].fullPath, path.join(syncedDir, variant));
     assert.equal(index.map.CLOUD.id, 'drive-fallback');
     assert.equal(index.map['21.19.00.0007'].id, 'exact-drive-fallback');
+    assert.equal(index.map['01.13.42.0518'].filename, '01.13.42.0518.jpg');
+    assert.equal(index.map['01.13.42.0518'].id, 'cross-extension-fallback');
+    assert.equal(fs.readFileSync(index.map['01.13.42.0518'].fullPath, 'utf8'), 'synced-jpg');
 });
 
 test('local image version changes when the file is replaced', t => {

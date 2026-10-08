@@ -507,19 +507,34 @@ async function scanLocalImageFolders(dirs = KNOWN_LOCAL_IMAGE_DIRS, syncedDir = 
     return localCount;
 }
 
-function seedCachedCloudImages(allFiles, cachedIndex) {
+function preferredLocalEntryByBase(allFiles, base, syncedDir = SYNCED_IMAGES_DIR) {
+    const wanted = String(base || '').trim().toUpperCase();
+    if (!wanted) return null;
+    const matches = Array.from(allFiles.values()).filter(entry =>
+        entry?.isLocal && String(entry.base || '').trim().toUpperCase() === wanted
+    );
+    return matches.sort((a, b) => {
+        const rank = entry => isSyncedImagePath(entry?.fullPath, syncedDir)
+            ? 3 : (!entry?.isBundledStatic ? 2 : 1);
+        return rank(b) - rank(a);
+    })[0] || null;
+}
+
+function seedCachedCloudImages(allFiles, cachedIndex, syncedDir = SYNCED_IMAGES_DIR) {
     (cachedIndex?.list || []).forEach(entry => {
         const filename = path.basename(String(entry?.filename || ''));
         if (!filename || !entry?.id) return;
         const upper = filename.toUpperCase();
-        if (allFiles.has(upper)) {
-            const localEntry = allFiles.get(upper);
+        const base = entry.base || path.basename(filename, path.extname(filename));
+        const localEntry = preferredLocalEntryByBase(allFiles, base, syncedDir);
+        if (localEntry) {
             if (localEntry?.isLocal && !localEntry.id) {
                 localEntry.id = entry.id;
                 localEntry.driveUrl = entry.driveUrl || `https://drive.google.com/file/d/${entry.id}/view`;
             }
             return;
         }
+        if (allFiles.has(upper)) return;
         const syncVersion = entry.version || driveImagesCache?.version || Date.now();
         allFiles.set(upper, {
             ...entry,
@@ -539,6 +554,11 @@ function mergeCloudImageEntry(allFiles, cloudEntry) {
     const upper = String(cloudEntry?.filename || '').toUpperCase();
     if (!upper) return allFiles;
     const existing = allFiles.get(upper);
+    const sameProductLocal = preferredLocalEntryByBase(allFiles, cloudEntry.base);
+    if (sameProductLocal && !sameProductLocal.id) {
+        sameProductLocal.id = cloudEntry.id;
+        sameProductLocal.driveUrl = cloudEntry.driveUrl;
+    }
     if (!existing || existing.isBundledStatic || existing.isLocal === false) {
         allFiles.set(upper, cloudEntry);
         return allFiles;
@@ -589,14 +609,25 @@ async function collectLocalImageEntries(options = {}) {
     return allFiles;
 }
 
-function finalizeImageIndex(allFiles, source) {
+function finalizeImageIndex(allFiles, source, syncedDir = SYNCED_IMAGES_DIR) {
     const list = Array.from(allFiles.values());
     const index = {};
+    const priority = entry => {
+        if (isSyncedImagePath(entry?.fullPath, syncedDir)) return 4;
+        if (entry?.isLocal && !entry?.isBundledStatic) return 3;
+        if (entry?.isLocal === false) return 2;
+        if (entry?.isBundledStatic) return 1;
+        return 0;
+    };
+    const setPreferred = (key, entry) => {
+        const existing = index[key];
+        if (!existing || priority(entry) >= priority(existing)) index[key] = entry;
+    };
     list.forEach(entry => {
         const upper = entry.base.toUpperCase();
-        index[upper] = entry;
-        index[upper.replace(/[^A-Z0-9]/g, '')] = entry;
-        index[entry.filename.toUpperCase()] = entry;
+        setPreferred(upper, entry);
+        setPreferred(upper.replace(/[^A-Z0-9]/g, ''), entry);
+        setPreferred(entry.filename.toUpperCase(), entry);
     });
 
     const bundledIndex = loadBundledImageIndex();
@@ -742,8 +773,8 @@ let localImageRefreshQueued = false;
 
 async function buildLocalOnlyImageIndex(options = {}) {
     const allFiles = await collectLocalImageEntries(options);
-    seedCachedCloudImages(allFiles, options.cachedIndex || driveImagesCache);
-    return finalizeImageIndex(allFiles, 'bundled-static-images+syncthing+drive-cache');
+    seedCachedCloudImages(allFiles, options.cachedIndex || driveImagesCache, options.syncedDir || SYNCED_IMAGES_DIR);
+    return finalizeImageIndex(allFiles, 'bundled-static-images+syncthing+drive-cache', options.syncedDir || SYNCED_IMAGES_DIR);
 }
 
 function refreshLocalImageIndex() {
