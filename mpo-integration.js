@@ -23,11 +23,41 @@ function publicImage(value) {
 }
 async function getMpoData(workspace) {
     const programs = validPrograms(await readMpo('/api/crm/workspaces'));
-    if (!workspace) return { programs };
+    if (!workspace) {
+        const summaries = [];
+        for (const program of programs) {
+            const summary = await readMpo('/api/crm/summary?workspace=' + encodeURIComponent(program.id));
+            if (summary.workspace?.id !== program.id) throw new Error('MPO retornou outra programação');
+            summaries.push(summary);
+        }
+        return { programs, summary: consolidate(summaries), fetchedAt: new Date().toISOString() };
+    }
     if (!programs.some(p => p.id === workspace)) { const error = new Error('Programação não disponível'); error.status = 404; throw error; }
     const summary = await readMpo('/api/crm/summary?workspace=' + encodeURIComponent(workspace));
     if (summary.workspace?.id !== workspace) throw new Error('MPO retornou outra programação');
-    summary.todas_pecas = (summary.todas_pecas || []).map(item => ({ ...item, image_full_url: publicImage(item.image_url), folha_full_url: publicImage(item.folha_url) }));
-    return { programs, summary, fetchedAt: new Date().toISOString() };
+    return { programs, summary: consolidate([summary]), fetchedAt: new Date().toISOString() };
 }
-module.exports = { getMpoData, validPrograms, publicImage };
+function consolidate(summaries) {
+    const items = [];
+    const groups = {};
+    for (const summary of summaries) {
+        const ws = summary.workspace;
+        const keys = new Map();
+        for (const item of summary.todas_pecas || []) {
+            const key = JSON.stringify([ws.id, String(item.id), item.ref]);
+            keys.set(JSON.stringify([String(item.id), item.ref]), key);
+            items.push({ ...item, key, program: ws.nome, programId: ws.id, image_full_url: publicImage(item.image_url), folha_full_url: publicImage(item.folha_url) });
+        }
+        for (const [name, group] of Object.entries(summary.por_responsavel || {})) {
+            groups[name] ||= { responsavel: group.responsavel, itens: [] };
+            for (const item of group.itens || []) {
+                const key = keys.get(JSON.stringify([String(item.id), item.ref]));
+                if (key) groups[name].itens.push({ key });
+            }
+            groups[name].total_pecas = groups[name].itens.length;
+        }
+    }
+    const pending = items.filter(i => i.tem_pendencia).length;
+    return { workspace: { nome: summaries.length === 1 ? summaries[0].workspace.nome : 'Todas as programações', total_pecas: items.length, total_com_pendencia: pending, total_sem_pendencia: items.length - pending }, todas_pecas: items, por_responsavel: groups };
+}
+module.exports = { getMpoData, validPrograms, publicImage, consolidate };
