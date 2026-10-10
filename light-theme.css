@@ -651,3 +651,5 @@ body.light-mode .prog-feira-legend-des { color:#1d4ed8; }
 body.light-mode .prog-feira-sector-badge,
 body.light-mode .prog-feira-history summary { color:#0369a1; }
 body.light-mode .prog-feira-history-step.current { color:#ffffff; background:#075985; }
+body.light-mode .mpo-view select, body.light-mode .mpo-view button, body.light-mode .mpo-view input { background:#fff; color:#172033; border-color:#cbd5e1; }
+body.light-mode .mpo-card { background:#fff; color:#172033; border-color:#cbd5e1; }

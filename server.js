@@ -5,6 +5,7 @@
  */
 
 const http = require('http');
+const { getMpoData } = require('./mpo-integration');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
@@ -51,7 +52,7 @@ const adminAuth = createAdminAuth({
     trustedProxyAddresses: CRM_TRUSTED_PROXY_IPS
 });
 const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE_TTL_MS) || 5 * 60_000);
-const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'prog-feira.js', 'image-coverage.js']);
+const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'prog-feira.js', 'image-coverage.js', 'mpo-view.js']);
 
 if (!ADMIN_PASSWORD_HASH) {
     console.warn('⚠️  CRM_ADMIN_PASSWORD_HASH não configurado: login administrativo por senha está indisponível.');
@@ -990,6 +991,13 @@ async function requestHandler(req, res) {
     
     const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
     const pathname = parsedUrl.pathname;
+
+    if (pathname === '/api/mpo') {
+        if (req.method !== 'GET') { res.writeHead(405, { Allow: 'GET' }); res.end(); return; }
+        try { sendJson(res, 200, await getMpoData(parsedUrl.searchParams.get('workspace') || '')); }
+        catch (error) { sendJson(res, error.status || 502, { error: error.status === 404 ? error.message : 'Não foi possível consultar o MPO. Tente atualizar novamente.' }); }
+        return;
+    }
 
     if (pathname === '/api/health') {
         sendJson(res, 200, { ok: true, service: 'oneda-crm', timestamp: new Date().toISOString() });

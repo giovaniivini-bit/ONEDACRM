@@ -5975,3 +5975,13 @@ body.light-mode .data-table tr:hover {
     body.print-prog-feira .prog-feira-card dd { margin-top:0 !important; font-size:6px !important; line-height:1.15 !important; }
     body.print-prog-feira .prog-feira-history { display:none !important; }
 }
+:root .mpo-view { padding: 20px; }
+.mpo-view select,.mpo-view button,.mpo-view input { padding: 9px 12px; border: 1px solid #64748b; border-radius: 8px; background: #172033; color: #f1f5f9; margin: 5px; }
+.mpo-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; margin-top: 18px; }
+.mpo-card { border: 1px solid #64748b; border-radius: 12px; overflow: hidden; }
+.mpo-card img { display:block; width:100%; height:240px; object-fit:contain; }
+.mpo-body { padding:12px; overflow-wrap:anywhere; }
+.mpo-pendency { border-left:3px solid #f59e0b; padding-left:8px; }
+.mpo-empty { height:240px; display:grid; place-items:center; }
+@media(max-width:1100px) { .mpo-grid {grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media(max-width:600px) { .mpo-grid {grid-template-columns:1fr;} }

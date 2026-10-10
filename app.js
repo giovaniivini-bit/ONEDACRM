@@ -1773,6 +1773,7 @@
         else if (state.activeSubmodule === 'malotes') label = 'Malotes (Setores 88 e 83)';
         else if (state.activeSubmodule === 'feira') label = 'Feira & Protótipos';
         else if (state.activeSubmodule === 'prog-feira') label = 'Prog Feira';
+        else if (state.activeSubmodule === 'mpo') label = 'MPO';
         else if (state.activeSubmodule === 'andamento-cq') label = 'Andamento do CQ (Qualidade)';
         else if (state.activeSubmodule === 'aproveitamento') label = 'Aproveitamento de Amostras';
         else if (state.activeSubmodule === 'leadtime') label = 'Leadtime Produtivo (Setor 13)';
@@ -1844,6 +1845,9 @@
                 break;
             case 'prog-feira':
                 renderProgFeiraView(container);
+                break;
+            case 'mpo':
+                window.renderMpoView(container);
                 break;
             // Configurações
             case 'sync':
