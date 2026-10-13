@@ -1,0 +1,4 @@
+interface:
+  display_name: "Oneda CRM — memória do projeto"
+  short_description: "Retoma decisões, operação e pendências do CRM Oneda"
+  default_prompt: "Use $oneda-crm para recuperar o estado do projeto e continuar a tarefa solicitada."
