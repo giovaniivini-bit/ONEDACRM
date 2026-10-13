@@ -992,9 +992,10 @@ async function requestHandler(req, res) {
     const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
     const pathname = parsedUrl.pathname;
 
-    if (pathname === '/api/mpo') {
+    if (pathname === '/api/mpo' || pathname === '/api/mpo/pending-by-person') {
         if (req.method !== 'GET') { res.writeHead(405, { Allow: 'GET' }); res.end(); return; }
-        try { sendJson(res, 200, await getMpoData(parsedUrl.searchParams.get('workspace') || '')); }
+        res.setHeader('Cache-Control', 'no-store');
+        try { sendJson(res, 200, await getMpoData()); }
         catch (error) { sendJson(res, error.status || 502, { error: error.status === 404 ? error.message : 'Não foi possível consultar o MPO. Tente atualizar novamente.' }); }
         return;
     }

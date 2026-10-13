@@ -1,5 +1,7 @@
 cloudflared.exe
 node_modules/
+data/mpo_snapshot.json
+data/mpo_snapshot.json.tmp
 data/alert_rules.json
 data/alert_rules.json.tmp
 .tmp-alert-rules*.json

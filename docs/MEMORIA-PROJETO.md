@@ -68,11 +68,15 @@ URL https://mpo.136-248-111-213.sslip.io/; documento fonte
 
 Tela desejada: pendências por Joyce/Rayza/Ana, Quadro e Mesa de Amostra; busca pessoa,
 produto, pendência, previsão, observação e entrega; imagens/fase/cliente/folha completa.
-Programação opcional, inicial Todas as programações. Só programações B + número
-(B41/B42 e futuras); ignorar default e projetos internos. Não inferir nome por ID.
-Contadores por pessoa podem se sobrepor. Fichas em programações distintas permanecem
-distintas. Datas sem ano não justificam inferir atraso.
-Detalhes/pêndencia de identificação: `docs/MPO.md`, `docs/ESTADO-ATUAL.md`.
+Em 12/10/2026, o usuário esclareceu que a programação só é conhecida pelo nome do PDF
+processado, e o MPO guarda as pendências sem uma divisão confiável por programação.
+O CRM deve sincronizar toda a memória exposta pela API, inclusive fontes default e
+IDs internos. Não exigir B41/B42 nem inferir nomes por ID. Botão Sincronizar MPO,
+filtros por responsável, dados da ficha, imagem e folha completa. Cópias de conteúdo
+idêntico são unidas; conteúdo diferente permanece separado. Totais por pessoa podem
+se sobrepor. Datas sem ano não justificam inferir atraso. Última consulta válida é
+preservada com aviso em falhas. Imagens continuam servidas pelo MPO.
+Detalhes: `docs/MPO.md`, `docs/ESTADO-ATUAL.md`.
 
 ## Galeed e outros aplicativos
 
