@@ -6489,24 +6489,24 @@
 
             
             <!-- GRID COM GR�FICO 1 E GR�FICO 2 (Empilhados) -->
-            <div style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 24px;">
+            <div class="cq-report-charts" style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 24px;">
                 
                 <!-- GR�FICO 1: PIZZA TOTAL AMOSTRAS (Full Width com Legenda Lateral) -->
-                <div class="cq-big-chart-card" style="margin-bottom: 0; display: flex; flex-direction: column;">
+                <div class="cq-big-chart-card cq-summary-chart" style="margin-bottom: 0; display: flex; flex-direction: column;">
                     <div class="leadtime-chart-header" style="border-bottom-color: rgba(56, 189, 248, 0.2);">
                         <div>
                             <h3 class="leadtime-chart-title">
                                 <i class="fa-solid fa-chart-pie" style="color: #38bdf8;"></i>
-                                <span>Gr�fico 1: Total Amostras</span>
+                                <span>Gráfico 1: Total Amostras</span>
                             </h3>
-                            <p class="leadtime-chart-subtitle">Resolu��o de OFs do CQ (${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 100).toFixed(1) : 0}% resolvidas)</p>
+                            <p class="leadtime-chart-subtitle">Resolução de OFs do CQ (${totalAllCount > 0 ? (((totalAllCount - totalPendingCount) / totalAllCount) * 100).toFixed(1) : 0}% resolvidas)</p>
                         </div>
                     </div>
                     
-                    <div style="flex: 1; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 64px; padding: 40px 20px;">
+                    <div class="cq-summary-layout" style="flex: 1; display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 64px; padding: 40px 20px;">
                         
                         <!-- Lado Esquerdo: SVG GIGANTE -->
-                        <svg viewBox="0 0 440 440" style="width: 100%; max-width: 440px; height: auto; overflow: visible; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));">
+                        <svg class="cq-summary-donut" viewBox="0 0 440 440" style="width: 100%; max-width: 440px; height: auto; overflow: visible; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));">
                             <defs>
                                 <filter id="glowPieResolvidoCQ" x="-30%" y="-30%" width="160%" height="160%">
                                     <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#10b981" flood-opacity="0.65"/>
@@ -6540,7 +6540,7 @@
                         </svg>
                         
                         <!-- Lado Direito: LEGENDA RICA E QUEBRADA POR SITUA��O -->
-                        <div style="display: flex; flex-direction: column; gap: 20px; min-width: 340px;">
+                        <div class="cq-summary-legend" style="display: flex; flex-direction: column; gap: 20px; min-width: 340px;">
                             
                             <!-- Bloco Resolvidos -->
                             <div style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid #10b981; padding: 18px 22px; border-radius: 0 12px 12px 0;">
@@ -6554,7 +6554,7 @@
                             <!-- Bloco Pendentes -->
                             <div style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid #ef4444; padding: 18px 22px; border-radius: 0 12px 12px 0;">
                                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-                                    <div style="color: #ffffff; font-weight: 800; font-size: 16px;">Pend�ncias no CQ</div>
+                                    <div style="color: #ffffff; font-weight: 800; font-size: 16px;">Pendências no CQ</div>
                                     <div style="color: #ef4444; font-weight: 900; font-size: 18px;">${totalAllCount > 0 ? ((totalPendingCount / totalAllCount) * 100).toFixed(1) : 0}%</div>
                                 </div>
                                 
@@ -6586,7 +6586,7 @@
                                     <div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                                         <div style="display: flex; align-items: center; gap: 8px; color: #fb7185;">
                                             <span style="width: 10px; height: 10px; border-radius: 50%; background: #fb7185; box-shadow: 0 0 6px #fb7185;"></span>
-                                            <span>Expirando Vig�ncia</span>
+                                            <span>Expirando Vigência</span>
                                         </div>
                                         <strong style="color: #ffffff;">${sitCounts['EXPIRANDO VIGÊNCIA'] || 0} <span style="color: #64748b; font-size: 12px; margin-left: 4px;">(${totalAllCount > 0 ? (((sitCounts['EXPIRANDO VIGÊNCIA'] || 0)/totalAllCount)*100).toFixed(1) : 0}%)</span></strong>
                                     </div>
@@ -6606,7 +6606,7 @@
 
                 <!-- GR�FICO 2: BAR CHART ORIGINAL -->
 <!-- GRÁFICO GRANDE DE OFs PENDENTES NO CQ (DUAL VISUAL SVG) -->
-            <div class="cq-big-chart-card" style="margin-bottom: 0;">
+            <div class="cq-big-chart-card cq-weekly-chart" style="margin-bottom: 0;">
                 <div class="leadtime-chart-header" style="border-bottom-color: rgba(56, 189, 248, 0.2);">
                     <div>
                         <h3 class="leadtime-chart-title">
@@ -6821,7 +6821,7 @@
 
             <!-- SEÇÃO DE FOTOS DOS PRODUTOS PENDENTES (HIERARQUIA: SEMANA -> [SITUAÇÃO] -> [FOTOS 4 POR LINHA]) -->
             ${(displayMode === 'cards' || displayMode === 'both') ? `
-                <div class="table-card" style="border-top: 3px solid #8b5cf6; margin-bottom: 24px; padding: 18px 20px;">
+                <div class="table-card cq-report-gallery" style="border-top: 3px solid #8b5cf6; margin-bottom: 24px; padding: 18px 20px;">
                     <div class="table-toolbar" style="border-bottom: 1px solid rgba(139, 92, 246, 0.2); justify-content: space-between; padding-bottom: 12px; margin-bottom: 16px;">
                         <div class="table-title-group">
                             <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -6978,7 +6978,7 @@
 
             <!-- TABELA DETALHADA DE OFs DO CQ -->
             ${(displayMode === 'table' || displayMode === 'both') ? `
-                <div class="table-card" style="border-top: 3px solid #38bdf8; margin-bottom: 24px;">
+                <div class="table-card cq-report-table" style="border-top: 3px solid #38bdf8; margin-bottom: 24px;">
                     <div class="table-toolbar" style="border-bottom: 1px solid rgba(56, 189, 248, 0.2); justify-content: space-between;">
                         <div class="table-title-group">
                             <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
@@ -12834,6 +12834,7 @@
             'cores-aviamentos': 'Estilo Pedido - Cores e Aviamentos (CM1/D01)',
             'rotativos': 'Estilo Pedido - Rotativos (Setor 43)',
             'feira': 'Estilo Amostras - Feira & Protótipos (Fluxo D36)'
+            ,'andamento-cq': 'Andamento do Controle de Qualidade (CQ)'
         };
         const title = subTitleMap[state.activeSubmodule] || 'Relatório Executivo de Produção & Métricas';
 
@@ -12860,6 +12861,7 @@
             'print-malotes',
             'print-alertas',
             'print-prog-feira',
+            'print-cq',
             'print-gallery-report'
         ];
         document.body.classList.remove(...printModeClasses);
@@ -12871,6 +12873,7 @@
             malotes: 'print-malotes'
             ,alertas: 'print-alertas'
             ,'prog-feira': 'print-prog-feira'
+            ,'andamento-cq': 'print-cq'
         }[state.activeSubmodule];
         if (activePrintClass) {
             document.body.classList.add(activePrintClass, 'print-gallery-report');

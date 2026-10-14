@@ -1,6 +1,25 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 12/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 14/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## PDF Andamento CQ — correção validada, publicação em curso
+
+Corrigida a fragmentação dos gráficos e a sobreposição na impressão do CQ. O modo
+temporário `print-cq` usa página A4 paisagem com margens 8mm/12mm em todas as folhas.
+Resumo/KPIs/donut na primeira página, gráfico semanal na seguinte e fotos/tabela depois.
+Gráficos têm tamanho limitado e não são divididos. Fotos em quatro colunas, cartões
+inteiros, tabela sem limite de altura, cabeçalhos repetidos e colunas quebráveis.
+Filtros e modo Fotos/Tabela/Ambos continuam sendo respeitados e a classe é removida
+ao finalizar a impressão. Corrigidos quatro rótulos com caracteres quebrados no CQ.
+
+Arquivos: `app.js`, `style.css`, `index.html`, teste comportamental de impressão e
+testes de versão do CSS. 89 testes passaram. Revisão independente sem Critical/Important.
+PDFs gerados em Chrome headless isolado com os dados reais: 378 OFs, 45 pendentes e
+45 fotos carregadas. Conferidos resumo, gráfico, fotos e última OF 62167 no modo Ambos.
+O número de páginas varia conforme os filtros e o modo de exibição.
+
+Próxima ação: concluir publicação no GitHub/VPS com backup e preservar os dados
+operacionais existentes, que possuem alterações locais na VPS.
 
 ## Sincronização MPO — publicada e validada
 

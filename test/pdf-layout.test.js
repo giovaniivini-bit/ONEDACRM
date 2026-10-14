@@ -5,6 +5,34 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 
+test('CQ report selects its print layout and restores the screen after printing', () => {
+    const vm = require('node:vm');
+    const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const start = app.indexOf('window.crmGeneratePDFReport = () => {');
+    const end = app.indexOf('\n    };', start) + '\n    };'.length;
+    const classes = new Set(['print-setor13']);
+    const elements = Object.fromEntries(['printReportTitle','printReportModule','printReportDate'].map(id => [id, {textContent:''}]));
+    let afterPrint;
+    let printed = false;
+    const context = {
+        state: { activeSubmodule: 'andamento-cq', cqDisplayMode: 'both', cqSearch: '7890' },
+        document: { body: { classList: { add: (...names) => names.forEach(name => classes.add(name)), remove: (...names) => names.forEach(name => classes.delete(name)) } }, getElementById: id => elements[id] },
+        window: { addEventListener: (name, fn) => { if(name === 'afterprint') afterPrint = fn; }, print: () => { printed = true; } },
+        showNotification() {}, renderActiveView() { throw new Error('CQ screen should not be re-rendered for printing'); },
+        setTimeout: fn => fn()
+    };
+    vm.runInNewContext(app.slice(start, end), context);
+    context.window.crmGeneratePDFReport();
+    assert.equal(printed, true);
+    assert.equal(classes.has('print-cq'), true);
+    assert.equal(classes.has('print-setor13'), false);
+    assert.match(elements.printReportTitle.textContent, /Controle de Qualidade/);
+    afterPrint();
+    assert.equal(classes.size, 0);
+    assert.equal(context.state.cqDisplayMode, 'both');
+    assert.equal(context.state.cqSearch, '7890');
+});
+
 test('PDF do Setor 13 usa modo de impressão específico e limpa após imprimir', () => {
     const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 

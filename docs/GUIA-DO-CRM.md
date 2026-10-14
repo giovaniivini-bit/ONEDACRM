@@ -271,6 +271,16 @@ Validação manual obrigatória:
 
 ## 8. Produção e publicação
 
+### Impressão do Andamento CQ
+
+Use **Gerar PDF** no módulo CQ. O relatório usa A4 paisagem, com margens consistentes
+em todas as páginas: resumo e gráfico circular primeiro, gráfico semanal depois,
+seguido das fotos e/ou tabela conforme o modo escolhido. A busca e os filtros atuais
+são preservados. A classe temporária `print-cq` é removida ao encerrar a impressão.
+Gráficos não se dividem entre páginas; cartões de foto permanecem inteiros. A tabela
+pode continuar em várias folhas, repetindo o cabeçalho e sem o limite de altura da tela.
+Não reintroduzir flex nos contêineres de paginação nem SVGs sem limite de altura no PDF.
+
 - URL pública: `https://crm.136-248-111-213.sslip.io`
 - Diretório: `/home/ubuntu/apps/ONEDACRM`
 - Processo PM2: `oneda-crm-app`
