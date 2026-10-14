@@ -78,6 +78,12 @@ se sobrepor. Datas sem ano não justificam inferir atraso. Última consulta vál
 preservada com aviso em falhas. Imagens continuam servidas pelo MPO.
 Detalhes: `docs/MPO.md`, `docs/ESTADO-ATUAL.md`.
 
+Em 14/10/2026, o usuário pediu filtros independentes para combinação/terceiros por
+pessoa e imagens agrupadas por entrega. Implementados nove grupos, cruzados com
+responsável, busca e data. Trocar responsável ou sincronizar preserva as outras
+seleções; Limpar filtros remove todas. Contadores podem se sobrepor e respeitam os
+filtros pertinentes. Preservar anos explícitos; não presumir ano nem atraso.
+
 ## Galeed e outros aplicativos
 
 Objetivo informado para Galeed: segundo cérebro da Oneda, arquivar informação importante,

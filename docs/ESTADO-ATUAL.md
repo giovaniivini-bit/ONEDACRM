@@ -2,7 +2,7 @@
 
 Atualizado em 14/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
-## MPO — filtros de pendência e entrega validados, publicação em curso
+## MPO — filtros de pendência e entrega publicados
 
 Implementados nove grupos independentes: terceiros/combinação para Joyce, Rayza e Ana,
 Quadro, Mesa de Amostra e Sem Pendências. Cruzam com responsável, entrega e busca;
@@ -17,7 +17,15 @@ dados reais validou 70 fichas, Ana 12, combinação 11, terceiros 6; Ana + terce
 30/10 = 5 fichas. Validou Ana + Quadro, sincronização mantendo filtros, alternância
 grade/entregas, busca sem resultado e limpeza. Contagens são snapshot, não monitoramento.
 
-Próxima ação: publicar no GitHub/VPS com backup e preservar os dados operacionais.
+Commit `df901de`, publicado no GitHub e na VPS em 14/10/2026. Os 91 testes passaram
+também na VPS; SHA-256 confirmou preservação dos arquivos operacionais no pull.
+Reiniciado somente `oneda-crm-app`; saúde OK. Helper e versões `20261014-mpo-filters-1`
+servidos corretamente. Teste no CRM público repetiu as contagens acima e confirmou
+os cruzamentos, a preservação das seleções e ausência de erros JavaScript.
+Backup: `/home/ubuntu/backups/oneda-crm-mpo-filters-20261014-df901de`.
+
+Próxima ação: acompanhar uso dos filtros com novas atualizações do MPO; não interpretar
+datas sem ano como atraso nem somar os contadores sobrepostos de combinação/terceiros.
 
 ## PDF Andamento CQ — corrigido e publicado
 
