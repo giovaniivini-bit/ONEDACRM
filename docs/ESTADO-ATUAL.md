@@ -2,6 +2,23 @@
 
 Atualizado em 14/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## MPO — filtros de pendência e entrega validados, publicação em curso
+
+Implementados nove grupos independentes: terceiros/combinação para Joyce, Rayza e Ana,
+Quadro, Mesa de Amostra e Sem Pendências. Cruzam com responsável, entrega e busca;
+trocar responsável e sincronizar preservam as demais seleções. Limpar filtros remove
+as seleções. Imagens agrupadas por data por padrão, com opção de grade. Cada pendência
+tem bloco separado no card. Não se presume ano/atraso para datas sem ano.
+
+Arquivos: `mpo-filters.js` (helper testável), `mpo-view.js`, `style.css`, `index.html`,
+whitelist estática em `server.js`, testes MPO e de versões CSS. Nenhuma alteração no MPO.
+91 testes passaram; revisão independente sem Critical/Important. Chrome headless com
+dados reais validou 70 fichas, Ana 12, combinação 11, terceiros 6; Ana + terceiros +
+30/10 = 5 fichas. Validou Ana + Quadro, sincronização mantendo filtros, alternância
+grade/entregas, busca sem resultado e limpeza. Contagens são snapshot, não monitoramento.
+
+Próxima ação: publicar no GitHub/VPS com backup e preservar os dados operacionais.
+
 ## PDF Andamento CQ — corrigido e publicado
 
 Corrigida a fragmentação dos gráficos e a sobreposição na impressão do CQ. O modo

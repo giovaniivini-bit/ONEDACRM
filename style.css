@@ -5998,6 +5998,20 @@ body.light-mode .data-table tr:hover {
 .mpo-view .mpo-mesa_amostra { background:#fce3b0; color:#49330c; border-color:#fce3b0; }
 .mpo-view .mpo-sem_pendencia { background:#e2e8f0; color:#172033; border-color:#e2e8f0; }
 .mpo-warning { padding:12px; background:#fef3c7; color:#78350f; border:1px solid #d97706; border-radius:8px; }
+.mpo-filter-panel { margin-top:16px; padding:14px; border:1px solid var(--border-base,#64748b); border-radius:12px; background:var(--bg-surface); }
+.mpo-filter-panel h3 { font-size:13px; margin:12px 0 4px; }
+.mpo-filters { display:flex; flex-wrap:wrap; gap:4px; }
+.mpo-filter-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-top:12px; }
+.mpo-filter-actions select { max-width:100%; }
+.mpo-delivery-group { margin-top:24px; }
+.mpo-delivery-heading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; padding:12px 14px; border:1px solid var(--border-base,#64748b); border-left:4px solid #38bdf8; border-radius:8px; background:var(--bg-surface); font-size:16px; }
+.mpo-delivery-heading span { font-size:12px; font-weight:400; }
+.mpo-pendency-block { padding:8px 10px; margin:8px 0; border:1px solid var(--border-base,#64748b); border-left:3px solid #f59e0b; border-radius:6px; }
+.mpo-pendency-block strong { display:block; font-size:12px; }
+.mpo-pendency-block p { margin:4px 0 0; }
+.mpo-pendency-block[data-selected="true"] { border-color:#38bdf8; }
+.mpo-body a { color:#38bdf8; }
+body.light-mode .mpo-body a { color:#0369a1; }
 /* CQ: keep SVGs inside their panels and use block fragmentation on paper. */
 @media print {
     @page cq-report { size:A4 landscape !important; margin:8mm 12mm !important; }

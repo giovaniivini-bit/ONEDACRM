@@ -13,6 +13,31 @@ Mesa de Amostra e Sem Pendências. A busca aplica enquanto se digita e inclui os
 responsáveis definidos pelos grupos da API, mesmo se o nome não estiver no texto.
 Datas são exibidas como recebidas; não se presume ano nem atraso.
 
+### Pendências independentes e entregas (14/10/2026)
+
+O filtro **Responsável** cruza com **Grupo de pendência independente** e **Data de
+entrega**. Os nove grupos são terceiros/combinação de Joyce, Rayza e Ana, Quadro,
+Mesa de Amostra e Sem Pendências. Todos permanecem disponíveis, inclusive para
+cruzar Ana + Quadro. Trocar responsável não apaga grupo nem entrega; **Limpar filtros**
+remove as três seleções e a busca. Sincronizar também preserva as seleções atuais.
+
+Exemplo: Ana → Terceiros pendentes Ana → 30/10. Uma ficha pode aparecer em combinação
+e terceiros, mas aparece uma só vez no resultado. Os contadores de grupos respeitam
+responsável, busca e data atual; os contadores de datas respeitam responsável, grupo
+e busca, permitindo escolher outra entrega. Uma seleção sem resultado continua
+explícita e pode ser removida. Os totais por responsável referem-se a toda a consulta.
+
+As imagens iniciam agrupadas por entrega, com cabeçalho e quantidade por data. A opção
+**Grade de fichas** reúne os mesmos resultados sem os cabeçalhos de data. Nos cards,
+cada pendência tem seu próprio bloco, com previsão/informação correspondente.
+
+O helper compartilhado `mpo-filters.js` classifica pelos nomes oficiais de pendência
+da API. Datas válidas são normalizadas (5/8 → 05/08); anos explícitos são preservados.
+Sem ano, não se presume atraso. Datas sem ano são ordenadas por mês/dia, seguidas
+das datas com ano explícito; valores não reconhecidos e fichas sem data ficam em
+grupos próprios. Alternativas de imagem são associadas à chave da ficha para não
+misturar fotos quando o agrupamento muda a ordem dos cards.
+
 ## Contrato do CRM
 
 `GET /api/mpo/pending-by-person` e `GET /api/mpo` retornam o mesmo objeto:
