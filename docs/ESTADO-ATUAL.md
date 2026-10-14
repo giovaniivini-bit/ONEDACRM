@@ -2,7 +2,7 @@
 
 Atualizado em 14/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
-## PDF Andamento CQ — correção validada, publicação em curso
+## PDF Andamento CQ — corrigido e publicado
 
 Corrigida a fragmentação dos gráficos e a sobreposição na impressão do CQ. O modo
 temporário `print-cq` usa página A4 paisagem com margens 8mm/12mm em todas as folhas.
@@ -18,8 +18,15 @@ PDFs gerados em Chrome headless isolado com os dados reais: 378 OFs, 45 pendente
 45 fotos carregadas. Conferidos resumo, gráfico, fotos e última OF 62167 no modo Ambos.
 O número de páginas varia conforme os filtros e o modo de exibição.
 
-Próxima ação: concluir publicação no GitHub/VPS com backup e preservar os dados
-operacionais existentes, que possuem alterações locais na VPS.
+Commit `6e305f7`, publicado no GitHub e na VPS em 14/10/2026. Os 89 testes passaram
+também na VPS. SHA-256 confirmou que o pull preservou os dados operacionais existentes;
+reiniciado somente `oneda-crm-app`. Saúde no endereço público OK e versões JS/CSS
+`20261014-cq-print-1` confirmadas. Backup:
+`/home/ubuntu/backups/oneda-crm-cq-pdf-20261014-6e305f7`.
+Conferência de texto do PDF Ambos encontrou todas as 45 OFs esperadas, sem omissões.
+
+Próxima ação: usar Gerar PDF no CQ com os filtros desejados. Novas alterações precisam
+preservar a paginação e validar fotos e a última linha da tabela.
 
 ## Sincronização MPO — publicada e validada
 
