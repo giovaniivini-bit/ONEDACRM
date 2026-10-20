@@ -15,7 +15,10 @@ para preservar oito fichas por página. 96 testes passaram; revisão independent
 sem achados. Chrome com dados reais: total109, B43=38; soma das participações100%,
 clique por setor validado, celular sem overflow, impressão e JS sem erros.
 Ajuste para colunas verticais validado em Chrome, com 96 testes e revisão
-independente aprovada. Publicação do ajuste em andamento.
+independente aprovada. Publicado no GitHub/VPS no commit 65d437f;
+96 testes passaram na VPS, saúde OK e dados preservados no pull. Chrome na URL
+pública confirmou filtros, colunas, temas, celular e impressão sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-prog-columns-20261020-65d437f.
 Versão anterior publicada no GitHub e VPS no commit e4ef05a. Os 96 testes passaram também na
 VPS; SHA-256 confirmou preservação dos dados no pull. Somente CRM reiniciado,
 saúde OK. Chrome repetiu as validações na URL pública sem erros JavaScript.
