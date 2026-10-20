@@ -61,7 +61,7 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
     assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
-    assert.match(html, /style\.css\?v=20261014-mpo-filters-1/);
+    assert.match(html, /style\.css\?v=20261020-prog-program-1/);
     assert.match(html, /app\.js\?v=[\w-]+/);
 });
 
@@ -75,4 +75,35 @@ test('groups products by the D36 sector order and parses delivery dates', () => 
     assert.equal(parseDelivery('10/01', new Date(2026, 11, 20)).getFullYear(), 2027);
     assert.equal(parseDelivery('20/12', new Date(2026, 0, 10)).getFullYear(), 2025);
     assert.equal(parseDelivery('31/02', new Date(2026, 9, 5)), null);
+});
+const { filterByPrograms, getProgramOptions } = require('../prog-feira');
+test('programação usa COD_CLIENTE atual, preserva variantes e não usa ORDEM como substituto', () => {
+    const products = buildProducts([
+        { NUMERO: '1', CODIGO: 'A', TIPO: '1', COD_CLIENTE: ' b43 ', OP: '02M' },
+        { NUMERO: '2', CODIGO: 'B', TIPO: '1', 'COD CLIENTE': 'B42', OP: '02M' },
+        { NUMERO: '3', CODIGO: 'C', TIPO: '1', COD_CLIENTE: '  ', OP: '02M' },
+        { NUMERO: '3', CODIGO: 'C', TIPO: '2', ORDEM: 'B99' },
+        { NUMERO: '4', CODIGO: 'D', TIPO: '1', COD_CLIENTE: 'B43 (W.ROT)', OP: '01F' }
+    ]);
+    assert.equal(products.find(p => p.codigo === 'C').program, 'B99');
+    assert.equal(products.find(p => p.codigo === 'C').customerProgram, '');
+    assert.deepEqual(filterByPrograms(products, ['B43', 'B42']).map(p => p.codigo).sort(), ['A', 'B']);
+    assert.deepEqual(filterByPrograms(products, ['']).map(p => p.codigo), ['C']);
+    assert.deepEqual(filterByPrograms(products, ['B43', '']).map(p => p.codigo).sort(), ['A', 'C']);
+    assert.equal(filterByPrograms(products, []).length, 4);
+    assert.equal(filterByPrograms(products, ['inexistente']).length, 0);
+    assert.equal(filterByPrograms(products, ['b43']).length, 1);
+    assert.deepEqual(getProgramOptions(products, ['B44']), [
+        { value: 'B42', count: 1 }, { value: 'B43', count: 1 },
+        { value: 'B43 (W.ROT)', count: 1 }, { value: 'B44', count: 0 }, { value: '', count: 1 }
+    ]);
+    assert.equal(filterByPrograms(products, ['B43', 'B43 (W.ROT)']).filter(p => p.sector === '01F').length, 1);
+});
+test('filtro de programação fica suspenso quando a coluna está indisponível e retoma a seleção depois', () => {
+    const available = [{ customerProgram: 'B43' }, { customerProgram: '' }];
+    const unavailable = [{ customerProgram: '' }, { customerProgram: '' }];
+    for (const selected of [['B43'], ['']]) {
+        assert.equal(filterByPrograms(unavailable, selected, false).length, 2);
+        assert.equal(filterByPrograms(available, selected, true).length, 1);
+    }
 });

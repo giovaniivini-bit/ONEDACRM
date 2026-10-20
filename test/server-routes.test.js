@@ -226,7 +226,8 @@ test('projects Prog Feira records and rejects exports without current TIPO 1 row
     assert.equal(sanitized[0].FICHA, '09/10');
     assert.equal(Object.hasOwn(sanitized[0], 'PRECO_VENDA'), false);
     assert.equal(Object.hasOwn(sanitized[0], 'PRECO_COM'), false);
-    assert.equal(Object.hasOwn(sanitized[0], 'COD_CLIENTE'), false);
+    assert.equal(sanitized[0].COD_CLIENTE, 'B41');
+    assert.equal(Object.hasOwn(sanitized[0], 'ID'), false);
     assert.throws(() => sanitizeProgFeiraRecords([
         { NUMERO: '77826', CODIGO: '01.11.00.7904', TIPO: '2' },
         { NUMERO: '77826', CODIGO: '01.11.00.7904', TIPO: '3' }
@@ -248,4 +249,14 @@ test('rejects alert-rule writes and foreign CORS preflight', async () => {
         headers: { Origin: 'https://evil.example', Host: `127.0.0.1:${port}` }
     });
     assert.equal(foreign.status, 403);
+});
+test('Prog Feira normaliza cabeçalho COD CLIENTE e mantém células vazias sem expor preços', () => {
+    const rows = sanitizeProgFeiraRecords([
+        { CODIGO: 'A', TIPO: '1', 'COD CLIENTE': ' B42 ', PRECO_COM: '10' },
+        { CODIGO: 'B', TIPO: '1', COD_CLIENTE: '   ', PRECO_VENDA: '20' }
+    ]);
+    assert.equal(rows[0].COD_CLIENTE, 'B42');
+    assert.equal(rows[1].COD_CLIENTE, '');
+    assert.equal(Object.hasOwn(rows[0], 'PRECO_COM'), false);
+    assert.equal(Object.hasOwn(rows[1], 'PRECO_VENDA'), false);
 });

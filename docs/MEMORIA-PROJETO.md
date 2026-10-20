@@ -45,7 +45,9 @@ os produtos exibidos nos módulos e preserva correspondência exata.
 
 Prog Feira: planilha `1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s`.
 CODIGO localiza imagem; OP na exportação representa setor; FICHA orienta entrega.
-TIPO 1 atual, TIPO 2 programação, TIPO 3 histórico. Fluxo D36 ordenado; DES recebe
+TIPO 1 atual, TIPO 2 agrupamento em ORDEM, TIPO 3 histórico.
+O filtro Programação usa exclusivamente COD_CLIENTE do TIPO 1, com seleção
+múltipla e opção VAZIO / Sem programação. Não substituir COD_CLIENTE por ORDEM. Fluxo D36 ordenado; DES recebe
 tarja azul; SETOR_TING informa M00/M01/M02/M03. Mostrar dias no setor atual.
 PDF A4 com quatro colunas e duas linhas (oito cards), setores em páginas separadas.
 

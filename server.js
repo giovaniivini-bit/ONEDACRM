@@ -179,7 +179,7 @@ function validateCalendarRecords(records) {
 const PROG_FEIRA_PUBLIC_FIELDS = [
     'NUMERO', 'CODIGO', 'IMG_PRODUTO', 'OP', 'SETOR', 'ORDEM',
     'DT_SAIDA', 'TIPO', 'QTDE_PEND', 'ESTAMPAS', 'OBS',
-    'SETOR_TING', 'SETOR_FLUXO_EM', 'FICHA'
+    'SETOR_TING', 'SETOR_FLUXO_EM', 'FICHA', 'COD_CLIENTE'
 ];
 
 function sanitizeProgFeiraRecords(records) {
@@ -192,7 +192,7 @@ function sanitizeProgFeiraRecords(records) {
         throw new Error('A planilha Prog Feira não contém produtos atuais (TIPO 1) válidos');
     }
     return validRows.map(record => Object.fromEntries(
-        PROG_FEIRA_PUBLIC_FIELDS.map(field => [field, String(record[field] == null ? '' : record[field]).trim()])
+        PROG_FEIRA_PUBLIC_FIELDS.map(field => [field, String((field === 'COD_CLIENTE' ? record.COD_CLIENTE ?? record['COD CLIENTE'] : record[field]) ?? '').trim()])
     ));
 }
 
@@ -1270,8 +1270,9 @@ async function requestHandler(req, res) {
                         cachedData = { ...cachedData, count: validCachedRows.length, records: validCachedRows };
                     }
                     if (type === 'prog_feira') {
+                        const programColumnAvailable = cachedData.programColumnAvailable !== false && cachedData.records?.some(record => Object.hasOwn(record, 'COD_CLIENTE'));
                         const safeCachedRows = sanitizeProgFeiraRecords(cachedData?.records);
-                        cachedData = { ...cachedData, count: safeCachedRows.length, records: safeCachedRows };
+                        cachedData = { ...cachedData, programColumnAvailable: Boolean(programColumnAvailable), count: safeCachedRows.length, records: safeCachedRows };
                     }
                 } catch (e) {
                     if (type === 'calendar') console.warn(`[CALENDÁRIO] Cache ignorado: ${e.message}`);
@@ -1280,7 +1281,7 @@ async function requestHandler(req, res) {
             }
 
             const cachedAt = cachedData && Date.parse(cachedData.timestamp || '');
-            if (!force && cachedData && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS) {
+            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS) {
                 sendJson(res, 200, { ...cachedData, cacheAgeMs: Date.now() - cachedAt });
                 return;
             }
@@ -1295,6 +1296,7 @@ async function requestHandler(req, res) {
                     const payload = {
                         success: true,
                         type: 'prog_feira',
+                        programColumnAvailable: records.some(record => Object.hasOwn(record, 'COD_CLIENTE') || Object.hasOwn(record, 'COD CLIENTE')),
                         title: cfg.name,
                         count: progRows.length,
                         records: progRows,

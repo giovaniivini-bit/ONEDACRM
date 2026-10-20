@@ -153,6 +153,7 @@
                 ting,
                 tingInfo: TINGIMENTO[ting] || { label: ting || 'Não informado', color: '#64748b' },
                 program: groups.get(key) || '',
+                customerProgram: normalizeProgram(field(record, 'COD_CLIENTE') || field(record, 'COD CLIENTE')),
                 prints: field(record, 'ESTAMPAS'),
                 notes: field(record, 'OBS'),
                 quantity: Number(field(record, 'QTDE_PEND')) || 0,
@@ -160,6 +161,25 @@
                 raw: record
             };
         }).sort((a, b) => a.sectorOrder - b.sectorOrder || a.deliverySort - b.deliverySort || a.codigo.localeCompare(b.codigo, 'pt-BR'));
+    }
+
+    function normalizeProgram(value) {
+        return String(value ?? '').trim().toUpperCase();
+    }
+
+    function getProgramOptions(products, selected = []) {
+        const counts = new Map(selected.map(value => [normalizeProgram(value), 0]));
+        (products || []).forEach(product => {
+            const value = normalizeProgram(product.customerProgram);
+            counts.set(value, (counts.get(value) || 0) + 1);
+        });
+        return Array.from(counts, ([value, count]) => ({ value, count }))
+            .sort((a, b) => a.value === '' ? 1 : b.value === '' ? -1 : a.value.localeCompare(b.value, 'pt-BR', { numeric: true }));
+    }
+
+    function filterByPrograms(products, selected = [], available = true) {
+        const values = new Set(selected.map(normalizeProgram));
+        return (products || []).filter(product => !available || !values.size || values.has(normalizeProgram(product.customerProgram)));
     }
 
     function groupBySector(products) {
@@ -176,5 +196,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

@@ -54,6 +54,7 @@
         progFeiraSector: 'all',
         progFeiraTing: 'all',
         progFeiraDesOnly: false,
+        progFeiraPrograms: [],
         rotativosActiveTab: 'drive',
         rotativosDriveFilter: null,
         rotativosDriveSearch: '', // 'grid' (4 fotos por linha) ou 'table',
@@ -10120,12 +10121,15 @@
 
         const allProducts = api.buildProducts(source.records || []);
         const search = String(state.progFeiraSearch || '').trim().toLowerCase();
-        const products = allProducts.filter(item => {
+        const selectedPrograms = state.progFeiraPrograms;
+        const programOptions = api.getProgramOptions(allProducts, selectedPrograms);
+        const programUnavailable = source.programColumnAvailable === false;
+        const products = api.filterByPrograms(allProducts, selectedPrograms, !programUnavailable).filter(item => {
             if (state.progFeiraSector !== 'all' && item.sector !== state.progFeiraSector) return false;
             if (state.progFeiraTing !== 'all' && item.ting !== state.progFeiraTing) return false;
             if (state.progFeiraDesOnly && !item.isDes) return false;
             if (!search) return true;
-            return [item.codigo, item.numero, item.sector, item.sectorLabel, item.program, item.prints, item.notes]
+            return [item.codigo, item.numero, item.sector, item.sectorLabel, item.program, item.customerProgram, item.prints, item.notes]
                 .some(value => String(value || '').toLowerCase().includes(search));
         });
         const groups = api.groupBySector(products);
@@ -10165,6 +10169,7 @@
                     <div class="prog-feira-status-row"><span class="prog-feira-sector-badge">${escapeHtml(item.sector)} • ${escapeHtml(item.sectorLabel)}</span><span class="prog-feira-ting-badge" style="--ting-color:${item.tingInfo.color}">${escapeHtml(item.ting)} • ${escapeHtml(item.tingInfo.label)}</span></div>
                     <div class="prog-feira-days ${item.daysInSector == null ? 'unknown' : item.daysInSector > 2 ? 'late' : ''}"><i class="fa-regular fa-clock"></i> ${item.daysInSector == null ? 'Data de entrada não informada' : `<strong>${formatNumber(item.daysInSector)}</strong> ${item.daysInSector === 1 ? 'dia' : 'dias'} no setor atual`}</div>
                     ${item.program ? `<div class="prog-feira-program"><i class="fa-solid fa-layer-group"></i>${escapeHtml(item.program)}</div>` : ''}
+                    <div class="prog-feira-customer-program">Programação: ${programUnavailable ? 'indisponível' : escapeHtml(item.customerProgram || 'VAZIO / Sem programação')}</div>
                     <dl><div><dt>Movimentação</dt><dd>${escapeHtml(item.movementDate || '—')}</dd></div><div><dt>Estampas</dt><dd>${escapeHtml(item.prints || '—')}</dd></div><div><dt>Observação</dt><dd>${escapeHtml(item.notes || '—')}</dd></div><div><dt>Quantidade pendente</dt><dd>${formatNumber(item.quantity)}</dd></div></dl>
                     <details class="prog-feira-history"><summary><i class="fa-solid fa-timeline"></i> Histórico do fluxo</summary><div>${renderHistory(item)}</div></details>
                 </div>
@@ -10217,8 +10222,16 @@
                     <select onchange="window.crmFilterProgFeiraSector(this.value)" aria-label="Filtrar setor"><option value="all">Todos os setores</option>${currentSectors.map(group => `<option value="${escapeHtml(group.sector)}" ${state.progFeiraSector === group.sector ? 'selected' : ''}>${escapeHtml(group.sector)} — ${escapeHtml(group.label)} (${group.items.length})</option>`).join('')}</select>
                     <select onchange="window.crmFilterProgFeiraTing(this.value)" aria-label="Filtrar tingimento"><option value="all">Todos os tingimentos</option>${Object.entries(api.TINGIMENTO).map(([code, info]) => `<option value="${code}" ${state.progFeiraTing === code ? 'selected' : ''}>${code} — ${escapeHtml(info.label)}</option>`).join('')}</select>
                     <button class="filter-chip ${state.progFeiraDesOnly ? 'active' : ''}" onclick="window.crmToggleProgFeiraDes()"><span class="prog-feira-blue-dot"></span> Somente custo DES (${desCount})</button>
-                    ${(state.progFeiraSector !== 'all' || state.progFeiraTing !== 'all' || state.progFeiraDesOnly || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
+                    ${(state.progFeiraSector !== 'all' || state.progFeiraTing !== 'all' || state.progFeiraDesOnly || selectedPrograms.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
                 </div>
+
+                <fieldset class="prog-feira-program-filter">
+                    <legend>Programação <small>Selecione uma ou mais opções</small></legend>
+                    ${programUnavailable ? '<p role="status">A programação não está disponível neste cache. Atualize a planilha para carregar a coluna COD_CLIENTE.</p>' : ''}
+                    <button type="button" class="filter-chip ${!selectedPrograms.length ? 'active' : ''}" onclick="window.crmClearProgFeiraPrograms()">Todas (${allProducts.length})</button>
+                    ${programUnavailable ? '' : programOptions.map(option => `<label class="prog-feira-program-option ${selectedPrograms.includes(option.value) ? 'active' : ''}"><input type="checkbox" value="${escapeHtml(option.value)}" ${selectedPrograms.includes(option.value) ? 'checked' : ''} onchange="window.crmToggleProgFeiraProgram(this.value)"><span>${escapeHtml(option.value || 'VAZIO / Sem programação')}</span><small>(${option.count})</small></label>`).join('')}
+                </fieldset>
+                <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências</p>
 
                 <div class="prog-feira-legend">
                     <strong>Cor da borda:</strong>${Object.entries(api.TINGIMENTO).map(([code, info]) => `<span><i style="background:${info.color}"></i>${code} — ${escapeHtml(info.label)}</span>`).join('')}
@@ -12312,6 +12325,18 @@
         renderActiveView();
     };
 
+    window.crmToggleProgFeiraProgram = value => {
+        const program = window.CRMProgFeira.normalizeProgram(value);
+        state.progFeiraPrograms = state.progFeiraPrograms.includes(program)
+            ? state.progFeiraPrograms.filter(selected => selected !== program)
+            : [...state.progFeiraPrograms, program];
+        renderActiveView();
+    };
+    window.crmClearProgFeiraPrograms = () => {
+        state.progFeiraPrograms = [];
+        renderActiveView();
+    };
+
     window.crmToggleProgFeiraDes = () => {
         state.progFeiraDesOnly = !state.progFeiraDesOnly;
         renderActiveView();
@@ -12322,6 +12347,7 @@
         state.progFeiraSector = 'all';
         state.progFeiraTing = 'all';
         state.progFeiraDesOnly = false;
+        state.progFeiraPrograms = [];
         renderActiveView();
     };
 

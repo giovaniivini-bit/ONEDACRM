@@ -1,6 +1,22 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 14/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 20/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Prog Feira — filtro Programação
+
+Filtro multisseleção baseado em COD_CLIENTE das linhas TIPO 1. Seleções são
+combinadas por OU e cruzadas com busca, setor, tingimento e DES. Células vazias
+aparecem como VAZIO / Sem programação; nenhuma seleção significa Todas.
+Valores completos são preservados (B43 e B43 (W.ROT) são opções distintas).
+ORDEM das linhas TIPO 2 continua sendo exibida separadamente nos cards.
+API mantém projeção pública sem preços/IDs. Cache antigo sem a coluna força
+nova leitura; se indisponível, suspende o filtro e informa a situação.
+Resumo da seleção também aparece no PDF; checkboxes são ocultados na impressão.
+
+94 testes passaram, revisão independente aprovada. Chrome isolado validou
+seleção simples/múltipla, vazio, cruzamento com setor e limpeza com fixture da
+planilha real acrescida de três linhas sintéticas. Snapshot real: 51 produtos,
+48 B43 e 3 B43 (W.ROT). Sem erros JavaScript. Publicação em andamento.
 
 ## MPO — filtros de pendência e entrega publicados
 
