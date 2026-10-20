@@ -13,10 +13,15 @@ API mantém projeção pública sem preços/IDs. Cache antigo sem a coluna forç
 nova leitura; se indisponível, suspende o filtro e informa a situação.
 Resumo da seleção também aparece no PDF; checkboxes são ocultados na impressão.
 
-94 testes passaram, revisão independente aprovada. Chrome isolado validou
+95 testes passaram na VPS, revisão independente aprovada. Chrome isolado validou
 seleção simples/múltipla, vazio, cruzamento com setor e limpeza com fixture da
 planilha real acrescida de três linhas sintéticas. Snapshot real: 51 produtos,
-48 B43 e 3 B43 (W.ROT). Sem erros JavaScript. Publicação em andamento.
+48 B43 e 3 B43 (W.ROT). VAZIO permanece disponível mesmo com zero produtos.
+Publicado no GitHub e VPS (commits 9fabe17 e 7d7d334), somente CRM reiniciado,
+saúde OK. SHA-256 confirmou dados operacionais preservados durante o pull.
+Chrome no CRM público confirmou B43=48, seleção múltipla=51, VAZIO=0 e
+limpeza=51, sem erros JavaScript. Cache atualizado com COD_CLIENTE real.
+Backup: /home/ubuntu/backups/oneda-crm-prog-program-20261020-7d7d334.
 
 ## MPO — filtros de pendência e entrega publicados
 
