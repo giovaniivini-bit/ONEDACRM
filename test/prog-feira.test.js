@@ -107,3 +107,7 @@ test('filtro de programação fica suspenso quando a coluna está indisponível 
         assert.equal(filterByPrograms(available, selected, true).length, 1);
     }
 });
+
+test('opção VAZIO permanece disponível mesmo sem produtos sem programação', () => {
+    assert.deepEqual(getProgramOptions([{ customerProgram: 'B43' }]), [{ value: 'B43', count: 1 }, { value: '', count: 0 }]);
+});

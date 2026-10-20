@@ -168,7 +168,7 @@
     }
 
     function getProgramOptions(products, selected = []) {
-        const counts = new Map(selected.map(value => [normalizeProgram(value), 0]));
+        const counts = new Map([['', 0], ...selected.map(value => [normalizeProgram(value), 0])]);
         (products || []).forEach(product => {
             const value = normalizeProgram(product.customerProgram);
             counts.set(value, (counts.get(value) || 0) + 1);
