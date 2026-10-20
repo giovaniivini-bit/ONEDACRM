@@ -2,6 +2,18 @@
 
 Atualizado em 20/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — barras de distribuição por setor
+
+Cada setor agora mostra barra proporcional, quantidade e percentual, na ordem D36.
+Considera programação, busca, tingimento e DES; o filtro de setor atua nas fichas,
+sem colapsar a comparação entre setores. Contagem por referência atual (TIPO 1),
+não soma de peças QTDE_PEND. Setores extras são incluídos; vazio tem 0% seguro.
+Layout responsivo, temas claro/escuro, botões acessíveis. Gráfico oculto no PDF
+para preservar oito fichas por página. 96 testes passaram; revisão independente
+sem achados. Chrome com dados reais: total109, B43=38; soma das participações100%,
+clique por setor validado, celular sem overflow, impressão e JS sem erros.
+Publicação em andamento.
+
 ## Prog Feira — filtro Programação
 
 Filtro multisseleção baseado em COD_CLIENTE das linhas TIPO 1. Seleções são

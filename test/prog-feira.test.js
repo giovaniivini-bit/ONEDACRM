@@ -61,7 +61,7 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
     assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
-    assert.match(html, /style\.css\?v=20261020-prog-program-1/);
+    assert.match(html, /style\.css\?v=20261020-prog-sector-chart-1/);
     assert.match(html, /app\.js\?v=[\w-]+/);
 });
 
@@ -110,4 +110,16 @@ test('filtro de programação fica suspenso quando a coluna está indisponível 
 
 test('opção VAZIO permanece disponível mesmo sem produtos sem programação', () => {
     assert.deepEqual(getProgramOptions([{ customerProgram: 'B43' }]), [{ value: 'B43', count: 1 }, { value: '', count: 0 }]);
+});
+test('distribuição por setor calcula contagens, percentuais e setores extras sem omitir produtos', () => {
+    const {getSectorDistribution} = require('../prog-feira');
+    const products = [{sector:'01A',customerProgram:'B43'},{sector:'01A',customerProgram:'B43'},{sector:'02B',customerProgram:'B44'},{sector:'EXTRA',sectorLabel:'Extra',customerProgram:'B43'}];
+    const rows = getSectorDistribution(products);
+    assert.equal(rows.find(r => r.code === '01A').percent,50);
+    assert.equal(rows.find(r => r.code === '02B').count,1);
+    assert.equal(rows.find(r => r.code === 'EXTRA').percent,25);
+    assert.equal(rows.reduce((sum,r) => sum+r.count,0),4);
+    assert.equal(rows.reduce((sum,r) => sum+r.percent,0),100);
+    assert.equal(getSectorDistribution(filterByPrograms(products,['B44'])).find(r=>r.code==='02B').percent,100);
+    assert.ok(getSectorDistribution([]).every(r=>r.count===0 && r.percent===0));
 });

@@ -182,6 +182,15 @@
         return (products || []).filter(product => !available || !values.size || values.has(normalizeProgram(product.customerProgram)));
     }
 
+    function getSectorDistribution(products = []) {
+        const groups = groupBySector(products);
+        const counts = new Map(groups.map(group => [group.sector, group.items.length]));
+        const sectors = [...FLOW, ...groups.filter(group => !FLOW_BY_CODE.has(group.sector)).map(group => ({ code: group.sector, label: group.label }))];
+        const total = products.length;
+        return sectors.map(sector => ({ ...sector, count: counts.get(sector.code) || 0,
+            percent: total ? (counts.get(sector.code) || 0) * 100 / total : 0 }));
+    }
+
     function groupBySector(products) {
         const groups = new Map();
         (products || []).forEach(product => {
@@ -196,5 +205,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

@@ -10124,14 +10124,15 @@
         const selectedPrograms = state.progFeiraPrograms;
         const programOptions = api.getProgramOptions(allProducts, selectedPrograms);
         const programUnavailable = source.programColumnAvailable === false;
-        const products = api.filterByPrograms(allProducts, selectedPrograms, !programUnavailable).filter(item => {
-            if (state.progFeiraSector !== 'all' && item.sector !== state.progFeiraSector) return false;
+        const distributionProducts = api.filterByPrograms(allProducts, selectedPrograms, !programUnavailable).filter(item => {
             if (state.progFeiraTing !== 'all' && item.ting !== state.progFeiraTing) return false;
             if (state.progFeiraDesOnly && !item.isDes) return false;
             if (!search) return true;
             return [item.codigo, item.numero, item.sector, item.sectorLabel, item.program, item.customerProgram, item.prints, item.notes]
                 .some(value => String(value || '').toLowerCase().includes(search));
         });
+        const products = distributionProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
+        const distribution = api.getSectorDistribution(distributionProducts);
         const groups = api.groupBySector(products);
         const desCount = allProducts.filter(item => item.isDes).length;
         const readyCount = allProducts.filter(item => item.sector === '01F').length;
@@ -10210,12 +10211,16 @@
                     <article class="ready"><span>Peças prontas</span><strong>${formatNumber(readyCount)}</strong><small>Setor 01F</small></article>
                 </div>
 
-                <div class="prog-feira-flow" aria-label="Fluxo de desenvolvimento de amostras">
-                    ${api.FLOW.map(step => {
-                        const count = allProducts.filter(item => item.sector === step.code).length;
-                        return `<button class="prog-feira-flow-step ${state.progFeiraSector === step.code ? 'active' : ''}" onclick="window.crmFilterProgFeiraSector('${step.code}')" title="Filtrar ${escapeHtml(step.label)}"><strong>${step.code}</strong><span>${escapeHtml(step.label)}</span><em>${count}</em></button>`;
-                    }).join('')}
-                </div>
+                <section class="prog-feira-distribution" aria-label="Distribuição dos produtos por setor">
+                    <header><h3>Produtos por setor</h3><span>${distributionProducts.length} referências • quantidade e participação por setor</span></header>
+                    <p>Considera programação, busca, tingimento e DES. Clique em um setor para filtrar as fichas.</p>
+                    <div class="prog-feira-flow" aria-label="Fluxo de desenvolvimento de amostras">
+                        ${distribution.map(step => {
+                            const percent = step.percent.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+                            return `<button type="button" class="prog-feira-flow-step ${state.progFeiraSector === step.code ? 'active' : ''}" data-sector="${escapeHtml(step.code)}" onclick="window.crmFilterProgFeiraSector(this.dataset.sector)" aria-pressed="${state.progFeiraSector === step.code}" aria-label="${escapeHtml(step.code + ' ' + step.label)}: ${step.count} referências, ${percent}%"><strong>${escapeHtml(step.code)}</strong><em>${step.count} <small>${percent}%</small></em><span>${escapeHtml(step.label)}</span><div class="prog-feira-sector-bar" aria-hidden="true"><i style="width:${step.percent}%"></i></div></button>`;
+                        }).join('')}
+                    </div>
+                </section>
 
                 <div class="prog-feira-toolbar">
                     <label class="prog-feira-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" value="${escapeHtml(state.progFeiraSearch)}" placeholder="Buscar produto, OP, programação, estampa ou observação..." oninput="window.crmSearchProgFeira(this.value)"></label>
