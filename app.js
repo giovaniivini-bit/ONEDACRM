@@ -10133,6 +10133,7 @@
         });
         const products = distributionProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
         const distribution = api.getSectorDistribution(distributionProducts);
+        const chartMax = Math.max(5, Math.ceil(Math.max(...distribution.map(step => step.count), 0) / 5) * 5);
         const groups = api.groupBySector(products);
         const desCount = allProducts.filter(item => item.isDes).length;
         const readyCount = allProducts.filter(item => item.sector === '01F').length;
@@ -10214,11 +10215,14 @@
                 <section class="prog-feira-distribution" aria-label="Distribuição dos produtos por setor">
                     <header><h3>Produtos por setor</h3><span>${distributionProducts.length} referências • quantidade e participação por setor</span></header>
                     <p>Considera programação, busca, tingimento e DES. Clique em um setor para filtrar as fichas.</p>
-                    <div class="prog-feira-flow" aria-label="Fluxo de desenvolvimento de amostras">
+                    <div class="prog-feira-chart-scroll">
+                    <div class="prog-feira-chart-axis" aria-hidden="true"><span>${chartMax}</span><span>${chartMax / 2}</span><span>0</span></div>
+                    <div class="prog-feira-flow" style="--sector-columns:${distribution.length}" aria-label="Fluxo de desenvolvimento de amostras">
                         ${distribution.map(step => {
                             const percent = step.percent.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-                            return `<button type="button" class="prog-feira-flow-step ${state.progFeiraSector === step.code ? 'active' : ''}" data-sector="${escapeHtml(step.code)}" onclick="window.crmFilterProgFeiraSector(this.dataset.sector)" aria-pressed="${state.progFeiraSector === step.code}" aria-label="${escapeHtml(step.code + ' ' + step.label)}: ${step.count} referências, ${percent}%"><strong>${escapeHtml(step.code)}</strong><em>${step.count} <small>${percent}%</small></em><span>${escapeHtml(step.label)}</span><div class="prog-feira-sector-bar" aria-hidden="true"><i style="width:${step.percent}%"></i></div></button>`;
+                            return `<button type="button" class="prog-feira-flow-step ${state.progFeiraSector === step.code ? 'active' : ''}" data-sector="${escapeHtml(step.code)}" onclick="window.crmFilterProgFeiraSector(this.dataset.sector)" aria-pressed="${state.progFeiraSector === step.code}" aria-label="${escapeHtml(step.code + ' ' + step.label)}: ${step.count} referências, ${percent}%" title="${escapeHtml(step.label)}"><div class="prog-feira-sector-plot" aria-hidden="true"><div class="prog-feira-sector-column" style="height:${step.count * 100 / chartMax}%"><em>${step.count}</em></div></div><strong>${escapeHtml(step.code)}</strong><small class="prog-feira-sector-percent">${percent}%</small><span>${escapeHtml(step.label)}</span></button>`;
                         }).join('')}
+                    </div>
                     </div>
                 </section>
 

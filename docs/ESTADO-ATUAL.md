@@ -4,7 +4,9 @@ Atualizado em 20/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
 ## Prog Feira — barras de distribuição por setor
 
-Cada setor agora mostra barra proporcional, quantidade e percentual, na ordem D36.
+Cada setor agora mostra coluna vertical proporcional, quantidade acima e percentual
+abaixo, na ordem D36. Escala comum de quantidade, linhas de grade e rolagem
+horizontal em telas menores, mantendo a paleta azul do módulo.
 Considera programação, busca, tingimento e DES; o filtro de setor atua nas fichas,
 sem colapsar a comparação entre setores. Contagem por referência atual (TIPO 1),
 não soma de peças QTDE_PEND. Setores extras são incluídos; vazio tem 0% seguro.
@@ -12,7 +14,9 @@ Layout responsivo, temas claro/escuro, botões acessíveis. Gráfico oculto no P
 para preservar oito fichas por página. 96 testes passaram; revisão independente
 sem achados. Chrome com dados reais: total109, B43=38; soma das participações100%,
 clique por setor validado, celular sem overflow, impressão e JS sem erros.
-Publicado no GitHub e VPS no commit e4ef05a. Os 96 testes passaram também na
+Ajuste para colunas verticais validado em Chrome, com 96 testes e revisão
+independente aprovada. Publicação do ajuste em andamento.
+Versão anterior publicada no GitHub e VPS no commit e4ef05a. Os 96 testes passaram também na
 VPS; SHA-256 confirmou preservação dos dados no pull. Somente CRM reiniciado,
 saúde OK. Chrome repetiu as validações na URL pública sem erros JavaScript.
 Backup: /home/ubuntu/backups/oneda-crm-prog-chart-20261020-e4ef05a.
