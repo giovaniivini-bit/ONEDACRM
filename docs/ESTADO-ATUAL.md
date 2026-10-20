@@ -12,7 +12,10 @@ Layout responsivo, temas claro/escuro, botões acessíveis. Gráfico oculto no P
 para preservar oito fichas por página. 96 testes passaram; revisão independente
 sem achados. Chrome com dados reais: total109, B43=38; soma das participações100%,
 clique por setor validado, celular sem overflow, impressão e JS sem erros.
-Publicação em andamento.
+Publicado no GitHub e VPS no commit e4ef05a. Os 96 testes passaram também na
+VPS; SHA-256 confirmou preservação dos dados no pull. Somente CRM reiniciado,
+saúde OK. Chrome repetiu as validações na URL pública sem erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-prog-chart-20261020-e4ef05a.
 
 ## Prog Feira — filtro Programação
 
