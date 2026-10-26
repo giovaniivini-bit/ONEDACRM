@@ -1,0 +1,67 @@
+// Optional browser smoke: provide Playwright through NODE_PATH or a local install.
+const assert = require('node:assert/strict');
+const http = require('node:http');
+const path = require('node:path');
+const { chromium } = require('playwright');
+const { requestHandler } = require('../server');
+
+(async () => {
+    const data = await fetch('https://crm.136-248-111-213.sslip.io/api/data?source=raw').then(r => r.json());
+    assert.ok(data.success && data.data.length);
+    const server = http.createServer(requestHandler);
+    const screenshot = path.join(require('node:os').tmpdir(), `oneda-raio-x-${Date.now()}.png`);
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    let browser;
+    try {
+        browser = await chromium.launch({ headless: true, channel: process.env.CRM_SMOKE_BROWSER || 'msedge' });
+        const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+        const images = await fetch('https://crm.136-248-111-213.sslip.io/api/drive-images').then(r => r.json());
+        const errors = [];
+        page.on('pageerror', err => errors.push(err.message));
+        await page.route('**/api/**', route => {
+            const url = new URL(route.request().url());
+            if (['/api/image-file', '/api/proxy-image'].includes(url.pathname)) return route.fetch({ url: `https://crm.136-248-111-213.sslip.io${url.pathname}${url.search}` }).then(response => route.fulfill({ response }));
+            const payload = url.pathname === '/api/data' ? data : url.pathname === '/api/drive-images' ? images : url.pathname === '/api/alert-rules' ? { success: true, rules: [] } : { success: true, records: [], images: {}, count: 0 };
+            return route.fulfill({ json: payload });
+        });
+        await page.goto(`http://127.0.0.1:${server.address().port}`);
+        await page.waitForFunction(() => document.querySelector('#systemStatusText')?.textContent.includes('Conectado'));
+        await page.locator('.nav-link[data-submodule="raio-x"]').click();
+        const cards = page.locator('#raioXGallery .rx-card');
+        const total = await cards.count();
+        assert.ok(total > 0);
+        await page.locator('[data-rx-filter="pending"]').selectOption('ambas');
+        const combined = await cards.count();
+        assert.ok(combined <= total);
+        assert.ok(combined > 0);
+        assert.equal(await page.locator('.rx-card .rx-secondary .s01-sector-chip').filter({ hasText: 'SETOR X01' }).count(), combined);
+        assert.equal(await page.locator('.rx-card .rx-secondary .s01-sector-chip').filter({ hasText: 'SETOR D01' }).count(), combined);
+        await page.locator('[data-rx-clear]').click();
+        await page.locator('#raioXView').evaluate(el => el.scrollIntoView({ block: 'start' }));
+        assert.ok(await page.locator('.rx-filters').evaluate(el => el.getBoundingClientRect().height < 300));
+        await page.locator('[data-rx-filter="style"]').selectOption('liberados');
+        assert.equal(await page.locator('.rx-card .s01-style-status.pendentes').count(), 0);
+        await page.locator('[data-rx-clear]').click();
+        await page.locator('[data-rx-filter="malote"]').selectOption('pending');
+        const malotes = await cards.count();
+        await page.locator('[data-rx-clear]').click();
+        const firstCode = await page.locator('.rx-card .s13-card-code').first().textContent();
+        await page.locator('[data-rx-search]').fill(firstCode);
+        assert.ok(await cards.count() > 0);
+        await page.emulateMedia({ media: 'print' });
+        assert.equal(await page.locator('.rx-filters').isVisible(), false);
+        assert.ok(await cards.first().isVisible());
+        await page.emulateMedia({ media: 'screen' });
+        await page.locator('[data-rx-clear]').click();
+        await page.locator('#raioXView').evaluate(el => el.scrollIntoView({ block: 'start' }));
+        await page.waitForFunction(() => document.querySelector('#raioXGallery img')?.naturalWidth > 0);
+        await page.screenshot({ path: screenshot, fullPage: false });
+        await page.setViewportSize({ width: 390, height: 844 });
+        assert.equal(await page.locator('#raioXView').evaluate(el => el.scrollWidth > el.clientWidth + 2), false);
+        assert.deepEqual(errors, []);
+        console.log(JSON.stringify({ total, combined, malotes, rows: data.data.length, errors, screenshot }));
+    } finally {
+        if (browser) await browser.close();
+        await new Promise(resolve => server.close(resolve));
+    }
+})().catch(err => { console.error(err); process.exitCode = 1; });

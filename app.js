@@ -34,6 +34,7 @@
         setor01Filter: null,
         setor01PendingFilter: 'all',
         setor01StyleFilter: 'all',
+        raioXFilters: { search: '', sector: 'all', client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all' },
         setor01Search: '',
         setor01ViewMode: 'grid', // 'grid' (4 fotos por linha) ou 'table'
         coresFilter: null,
@@ -100,6 +101,7 @@
         'setor13',
         'processo',
         'setor01',
+        'raio-x',
         'estampa',
         'andamento-cq',
         'rotativos',
@@ -1709,6 +1711,8 @@
 
         const b01 = document.getElementById('badge-setor01');
         if (b01) b01.textContent = s01;
+        const bRaioX = document.getElementById('badge-raio-x');
+        if (bRaioX) bRaioX.textContent = window.CRMRaioX.build(state.allData).length;
 
         
         const sMalotes = state.allData.filter(r => r.setor === '88' || r.setor === '83' || r.setor === '088' || r.setor === '083').length;
@@ -1768,6 +1772,7 @@
         else if (state.activeSubmodule === 'setor13') label = 'Setor 13 (Modelagem)';
         else if (state.activeSubmodule === 'processo') label = 'Em Processo (05, 06, 12)';
         else if (state.activeSubmodule === 'setor01') label = 'Pend. Setor 01';
+        else if (state.activeSubmodule === 'raio-x') label = 'Raio X';
         else if (state.activeSubmodule === 'estampa') label = 'Sit. Estampa';
         else if (state.activeSubmodule === 'cores-pendentes') label = 'Cores Pendentes (Setor D01)';
         else if (state.activeSubmodule === 'aviamentos-pendentes') label = 'Aviamentos Pendentes (Setor X01)';
@@ -1815,6 +1820,9 @@
             // Estilo Pedido
             case 'setor01':
                 renderSetor01View(container);
+                break;
+            case 'raio-x':
+                renderRaioXView(container);
                 break;
             case 'estampa':
                 renderEstampaView(container);
@@ -3907,6 +3915,103 @@
     // =========================================================================
     // 3.5 MÓDULO ESTILO PEDIDO - PENDÊNCIAS SETOR 01 (POR CLIENTE & DIAS)
     // =========================================================================
+    function renderRaioXView(container) {
+        const api = window.CRMRaioX;
+        const helpers = window.CRMSetor01RelatedSectors;
+        const allowedKeys = new Set(state.filteredData.filter(p => api.SECTORS.includes(p.setor)).map(p => JSON.stringify([String(p.op || '').trim().toUpperCase(), String(p.codigo || '').trim().toUpperCase()])));
+        const products = api.build(state.allData).filter(p => allowedKeys.has(p.key));
+        const f = state.raioXFilters;
+        const visible = api.filter(products, f, helpers);
+        const toolbarCount = document.getElementById('toolbarActiveCount');
+        if (toolbarCount) toolbarCount.textContent = visible.length;
+        const clients = [...new Set(products.map(p => p.cliente).filter(Boolean))].sort();
+        const models = [...new Set(products.flatMap(p => p.modelagem))].sort();
+        const select = (field, title, options) => `<label class="rx-filter"><span>${title}</span><select class="crm-input" data-rx-filter="${field}">${[['all', 'Todos'], ...options].map(([value, label]) => `<option value="${escapeHtml(value)}" ${f[field] === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>`;
+        const filterLabels = {
+            sector: 'Setor', client: 'Cliente', pending: 'Cor / aviamento', style: 'Status de estilo', model: 'Status de modelagem', malote: 'Malotes D7'
+        };
+        const labels = {
+            pending: { cor: 'Só cor (D01)', aviamento: 'Só aviamento (X01)', ambas: 'Cor e aviamento', nenhuma: 'Sem cor e aviamento' },
+            style: { liberados: 'Produtos liberados', pendentes: 'Produtos pendentes' },
+            malote: { pending: 'Com pendência (83/88)', none: 'Sem pendência', '83': 'Pendente no 83', '88': 'Pendente no 88' }
+        };
+        const activeLabels = Object.entries(filterLabels).filter(([key]) => f[key] !== 'all').map(([key, title]) => `${title}: ${labels[key]?.[f[key]] || f[key]}`);
+        if (f.search) activeLabels.push(`Busca: ${f.search}`);
+        const metric = (label, value) => `<article class="kpi-card"><span class="kpi-label">${label}</span><strong class="kpi-value">${formatNumber(value)}</strong></article>`;
+        const meta = (label, value) => `<div class="s13-meta-item"><span class="s13-meta-label">${label}</span><span class="s13-meta-value">${escapeHtml(value || '—')}</span></div>`;
+        container.innerHTML = `<section id="raioXView">
+            <div class="module-view-header"><h2>Raio X</h2><p class="module-view-description">Produtos por OF e código completo • Setores principais e pendências secundárias</p></div>
+            <div class="table-card rx-filters pdf-screen-controls">
+                <label class="rx-filter rx-search"><span>Buscar produto ou OF</span><input class="crm-input" data-rx-search value="${escapeHtml(f.search)}" placeholder="Código, OF, descrição, cliente ou status..."></label>
+                ${select('sector', 'Setor principal', api.SECTORS.map(s => [s, `Setor ${s}`]))}
+                ${select('client', 'Cliente', clients.map(s => [s, s]))}
+                ${select('pending', 'Cor / aviamento', Object.entries(labels.pending))}
+                ${select('style', 'Status de estilo', Object.entries(labels.style))}
+                ${select('model', 'Status de modelagem', models.map(s => [s, s]))}
+                ${select('malote', 'Malotes D7', Object.entries(labels.malote))}
+                <button class="exec-action-btn" data-rx-clear>Limpar filtros</button>
+            </div>
+            <p class="rx-filter-summary">${escapeHtml(activeLabels.join(' • ') || 'Todos os produtos dos setores selecionados para o Raio X')} • ${visible.length} de ${products.length} produtos</p>
+            <div class="rx-kpis">
+                ${metric('Produtos exibidos', visible.length)}
+                ${metric('OFs', new Set(visible.map(p => p.op)).size)}
+                ${metric('Com cor pendente', visible.filter(p => p.setoresCor.length).length)}
+                ${metric('Com aviamento pendente', visible.filter(p => p.setoresAviamento.length).length)}
+                ${metric('Com malote pendente', visible.filter(p => p.malotes.length).length)}
+            </div>
+            <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Um produto pode aparecer em mais de um setor.</p><div class="rx-sector-counts">${api.SECTORS.map(s => `<span class="badge badge-cyan">${s}: ${visible.filter(p => p.sectors.includes(s)).length}</span>`).join('')}</div></div>
+            <div id="raioXGallery" class="s13-photo-grid">
+                ${visible.length ? visible.map((p, index) => {
+                    const img = getProductImage(p.codigo);
+                    return `<article class="s13-photo-card rx-card">
+                        <div class="s13-photo-wrapper">
+                            ${img.hasImage ? `<img class="s13-photo-img" src="${escapeHtml(img.thumbUrl)}" data-rx-fallback="${escapeHtml(img.proxyUrl || '')}" alt="${escapeHtml(p.codigo)}" loading="lazy"><button class="s13-photo-overlay" data-rx-image="${index}" aria-label="Ampliar imagem de ${escapeHtml(p.codigo)}">Ampliar foto</button>` : '<div class="s13-photo-placeholder">Imagem indisponível</div>'}
+                        </div>
+                        <div class="s13-card-body">
+                            <div class="s13-card-code-row"><strong class="s13-card-code">${escapeHtml(p.codigo)}</strong><span class="s13-card-op-badge">OF ${escapeHtml(p.op)}</span></div>
+                            <div class="s13-card-description">${escapeHtml(p.descricao || 'Produto')}</div>
+                            <div class="rx-sector-counts">${p.setorDias.map(s => `<span class="badge badge-cyan">${s.setor} • ${s.dias} dias</span>`).join('')}</div>
+                            <div class="rx-status"><small>Status de estilo</small>${p.estilo.length ? p.estilo.map(status => renderSetor01StyleBadge({ statusEstilo: status })).join('') : renderSetor01StyleBadge({})}</div>
+                            <div class="rx-status"><small>Status de modelagem</small>${p.modelagem.map(s => renderStatusModelagemBadge(s)).join('')}</div>
+                            <div class="s13-card-meta-grid">${meta('Cliente', p.cliente)}${meta('Marca / Grupo', p.marca)}${meta('Etiqueta', p.etiqueta)}${meta('Semana pedido', p.pedDescPeriodo || p.semanaPedido)}${meta('OC / RIS', p.oc)}${meta('Peças no setor (máximo)', formatNumber(p.qtdeOriginal))}</div>
+                            <div class="s13-card-meta-grid rx-secondary">
+                                <div class="s13-meta-item"><span class="s13-meta-label">Setor Aviamento</span><span class="s01-sector-chip-list">${p.setoresAviamento.length ? '<span class="s01-sector-chip danger badge-pulse-red">SETOR X01</span>' : '<span class="s01-sector-chip empty">—</span>'}</span></div>
+                                <div class="s13-meta-item"><span class="s13-meta-label">Setor Cor</span><span class="s01-sector-chip-list">${p.setoresCor.length ? '<span class="s01-sector-chip danger badge-pulse-red">SETOR D01</span>' : '<span class="s01-sector-chip empty">—</span>'}</span></div>
+                            </div>
+                            <div class="rx-secondary"><span class="s01-sector-chip ${p.malotes.length ? 'danger' : 'success'}">Malote D7: ${p.malotes.length ? p.malotes.join(' / ') : 'Sem pendência'}</span></div>
+                            <button class="s13-btn-action primary" data-rx-op="${index}">Detalhes da OP</button>
+                        </div>
+                    </article>`;
+                }).join('') : '<div class="table-card rx-empty">Nenhum produto encontrado para os filtros selecionados.</div>'}
+            </div>
+        </section>`;
+        container.querySelectorAll('[data-rx-filter]').forEach(el => el.addEventListener('change', () => {
+            f[el.dataset.rxFilter] = el.value;
+            renderActiveView();
+        }));
+        const search = container.querySelector('[data-rx-search]');
+        search.addEventListener('input', () => {
+            const position = search.selectionStart;
+            f.search = search.value;
+            renderActiveView();
+            const next = container.querySelector('[data-rx-search]');
+            next.focus(); next.setSelectionRange(position, position);
+        });
+        container.querySelector('[data-rx-clear]').addEventListener('click', () => {
+            Object.assign(f, { search: '', sector: 'all', client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all' });
+            renderActiveView();
+        });
+        container.querySelectorAll('[data-rx-op]').forEach(el => el.addEventListener('click', () => window.crmOpenOpModal(visible[Number(el.dataset.rxOp)].op)));
+        container.querySelectorAll('[data-rx-image]').forEach(el => el.addEventListener('click', () => {
+            const p = visible[Number(el.dataset.rxImage)];
+            window.crmOpenImageLightbox(getProductImage(p.codigo).largeUrl, p.codigo, `OF ${p.op} • ${p.descricao || ''}`);
+        }));
+        container.querySelectorAll('[data-rx-fallback]').forEach(img => img.addEventListener('error', () => {
+            if (img.dataset.rxTried || !img.dataset.rxFallback) { img.hidden = true; return; }
+            img.dataset.rxTried = '1'; img.src = img.dataset.rxFallback;
+        }));
+    }
+
     function renderSetor01StyleBadge(item) {
         const status = item.statusEstilo || item.statusProd || 'Não informado';
         const group = window.CRMSetor01RelatedSectors.styleStatusGroup(status);
@@ -12891,6 +12996,7 @@
             'setor13': 'Modelagem - Pedidos Setor 13 (Aguardando Retorno)',
             'processo': 'Modelagem - Pedidos em Processo (Setores 05, 06, 12)',
             'setor01': 'Estilo Pedido - Pendências Setor 01',
+            'raio-x': 'Raio X - Produtos e Pendências',
             'estampa': 'Estilo Pedido - Situação de Estampa',
             'malotes': 'Malotes - Setores 88 e 83',
             'alertas': 'Alertas Operacionais',
