@@ -5,6 +5,22 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 
+test('filtro de pendências separa D01 e X01 e não trata D02/X02 como pendentes', () => {
+    const { matchesPending } = require('../setor01-related-sectors');
+    const items = [
+        { id: 'cor', setoresCor: ['D01'], setoresAviamento: ['X02'] },
+        { id: 'aviamento', setoresCor: ['D02'], setoresAviamento: ['X01'] },
+        { id: 'ambas', setoresCor: ['D01'], setoresAviamento: ['X01'] },
+        { id: 'nenhuma', setoresCor: ['D02'], setoresAviamento: ['X02'] },
+        { id: 'sem-registro' }
+    ];
+    for (const kind of ['cor', 'aviamento', 'ambas']) {
+        assert.deepEqual(items.filter(item => matchesPending(item, kind)).map(item => item.id), [kind]);
+    }
+    assert.deepEqual(items.filter(item => matchesPending(item, 'nenhuma')).map(item => item.id), ['nenhuma', 'sem-registro']);
+    assert.equal(items.filter(item => matchesPending(item, 'all')).length, 5);
+});
+
 test('miniaturas do Setor 01 reutilizam a geometria do Setor 13', () => {
     const css = fs.readFileSync(path.join(root, 'style.css'), 'utf8');
 

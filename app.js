@@ -32,6 +32,7 @@
         setor13Search: '',
         setor13ViewMode: 'grid', // 'grid' (4 fotos por linha) ou 'table'
         setor01Filter: null,
+        setor01PendingFilter: 'all',
         setor01Search: '',
         setor01ViewMode: 'grid', // 'grid' (4 fotos por linha) ou 'table'
         coresFilter: null,
@@ -3914,7 +3915,8 @@
         const relatedSectorMap = window.CRMSetor01RelatedSectors.buildMap(state.allData);
         const s01Items = state.filteredData
             .filter(r => r.setor === '01' || r.setor === '1')
-            .map(item => ({ ...item, ...window.CRMSetor01RelatedSectors.resolve(item, relatedSectorMap) }));
+            .map(item => ({ ...item, ...window.CRMSetor01RelatedSectors.resolve(item, relatedSectorMap) }))
+            .filter(item => window.CRMSetor01RelatedSectors.matchesPending(item, state.setor01PendingFilter));
         const totalItems = s01Items.length;
         const totalPecas = s01Items.reduce((sum, r) => sum + r.qtdeOriginal, 0);
 
@@ -4239,6 +4241,12 @@
                         ` : ''}
                     </div>
 
+                    <label style="display:flex; align-items:center; gap:8px; font-size:12px;">
+                        Pendência
+                        <select class="crm-input" aria-label="Filtrar pendências do Setor 01" onchange="window.crmSetSetor01PendingFilter(this.value)" style="height:38px; min-width:200px;">
+                            ${[['all', 'Todas'], ['cor', 'Só cor (D01)'], ['aviamento', 'Só aviamento (X01)'], ['ambas', 'Cor e aviamento'], ['nenhuma', 'Sem cor e aviamento']].map(([value, label]) => `<option value="${value}" ${state.setor01PendingFilter === value ? 'selected' : ''}>${label}</option>`).join('')}
+                        </select>
+                    </label>
                     <!-- Alternadores de Visualização e Filtro Ativo -->
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         ${activeFilterLabel ? `
@@ -4278,7 +4286,7 @@
                         <div style="padding: 48px; text-align: center; color: var(--text-muted);">
                             <i class="fa-solid fa-clock-rotate-left" style="font-size: 32px; color: var(--text-muted); margin-bottom: 12px;"></i>
                             <p style="font-size: 14px; font-weight: 600;">Nenhum produto encontrado no Setor 01 para os filtros selecionados.</p>
-                            <button class="exec-action-btn" onclick="window.crmFilterSetor01(null); window.crmSearchSetor01('');" style="margin-top: 10px;">
+                            <button class="exec-action-btn" onclick="window.crmSetSetor01PendingFilter('all'); window.crmFilterSetor01(null); window.crmSearchSetor01('');" style="margin-top: 10px;">
                                 Limpar Todos os Filtros
                             </button>
                         </div>
@@ -12196,6 +12204,11 @@
 
     window.crmToggleEstampaViewMode = (mode) => {
         state.estampaViewMode = mode;
+        renderActiveView();
+    };
+
+    window.crmSetSetor01PendingFilter = (value) => {
+        state.setor01PendingFilter = ['cor', 'aviamento', 'ambas', 'nenhuma'].includes(value) ? value : 'all';
         renderActiveView();
     };
 

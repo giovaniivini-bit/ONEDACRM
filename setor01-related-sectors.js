@@ -27,5 +27,17 @@
         };
     }
 
-    return { buildMap, resolve };
+    function matchesPending(item, filter) {
+        const cor = (item.setoresCor || []).includes('D01');
+        const aviamento = (item.setoresAviamento || []).includes('X01');
+        switch (filter) {
+            case 'cor': return cor && !aviamento;
+            case 'aviamento': return aviamento && !cor;
+            case 'ambas': return cor && aviamento;
+            case 'nenhuma': return !cor && !aviamento;
+            default: return true;
+        }
+    }
+
+    return { buildMap, resolve, matchesPending };
 }));
