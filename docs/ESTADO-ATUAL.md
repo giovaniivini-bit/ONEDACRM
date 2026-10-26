@@ -15,7 +15,10 @@ com 409 produtos atuais validou filtros, 24 com ambas pendências, 37 malotes,
 conteúdo denso, fallback e limpeza após impressão. Amostra de 17 cards gerou três
 folhas físicas (6/6/5); renderização conferida e menor margem textual medida 11,91mm.
 Conteúdo excepcionalmente longo pode ocupar folhas adicionais, sem ser ocultado.
-Publicação em andamento.
+Publicado no GitHub e VPS no commit 4945946. Os 106 testes passaram também na
+VPS; hash dos dados operacionais preservado no pull; somente CRM reiniciado,
+saúde OK. Chrome no CRM público repetiu 17 produtos em 3 folhas sem erros JS.
+Backup: /home/ubuntu/backups/oneda-crm-raio-safe-20261026-4945946.
 
 ## Prog Feira — barras de distribuição por setor
 
