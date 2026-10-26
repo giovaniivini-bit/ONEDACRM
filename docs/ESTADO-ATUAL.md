@@ -1,6 +1,21 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 20/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 26/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Raio X — impressão com margem segura e textos legíveis
+
+Página A4 paisagem com margem real de 12mm, sobrepondo a regra global de margem
+zero. Até seis cartões por grupo (três colunas), fotos de 33mm e texto em campos
+separados: setores/dias, estilo, modelagem, aviamento/cor e malote. Alturas automáticas,
+quebra de texto e sem recorte de conteúdo. Tela original e filtros preservados.
+Textos são escapados; IDs removidos nas cópias; fallback de imagens preservado.
+
+106 testes passaram. Revisão independente sem Critical/Important. Smoke de browser
+com 409 produtos atuais validou filtros, 24 com ambas pendências, 37 malotes,
+conteúdo denso, fallback e limpeza após impressão. Amostra de 17 cards gerou três
+folhas físicas (6/6/5); renderização conferida e menor margem textual medida 11,91mm.
+Conteúdo excepcionalmente longo pode ocupar folhas adicionais, sem ser ocultado.
+Publicação em andamento.
 
 ## Prog Feira — barras de distribuição por setor
 

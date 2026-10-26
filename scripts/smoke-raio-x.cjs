@@ -84,8 +84,8 @@ const { requestHandler } = require('../server');
             await cards.evaluateAll(elements => elements.slice(17).forEach(el => el.remove()));
             await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
             const groups = await page.locator('.rx-print-page').evaluateAll(pages => pages.map(p => p.querySelectorAll('.rx-card').length));
-            assert.deepEqual(groups, [8, 8, 1]);
-            const clipped = await page.locator('#raioXPrintReport .rx-card').evaluateAll(cards => cards.filter(card => card.querySelector('.rx-secondary:last-of-type').getBoundingClientRect().bottom > card.getBoundingClientRect().bottom + 1).length);
+            assert.deepEqual(groups, [6, 6, 5]);
+            const clipped = await page.locator('#raioXPrintReport .rx-card').evaluateAll(cards => cards.filter(card => card.querySelector('.rx-print-details').getBoundingClientRect().bottom > card.getBoundingClientRect().bottom + 1).length);
             assert.equal(clipped, 0, 'secondary pendencies must remain inside each printed card');
             assert.equal(await page.evaluate(() => {
                 const before = document.getElementById('raioXPrintReport');
@@ -102,8 +102,8 @@ const { requestHandler } = require('../server');
                 const badge = model.querySelector('span');
                 for (let i = 1; i < 15; i++) model.appendChild(badge.cloneNode(true));
             });
-            await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
-            const stressClipped = await page.locator('#raioXPrintReport .rx-card').first().evaluate(card => card.querySelector('.rx-secondary:last-of-type').getBoundingClientRect().bottom > card.getBoundingClientRect().bottom + 1);
+            await page.evaluate(() => { window.dispatchEvent(new Event('afterprint')); window.dispatchEvent(new Event('beforeprint')); });
+            const stressClipped = await page.locator('#raioXPrintReport .rx-card').first().evaluate(card => card.querySelector('.rx-print-details').getBoundingClientRect().bottom > card.getBoundingClientRect().bottom + 1);
             assert.equal(stressClipped, false, 'dense multi-sector/status product must keep its secondary pendencies');
             await page.evaluate(() => {
                 const img = document.querySelector('#raioXPrintReport img');

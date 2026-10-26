@@ -4048,7 +4048,7 @@
         const report = document.createElement('div');
         report.id = 'raioXPrintReport';
         const cards = [...view.querySelectorAll('#raioXGallery .rx-card')];
-        for (let offset = 0; offset < Math.max(1, cards.length); offset += 8) {
+        for (let offset = 0; offset < Math.max(1, cards.length); offset += 6) {
             const page = document.createElement('section');
             page.className = 'rx-print-page';
             if (offset === 0) {
@@ -4062,11 +4062,27 @@
             }
             const grid = document.createElement('div');
             grid.className = 'rx-print-grid';
-            cards.slice(offset, offset + 8).forEach(card => {
+            cards.slice(offset, offset + 6).forEach(card => {
                 const copy = card.cloneNode(true);
                 copy.querySelectorAll('.rx-sector-counts > span').forEach(badge => {
                     badge.textContent = badge.textContent.replace(/ — [^•]+(?=•)/, ' ');
                 });
+                const body = copy.querySelector('.s13-card-body');
+                const textOf = selector => [...copy.querySelectorAll(selector)].map(el => el.textContent.trim()).filter(Boolean).join(' / ');
+                const details = [
+                    ['Setores / dias', textOf('.rx-sector-counts > span')],
+                    ['Estilo', ''],
+                    ['Modelagem', ''],
+                ];
+                // Read statuses by their ordered blocks, independently of badge styling.
+                const statuses = [...copy.querySelectorAll('.rx-status')];
+                details[1][1] = statuses[0] ? [...statuses[0].querySelectorAll(':scope > span')].map(el => el.textContent.trim()).join(' / ') : '';
+                details[2][1] = statuses[1] ? [...statuses[1].querySelectorAll(':scope > span')].map(el => el.textContent.trim()).join(' / ') : '';
+                details.push(['Aviamento / cor', [...copy.querySelectorAll('.rx-secondary .s13-meta-item')].map(el => el.querySelector('.s13-meta-label').textContent.trim() + ': ' + el.querySelector('.s01-sector-chip-list').textContent.trim()).join(' • ')]);
+                details.push(['Malote', textOf('.rx-secondary > .s01-sector-chip').replace(/^Malote D7:\s*/, '')]);
+                const identification = body.querySelector('.s13-card-code-row').outerHTML;
+                const description = body.querySelector('.s13-card-description').textContent.trim();
+                body.innerHTML = identification + `<p class="rx-print-description">${escapeHtml(description)}</p><dl class="rx-print-details">${details.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value || 'Não informado')}</dd></div>`).join('')}</dl>`;
                 copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
                 copy.querySelectorAll('img').forEach(img => {
                     img.loading = 'eager';

@@ -102,3 +102,9 @@ Este arquivo registra decisões duradouras. `ESTADO-ATUAL.md` registra o trabalh
 curso. Os guias detalham a operação. Skill `skills/oneda-crm/SKILL.md` recupera esses
 arquivos em novas conversas. Publicar documentos no GitHub quando incluído no escopo;
 arquivos locais e chat, sozinhos, não constituem backup remoto.
+
+## Impressão Raio X (26/10/2026)
+
+Usar A4 paisagem com margem mínima de 1cm (CSS aplica12mm!important para vencer
+regra global de margem zero). Até6cartões por grupo,3colunas; campos separados e
+altura automática. Não voltar aos badges comprimidos de6px ou esconder excedentes.

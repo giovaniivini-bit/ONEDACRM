@@ -66,3 +66,13 @@ test('preserva status divergentes entre setores e não considera status desconhe
     assert.equal(rx.filter(products, { ...defaults, style: 'pendentes' }, helpers).length, 1);
     assert.equal(rx.filter(products, { ...defaults, style: 'liberados' }, helpers).length, 1);
 });
+test('Raio X imprime com margem segura e campos legíveis sem compressão de badges', () => {
+    const fs = require('node:fs');
+    const css = fs.readFileSync(require('node:path').join(__dirname, '../style.css'), 'utf8');
+    const app = fs.readFileSync(require('node:path').join(__dirname, '../app.js'), 'utf8');
+    assert.match(css, /@page raio-x-report\s*\{[^}]*margin:12mm !important/);
+    assert.match(css, /\.rx-print-grid\s*\{[^}]*repeat\(3,minmax\(0,1fr\)\)/);
+    assert.match(css, /#raioXPrintReport \.rx-card\s*\{[^}]*height:auto[^}]*overflow:visible/);
+    assert.match(app, /cards\.slice\(offset, offset \+ 6\)/);
+    assert.match(app, /class="rx-print-details"/);
+});
