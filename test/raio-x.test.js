@@ -5,6 +5,11 @@ const helpers = require('../setor01-related-sectors');
 const row = (setor, extra = {}) => ({ op: '123', codigo: '01.00.123A', setor, qtdeOriginal: 10, diasParado: 2, statusModelagem: 'Lib corte', statusEstilo: 'LIBERADO PARA PRODUÇÃO', cliente: 'C&A', ...extra });
 const defaults = { search: '', sectors: [], client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all' };
 
+test('nomes usam Desc Setor somente dos setores principais e eliminam repetições', () => {
+    const names = rx.sectorNames([row('1', { descSetor: 'ESTILO' }), row('01', { descSetor: 'ESTILO' }), row('13', { descSetor: 'MODELAGEM' }), row('D01', { descSetor: 'COR' }), row('88', { descSetor: 'MALOTES' }), row('05', { descSetor: '' })]);
+    assert.deepEqual(names, { '01': 'ESTILO', '13': 'MODELAGEM' });
+});
+
 test('consolida setores por OF e código completo sem multiplicar produtos ou peças', () => {
     const products = rx.build([row('01'), row('13', { diasParado: 5 }), row('D01'), row('X01'), row('88', { parte: 'D7' })]);
     assert.equal(products.length, 1);

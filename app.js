@@ -3923,6 +3923,8 @@
         const f = state.raioXFilters;
         const visible = api.filter(products, f, helpers);
         const sectorCandidates = api.filter(products, { ...f, sectors: [] }, helpers);
+        const sectorNames = api.sectorNames(state.allData);
+        const sectorLabel = code => sectorNames[code] ? `${code} — ${sectorNames[code]}` : code;
         const toolbarCount = document.getElementById('toolbarActiveCount');
         if (toolbarCount) toolbarCount.textContent = visible.length;
         const clients = [...new Set(products.map(p => p.cliente).filter(Boolean))].sort();
@@ -3943,7 +3945,7 @@
         const meta = (label, value) => `<div class="s13-meta-item"><span class="s13-meta-label">${label}</span><span class="s13-meta-value">${escapeHtml(value || '—')}</span></div>`;
         container.innerHTML = `<section id="raioXView">
             <div class="module-view-header"><h2>Raio X</h2><p class="module-view-description">Produtos por OF e código completo • Setores principais e pendências secundárias</p></div>
-            <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Selecione um ou mais setores. Serão exibidos os produtos de qualquer setor marcado. Um produto pode aparecer em mais de um setor.</p><div class="rx-sector-counts" role="group" aria-label="Selecionar setores do Raio X"><button type="button" class="badge badge-cyan rx-sector-toggle ${f.sectors.length ? '' : 'selected'}" data-rx-sector="all" aria-pressed="${!f.sectors.length}">Todos</button>${api.SECTORS.map(s => `<button type="button" class="badge badge-cyan rx-sector-toggle ${f.sectors.includes(s) ? 'selected' : ''}" data-rx-sector="${s}" aria-pressed="${f.sectors.includes(s)}" aria-label="Setor ${s}">${f.sectors.includes(s) ? '✓ ' : ''}${s}: ${sectorCandidates.filter(p => p.sectors.includes(s)).length}</button>`).join('')}</div></div>
+            <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Selecione um ou mais setores. Serão exibidos os produtos de qualquer setor marcado. Um produto pode aparecer em mais de um setor.</p><div class="rx-sector-counts" role="group" aria-label="Selecionar setores do Raio X"><button type="button" class="badge badge-cyan rx-sector-toggle ${f.sectors.length ? '' : 'selected'}" data-rx-sector="all" aria-pressed="${!f.sectors.length}">Todos</button>${api.SECTORS.map(s => `<button type="button" class="badge badge-cyan rx-sector-toggle ${f.sectors.includes(s) ? 'selected' : ''}" data-rx-sector="${s}" aria-pressed="${f.sectors.includes(s)}" aria-label="Setor ${escapeHtml(sectorLabel(s))}">${f.sectors.includes(s) ? '✓ ' : ''}${escapeHtml(sectorLabel(s))}: ${sectorCandidates.filter(p => p.sectors.includes(s)).length}</button>`).join('')}</div></div>
             <div class="table-card rx-filters pdf-screen-controls">
                 <label class="rx-filter rx-search"><span>Buscar produto ou OF</span><input class="crm-input" data-rx-search value="${escapeHtml(f.search)}" placeholder="Código, OF, descrição, cliente ou status..."></label>
                 ${select('client', 'Cliente', clients.map(s => [s, s]))}
@@ -3971,7 +3973,7 @@
                         <div class="s13-card-body">
                             <div class="s13-card-code-row"><strong class="s13-card-code">${escapeHtml(p.codigo)}</strong><span class="s13-card-op-badge">OF ${escapeHtml(p.op)}</span></div>
                             <div class="s13-card-description">${escapeHtml(p.descricao || 'Produto')}</div>
-                            <div class="rx-sector-counts">${p.setorDias.map(s => `<span class="badge badge-cyan">${s.setor} • ${s.dias} dias</span>`).join('')}</div>
+                            <div class="rx-sector-counts">${p.setorDias.map(s => `<span class="badge badge-cyan">${escapeHtml(sectorLabel(s.setor))} • ${s.dias} dias</span>`).join('')}</div>
                             <div class="rx-status"><small>Status de estilo</small>${p.estilo.length ? p.estilo.map(status => renderSetor01StyleBadge({ statusEstilo: status })).join('') : renderSetor01StyleBadge({})}</div>
                             <div class="rx-status"><small>Status de modelagem</small>${p.modelagem.map(s => renderStatusModelagemBadge(s)).join('')}</div>
                             <div class="s13-card-meta-grid">${meta('Cliente', p.cliente)}${meta('Marca / Grupo', p.marca)}${meta('Etiqueta', p.etiqueta)}${meta('Semana pedido', p.pedDescPeriodo || p.semanaPedido)}${meta('OC / RIS', p.oc)}${meta('Peças no setor (máximo)', formatNumber(p.qtdeOriginal))}</div>

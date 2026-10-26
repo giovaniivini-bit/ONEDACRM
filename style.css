@@ -6118,7 +6118,7 @@ body.light-mode .prog-feira-sector-percent { color: #0369a1; }
 .rx-sector-summary { padding:16px; margin-bottom:18px; }
 .rx-sector-summary p { font-size:12px; color:var(--text-secondary); margin:6px 0 12px; }
 .rx-sector-counts, .rx-secondary { display:flex; flex-wrap:wrap; gap:6px; }
-.rx-sector-toggle { cursor:pointer; padding:6px 10px; font:inherit; font-size:12px; }
+.rx-sector-toggle { cursor:pointer; padding:6px 10px; font:inherit; font-size:12px; white-space:normal; overflow-wrap:anywhere; max-width:100%; }
 .rx-sector-toggle.selected { outline:2px solid #38bdf8; outline-offset:1px; font-weight:800; }
 .rx-sector-toggle:focus-visible { outline:2px solid var(--text-primary); outline-offset:3px; }
 .rx-card .s13-card-body { padding:12px; gap:10px; min-width:0; }

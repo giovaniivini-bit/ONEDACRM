@@ -58,5 +58,17 @@
             return true;
         });
     }
-    return { SECTORS, build, filter };
+    function sectorNames(records) {
+        const names = {};
+        for (const row of records || []) {
+            const code = sector(row.setor);
+            const description = String(row.descSetor || '').trim();
+            if (!SECTORS.includes(code) || !description) continue;
+            if (!names[code]) names[code] = new Set();
+            names[code].add(description);
+        }
+        return Object.fromEntries(Object.entries(names).map(([code, values]) => [code, [...values].sort().join(' / ')]));
+    }
+
+    return { SECTORS, build, filter, sectorNames };
 }));
