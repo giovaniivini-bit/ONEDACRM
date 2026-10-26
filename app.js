@@ -3925,6 +3925,18 @@
         const sectorCandidates = api.filter(products, { ...f, sectors: [] }, helpers);
         const sectorNames = api.sectorNames(state.allData);
         const sectorLabel = code => sectorNames[code] ? `${code} — ${sectorNames[code]}` : code;
+        const shortSectorName = code => {
+            const name = sectorNames[code] || '';
+            const clean = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+            const abbreviations = [
+                [/DESENVOLVIMENTO/, 'Desenv.'], [/FICHA TECNICA/, 'Ficha téc.'],
+                [/ENGENHARIA DE PRODUTO/, 'Eng. prod.'], [/TECELAGEM/, 'PCP/Tecel.'],
+                [/LAB.*TINTURARIA/, 'Lab/Tint.'], [/TINTURARIA/, 'Tintur.'],
+                [/MODELAGEM.*CORTE/, 'Mod./Corte'], [/CONSUMO/, 'Consumo'],
+                [/AGUARD.*ESTAMPAR/, 'Ag. estampa'], [/SUBLIMACAO/, 'Sublim.']
+            ];
+            return abbreviations.find(([pattern]) => pattern.test(clean))?.[1] || name || '—';
+        };
         const toolbarCount = document.getElementById('toolbarActiveCount');
         if (toolbarCount) toolbarCount.textContent = visible.length;
         const clients = [...new Set(products.map(p => p.cliente).filter(Boolean))].sort();
@@ -3945,7 +3957,11 @@
         const meta = (label, value) => `<div class="s13-meta-item"><span class="s13-meta-label">${label}</span><span class="s13-meta-value">${escapeHtml(value || '—')}</span></div>`;
         container.innerHTML = `<section id="raioXView">
             <div class="module-view-header"><h2>Raio X</h2><p class="module-view-description">Produtos por OF e código completo • Setores principais e pendências secundárias</p></div>
-            <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Selecione um ou mais setores. Serão exibidos os produtos de qualquer setor marcado. Um produto pode aparecer em mais de um setor.</p><div class="rx-sector-counts" role="group" aria-label="Selecionar setores do Raio X"><button type="button" class="badge badge-cyan rx-sector-toggle ${f.sectors.length ? '' : 'selected'}" data-rx-sector="all" aria-pressed="${!f.sectors.length}">Todos</button>${api.SECTORS.map(s => `<button type="button" class="badge badge-cyan rx-sector-toggle ${f.sectors.includes(s) ? 'selected' : ''}" data-rx-sector="${s}" aria-pressed="${f.sectors.includes(s)}" aria-label="Setor ${escapeHtml(sectorLabel(s))}">${f.sectors.includes(s) ? '✓ ' : ''}${escapeHtml(sectorLabel(s))}: ${sectorCandidates.filter(p => p.sectors.includes(s)).length}</button>`).join('')}</div></div>
+            <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Selecione um ou mais setores. Passe o mouse para ver o nome completo.</p><div class="rx-sector-selector" role="group" aria-label="Selecionar setores do Raio X"><button type="button" class="rx-sector-toggle ${f.sectors.length ? '' : 'selected'}" data-rx-sector="all" aria-pressed="${!f.sectors.length}"><strong>Todos</strong><span></span><span class="rx-sector-quantity">${sectorCandidates.length}</span></button>${[...api.SECTORS].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })).map(s => {
+                const count = sectorCandidates.filter(p => p.sectors.includes(s)).length;
+                const title = `${sectorLabel(s)}: ${count} produtos`;
+                return `<button type="button" class="rx-sector-toggle ${f.sectors.includes(s) ? 'selected' : ''}" data-rx-sector="${s}" aria-pressed="${f.sectors.includes(s)}" aria-label="Setor ${escapeHtml(title)}" title="${escapeHtml(title)}"><strong>${s}</strong><span class="rx-sector-name">${escapeHtml(shortSectorName(s))}</span><span class="rx-sector-quantity ${count > 1 ? 'high' : ''}">${count}</span></button>`;
+            }).join('')}</div></div>
             <div class="table-card rx-filters pdf-screen-controls">
                 <label class="rx-filter rx-search"><span>Buscar produto ou OF</span><input class="crm-input" data-rx-search value="${escapeHtml(f.search)}" placeholder="Código, OF, descrição, cliente ou status..."></label>
                 ${select('client', 'Cliente', clients.map(s => [s, s]))}
