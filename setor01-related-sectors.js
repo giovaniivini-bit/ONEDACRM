@@ -39,5 +39,12 @@
         }
     }
 
-    return { buildMap, resolve, matchesPending };
+    function styleStatusGroup(value) {
+        const status = normalize(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').replace(/\s*\/\s*/g, '/');
+        if (['PENDENTE DESENVOLVIMENTO', 'AGUAR. APROV. LIC./CONCEITO', 'AGUAR. APROV. LIC./PP SAMPLE', 'PEDIDO CANCELADO'].includes(status)) return 'pendentes';
+        if (['PP SAMPL APROVADA', 'PP SAMPLE APROVADA', 'LIBERADO PARA PRODUCAO'].includes(status)) return 'liberados';
+        return 'outros';
+    }
+
+    return { buildMap, resolve, matchesPending, styleStatusGroup };
 }));

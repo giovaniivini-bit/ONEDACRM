@@ -6100,3 +6100,11 @@ body.light-mode .prog-feira-distribution .prog-feira-flow-step.active,body.light
 body.light-mode .prog-feira-distribution .prog-feira-flow-step em { color: #0f172a; background: #fff; }
 body.light-mode .prog-feira-sector-percent { color: #0369a1; }
 @media print { body.print-prog-feira .prog-feira-distribution { display: none !important; } }
+.s01-style-status { width:100%; display:block; white-space:normal; text-align:center; font-size:11px; padding:5px 8px; }
+.s01-style-status.pendentes { color:#fb923c; background:rgba(249,115,22,.16); border:1px solid #f97316; animation:s01StyleOrangePulse 1.2s ease-in-out infinite; }
+.s01-style-status.liberados { color:#10b981; background:rgba(16,185,129,.14); border:1px solid #10b981; }
+@keyframes s01StyleOrangePulse {
+    0%, 100% { opacity:1; box-shadow:0 0 0 rgba(249,115,22,0); }
+    50% { opacity:.6; box-shadow:0 0 10px rgba(249,115,22,.5); }
+}
+@media print { .s01-style-status.pendentes { animation:none; opacity:1; } }

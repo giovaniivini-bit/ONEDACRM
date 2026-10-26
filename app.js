@@ -33,6 +33,7 @@
         setor13ViewMode: 'grid', // 'grid' (4 fotos por linha) ou 'table'
         setor01Filter: null,
         setor01PendingFilter: 'all',
+        setor01StyleFilter: 'all',
         setor01Search: '',
         setor01ViewMode: 'grid', // 'grid' (4 fotos por linha) ou 'table'
         coresFilter: null,
@@ -1069,7 +1070,7 @@
                 const etiqueta = getField(r, ['Etiqueta', 'Etq', 'Desc Etiqueta', 'Cód Etiqueta', 'Cod Etiqueta'], '—');
 
                 // 5. STATUS ESTILO (Coluna: Status Estilo / Situação Estilo / Produto Status)
-                const statusEstilo = getField(r, ['Status Estilo', 'Situação Estilo', 'Situacao Estilo', 'Produto Status', 'Status Prod', 'Status Estampa', 'Sit Estilo', 'Desc Estilo'], '—');
+                const statusEstilo = getField(r, ['Produto Status', 'Status Estilo', 'Situação Estilo', 'Situacao Estilo', 'Status Prod', 'Status Estampa', 'Sit Estilo', 'Desc Estilo'], '—');
                 const statusProd = statusEstilo;
 
                 // 6. TIPOS DE PRODUTO (Coluna: Desc Grupo Prod)
@@ -3906,6 +3907,12 @@
     // =========================================================================
     // 3.5 MÓDULO ESTILO PEDIDO - PENDÊNCIAS SETOR 01 (POR CLIENTE & DIAS)
     // =========================================================================
+    function renderSetor01StyleBadge(item) {
+        const status = item.statusEstilo || item.statusProd || 'Não informado';
+        const group = window.CRMSetor01RelatedSectors.styleStatusGroup(status);
+        return `<span class="badge s01-style-status ${group}" title="Status de estilo: ${escapeHtml(status)}">${escapeHtml(status)}</span>`;
+    }
+
     function renderSetor01View(container) {
         // Regra do Usuário:
         // - produtos pendentes no setor 01 (coluna AY)
@@ -3916,7 +3923,8 @@
         const s01Items = state.filteredData
             .filter(r => r.setor === '01' || r.setor === '1')
             .map(item => ({ ...item, ...window.CRMSetor01RelatedSectors.resolve(item, relatedSectorMap) }))
-            .filter(item => window.CRMSetor01RelatedSectors.matchesPending(item, state.setor01PendingFilter));
+            .filter(item => window.CRMSetor01RelatedSectors.matchesPending(item, state.setor01PendingFilter))
+            .filter(item => state.setor01StyleFilter === 'all' || window.CRMSetor01RelatedSectors.styleStatusGroup(item.statusEstilo || item.statusProd) === state.setor01StyleFilter);
         const totalItems = s01Items.length;
         const totalPecas = s01Items.reduce((sum, r) => sum + r.qtdeOriginal, 0);
 
@@ -4247,6 +4255,12 @@
                             ${[['all', 'Todas'], ['cor', 'Só cor (D01)'], ['aviamento', 'Só aviamento (X01)'], ['ambas', 'Cor e aviamento'], ['nenhuma', 'Sem cor e aviamento']].map(([value, label]) => `<option value="${value}" ${state.setor01PendingFilter === value ? 'selected' : ''}>${label}</option>`).join('')}
                         </select>
                     </label>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:12px;">
+                        Status de estilo
+                        <select class="crm-input" aria-label="Filtrar status de estilo" onchange="window.crmSetSetor01StyleFilter(this.value)" style="height:38px; min-width:180px;">
+                            ${[['all', 'Todos'], ['liberados', 'Produtos liberados'], ['pendentes', 'Produtos pendentes']].map(([value, label]) => `<option value="${value}" ${state.setor01StyleFilter === value ? 'selected' : ''}>${label}</option>`).join('')}
+                        </select>
+                    </label>
                     <!-- Alternadores de Visualização e Filtro Ativo -->
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         ${activeFilterLabel ? `
@@ -4286,7 +4300,7 @@
                         <div style="padding: 48px; text-align: center; color: var(--text-muted);">
                             <i class="fa-solid fa-clock-rotate-left" style="font-size: 32px; color: var(--text-muted); margin-bottom: 12px;"></i>
                             <p style="font-size: 14px; font-weight: 600;">Nenhum produto encontrado no Setor 01 para os filtros selecionados.</p>
-                            <button class="exec-action-btn" onclick="window.crmSetSetor01PendingFilter('all'); window.crmFilterSetor01(null); window.crmSearchSetor01('');" style="margin-top: 10px;">
+                            <button class="exec-action-btn" onclick="window.crmSetSetor01StyleFilter('all'); window.crmSetSetor01PendingFilter('all'); window.crmFilterSetor01(null); window.crmSearchSetor01('');" style="margin-top: 10px;">
                                 Limpar Todos os Filtros
                             </button>
                         </div>
@@ -4361,9 +4375,7 @@
 
                                             <!-- Linha 4: Status do Produto / Local -->
                                             <div style="margin-top: 2px;">
-                                                <span class="badge badge-sub" style="font-size: 11px; padding: 3px 8px; font-weight: 600; width: 100%; display: block; text-align: center; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${item.statusModelagem || item.descLocal || item.statusProd || 'SETOR 01'}">
-                                                    <i class="fa-solid fa-location-dot" style="color: #38bdf8;"></i> ${item.statusModelagem || item.descLocal || item.statusProd || 'SETOR 01'}
-                                                </span>
+                                                ${renderSetor01StyleBadge(item)}
                                             </div>
 
                                             <!-- Linha 5: Grid de Metadados (Semana, Peças, Dias no Setor, Cliente) -->
@@ -4444,7 +4456,7 @@
                                 <th>Código & Produto</th>
                                 <th>Cliente</th>
                                 <th>Dias Pendente (Setor 01)</th>
-                                <th>Status / Local (AY/BD)</th>
+                                <th>Status de estilo</th>
                                 <th>Semana Entrega (Col BK)</th>
                                 <th>Peças Pedido (AP)</th>
                                 <th>Marca / Etiqueta</th>
@@ -4496,9 +4508,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="badge badge-sub" style="font-size: 11px;">
-                                                ${item.statusModelagem || item.descLocal || item.statusProd || 'SETOR 01'}
-                                            </span>
+                                            ${renderSetor01StyleBadge(item)}
                                         </td>
                                         <td style="color: #c084fc; font-weight: 600;">
                                             ${item.pedDescPeriodo || item.pedPeriodo || '—'}
@@ -12204,6 +12214,11 @@
 
     window.crmToggleEstampaViewMode = (mode) => {
         state.estampaViewMode = mode;
+        renderActiveView();
+    };
+
+    window.crmSetSetor01StyleFilter = (value) => {
+        state.setor01StyleFilter = ['liberados', 'pendentes'].includes(value) ? value : 'all';
         renderActiveView();
     };
 

@@ -5,6 +5,18 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 
+test('status de estilo agrupa os estados definidos e tolera acentos e espaços', () => {
+    const { styleStatusGroup } = require('../setor01-related-sectors');
+    for (const status of ['PENDENTE DESENVOLVIMENTO', 'AGUAR. APROV. LIC. / CONCEITO', 'AGUAR. APROV. LIC./ PP SAMPLE', 'PEDIDO CANCELADO']) {
+        assert.equal(styleStatusGroup(status), 'pendentes');
+    }
+    for (const status of ['PP SAMPL APROVADA', 'LIBERADO PARA PRODUÇÂO', 'liberado para produção']) {
+        assert.equal(styleStatusGroup(status), 'liberados');
+    }
+    assert.equal(styleStatusGroup('Agu retor Feira / pos fei'), 'outros');
+    assert.equal(styleStatusGroup(''), 'outros');
+});
+
 test('filtro de pendências separa D01 e X01 e não trata D02/X02 como pendentes', () => {
     const { matchesPending } = require('../setor01-related-sectors');
     const items = [
