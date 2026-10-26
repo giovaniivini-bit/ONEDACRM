@@ -19,6 +19,10 @@ seus próprios dias de permanência. A contagem por setor pode somar mais que o 
 de cards, porque o produto pode estar em vários setores.
 
 Filtros combináveis: setor, cliente, cor/aviamento, estilo, modelagem, malotes e busca.
+Os botões de Produtos por setor permitem seleção múltipla: um produto em qualquer
+setor marcado é incluído uma única vez. Todos ou desmarcar o último setor restaura
+a base inteira. As contagens dos botões respeitam os demais filtros e não são
+zeradas pela seleção de outro setor, permitindo comparar e ampliar a seleção.
 Filtros globais do CRM também restringem os produtos principais, mas nunca removem
 os registros secundários usados no cruzamento. PDF usa o conjunto visível.
 

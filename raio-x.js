@@ -46,7 +46,7 @@
     function filter(products, filters, helpers) {
         const q = norm(filters.search);
         return products.filter(p => {
-            if (filters.sector !== 'all' && !p.sectors.includes(filters.sector)) return false;
+            if (filters.sectors?.length && !p.sectors.some(s => filters.sectors.includes(s))) return false;
             if (filters.client !== 'all' && p.cliente !== filters.client) return false;
             if (!helpers.matchesPending(p, filters.pending)) return false;
             if (filters.style !== 'all' && !p.estilo.some(s => helpers.styleStatusGroup(s) === filters.style)) return false;

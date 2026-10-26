@@ -34,7 +34,7 @@
         setor01Filter: null,
         setor01PendingFilter: 'all',
         setor01StyleFilter: 'all',
-        raioXFilters: { search: '', sector: 'all', client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all' },
+        raioXFilters: { search: '', sectors: [], client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all' },
         setor01Search: '',
         setor01ViewMode: 'grid', // 'grid' (4 fotos por linha) ou 'table'
         coresFilter: null,
@@ -3922,13 +3922,14 @@
         const products = api.build(state.allData).filter(p => allowedKeys.has(p.key));
         const f = state.raioXFilters;
         const visible = api.filter(products, f, helpers);
+        const sectorCandidates = api.filter(products, { ...f, sectors: [] }, helpers);
         const toolbarCount = document.getElementById('toolbarActiveCount');
         if (toolbarCount) toolbarCount.textContent = visible.length;
         const clients = [...new Set(products.map(p => p.cliente).filter(Boolean))].sort();
         const models = [...new Set(products.flatMap(p => p.modelagem))].sort();
         const select = (field, title, options) => `<label class="rx-filter"><span>${title}</span><select class="crm-input" data-rx-filter="${field}">${[['all', 'Todos'], ...options].map(([value, label]) => `<option value="${escapeHtml(value)}" ${f[field] === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>`;
         const filterLabels = {
-            sector: 'Setor', client: 'Cliente', pending: 'Cor / aviamento', style: 'Status de estilo', model: 'Status de modelagem', malote: 'Malotes D7'
+            client: 'Cliente', pending: 'Cor / aviamento', style: 'Status de estilo', model: 'Status de modelagem', malote: 'Malotes D7'
         };
         const labels = {
             pending: { cor: 'Só cor (D01)', aviamento: 'Só aviamento (X01)', ambas: 'Cor e aviamento', nenhuma: 'Sem cor e aviamento' },
@@ -3936,14 +3937,15 @@
             malote: { pending: 'Com pendência (83/88)', none: 'Sem pendência', '83': 'Pendente no 83', '88': 'Pendente no 88' }
         };
         const activeLabels = Object.entries(filterLabels).filter(([key]) => f[key] !== 'all').map(([key, title]) => `${title}: ${labels[key]?.[f[key]] || f[key]}`);
+        if (f.sectors.length) activeLabels.unshift(`Setores: ${f.sectors.join(', ')}`);
         if (f.search) activeLabels.push(`Busca: ${f.search}`);
         const metric = (label, value) => `<article class="kpi-card"><span class="kpi-label">${label}</span><strong class="kpi-value">${formatNumber(value)}</strong></article>`;
         const meta = (label, value) => `<div class="s13-meta-item"><span class="s13-meta-label">${label}</span><span class="s13-meta-value">${escapeHtml(value || '—')}</span></div>`;
         container.innerHTML = `<section id="raioXView">
             <div class="module-view-header"><h2>Raio X</h2><p class="module-view-description">Produtos por OF e código completo • Setores principais e pendências secundárias</p></div>
+            <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Selecione um ou mais setores. Serão exibidos os produtos de qualquer setor marcado. Um produto pode aparecer em mais de um setor.</p><div class="rx-sector-counts" role="group" aria-label="Selecionar setores do Raio X"><button type="button" class="badge badge-cyan rx-sector-toggle ${f.sectors.length ? '' : 'selected'}" data-rx-sector="all" aria-pressed="${!f.sectors.length}">Todos</button>${api.SECTORS.map(s => `<button type="button" class="badge badge-cyan rx-sector-toggle ${f.sectors.includes(s) ? 'selected' : ''}" data-rx-sector="${s}" aria-pressed="${f.sectors.includes(s)}" aria-label="Setor ${s}">${f.sectors.includes(s) ? '✓ ' : ''}${s}: ${sectorCandidates.filter(p => p.sectors.includes(s)).length}</button>`).join('')}</div></div>
             <div class="table-card rx-filters pdf-screen-controls">
                 <label class="rx-filter rx-search"><span>Buscar produto ou OF</span><input class="crm-input" data-rx-search value="${escapeHtml(f.search)}" placeholder="Código, OF, descrição, cliente ou status..."></label>
-                ${select('sector', 'Setor principal', api.SECTORS.map(s => [s, `Setor ${s}`]))}
                 ${select('client', 'Cliente', clients.map(s => [s, s]))}
                 ${select('pending', 'Cor / aviamento', Object.entries(labels.pending))}
                 ${select('style', 'Status de estilo', Object.entries(labels.style))}
@@ -3959,7 +3961,6 @@
                 ${metric('Com aviamento pendente', visible.filter(p => p.setoresAviamento.length).length)}
                 ${metric('Com malote pendente', visible.filter(p => p.malotes.length).length)}
             </div>
-            <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Um produto pode aparecer em mais de um setor.</p><div class="rx-sector-counts">${api.SECTORS.map(s => `<span class="badge badge-cyan">${s}: ${visible.filter(p => p.sectors.includes(s)).length}</span>`).join('')}</div></div>
             <div id="raioXGallery" class="s13-photo-grid">
                 ${visible.length ? visible.map((p, index) => {
                     const img = getProductImage(p.codigo);
@@ -3998,9 +3999,15 @@
             next.focus(); next.setSelectionRange(position, position);
         });
         container.querySelector('[data-rx-clear]').addEventListener('click', () => {
-            Object.assign(f, { search: '', sector: 'all', client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all' });
+            Object.assign(f, { search: '', sectors: [], client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all' });
             renderActiveView();
         });
+        container.querySelectorAll('[data-rx-sector]').forEach(el => el.addEventListener('click', () => {
+            const sector = el.dataset.rxSector;
+            f.sectors = sector === 'all' ? [] : f.sectors.includes(sector) ? f.sectors.filter(s => s !== sector) : api.SECTORS.filter(s => s === sector || f.sectors.includes(s));
+            renderActiveView();
+            container.querySelector(`[data-rx-sector="${sector}"]`)?.focus({ preventScroll: true });
+        }));
         container.querySelectorAll('[data-rx-op]').forEach(el => el.addEventListener('click', () => window.crmOpenOpModal(visible[Number(el.dataset.rxOp)].op)));
         container.querySelectorAll('[data-rx-image]').forEach(el => el.addEventListener('click', () => {
             const p = visible[Number(el.dataset.rxImage)];
