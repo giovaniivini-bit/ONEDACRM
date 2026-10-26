@@ -63,8 +63,12 @@ const { requestHandler } = require('../server');
         await page.locator('[data-rx-search]').fill(firstCode);
         assert.ok(await cards.count() > 0);
         await page.emulateMedia({ media: 'print' });
+        await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
         assert.equal(await page.locator('.rx-filters').isVisible(), false);
-        assert.ok(await cards.first().isVisible());
+        assert.equal(await page.locator('.rx-sector-summary').isVisible(), false);
+        assert.ok(await page.locator('#raioXPrintReport .rx-card').first().isVisible());
+        assert.equal(await page.locator('#raioXPrintReport .rx-card').count(), await cards.count());
+        await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
         await page.emulateMedia({ media: 'screen' });
         await page.locator('[data-rx-clear]').click();
         await page.locator('#raioXView').evaluate(el => el.scrollIntoView({ block: 'start' }));
@@ -73,6 +77,44 @@ const { requestHandler } = require('../server');
         await page.setViewportSize({ width: 390, height: 844 });
         assert.equal(await page.locator('#raioXView').evaluate(el => el.scrollWidth > el.clientWidth + 2), false);
         assert.deepEqual(errors, []);
+        if (process.env.CRM_SMOKE_PDF) {
+            await page.setViewportSize({ width: 1440, height: 1000 });
+            await page.emulateMedia({ media: 'print' });
+            // Controlled 17-product sample verifies two full sheets plus a partial sheet.
+            await cards.evaluateAll(elements => elements.slice(17).forEach(el => el.remove()));
+            await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+            const groups = await page.locator('.rx-print-page').evaluateAll(pages => pages.map(p => p.querySelectorAll('.rx-card').length));
+            assert.deepEqual(groups, [8, 8, 1]);
+            const clipped = await page.locator('#raioXPrintReport .rx-card').evaluateAll(cards => cards.filter(card => card.querySelector('.rx-secondary:last-of-type').getBoundingClientRect().bottom > card.getBoundingClientRect().bottom + 1).length);
+            assert.equal(clipped, 0, 'secondary pendencies must remain inside each printed card');
+            assert.equal(await page.evaluate(() => {
+                const before = document.getElementById('raioXPrintReport');
+                window.dispatchEvent(new Event('beforeprint'));
+                return before === document.getElementById('raioXPrintReport');
+            }), true, 'beforeprint must preserve prepared images');
+            await page.pdf({ path: process.env.CRM_SMOKE_PDF, preferCSSPageSize: true, printBackground: true });
+            await cards.first().evaluate(card => {
+                const sectors = card.querySelector('.rx-sector-counts');
+                sectors.replaceChildren(...Array.from({ length:15 }, (_, i) => {
+                    const span = document.createElement('span'); span.className = 'badge badge-cyan'; span.textContent = `${i + 1} — SETOR PRINCIPAL COM NOME LONGO • 123 dias`; return span;
+                }));
+                const model = card.querySelectorAll('.rx-status')[1];
+                const badge = model.querySelector('span');
+                for (let i = 1; i < 15; i++) model.appendChild(badge.cloneNode(true));
+            });
+            await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
+            const stressClipped = await page.locator('#raioXPrintReport .rx-card').first().evaluate(card => card.querySelector('.rx-secondary:last-of-type').getBoundingClientRect().bottom > card.getBoundingClientRect().bottom + 1);
+            assert.equal(stressClipped, false, 'dense multi-sector/status product must keep its secondary pendencies');
+            await page.evaluate(() => {
+                const img = document.querySelector('#raioXPrintReport img');
+                img.dataset.rxTried = ''; img.dataset.rxFallback = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>';
+                img.dispatchEvent(new Event('error'));
+                if (!img.src.startsWith('data:image/svg+xml')) throw new Error('print image fallback failed');
+                window.dispatchEvent(new Event('afterprint'));
+            });
+            await page.emulateMedia({ media: 'screen' });
+            assert.ok(await cards.first().isVisible());
+        }
         console.log(JSON.stringify({ total, combined, malotes, rows: data.data.length, errors, screenshot }));
     } finally {
         if (browser) await browser.close();

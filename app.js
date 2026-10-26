@@ -4037,6 +4037,63 @@
         }));
     }
 
+    function prepareRaioXPrint() {
+        if (state.activeSubmodule !== 'raio-x') return;
+        const view = document.getElementById('raioXView');
+        if (!view) return;
+        if (view.querySelector('#raioXPrintReport')) {
+            document.body.classList.add('print-raio-x');
+            return;
+        }
+        const report = document.createElement('div');
+        report.id = 'raioXPrintReport';
+        const cards = [...view.querySelectorAll('#raioXGallery .rx-card')];
+        for (let offset = 0; offset < Math.max(1, cards.length); offset += 8) {
+            const page = document.createElement('section');
+            page.className = 'rx-print-page';
+            if (offset === 0) {
+                const summary = document.createElement('div');
+                summary.className = 'rx-print-summary';
+                for (const selector of ['.rx-filter-summary', '.rx-kpis']) {
+                    const original = view.querySelector(selector);
+                    if (original) summary.appendChild(original.cloneNode(true));
+                }
+                page.appendChild(summary);
+            }
+            const grid = document.createElement('div');
+            grid.className = 'rx-print-grid';
+            cards.slice(offset, offset + 8).forEach(card => {
+                const copy = card.cloneNode(true);
+                copy.querySelectorAll('.rx-sector-counts > span').forEach(badge => {
+                    badge.textContent = badge.textContent.replace(/ — [^•]+(?=•)/, ' ');
+                });
+                copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+                copy.querySelectorAll('img').forEach(img => {
+                    img.loading = 'eager';
+                    img.addEventListener('error', () => {
+                        if (!img.dataset.rxTried && img.dataset.rxFallback) {
+                            img.dataset.rxTried = '1'; img.src = img.dataset.rxFallback;
+                        } else {
+                            img.hidden = true;
+                        }
+                    });
+                });
+                grid.appendChild(copy);
+            });
+            if (!cards.length) grid.textContent = 'Nenhum produto para os filtros selecionados.';
+            page.appendChild(grid);
+            report.appendChild(page);
+        }
+        view.appendChild(report);
+        document.body.classList.add('print-raio-x');
+    }
+
+    window.addEventListener('beforeprint', prepareRaioXPrint);
+    window.addEventListener('afterprint', () => {
+        document.body.classList.remove('print-raio-x');
+        document.getElementById('raioXPrintReport')?.remove();
+    });
+
     function renderSetor01StyleBadge(item) {
         const status = item.statusEstilo || item.statusProd || 'Não informado';
         const group = window.CRMSetor01RelatedSectors.styleStatusGroup(status);
@@ -13048,6 +13105,7 @@
         // página reúne o resumo e os gráficos; as miniaturas começam na página 2.
         // A classe é temporária para não alterar o layout normal da aplicação.
         const printModeClasses = [
+            'print-raio-x',
             'print-setor13',
             'print-processo',
             'print-setor01',
@@ -13068,10 +13126,12 @@
             ,alertas: 'print-alertas'
             ,'prog-feira': 'print-prog-feira'
             ,'andamento-cq': 'print-cq'
+            ,'raio-x': 'print-raio-x'
         }[state.activeSubmodule];
         if (activePrintClass) {
             document.body.classList.add(activePrintClass, 'print-gallery-report');
         }
+        if (state.activeSubmodule === 'raio-x') prepareRaioXPrint();
 
         const cleanupPrintMode = () => {
             document.body.classList.remove(...printModeClasses);
@@ -13087,7 +13147,20 @@
         window.addEventListener('afterprint', cleanupPrintMode, { once: true });
 
         showNotification('Formatando relatório executivo para salvar em PDF ou imprimir...', 'info', 'Gerando Relatório');
-        setTimeout(() => {
+        setTimeout(async () => {
+            if (state.activeSubmodule === 'raio-x') {
+                const images = [...document.querySelectorAll('#raioXPrintReport img')];
+                await Promise.race([
+                    Promise.allSettled(images.map(async img => {
+                        try { await img.decode(); }
+                        catch (_) {
+                            if (img.dataset.rxFallback && img.src !== img.dataset.rxFallback) img.src = img.dataset.rxFallback;
+                            try { await img.decode(); } catch (_) { /* Keep the existing fallback/placeholder. */ }
+                        }
+                    })),
+                    new Promise(resolve => setTimeout(resolve, 10000))
+                ]);
+            }
             window.print();
         }, 350);
     };

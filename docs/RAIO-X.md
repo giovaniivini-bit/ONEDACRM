@@ -26,4 +26,13 @@ zeradas pela seleção de outro setor, permitindo comparar e ampliar a seleção
 Filtros globais do CRM também restringem os produtos principais, mas nunca removem
 os registros secundários usados no cruzamento. PDF usa o conjunto visível.
 
+Impressão: grupos de oito cards, quatro colunas e duas linhas em A4 paisagem.
+O resumo e os totais aparecem somente na primeira folha. Controles e seleção de
+setores ficam ocultos, assim como os metadados de cliente/marca/etiqueta/semana/OC/peças.
+Permanecem a identificação do produto, foto em destaque, setores/dias, status e
+pendências de cor, aviamento e malote. O modo da tela é restaurado após imprimir.
+
 Validação: testes de consolidação, chaves, setores, D7, grupos de estilo e combinações.
+O smoke opcional com CRM_SMOKE_PDF testa 17 cards ([8,8,1]), caso denso,
+fallback de foto e restauração após impressão. O PDF gerado deve ser conferido
+quanto à contagem real por página e renderizado para revisão visual.

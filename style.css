@@ -6136,11 +6136,42 @@ body.light-mode .prog-feira-sector-percent { color: #0369a1; }
 .rx-status small { color:var(--text-muted); font-size:10px; }
 .rx-status > span { white-space:normal; }
 .rx-empty { grid-column:1/-1; padding:36px; text-align:center; }
+#raioXPrintReport { display:none; }
 @media print {
-    #raioXView .rx-filters, #raioXView .s13-photo-overlay, #raioXView .s13-btn-action { display:none !important; }
-    #raioXGallery { display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:3mm !important; }
-    #raioXGallery .rx-card { break-inside:avoid !important; page-break-inside:avoid !important; }
-    #raioXGallery .s13-photo-wrapper { height:38mm !important; min-height:38mm !important; flex-basis:38mm !important; }
-    #raioXGallery .s13-card-body { gap:4px !important; padding:6px !important; }
-    #raioXGallery * { animation:none !important; }
+    @page raio-x-report { size:A4 landscape; margin:6mm; }
+    body.print-raio-x { page:raio-x-report; background:#fff !important; }
+    body.print-raio-x .main-content { width:100% !important; max-width:100% !important; padding:0 !important; margin:0 !important; min-height:0 !important; }
+    body.print-raio-x #toastContainer, body.print-raio-x .toast-item, body.print-raio-x #globalAlertBanner { display:none !important; }
+    body.print-raio-x #raioXView > :not(#raioXPrintReport) { display:none !important; }
+    body.print-raio-x #raioXPrintReport { display:block !important; }
+    .rx-print-page { height:196mm !important; display:flex !important; flex-direction:column !important; gap:2mm !important; break-after:page !important; break-inside:avoid !important; box-sizing:border-box !important; }
+    .rx-print-page:last-child { break-after:auto !important; }
+    .rx-print-summary { flex:0 0 auto !important; }
+    .rx-print-summary .rx-filter-summary { margin:0 0 1mm !important; font-size:8px !important; line-height:1.15 !important; }
+    .rx-print-summary .rx-kpis { grid-template-columns:repeat(5,1fr) !important; margin:0 !important; gap:2mm !important; }
+    .rx-print-summary .kpi-card { padding:2mm !important; min-height:0 !important; margin:0 !important; }
+    .rx-print-summary .kpi-label { font-size:7px !important; }
+    .rx-print-summary .kpi-value { font-size:16px !important; line-height:1.1 !important; }
+    .rx-print-grid { display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; grid-template-rows:repeat(2,minmax(0,1fr)) !important; gap:2mm !important; flex:1 1 0 !important; min-height:0 !important; }
+    #raioXPrintReport .rx-card { zoom:1 !important; height:100% !important; min-height:0 !important; width:100% !important; box-sizing:border-box !important; border-radius:2mm !important; break-inside:avoid !important; box-shadow:none !important; overflow:hidden !important; }
+    #raioXPrintReport .s13-photo-wrapper { height:auto !important; min-height:38mm !important; max-height:63mm !important; flex:1 1 auto !important; aspect-ratio:auto !important; }
+    #raioXPrintReport .s13-photo-img { padding:1mm !important; object-fit:contain !important; }
+    #raioXPrintReport .s13-card-body { padding:1.5mm !important; gap:.4mm !important; flex:0 0 auto !important; min-height:0 !important; }
+    #raioXPrintReport .s13-card-meta-grid:not(.rx-secondary) { display:none !important; }
+    #raioXPrintReport .s13-card-code { font-size:9px !important; }
+    #raioXPrintReport .s13-card-op-badge { font-size:7px !important; padding:1px 3px !important; }
+    #raioXPrintReport .s13-card-description { font-size:8px !important; line-height:1.1 !important; max-height:5mm !important; }
+    #raioXPrintReport .rx-status { display:block !important; font-size:6.5px !important; line-height:1.2 !important; }
+    #raioXPrintReport .rx-status small { display:block !important; }
+    #raioXPrintReport .rx-status > span { display:inline !important; width:auto !important; margin-right:1mm !important; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
+    #raioXPrintReport .rx-status small, #raioXPrintReport .s13-meta-label { font-size:6px !important; line-height:1.1 !important; }
+    #raioXPrintReport .rx-status > span, #raioXPrintReport .badge, #raioXPrintReport .s01-sector-chip { font-size:6.5px !important; padding:1px 3px !important; line-height:1.15 !important; }
+    #raioXPrintReport .s13-meta-value { font-size:7px !important; line-height:1.1 !important; }
+    #raioXPrintReport .s13-card-meta-grid { gap:.3mm 1mm !important; padding:0 !important; margin:0 !important; border:0 !important; background:none !important; border-radius:0 !important; }
+    #raioXPrintReport .s13-meta-item { gap:0 !important; }
+    #raioXPrintReport .s13-card-body > * { flex-shrink:0 !important; }
+    #raioXPrintReport .s13-card-code-row { margin:0 !important; }
+    #raioXPrintReport .rx-sector-counts, #raioXPrintReport .rx-secondary { gap:.5mm !important; }
+    #raioXPrintReport .s13-photo-overlay, #raioXPrintReport .s13-btn-action { display:none !important; }
+    #raioXPrintReport * { animation:none !important; }
 }
