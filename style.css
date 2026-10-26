@@ -6175,3 +6175,8 @@ body.light-mode .prog-feira-sector-percent { color: #0369a1; }
     #raioXPrintReport .kpi-value { color:#0f172a !important; }
     #raioXPrintReport .s13-photo-placeholder { background:#f1f5f9 !important; color:#475569 !important; }
 }
+@media print {
+    html:has(body.print-raio-x) { background:#fff !important; height:auto !important; min-height:0 !important; }
+    body.print-raio-x { --bg-base:#fff; --bg-card:#fff; --text-primary:#172033; }
+    body.print-raio-x .app-layout, body.print-raio-x .view-container, body.print-raio-x #raioXView { background:#fff !important; height:auto !important; min-height:0 !important; }
+}
