@@ -27,3 +27,8 @@ Impressão mantém oito cards e abrevia complementos para códigos sem omiti-los
 
 O cache schema3 mantém o formato canônico com Parte/Fluxo. Evitar expor todos os
 campos da planilha: a API conserva whitelist, sem preços, CNPJ, endereços ou IDs.
+
+Dias: somente D36 e TF/D43 aparecem na tela. O badge de tingimento informa dias no
+estado atual M00–M03, calculados de Data Saída das próprias linhas TF. Maior tempo
+entre grades desse estado; data ausente permanece sem contagem. Não há contagem
+visível de dias para custos, cor ou aviamento. Filtros mantidos.

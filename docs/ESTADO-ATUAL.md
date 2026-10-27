@@ -2,6 +2,16 @@
 
 Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — dias no tingimento TF
+
+Tingimento M00/M01/M02/M03 exibe dias no setor junto ao badge existente, usando
+Data Saída somente das linhas TF/D43 do estado selecionado. Se houver grades com
+datas distintas, conserva maior permanência; data ausente não inventa zero.
+D36 mantém sua contagem. Cor, custo e aviamento não mostram dias. Filtros atuais
+preservados. 113 testes passaram, revisão independente aprovada; ajuste de foto
+somente na impressão para acomodar o badge sem cortar complementos.
+Publicação do complemento TF em andamento.
+
 ## Prog Feira — nova exportação com partes e fluxos paralelos
 
 Fonte ERP detalhada na mesma planilha. Cards/contagens somente FE/D36 com saldo
@@ -23,7 +33,9 @@ conserva demais vínculos. Base observada tem somente um setor FE por produto.
 validou186cards, programações (120VAZIO), multi/vazio, DES, tingimento sem informação,
 pendências empilhadas, temas claro/escuro e celular sem overflow. PDF amostra de oito
 cards conferido sem corte das pendências e sem folha exclusiva do resumo de filtro.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit624dce5;112testes passaram também na VPS,
+saúde OK e dados preservados no pull. Chrome público confirmou filtros e186cards.
+Backup: /home/ubuntu/backups/oneda-crm-prog-parallel-20261027-624dce5.
 
 ## Raio X — filtros de cor e aviamento inclusivos
 

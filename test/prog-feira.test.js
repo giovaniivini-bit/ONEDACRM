@@ -61,7 +61,7 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
     assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
-    assert.match(html, /style\.css\?v=20261027-prog-parallel-1/);
+    assert.match(html, /style\.css\?v=20261027-prog-tf-days-1/);
     assert.match(html, /app\.js\?v=[\w-]+/);
 });
 
@@ -148,4 +148,13 @@ test('quantidade preserva grades distribuídas em setores e reconhece estado res
     const [p]=buildProducts([erp('FE','D36','01A'),erp('FE','D36','02B',{Tamanho:'8','Qtde Pend':'6'}),erp('TF','D43','M03',{'Qtde Pend':'0'}),erp('AV','D47','X02',{'Qtde Pend':'0'})]);
     assert.equal(p.quantity,10);assert.equal(p.ting,'M03');assert.ok(!p.missingParallel.includes('Tingimento'));assert.ok(!p.missingParallel.includes('Aviamento'));assert.equal(p.parallelPending.length,0);
     assert.equal(buildProducts([erp('FE','D36','01A',{'Qtde Pend':'0'}),erp('CO','D41','D01')]).length,0);
+});
+test('dias de TF acompanham o setor real M00 a M03 e não usam a data do D36',()=>{
+    const now=new Date(2026,9,27);
+    for(const setor of ['M00','M01','M02','M03']){
+        const [p]=buildProducts([erp('FE','D36','01A',{'Data Saída':'26/10/2026'}),erp('TF','D43',setor,{'Data Saída':'20/10/2026'})],now);
+        assert.equal(p.daysInSector,1);assert.equal(p.tingDays,7);assert.equal(p.ting,setor);
+    }
+    const [missing]=buildProducts([erp('FE','D36','01A'),erp('TF','D43','M00',{'Data Saída':''})],now);assert.equal(missing.tingDays,null);
+    const [absent]=buildProducts([erp('FE','D36','01A')],now);assert.equal(absent.tingDays,null);
 });

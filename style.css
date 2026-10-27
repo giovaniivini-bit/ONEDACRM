@@ -6198,3 +6198,6 @@ body.light-mode .prog-feira-parallel-item strong { color:#991b1b; background:#fe
  body.print-prog-feira .prog-feira-program-selection { display:none !important; }
  body.print-prog-feira .prog-feira-print-filter-summary { display:block !important; font-size:7px !important; line-height:1.2 !important; }
 }
+.prog-feira-ting-badge { flex-wrap:wrap; }
+.prog-feira-ting-days { display:block; flex-basis:100%; font-weight:600; }
+@media print { body.print-prog-feira .prog-feira-parallel .prog-feira-media { height:27mm !important; } }
