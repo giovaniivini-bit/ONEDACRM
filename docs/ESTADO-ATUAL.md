@@ -18,7 +18,10 @@ planilha e Raio X não alterados; cruzamento entre telas ainda não implementado
 121 testes passaram; revisão independente aprovada. Chrome comparou1995células
 (133registros×15colunas) com API atual, temas claro/escuro, contêiner no celular,
 rolagem, aprovação em branco, linha após50, zero e payloadHTML escapado. Sem erros
-JavaScript. Publicação em andamento.
+JavaScript. Publicado no GitHub/VPS no commit 26010d1. Os 121 testes passaram na VPS;
+saúde OK e dados preservados no pull. Chrome público confirmou 133 registros,15 colunas
+e 1995 células correspondentes à fonte sem erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-aviamentos-full-20261027-26010d1.
 
 ## Prog Feira — contador por grupo de etiqueta
 
