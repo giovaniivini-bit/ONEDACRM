@@ -20,7 +20,11 @@ Cache indisponível suspende seleção, em vez de confundir com Sem etiqueta.
 119 testes passaram; revisão independente aprovada. Chrome com base186produtos e
 26etiquetas validou ordem, múltiplas, faceta01B, custoDES, limpeza, celular e cores;
 quadros A4 iguais medidos para todas as mídias. PDF oito cards/uma folha sem corte
-de complementos. Publicação em andamento.
+de complementos. Publicado no GitHub/VPS no commit 0b9477d.
+Os 119 testes passaram na VPS, saúde OK e dados preservados. API pública schema4
+com labelColumnAvailable=true; Chrome repetiu a validação das 26 etiquetas, seleção
+múltipla, facetas, mídias A4 e impressão sem corte/erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-prog-labels-a4-20261027-0b9477d.
 
 ## Prog Feira — filtros por fluxo e card organizado
 
