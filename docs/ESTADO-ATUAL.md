@@ -2,6 +2,15 @@
 
 Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — cores dos dias D43
+
+Número de dias do tingimento: M00 vermelho piscante, M01 azul fixo, M02 laranja
+piscante, M03 verde fixo. Animação somente no número D43, não altera D36. Cores
+ajustadas nos temas claro/escuro; impressão e redução de movimento não piscam.
+119 testes passaram; revisão independente aprovada. Chrome validou quatro setores,
+cores calculadas, animações, D36 estático e impressão estática, sem erros JavaScript.
+Publicação em andamento.
+
 ## Prog Feira — quadros A4 e filtro de etiquetas
 
 Mídia em tela tem proporção fixa A4 paisagem297/210, mesma largura/altura por card,

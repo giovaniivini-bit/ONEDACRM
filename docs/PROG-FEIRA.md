@@ -54,3 +54,9 @@ Filtro multisseleção por OU, ordenado alfabeticamente; cruza por AND com os de
 Opções são facetadas pelos outros filtros, inclusive setor principal, sem aplicar
 a seleção da própria etiqueta. Retém selecionadas com contagem zero. Coluna ausente
 no cache sinaliza indisponibilidade e suspende esse filtro até carregar nova base.
+
+## Cores dos dias do tingimento
+
+M00: vermelho piscante; M01: azul fixo; M02: laranja piscante; M03: verde fixo.
+Somente número de dias D43 anima; D36 mantém estilo anterior. Impressão e preferência
+por movimento reduzido desativam a animação, preservando a cor do estado.

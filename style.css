@@ -6240,3 +6240,18 @@ body.light-mode .prog-feira-parallel-item strong { color:#991b1b; background:#fe
 
 .prog-feira-customer-program { display:flex; flex-wrap:wrap; gap:5px 10px; align-items:baseline; }
 .prog-feira-customer-program > span { min-width:0; overflow-wrap:anywhere; }
+
+/* D43: cores da permanência conforme o setor de tingimento. */
+.prog-feira-time[data-ting-sector="M00"] { --d43-tone:#ef4444; --d43-ink:#fca5a5; --d43-light:#b91c1c; }
+.prog-feira-time[data-ting-sector="M01"] { --d43-tone:#3b82f6; --d43-ink:#93c5fd; --d43-light:#1d4ed8; }
+.prog-feira-time[data-ting-sector="M02"] { --d43-tone:#f97316; --d43-ink:#fdba74; --d43-light:#9a3412; }
+.prog-feira-time[data-ting-sector="M03"] { --d43-tone:#10b981; --d43-ink:#6ee7b7; --d43-light:#166534; }
+.prog-feira-time-grid .prog-feira-time[data-prog-duration="ting"]:is([data-ting-sector="M00"],[data-ting-sector="M01"],[data-ting-sector="M02"],[data-ting-sector="M03"]) {
+ color:var(--d43-ink); border-color:var(--d43-tone); background:color-mix(in srgb,var(--d43-tone) 13%,transparent);
+}
+body.light-mode .prog-feira-time-grid .prog-feira-time[data-prog-duration="ting"][data-ting-sector] { --d43-ink:var(--d43-light); }
+.prog-feira-time[data-prog-duration="ting"]:is([data-ting-sector="M00"],[data-ting-sector="M02"]) strong { animation:progD43DaysBlink 1.2s ease-in-out infinite; }
+@keyframes progD43DaysBlink { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+@media (prefers-reduced-motion:reduce),print {
+ .prog-feira-time[data-prog-duration="ting"] strong { animation:none !important; opacity:1 !important; }
+}
