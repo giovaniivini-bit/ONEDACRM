@@ -23,7 +23,11 @@ scripts/smoke-raio-x-sheets.cjs valida chegada tardia, sufixos, prioridade, fall
 ausência, escaping, clonagem PDF e restauração. Chrome com base real397cards:
 10produtos com cores localizadas,16com aviamentos;49pendências sem linha útil não
 criam bloco. PDF de6produtos com mais detalhes contém14itens em2folhas, margens
-textuais mínimas11,91mm; renderização conferida, sem errosJS. Publicação em andamento.
+textuais mínimas11,91mm; renderização conferida, sem errosJS.
+Publicado no GitHub/VPS no commit d718786. Os 126 testes passaram na VPS; saúde OK
+e dados operacionais preservados. Chrome público confirmou os397cards e os mesmos
+cruzamentos; smoke controlado passou também na URL publicada.
+Backup: /home/ubuntu/backups/oneda-crm-raio-sheet-details-20261027-d718786.
 
 ## Aviamentos Pendentes — planilha completa na tela
 
@@ -36,7 +40,8 @@ vermelho, corrigindo destaque verde anterior para texto Pendente.
 Descrições/observações têm quebra de linha sem ellipsis; datas preservadas como
 texto da planilha e zero não vira vazio. Cabeçalhos/células escapados. Rolagem
 horizontal/vertical interna e cabeçalho fixo, CSS restrito ao módulo/tabela. API,
-planilha e Raio X não alterados; cruzamento entre telas ainda não implementado.
+planilha não alterados nessa etapa; cruzamento do Raio X implementado depois,
+conforme seção acima.
 
 121 testes passaram; revisão independente aprovada. Chrome comparou1995células
 (133registros×15colunas) com API atual, temas claro/escuro, contêiner no celular,
