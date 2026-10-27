@@ -10,7 +10,10 @@ datas distintas, conserva maior permanência; data ausente não inventa zero.
 D36 mantém sua contagem. Cor, custo e aviamento não mostram dias. Filtros atuais
 preservados. 113 testes passaram, revisão independente aprovada; ajuste de foto
 somente na impressão para acomodar o badge sem cortar complementos.
-Publicação do complemento TF em andamento.
+Publicado no GitHub/VPS no commit 005f4b2. Os 113 testes passaram na VPS,
+saúde OK e dados operacionais preservados no pull. Chrome no CRM público
+confirmou dias TF, filtros, complementos e impressão sem cortes/erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-prog-tf-days-20261027-005f4b2.
 
 ## Prog Feira — nova exportação com partes e fluxos paralelos
 
