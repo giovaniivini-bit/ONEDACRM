@@ -10,10 +10,13 @@ Cor e aviamento exige ambas e Sem cor e aviamento exige nenhuma. O helper recebe
 opção explícita somente no Raio X; comportamento exclusivo do Setor01 preservado.
 
 107 testes passaram; revisão independente aprovada. Chrome com dados reais validou
-o produto01.16.00.7896 OF77817 (setores01,D01,X01) nos três filtros e ausência em
+o produto01.16.00.7896 OF 77817 (setores01,D01,X01) nos três filtros e ausência em
 Nenhuma. Conferidas também as contagens globais dos quatro filtros (base409), sem
 erros JavaScript. Versões dos três scripts atualizadas para evitar cache antigo.
-Publicação em andamento.
+Publicado no GitHub e VPS no commit d956e40. Os 107 testes passaram na VPS;
+saúde OK e dados operacionais preservados. Chrome no CRM público confirmou
+OF 77817 nos filtros Com cor, Com aviamento e Ambas, e ausência em Nenhuma.
+Backup: /home/ubuntu/backups/oneda-crm-raio-pending-20261027-d956e40.
 
 ## Raio X — impressão com margem segura e textos legíveis
 
