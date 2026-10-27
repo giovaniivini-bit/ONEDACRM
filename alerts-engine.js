@@ -779,6 +779,7 @@
         getCQRejectionDate,
         calculateElapsedDays,
         normalizeProductCode,
+        getRecordField,
         buildColorForecastIndex,
         buildCQAlertRecords,
         parseIndustrialDate,

@@ -42,3 +42,27 @@ Validação: testes de consolidação, chaves, setores, D7, grupos de estilo e c
 O smoke opcional com CRM_SMOKE_PDF testa 17 cards ([6,6,5]), caso denso,
 fallback de foto e restauração após impressão. O PDF gerado deve ser conferido
 quanto à contagem real por página e renderizado para revisão visual.
+
+## Complementos das planilhas de cores e aviamentos
+
+Apenas D01 recebe dados de cores; apenas X01 recebe dados de aviamentos. Ambos
+exigem uma linha útil na planilha externa com PRODUTO igual ao código completo,
+ignorando apenas espaços externos/caixa. Não remove sufixos nem usa prefixos.
+Planilhas sem OF são cruzadas por produto; cards seguem identificados por OF+código.
+Sem correspondência, fonte indisponível ou linha só com PRODUTO: não acrescentar
+bloco. A pendência D01/X01 original continua, mesmo se houver envio ao cliente.
+
+Cada linha vira um item: cor/Pantone ou tipo/descrição de aviamento. ENV CLIENTE
+(cores) e ENV. CLIENTE (aviamentos) têm prioridade sobre PREVISÃO. Se envio estiver
+vazio, traço ou erro de célula, mostrar a previsão. Se não houver ambos, mas houver
+cor/tipo/descrição, informar envio/previsão não informados. Não inferir aprovação,
+não usar RECEBIDO como envio ao cliente e não converter conteúdo textual em data.
+Todos os itens são preservados, inclusive após a linha50; sem escolher último registro.
+
+Atualização das fontes refaz o Raio X aberto; isLive=false identifica cache local.
+PDF conserva complementos legíveis e margem segura. Muitos detalhes podem ocupar
+mais folhas: não reduzir fontes nem esconder conteúdo para forçar seis por folha.
+
+Smoke opcional: fornecer Playwright via NODE_PATH, definir CRM_SMOKE_URL para a
+prévia e rodar node scripts/smoke-raio-x-sheets.cjs. CRM_SMOKE_PDF opcional grava
+PDF da fixture; o teste só intercepta leituras em seu navegador isolado.

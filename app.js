@@ -40,6 +40,7 @@
         coresFilter: null,
         coresSearch: '',
         coresExternalData: null,
+        externalSheetsLoaded: false,
         aviamentosFilter: null,
         aviamentosSearch: '',
         aviamentosExternalData: null,
@@ -863,6 +864,8 @@
 
     // Carregamento assíncrono das planilhas externas do Drive (Cores, Aviamentos e CQ)
     async function loadExternalSheets(force = false) {
+        const sheetsWereLoaded = state.externalSheetsLoaded;
+        const previousSheetSources = JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive]);
         if (!window.location.protocol.startsWith('http')) return;
         const previousRecords = JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
         const failures = [];
@@ -886,6 +889,7 @@
                 requestExternal('calendar'),
                 requestExternal('prog_feira')
             ]);
+            state.externalSheetsLoaded = true;
             if (coresRes && coresRes.success) {
                 state.coresExternalData = coresRes;
             }
@@ -912,7 +916,7 @@
             }
             const changed = previousRecords !== JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
             updateSidebarBadges();
-            if ((changed || force) && ['cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
+            if ((changed || force || !sheetsWereLoaded || previousSheetSources !== JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive])) && ['raio-x', 'cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
             }
             if (force && failures.length) throw new Error(`Atualização parcial: ${failures.join('; ')}`);
@@ -3921,7 +3925,7 @@
         const api = window.CRMRaioX;
         const helpers = window.CRMSetor01RelatedSectors;
         const allowedKeys = new Set(state.filteredData.filter(p => api.SECTORS.includes(p.setor)).map(p => JSON.stringify([String(p.op || '').trim().toUpperCase(), String(p.codigo || '').trim().toUpperCase()])));
-        const products = api.build(state.allData).filter(p => allowedKeys.has(p.key));
+        const products = api.enrichWithSheets(api.build(state.allData).filter(p => allowedKeys.has(p.key)), state.coresExternalData?.records, state.aviamentosExternalData?.records);
         const f = state.raioXFilters;
         const visible = api.filter(products, f, helpers);
         const sectorCandidates = api.filter(products, { ...f, sectors: [] }, helpers);
@@ -3957,6 +3961,13 @@
         if (f.search) activeLabels.push(`Busca: ${f.search}`);
         const metric = (label, value) => `<article class="kpi-card"><span class="kpi-label">${label}</span><strong class="kpi-value">${formatNumber(value)}</strong></article>`;
         const meta = (label, value) => `<div class="s13-meta-item"><span class="s13-meta-label">${label}</span><span class="s13-meta-value">${escapeHtml(value || '—')}</span></div>`;
+        const renderSheetDetails = (sheet, kind) => {
+            if (!sheet?.items.length) return '';
+            const isColor = kind === 'color';
+            const source = isColor ? state.coresExternalData : state.aviamentosExternalData;
+            const title = isColor ? 'Cor pendente · D01' : 'Aviamento pendente · X01';
+            return `<section class="rx-sheet-details" data-rx-sheet="${kind}"><h4>${title}${source?.isLive === false ? '<small>Cache local</small>' : ''}</h4>${sheet.items.map(item => `<article class="rx-sheet-item"><strong>${escapeHtml(item.name || (isColor ? 'Cor não informada' : 'Aviamento não informado'))}</strong>${item.description && (isColor || item.description.toUpperCase() !== item.name.toUpperCase()) ? `<span class="rx-sheet-description">${isColor ? 'Pantone: ' : ''}${escapeHtml(item.description)}</span>` : ''}<p class="rx-sheet-delivery" data-delivery-kind="${item.delivery.kind}"><span>${item.delivery.label}:</span> <strong>${escapeHtml(item.delivery.value)}</strong></p></article>`).join('')}</section>`;
+        };
         container.innerHTML = `<section id="raioXView">
             <div class="module-view-header"><h2>Raio X</h2><p class="module-view-description">Produtos por OF e código completo • Setores principais e pendências secundárias</p></div>
             <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Selecione um ou mais setores. Passe o mouse para ver o nome completo.</p><div class="rx-sector-selector" role="group" aria-label="Selecionar setores do Raio X"><button type="button" class="rx-sector-toggle ${f.sectors.length ? '' : 'selected'}" data-rx-sector="all" aria-pressed="${!f.sectors.length}"><strong>Todos</strong><span></span><span class="rx-sector-quantity">${sectorCandidates.length}</span></button>${[...api.SECTORS].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })).map(s => {
@@ -3999,6 +4010,8 @@
                                 <div class="s13-meta-item"><span class="s13-meta-label">Setor Aviamento</span><span class="s01-sector-chip-list">${p.setoresAviamento.length ? '<span class="s01-sector-chip danger badge-pulse-red">SETOR X01</span>' : '<span class="s01-sector-chip empty">—</span>'}</span></div>
                                 <div class="s13-meta-item"><span class="s13-meta-label">Setor Cor</span><span class="s01-sector-chip-list">${p.setoresCor.length ? '<span class="s01-sector-chip danger badge-pulse-red">SETOR D01</span>' : '<span class="s01-sector-chip empty">—</span>'}</span></div>
                             </div>
+                            ${renderSheetDetails(p.colorSheet, 'color')}
+                            ${renderSheetDetails(p.trimSheet, 'trim')}
                             <div class="rx-secondary"><span class="s01-sector-chip ${p.malotes.length ? 'danger' : 'success'}">Malote D7: ${p.malotes.length ? p.malotes.join(' / ') : 'Sem pendência'}</span></div>
                             <button class="s13-btn-action primary" data-rx-op="${index}">Detalhes da OP</button>
                         </div>
@@ -4082,9 +4095,11 @@
                 details[2][1] = statuses[1] ? [...statuses[1].querySelectorAll(':scope > span')].map(el => el.textContent.trim()).join(' / ') : '';
                 details.push(['Aviamento / cor', [...copy.querySelectorAll('.rx-secondary .s13-meta-item')].map(el => el.querySelector('.s13-meta-label').textContent.trim() + ': ' + el.querySelector('.s01-sector-chip-list').textContent.trim()).join(' • ')]);
                 details.push(['Malote', textOf('.rx-secondary > .s01-sector-chip').replace(/^Malote D7:\s*/, '')]);
+                const sheetDetails = [...copy.querySelectorAll('.rx-sheet-details')].map(section => section.cloneNode(true));
                 const identification = body.querySelector('.s13-card-code-row').outerHTML;
                 const description = body.querySelector('.s13-card-description').textContent.trim();
                 body.innerHTML = identification + `<p class="rx-print-description">${escapeHtml(description)}</p><dl class="rx-print-details">${details.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value || 'Não informado')}</dd></div>`).join('')}</dl>`;
+                sheetDetails.forEach(section => body.appendChild(section));
                 copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
                 copy.querySelectorAll('img').forEach(img => {
                     img.loading = 'eager';

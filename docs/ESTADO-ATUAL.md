@@ -2,6 +2,29 @@
 
 Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Raio X — cruzamento com planilhas de cores e aviamentos
+
+Complementos somente para produtos com D01 (cores) ou X01 (aviamentos), com linha
+útil correspondente em PRODUTO na planilha do CRM. Comparação exata de código
+completo (trim/maiúsculas), preservando sufixos/hífens. Planilhas não têm OF: mesma
+informação de produto pode complementar suas OFs, sem alterar a chave OF+código do
+Raio X. Não cria pendência nem a resolve porque existe envio ao cliente.
+
+Cor: nome e Pantone. Aviamento: tipo e descrição. Cada linha preservada separadamente.
+Prioridade ENV CLIENTE/ENV. CLIENTE; se ausente/traço/erro de célula, PREVISÃO; se
+ambos ausentes mas há descrição, informa que envio/previsão não foram informados.
+Sem informação útil ou sem correspondência: nenhum bloco extra. Valores mantidos
+como na fonte, sem inventar datas. Conteúdo escapado. Carregamento/atualização de
+planilhas refaz Raio X aberto, inclusive mudança isLive; cache identificado quando
+usado. Filtros e pendências originais preservados; impressão clona complementos.
+
+126 testes passaram e revisão independente aprovada. Novo smoke controlado em
+scripts/smoke-raio-x-sheets.cjs valida chegada tardia, sufixos, prioridade, fallback,
+ausência, escaping, clonagem PDF e restauração. Chrome com base real397cards:
+10produtos com cores localizadas,16com aviamentos;49pendências sem linha útil não
+criam bloco. PDF de6produtos com mais detalhes contém14itens em2folhas, margens
+textuais mínimas11,91mm; renderização conferida, sem errosJS. Publicação em andamento.
+
 ## Aviamentos Pendentes — planilha completa na tela
 
 Tabela da planilha agora deriva todas as colunas da fonte, na ordem original

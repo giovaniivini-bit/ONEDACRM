@@ -119,3 +119,12 @@ apenas estados pendentes em linhas empilhadas (COR, CUSTO, TINT. CASEIRA, AVIAME
 Cor usa D01/D02; aviamento X01/X02. Não criar cards de fluxos paralelos isolados,
 não somar suas quantidades e não interpretar ausência como resolvido ou como M00.
 Formato antigo TIPO1/2/3 e COD_CLIENTE é compatibilidade, não a fonte atual.
+
+## Raio X × planilhas externas — 27/10/2026
+
+Somente card com D01/X01 e informação útil em linha PRODUTO de cores/aviamentos
+recebe complemento. Código completo preserva sufixos, sem cruzamento por prefixo.
+Mostrar cor/Pantone ou tipo/descrição; ENV CLIENTE/ENV. CLIENTE prevalece sobre
+PREVISÃO. Se vazio, usar previsão; nunca RECEBIDO. Preservar todas as linhas e valores
+textuais. Sem informação correspondente não criar bloco nem inventar ausência de
+pendência; envio não resolve D01/X01 automaticamente. PDF conserva os complementos.

@@ -95,3 +95,39 @@ test('Raio X inclui pendência dupla em cor e aviamento sem alterar filtro exclu
     assert.equal(helpers.matchesPending(both,'aviamento'),false);
     assert.equal(helpers.matchesPending(both,'ambas'),true);
 });
+test('cruza planilhas por produto completo e prioriza envio ao cliente em cada linha',()=>{
+    const ps=rx.build([row('01'),row('D01'),row('X01')]);
+    const colors=[{PRODUTO:' 01.00.123a ',COR:'AZUL',PANTONE:'19-4001','ENV CLIENTE':'20/10/2026','PREVISÃO':'10/10/2026'},{PRODUTO:'01.00.123A',COR:'VERDE','ENV CLIENTE':'','PREVISÃO':'30/10/2026'},{PRODUTO:'01.00.123',COR:'ERRADA'}];
+    const trims=[{PRODUTO:'01.00.123A','TIPO AVIAMENTO':'BOTÃO','DESCRIÇÃO':'18 mm','ENV. CLIENTE':'22/10/2026','PREVISÃO':'10/10/2026'},{PRODUTO:'01.00.123A','TIPO AVIAMENTO':'ETIQUETA','ENV. CLIENTE':'','PREVISÃO':'31/10/2026'}];
+    const [p]=rx.enrichWithSheets(ps,colors,trims);
+    assert.equal(p.colorSheet.items.length,2);assert.equal(p.trimSheet.items.length,2);
+    assert.equal(p.colorSheet.items[0].name,'AZUL');assert.equal(p.colorSheet.items[0].description,'19-4001');
+    assert.deepEqual(p.colorSheet.items[0].delivery,{kind:'sent',label:'Enviado ao cliente',value:'20/10/2026'});
+    assert.deepEqual(p.colorSheet.items[1].delivery,{kind:'forecast',label:'Previsão',value:'30/10/2026'});
+    assert.equal(p.trimSheet.items[0].description,'18 mm');assert.equal(p.trimSheet.items[0].delivery.kind,'sent');assert.equal(p.trimSheet.items[1].delivery.value,'31/10/2026');
+    assert.equal(ps[0].colorSheet,undefined,'não muta os produtos da consolidação');
+});
+test('não usa recebido como envio nem mistura sufixos ou produtos sem pendência ativa',()=>{
+    const ps=rx.build([row('01'),row('D01'),row('X01'),row('01',{op:'2',codigo:'01.00.123B'})]);
+    const colors=[{PRODUTO:'01.00.123A',COR:'BRANCO',RECEBIDO:'20/10/2026','ENV CLIENTE':'—',PREVISAO:'30/10/2026'}];
+    const trims=[{PRODUTO:'01.00.123A','TIPO AVIAMENTO':'CORDÃO','ENV. CLIENTE':'#VALUE!',PREVISAO:'-'},{PRODUTO:'01.00.123B','TIPO AVIAMENTO':'NÃO DEVE MOSTRAR'}];
+    const enriched=rx.enrichWithSheets(ps,colors,trims);const a=enriched.find(p=>p.op==='123');const b=enriched.find(p=>p.op==='2');
+    assert.equal(a.colorSheet.items[0].delivery.kind,'forecast');assert.equal(a.trimSheet.items[0].delivery.kind,'missing');
+    assert.equal(b.colorSheet,null);assert.equal(b.trimSheet,null);
+});
+test('distingue planilha indisponível de produto ausente e preserva dados textuais sem inventar datas',()=>{
+    const ps=rx.build([row('01'),row('D01'),row('X01')]);
+    const [missing]=rx.enrichWithSheets(ps,[],null);assert.equal(missing.colorSheet.available,true);assert.deepEqual(missing.colorSheet.items,[]);assert.equal(missing.trimSheet.available,false);
+    const [text]=rx.enrichWithSheets(ps,[{produto:'01.00.123A',cor:'CREME','enviado ao cliente':'COM O MALOTE 27','previsao':'DEFINIR'}],[]);
+    assert.equal(text.colorSheet.items[0].delivery.value,'COM O MALOTE 27');assert.equal(text.colorSheet.items[0].delivery.kind,'sent');
+});
+test('planilha sem OF complementa todas as OFs do código exato e mantém itens após a linha 50',()=>{
+    const ps=rx.build([row('01'),row('D01'),row('01',{op:'2'}),row('D01',{op:'2'})]);
+    const colors=[...Array.from({length:50},(_,i)=>({PRODUTO:'OUTRO'+i,COR:'OUTRA'})),{PRODUTO:'01.00.123A',COR:'AZUL',PREVISAO:'30/10/2026'}];
+    const enriched=rx.enrichWithSheets(ps,colors,[]);assert.equal(enriched.length,2);assert.ok(enriched.every(p=>p.colorSheet.items.length===1&&p.colorSheet.items[0].name==='AZUL'));
+});
+test('linha que contém apenas o produto não cria complemento sem informação',()=>{
+    const ps=rx.build([row('01'),row('D01'),row('X01')]);
+    const [p]=rx.enrichWithSheets(ps,[{PRODUTO:'01.00.123A',COR:'-',PANTONE:'','ENV CLIENTE':'',PREVISAO:''}],[{PRODUTO:'01.00.123A'}]);
+    assert.deepEqual(p.colorSheet.items,[]);assert.deepEqual(p.trimSheet.items,[]);
+});

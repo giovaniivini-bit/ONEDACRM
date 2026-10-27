@@ -73,7 +73,7 @@ test('filtro de tipo é dinâmico e o PDF respeita o conjunto filtrado', () => {
     assert.match(app, /alertas: 'print-alertas'/);
     assert.match(css, /body\.print-alertas \.alerts-panel\s*\{[\s\S]*?break-inside: auto !important/);
     assert.match(css, /body\.print-alertas \.alert-item\s*\{[\s\S]*?min-height: 26mm !important[\s\S]*?break-inside: avoid !important/);
-    assert.match(index, /style\.css\?v=20261027-aviamentos-full-sheet-1/);
+    assert.match(index, /style\.css\?v=20261027-raio-x-sheet-details-1/);
     assert.match(index, /light-theme\.css\?v=20261012-mpo-memory-1/);
     assert.match(index, /app\.js\?v=[\w-]+/);
 });
@@ -91,5 +91,5 @@ test('andamento CQ inclui REPROVADO como situação crítica vermelha e piscante
     assert.match(app, /buildCQAlertRecords/);
     assert.match(css, /@keyframes cqRejectedPulse/);
     assert.match(css, /\.cq-reprovado-pulse/);
-    assert.match(index, /alerts-engine\.js\?v=20261007-prog-feira-alert-days-1/);
+    assert.match(index, /alerts-engine\.js\?v=20261027-raio-x-sheet-details-1/);
 });

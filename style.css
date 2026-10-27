@@ -6284,3 +6284,21 @@ body:has(#aviamentosSheetSection) .main-content { min-width:0; }
 .aviamentos-sheet-scroll { min-width:0; width:100%; }
 .aviamentos-sheet-section .table-toolbar, .aviamentos-sheet-section .table-title-group { flex-wrap:wrap; min-width:0; }
 .aviamentos-sheet-section .table-title { min-width:0; white-space:normal; overflow-wrap:anywhere; }
+
+.rx-sheet-details { margin:0; padding:10px; border:1px solid var(--border-color,#334155); border-radius:8px; background:var(--bg-panel); min-width:0; overflow-wrap:anywhere; }
+.rx-sheet-details h4 { margin:0 0 8px; font-size:11px; color:var(--text-primary); }
+.rx-sheet-details h4 small { display:block; margin-top:3px; font-size:9px; color:var(--text-secondary); }
+.rx-sheet-item { display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-primary); }
+.rx-sheet-item + .rx-sheet-item { margin-top:8px; padding-top:8px; border-top:1px solid var(--border-color,#334155); }
+.rx-sheet-description { font-size:10px; line-height:1.4; color:var(--text-secondary); margin:0; }
+.rx-sheet-delivery { margin:0; line-height:1.4; font-size:10px; }
+.rx-sheet-delivery > span { color:var(--text-secondary); }
+body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
+@media print {
+ #raioXPrintReport .rx-sheet-details { margin:2mm 0 0 !important; padding:1.5mm !important; border-color:#cbd5e1 !important; background:#f8fafc !important; }
+ #raioXPrintReport .rx-sheet-details h4 { color:#0f172a !important; font-size:9px !important; margin:0 0 1mm !important; }
+ #raioXPrintReport .rx-sheet-item { color:#0f172a !important; font-size:9px !important; line-height:1.3 !important; gap:.5mm !important; }
+ #raioXPrintReport .rx-sheet-description, #raioXPrintReport .rx-sheet-delivery { color:#334155 !important; font-size:9px !important; }
+ #raioXPrintReport .rx-sheet-delivery > span { color:#475569 !important; }
+ #raioXPrintReport .rx-sheet-item + .rx-sheet-item { margin-top:1mm !important; padding-top:1mm !important; border-color:#cbd5e1 !important; }
+}
