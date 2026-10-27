@@ -5836,6 +5836,33 @@
 
         // 2. Dados da Planilha Externa de Aviamentos (Google Drive - Responsável / Coluna C)
         const avExt = state.aviamentosExternalData || { count: 0, byResponsavel: {}, records: [], isLive: false };
+        const avSheetColumns = [...new Set((avExt.records || []).flatMap(record => Object.keys(record || {})))];
+        const avSheetColumnWidth = column => {
+            const key = normalizeKey(column);
+            if (key.includes('observa')) return 420;
+            if (key === 'descricao') return 260;
+            if (key === 'dias' || key === 'dias2') return 85;
+            if (['solicitado','previsao','recebido','envcliente','dataaprovado'].includes(key)) return 145;
+            return 170;
+        };
+        const renderAvSheetCell = (record, column) => {
+            const key = normalizeKey(column);
+            const value = String(record[column] ?? '').trim();
+            let content = escapeHtml(value || '—');
+            let className = '';
+            if (key.includes('observa')) className = 'av-sheet-notes';
+            else if (key === 'descricao') className = 'av-sheet-description';
+            else if (key === 'produto') className = 'av-sheet-code';
+            else if (['solicitado','previsao','recebido','envcliente','dias','dias2'].includes(key)) className = 'av-sheet-date';
+            if (key === 'dataaprovado') {
+                const approved = Boolean(value && !/^[-—–]+$/.test(value));
+                content = `<span class="badge ${approved ? 'badge-emerald' : 'badge-rose'}">${approved ? escapeHtml(value) : 'Pendente'}</span>`;
+            } else if (key === 'tipoaviamento' || key === 'responsavel') {
+                content = `<span class="badge ${key === 'responsavel' ? 'badge-purple' : 'badge-amber'}">${content}</span>`;
+            }
+            return `<td class="${className}">${content}</td>`;
+        };
+
         const avRespList = Object.entries(avExt.byResponsavel || {})
             .map(([name, count]) => ({ name, count }))
             .sort((a, b) => b.count - a.count);
@@ -6189,67 +6216,23 @@
             </div>
 
             ${avExt.records && avExt.records.length > 0 ? `
-                <!-- TABELA ADICIONAL: ITENS DA PLANILHA DRIVE DE AVIAMENTOS -->
-                <div class="table-card" style="border-top: 3px solid #fbbf24; margin-bottom: 24px;">
-                    <div class="table-toolbar" style="border-bottom: 1px solid rgba(245, 158, 11, 0.2); justify-content: space-between;">
+                <!-- TABELA ADICIONAL: TODAS AS COLUNAS E REGISTROS DA PLANILHA -->
+                <section id="aviamentosSheetSection" class="table-card aviamentos-sheet-section">
+                    <div class="table-toolbar">
                         <div class="table-title-group">
-                            <h3 class="table-title" style="display: flex; align-items: center; gap: 8px; color: #ffffff;">
-                                <i class="fa-solid fa-file-excel" style="color: #10b981;"></i>
-                                <span>Itens Pendentes na Planilha de Aviamentos (Google Drive)</span>
-                            </h3>
-                            <span class="badge badge-amber">${avExt.records.length} registros</span>
+                            <h3 class="table-title"><i class="fa-solid fa-file-excel"></i> Itens Pendentes na Planilha de Aviamentos (Google Drive)</h3>
+                            <span class="badge badge-amber">${avExt.records.length} registros · ${avSheetColumns.length} colunas</span>
                         </div>
                     </div>
-
-                    <div class="table-responsive">
-                        <table class="crm-table">
-                            <thead>
-                                <tr>
-                                    <th>Tipo Aviamento</th>
-                                    <th>Fornecedor</th>
-                                    <th>Responsável</th>
-                                    <th>Pedido / Feira</th>
-                                    <th>Coleção</th>
-                                    <th>Produto / Referência</th>
-                                    <th>Descrição</th>
-                                    <th>Dias</th>
-                                    <th>Status Aprovado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${avExt.records.slice(0, 50).map(r => {
-                                    const tipo = r['TIPO AVIAMENTO'] || r[Object.keys(r)[0]] || '—';
-                                    const forn = r['FORNECEDOR'] || r[Object.keys(r)[1]] || '—';
-                                    const resp = r['RESPONSÁVEL'] || r[Object.keys(r)[2]] || '—';
-                                    const col = r['COLEÇÃO'] || r[Object.keys(r)[3]] || '—';
-                                    const ped = r['PEDIDO OU FEIRA'] || r[Object.keys(r)[4]] || '—';
-                                    const prod = r['PRODUTO'] || r[Object.keys(r)[5]] || '—';
-                                    const desc = r['DESCRIÇÃO'] || r[Object.keys(r)[6]] || '—';
-                                    const dias = r['DIAS'] || r[Object.keys(r)[9]] || '—';
-                                    const aprov = r['DATA APROVADO'] || r[Object.keys(r)[13]] || 'Pendente';
-
-                                    return `
-                                        <tr>
-                                            <td><span class="badge badge-amber" style="font-weight: 700;">${tipo}</span></td>
-                                            <td style="color: #cbd5e1; font-size: 12.5px;">${forn}</td>
-                                            <td><span class="badge badge-purple" style="font-weight: 800;">${resp}</span></td>
-                                            <td><span class="badge badge-sub">${ped}</span></td>
-                                            <td style="font-size: 12px; color: #94a3b8;">${col}</td>
-                                            <td style="font-family: monospace; font-weight: 700; color: #ffffff;">${prod}</td>
-                                            <td style="font-size: 12px; color: #e2e8f0; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${desc}">${desc}</td>
-                                            <td><span class="badge badge-sub">${dias}</span></td>
-                                            <td>
-                                                <span class="badge ${aprov && aprov.trim() ? 'badge-emerald' : 'badge-rose'}">
-                                                    ${aprov && aprov.trim() ? aprov : 'Pendente'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
+                    <p class="aviamentos-sheet-hint">Role a tabela para os lados para consultar todas as colunas da planilha.</p>
+                    <div class="table-responsive aviamentos-sheet-scroll" tabindex="0" role="region" aria-label="Planilha completa de aviamentos">
+                        <table id="aviamentosSheetTable" class="crm-table aviamentos-sheet-table" style="min-width:${avSheetColumns.reduce((sum,column) => sum + avSheetColumnWidth(column),0)}px">
+                            <colgroup>${avSheetColumns.map(column => `<col style="width:${avSheetColumnWidth(column)}px">`).join('')}</colgroup>
+                            <thead><tr>${avSheetColumns.map(column => `<th scope="col">${escapeHtml(column)}</th>`).join('')}</tr></thead>
+                            <tbody>${avExt.records.map(record => `<tr>${avSheetColumns.map(column => renderAvSheetCell(record,column)).join('')}</tr>`).join('')}</tbody>
                         </table>
                     </div>
-                </div>
+                </section>
             ` : ''}
         `;
     }

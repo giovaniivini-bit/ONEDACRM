@@ -2,6 +2,24 @@
 
 Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Aviamentos Pendentes — planilha completa na tela
+
+Tabela da planilha agora deriva todas as colunas da fonte, na ordem original
+(união de cabeçalhos), em vez de nove campos fixos. Inclui solicitado, previsão,
+dias2, recebido, envio ao cliente, data aprovado e observações. Todos os registros
+recebidos aparecem (removido limite50). Aprovação vazia/traço mostra Pendente em
+vermelho, corrigindo destaque verde anterior para texto Pendente.
+
+Descrições/observações têm quebra de linha sem ellipsis; datas preservadas como
+texto da planilha e zero não vira vazio. Cabeçalhos/células escapados. Rolagem
+horizontal/vertical interna e cabeçalho fixo, CSS restrito ao módulo/tabela. API,
+planilha e Raio X não alterados; cruzamento entre telas ainda não implementado.
+
+121 testes passaram; revisão independente aprovada. Chrome comparou1995células
+(133registros×15colunas) com API atual, temas claro/escuro, contêiner no celular,
+rolagem, aprovação em branco, linha após50, zero e payloadHTML escapado. Sem erros
+JavaScript. Publicação em andamento.
+
 ## Prog Feira — contador por grupo de etiqueta
 
 Contador próximo ao seletor de etiquetas, agrupa pelos primeiros dois caracteres

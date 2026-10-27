@@ -6268,3 +6268,19 @@ body.light-mode .prog-feira-label-group > strong { color:#0369a1; }
 @media print { body.print-prog-feira .prog-feira-label-groups { display:none !important; } }
 .prog-feira-label-group { grid-template-columns:minmax(0,1fr) auto; }
 .prog-feira-label-group > span { min-width:0; overflow-wrap:anywhere; }
+
+.aviamentos-sheet-section { border-top:3px solid #fbbf24; margin-bottom:24px; min-width:0; }
+.aviamentos-sheet-section .table-title { color:var(--text-primary); }
+.aviamentos-sheet-section .table-title i { color:#10b981; }
+.aviamentos-sheet-hint { margin:10px 16px; font-size:12px; color:var(--text-secondary); }
+.aviamentos-sheet-scroll { max-width:100%; }
+.aviamentos-sheet-scroll:focus-visible { outline:2px solid #f59e0b; outline-offset:2px; }
+.aviamentos-sheet-table { table-layout:fixed; width:100%; }
+.aviamentos-sheet-table td { vertical-align:top; white-space:normal; overflow-wrap:anywhere; color:var(--text-primary); line-height:1.45; }
+.aviamentos-sheet-table .av-sheet-code { font-family:monospace; font-weight:700; }
+.aviamentos-sheet-table .av-sheet-date { white-space:nowrap; }
+.aviamentos-sheet-table .av-sheet-notes, .aviamentos-sheet-table .av-sheet-description { white-space:pre-wrap; overflow-wrap:anywhere; }
+body:has(#aviamentosSheetSection) .main-content { min-width:0; }
+.aviamentos-sheet-scroll { min-width:0; width:100%; }
+.aviamentos-sheet-section .table-toolbar, .aviamentos-sheet-section .table-title-group { flex-wrap:wrap; min-width:0; }
+.aviamentos-sheet-section .table-title { min-width:0; white-space:normal; overflow-wrap:anywhere; }
