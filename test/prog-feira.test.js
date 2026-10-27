@@ -61,7 +61,7 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
     assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
-    assert.match(html, /style\.css\?v=20261027-prog-tf-days-1/);
+    assert.match(html, /style\.css\?v=20261027-prog-flow-filters-1/);
     assert.match(html, /app\.js\?v=[\w-]+/);
 });
 
@@ -157,4 +157,37 @@ test('dias de TF acompanham o setor real M00 a M03 e não usam a data do D36',()
     }
     const [missing]=buildProducts([erp('FE','D36','01A'),erp('TF','D43','M00',{'Data Saída':''})],now);assert.equal(missing.tingDays,null);
     const [absent]=buildProducts([erp('FE','D36','01A')],now);assert.equal(absent.tingDays,null);
+});
+test('filtros independentes de cor, tingimento caseiro e custo cruzam estados atuais inclusive resolvidos',()=>{
+    const {filterByParallelSectors,getParallelFilterOptions}=require('../prog-feira');
+    const ps=buildProducts([
+        erp('FE','D36','01A'),erp('CO','D41','D01'),erp('TF','D43','M00'),erp('D6','D35','DES'),
+        erp('FE','D36','02B',{'Número':'200'}),erp('CO','D41','D02',{'Número':'200','Qtde Pend':'0'}),erp('TF','D43','M03',{'Número':'200','Qtde Pend':'0'}),erp('D6','D35','FIM',{'Número':'200','Qtde Pend':'0'}),
+        erp('FE','D36','01B',{'Número':'300'})
+    ]);
+    const ids=filters=>filterByParallelSectors(ps,filters).map(p=>p.numero);
+    assert.deepEqual(ids({color:'D01',ting:'M00',cost:'DES'}),['100']);
+    assert.deepEqual(ids({color:'D02',ting:'M03',cost:'FIM'}),['200']);
+    assert.deepEqual(ids({color:'D01',cost:'FIM'}),[]);
+    assert.deepEqual(ids({color:'unknown',ting:'unknown',cost:'unknown'}),['300']);
+    assert.equal(ids({}).length,3);
+    assert.equal(getParallelFilterOptions(ps,'cost').find(o=>o.value==='DES').count,1);
+    assert.equal(getParallelFilterOptions(ps,'cost').find(o=>o.value==='FIM').count,1);
+    assert.equal(getParallelFilterOptions(ps,'cost','CUSTOM').find(o=>o.value==='CUSTOM').count,0);
+    assert.equal(filterByPrograms(filterByParallelSectors(ps,{cost:'DES'}),['B44']).length,1);
+});
+test('filtros por fluxo preservam compatibilidade legada e múltiplos estados sem confundir ausência',()=>{
+    const {filterByParallelSectors}=require('../prog-feira');
+    const legacy=buildProducts([{NUMERO:'1',CODIGO:'A',TIPO:'1',OP:'01A',SETOR_TING:'M02',SETOR_FLUXO_EM:'PCO'}]);
+    assert.equal(filterByParallelSectors(legacy,{ting:'M02',cost:'PCO',color:'unknown'}).length,1);
+    const ps=buildProducts([erp('FE','D36','01A'),erp('TF','D43','M00'),erp('TF','D43','M02')]);
+    assert.equal(filterByParallelSectors(ps,{ting:'M00'}).length,1);
+    assert.equal(filterByParallelSectors(ps,{ting:'M02'}).length,1);
+});
+test('setor complementar em branco é Sem informação e nunca vira opção vazia',()=>{
+    const {filterByParallelSectors,getParallelFilterOptions}=require('../prog-feira');
+    const ps=buildProducts([erp('FE','D36','01A'),erp('CO','D41',''),erp('TF','D43',''),erp('D6','D35','')]);
+    assert.equal(filterByParallelSectors(ps,{color:'unknown',ting:'unknown',cost:'unknown'}).length,1);
+    assert.equal(ps[0].tingDays,null);
+    for(const kind of ['color','ting','cost'])assert.ok(getParallelFilterOptions(ps,kind).every(o=>o.value));
 });

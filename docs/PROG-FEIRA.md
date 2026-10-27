@@ -32,3 +32,15 @@ Dias: somente D36 e TF/D43 aparecem na tela. O badge de tingimento informa dias 
 estado atual M00–M03, calculados de Data Saída das próprias linhas TF. Maior tempo
 entre grades desse estado; data ausente permanece sem contagem. Não há contagem
 visível de dias para custos, cor ou aviamento. Filtros mantidos.
+
+## Filtros por fluxo e organização do card
+
+Seletores independentes Cor (CO/D41), Ting. caseiro (TF/D43), Custos (D6/D35).
+Composição AND entre seletores e os filtros existentes. Todos remove a restrição do
+fluxo, Sem informação exige nenhum setor registrado. Estados resolvidos continuam
+filtráveis; estados vazios não criam opção vazia. Produtos com múltiplos setores
+podem corresponder a qualquer setor daquele fluxo, sem duplicar cards.
+
+Imagem em tela ocupa largura inteira, proporcional, sem corte. Tempos D36 e D43
+lado a lado com números grandes e alinhados; datas ausentes ficam sem número.
+Impressão mantém oito cards, ajustando foto e tempos; inclui seleção no resumo.

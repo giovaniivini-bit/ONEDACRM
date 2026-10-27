@@ -6201,3 +6201,36 @@ body.light-mode .prog-feira-parallel-item strong { color:#991b1b; background:#fe
 .prog-feira-ting-badge { flex-wrap:wrap; }
 .prog-feira-ting-days { display:block; flex-basis:100%; font-weight:600; }
 @media print { body.print-prog-feira .prog-feira-parallel .prog-feira-media { height:27mm !important; } }
+
+.prog-feira-parallel-filter { display:flex; flex-direction:column; gap:5px; min-width:155px; flex:1 1 170px; }
+.prog-feira-parallel-filter > span { font-size:11px; font-weight:700; color:var(--text-secondary); }
+.prog-feira-parallel-filter select { width:100%; min-width:0; }
+
+/* Prog Feira: foto inteira na largura do card e tempos alinhados. */
+@media screen {
+ .prog-feira-media { display:block; height:auto; }
+ .prog-feira-image { display:block; width:100%; height:auto; max-width:100%; max-height:none; }
+ .prog-feira-image-empty { min-height:220px; justify-content:center; }
+}
+.prog-feira-card-body { display:flex; flex-direction:column; gap:10px; padding:12px; }
+.prog-feira-status-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:stretch; }
+.prog-feira-sector-badge { max-width:none; }
+.prog-feira-status-row > span { min-width:0; overflow-wrap:anywhere; align-items:center; }
+.prog-feira-time-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.prog-feira-time-grid .prog-feira-time { width:auto; min-width:0; margin:0; padding:10px 6px; display:grid; grid-template-rows:16px 36px 16px; gap:3px; justify-items:center; align-items:center; text-align:center; }
+.prog-feira-time > span { font-size:10px; font-weight:800; white-space:nowrap; }
+.prog-feira-time-grid .prog-feira-time strong { font:800 30px/1 'Outfit',sans-serif; font-variant-numeric:tabular-nums; }
+.prog-feira-time > small { font-size:9px; font-weight:500; white-space:nowrap; }
+.prog-feira-customer-program { margin:0; padding:8px; border-radius:6px; background:rgba(14,165,233,.07); }
+.prog-feira-card dl { margin:0; gap:10px; }
+.prog-feira-parallel-pending { margin:0; }
+.prog-feira-history { margin-top:0; }
+@media print {
+ body.print-prog-feira .prog-feira-card-body { display:block !important; }
+ body.print-prog-feira .prog-feira-time-grid { gap:1mm !important; margin:1mm 0 !important; }
+ body.print-prog-feira .prog-feira-time-grid .prog-feira-time { padding:1mm !important; grid-template-rows:2.5mm 5mm 2.5mm !important; gap:0 !important; }
+ body.print-prog-feira .prog-feira-time > span, body.print-prog-feira .prog-feira-time > small { font-size:6px !important; }
+ body.print-prog-feira .prog-feira-time-grid .prog-feira-time strong { font-size:15px !important; }
+ body.print-prog-feira .prog-feira-customer-program { padding:.5mm !important; font-size:7px !important; }
+ body.print-prog-feira .prog-feira-parallel .prog-feira-media { height:22mm !important; }
+}

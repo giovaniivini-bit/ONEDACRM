@@ -157,6 +157,7 @@
                 dimensions.set(dimension, Math.max(dimensions.get(dimension) || 0, quantityOf(row)));
             });
             const pending = [];
+            const parallelSectors = {};
             const missing = [];
             let ting = '';
             let tingDays = null;
@@ -164,11 +165,12 @@
             for (const spec of PARALLEL_FLOWS) {
                 const parallel = rows.filter(row => field(row, 'PARTE') === spec.part && field(row, 'FLUXO') === spec.flow);
                 if (!parallel.length) missing.push(spec.label);
-                const states = [...new Set(parallel.map(row => normalizeSector(field(row, 'OP'))))];
+                const states = [...new Set(parallel.map(row => normalizeSector(field(row, 'OP'))).filter(Boolean))];
+                parallelSectors[spec.part] = states;
                 const pendingStates = states.filter(state => spec.pending.includes(state) && parallel.some(row => normalizeSector(field(row, 'OP')) === state && quantityOf(row) > 0));
                 if (spec.part === 'TF') {
                     ting = pendingStates[0] || states[0] || '';
-                    const days = parallel.filter(row => normalizeSector(field(row, 'OP')) === ting).map(row => calculateDaysInSector(field(row, 'DT_SAIDA'), now)).filter(value => value != null);
+                    const days = parallel.filter(row => ting && normalizeSector(field(row, 'OP')) === ting).map(row => calculateDaysInSector(field(row, 'DT_SAIDA'), now)).filter(value => value != null);
                     tingDays = days.length ? Math.max(...days) : null;
                 }
                 if (spec.part === 'D6') costSector = states.join(' / ');
@@ -178,11 +180,11 @@
                 });
             }
             canonical.push({ ...primary, PARTE: '', FLUXO: '', QTDE_PEND: String([...dimensions.values()].reduce((a,b) => a+b, 0)), SETOR_TING: ting, SETOR_FLUXO_EM: costSector });
-            complements.set(key, { pending, missing, ting, tingDays, mainSectors: [...new Set(main.map(row => normalizeSector(field(row, 'OP'))))] });
+            complements.set(key, { pending, missing, ting, tingDays, parallelSectors, mainSectors: [...new Set(main.map(row => normalizeSector(field(row, 'OP'))))] });
         }
         return buildProducts(canonical, now).map(product => {
             const parallel = complements.get(product.key);
-            return { ...product, parallelPending: parallel.pending, missingParallel: parallel.missing, mainSectors: parallel.mainSectors, ting: parallel.ting, tingDays: parallel.tingDays,
+            return { ...product, parallelPending: parallel.pending, parallelSectors: parallel.parallelSectors, missingParallel: parallel.missing, mainSectors: parallel.mainSectors, ting: parallel.ting, tingDays: parallel.tingDays,
                 tingInfo: TINGIMENTO[parallel.ting] || { label: 'Não informado', color: '#64748b' },
                 isDes: parallel.pending.some(item => item.part === 'D6' && item.sector === 'DES'), sourceFormat: 'parallel' };
         });
@@ -270,6 +272,38 @@
         return (products || []).filter(product => !available || !values.size || values.has(normalizeProgram(product.customerProgram)));
     }
 
+    const PARALLEL_FILTERS = {
+        color: { part: 'CO', label: 'Setores cor', states: { D01: 'Cor pendente', D02: 'Cor desenvolvida' } },
+        ting: { part: 'TF', label: 'Setores ting. caseiro', states: Object.fromEntries(Object.entries(TINGIMENTO).map(([code,info]) => [code,info.label])) },
+        cost: { part: 'D6', label: 'Setores custo', states: { DES: 'Desenvolvimento', PCO: 'Preço costura', ENG: 'Engenharia', CTO: 'Custo', FIM: 'Finalizado' } }
+    };
+
+    function parallelSectorValues(product, kind) {
+        const spec = PARALLEL_FILTERS[kind];
+        if (!spec) return [];
+        if (product.parallelSectors) return (product.parallelSectors[spec.part] || []).filter(Boolean);
+        if (kind === 'ting') return product.ting ? [product.ting] : [];
+        if (kind === 'cost') return text(product.costSector).split(' / ').filter(Boolean);
+        return [];
+    }
+
+    function filterByParallelSectors(products, filters = {}) {
+        return (products || []).filter(product => Object.keys(PARALLEL_FILTERS).every(kind => {
+            const selected = filters[kind] || 'all';
+            const states = parallelSectorValues(product, kind);
+            return selected === 'all' || (selected === 'unknown' ? !states.length : states.includes(selected));
+        }));
+    }
+
+    function getParallelFilterOptions(products, kind, selected = 'all') {
+        const spec = PARALLEL_FILTERS[kind];
+        if (!spec) return [];
+        const codes = new Set([...Object.keys(spec.states), ...(products || []).flatMap(product => parallelSectorValues(product, kind))]);
+        if (!['all','unknown'].includes(selected)) codes.add(selected);
+        return [...codes].map(value => ({ value, label: spec.states[value] || value,
+            count: (products || []).filter(product => parallelSectorValues(product,kind).includes(value)).length }));
+    }
+
     function getSectorDistribution(products = []) {
         const groups = groupBySector(products);
         const counts = new Map(groups.map(group => [group.sector, group.items.length]));
@@ -293,5 +327,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { normalizeSourceRecords, sourceField, getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

@@ -2,6 +2,26 @@
 
 Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — filtros por fluxo e card organizado
+
+Filtros separados Setores cor (D01/D02), Setores ting. caseiro (M00–M03) e Setores
+custo (DES/PCO/ENG/CTO/FIM), incluindo Sem informação. Substituem seletor antigo de
+tingimento e botão exclusivo DES; cruzam por AND com programação, setor principal
+e busca. Valores vêm dos estados atuais completos por parte/fluxo, inclusive estados
+resolvidos, e não apenas das pendências do card. Estado vazio é ausência, não opção
+selecionável. Limpar restaura todos; seleção também consta no resumo impresso.
+
+Foto inteira ocupa largura do card com altura proporcional em tela. Dados agrupados;
+tempos D36 e D43 em duas colunas, números30px alinhados, sem inventar dias para data
+ausente. Sem contagem de dias nos demais fluxos. PDF mantém oito cards e compacta
+somente o tamanho da foto/tempos para preservar todos os complementos.
+
+116 testes passaram; revisão independente aprovada. Chrome com base186produtos:
+CorD01=109; +TFM02=21; +CustoDES=20. Conferidos filtro combinado/programação,
+resolvidos/ausência, limpeza, temas e celular. Card01.18.00.7936:11diasD36/7diasD43,
+alinhamento e largura da imagem medidos. PDF de oito cards em uma página conferido,
+sem corte de complementos. Publicação em andamento.
+
 ## Prog Feira — dias no tingimento TF
 
 Tingimento M00/M01/M02/M03 exibe dias no setor junto ao badge existente, usando
