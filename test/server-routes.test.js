@@ -260,3 +260,11 @@ test('Prog Feira normaliza cabeçalho COD CLIENTE e mantém células vazias sem 
     assert.equal(Object.hasOwn(rows[0], 'PRECO_COM'), false);
     assert.equal(Object.hasOwn(rows[1], 'PRECO_VENDA'), false);
 });
+test('nova exportação Prog Feira projeta campos operacionais sem preços e mantém vínculos de parte/fluxo',()=>{
+    const input=[{'Número':'100','Código':'ABC',Parte:'FE',Fluxo:'D36',Setor:'01A','Descrição2':'B45','Qtde Pend':'4','Preço':'100','Cliente Cnpj':'privado'}, {'Número':'100','Código':'ABC',Parte:'CO',Fluxo:'D41',Setor:'D01','Qtde Pend':'4'}];
+    const rows=sanitizeProgFeiraRecords(input);assert.equal(rows.length,2);assert.equal(rows[0].COD_CLIENTE,'B45');assert.equal(rows[0].OP,'01A');assert.equal(rows[1].FLUXO,'D41');assert.equal(rows[1].PARTE,'CO');
+    assert.equal(JSON.stringify(rows).includes('privado'),false);assert.equal(Object.hasOwn(rows[0],'Preço'),false);
+    assert.deepEqual(sanitizeProgFeiraRecords(rows),rows,'cache projetado pode ser lido novamente sem perder relações');
+    assert.equal(sanitizeProgFeiraRecords(input.slice(1)).length,1);
+    assert.equal(sanitizeProgFeiraRecords([{...input[0],'Qtde Pend':'0'}]).length,1);
+});

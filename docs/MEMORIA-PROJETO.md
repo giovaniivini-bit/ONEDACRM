@@ -108,3 +108,14 @@ arquivos locais e chat, sozinhos, não constituem backup remoto.
 Usar A4 paisagem com margem mínima de 1cm (CSS aplica12mm!important para vencer
 regra global de margem zero). Até6cartões por grupo,3colunas; campos separados e
 altura automática. Não voltar aos badges comprimidos de6px ou esconder excedentes.
+
+## Nova base Prog Feira — 27/10/2026
+
+A fonte atual é ERP detalhado. Cards somente parte FE/fluxo D36 com Qtde Pend>0,
+setores da sequência já existente; consolidar por Número (OF)+Código completo.
+Descrição2 é Programação, mantendo multisseleção e VAZIO. Ficha é entrega.
+D6/D35 custos, TF/D43 tingimento, AV/D47 aviamento, CO/D41 cor complementam o card;
+apenas estados pendentes em linhas empilhadas (COR, CUSTO, TINT. CASEIRA, AVIAMENTO).
+Cor usa D01/D02; aviamento X01/X02. Não criar cards de fluxos paralelos isolados,
+não somar suas quantidades e não interpretar ausência como resolvido ou como M00.
+Formato antigo TIPO1/2/3 e COD_CLIENTE é compatibilidade, não a fonte atual.

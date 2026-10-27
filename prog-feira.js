@@ -101,8 +101,91 @@
         return Math.max(0, Math.floor((todayUtc - movementUtc) / 86400000));
     }
 
+    const PARALLEL_FLOWS = [
+        { part: 'D6', flow: 'D35', label: 'Custos', pending: ['DES', 'PCO', 'ENG', 'CTO'] },
+        { part: 'TF', flow: 'D43', label: 'Tingimento', pending: ['M00', 'M02'] },
+        { part: 'AV', flow: 'D47', label: 'Aviamento', pending: ['X01'] },
+        { part: 'CO', flow: 'D41', label: 'Cor', pending: ['D01'] }
+    ];
+
+    function sourceField(record, name) {
+        const normalize = value => text(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[ _]/g, '').toUpperCase();
+        const key = Object.keys(record || {}).find(key => normalize(key) === normalize(name));
+        return key == null ? '' : text(record[key]);
+    }
+
+    function normalizeSourceRecords(records) {
+        return (Array.isArray(records) ? records : []).map(record => {
+            // Only the raw ERP export has Parte/Fluxo without the canonical TIPO.
+            if (field(record, 'TIPO') || !sourceField(record, 'Fluxo') || !sourceField(record, 'Parte')) return record;
+            const read = name => sourceField(record, name);
+            return {
+                NUMERO: read('Número'), CODIGO: read('Código'), IMG_PRODUTO: read('Código'),
+                PARTE: read('Parte').toUpperCase(), FLUXO: read('Fluxo').toUpperCase(),
+                OP: normalizeSector(read('Setor')), SETOR: read('Desc Setor'),
+                ORDEM: read('Ord Setor'), DT_SAIDA: read('Data Saída'), TIPO: '1',
+                QTDE_PEND: read('Qtde Pend'), COR: read('Cor'), TAMANHO: read('Tamanho'),
+                ESTAMPAS: [read('Comp1'), read('Comp2')].filter(Boolean).join(' • '),
+                OBS: [read('Obs'), read('Observação OF2')].filter(Boolean).join(' • '),
+                FICHA: read('Ficha'), COD_CLIENTE: read('Descrição2')
+            };
+        });
+    }
+
+    function quantityOf(record) {
+        return Math.max(0, Number(field(record, 'QTDE_PEND').replace(',', '.')) || 0);
+    }
+
+    function buildParallelProducts(records, now) {
+        const byProduct = new Map();
+        for (const record of records) {
+            if (!field(record, 'NUMERO') || !field(record, 'CODIGO')) continue;
+            const key = getKey(record);
+            if (!byProduct.has(key)) byProduct.set(key, []);
+            byProduct.get(key).push(record);
+        }
+        const canonical = [];
+        const complements = new Map();
+        for (const [key, rows] of byProduct) {
+            const main = rows.filter(row => field(row, 'PARTE') === 'FE' && field(row, 'FLUXO') === 'D36' && quantityOf(row) > 0 && FLOW_BY_CODE.has(normalizeSector(field(row, 'OP'))) && normalizeSector(field(row, 'OP')) !== '01Z')
+                .sort((a, b) => FLOW_BY_CODE.get(normalizeSector(field(a, 'OP'))).order - FLOW_BY_CODE.get(normalizeSector(field(b, 'OP'))).order);
+            if (!main.length) continue;
+            const primary = main[0];
+            const dimensions = new Map();
+            main.forEach(row => {
+                const dimension = JSON.stringify([field(row, 'COR'), field(row, 'TAMANHO')]);
+                dimensions.set(dimension, Math.max(dimensions.get(dimension) || 0, quantityOf(row)));
+            });
+            const pending = [];
+            const missing = [];
+            let ting = '';
+            let costSector = '';
+            for (const spec of PARALLEL_FLOWS) {
+                const parallel = rows.filter(row => field(row, 'PARTE') === spec.part && field(row, 'FLUXO') === spec.flow);
+                if (!parallel.length) missing.push(spec.label);
+                const states = [...new Set(parallel.map(row => normalizeSector(field(row, 'OP'))))];
+                const pendingStates = states.filter(state => spec.pending.includes(state) && parallel.some(row => normalizeSector(field(row, 'OP')) === state && quantityOf(row) > 0));
+                if (spec.part === 'TF') ting = pendingStates[0] || states[0] || '';
+                if (spec.part === 'D6') costSector = states.join(' / ');
+                pendingStates.forEach(state => {
+                    const row = parallel.find(row => normalizeSector(field(row, 'OP')) === state);
+                    pending.push({ flow: spec.flow, part: spec.part, label: spec.label, sector: state, description: field(row, 'SETOR'), date: field(row, 'DT_SAIDA'), days: calculateDaysInSector(field(row, 'DT_SAIDA'), now) });
+                });
+            }
+            canonical.push({ ...primary, PARTE: '', FLUXO: '', QTDE_PEND: String([...dimensions.values()].reduce((a,b) => a+b, 0)), SETOR_TING: ting, SETOR_FLUXO_EM: costSector });
+            complements.set(key, { pending, missing, ting, mainSectors: [...new Set(main.map(row => normalizeSector(field(row, 'OP'))))] });
+        }
+        return buildProducts(canonical, now).map(product => {
+            const parallel = complements.get(product.key);
+            return { ...product, parallelPending: parallel.pending, missingParallel: parallel.missing, mainSectors: parallel.mainSectors, ting: parallel.ting,
+                tingInfo: TINGIMENTO[parallel.ting] || { label: 'Não informado', color: '#64748b' },
+                isDes: parallel.pending.some(item => item.part === 'D6' && item.sector === 'DES'), sourceFormat: 'parallel' };
+        });
+    }
+
     function buildProducts(records, now = new Date()) {
-        const rows = Array.isArray(records) ? records.filter(Boolean) : [];
+        const rows = normalizeSourceRecords(Array.isArray(records) ? records.filter(Boolean) : []);
+        if (rows.some(row => field(row, 'PARTE') && field(row, 'FLUXO'))) return buildParallelProducts(rows, now);
         const current = new Map();
         const groups = new Map();
         const history = new Map();
@@ -205,5 +288,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { normalizeSourceRecords, sourceField, getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

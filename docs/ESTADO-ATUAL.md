@@ -2,6 +2,29 @@
 
 Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — nova exportação com partes e fluxos paralelos
+
+Fonte ERP detalhada na mesma planilha. Cards/contagens somente FE/D36 com saldo
+pendente, chave OF+código completo. Descrição2 alimenta Programação (multisseleção
++VAZIO); Ficha segue como entrega. Fluxos complementares apenas em linhas empilhadas
+no card: COR D01 (CO/D41), CUSTO DES/PCO/ENG/CTO (D6/D35), TINT. CASEIRA M00/M02
+(TF/D43), AVIAMENTO X01 (AV/D47). D02/X02/FIM não exibidos como pendência; ausência
+não é resolução nem M00. Tingimento mantém badge/filtro do estado informado.
+
+Adaptador e consolidação em prog-feira.js compartilhados com server.js. API projeta
+somente campos operacionais permitidos (sem preços/PII), conserva partes/fluxos;
+cache schema3 força releitura do formato anterior. Exportação válida sem FE ativa
+retorna zero cards em vez de reter pendências antigas. Compatibilidade com TIPO1/2/3
+preservada. Grades deduplicadas por cor/tamanho; não soma outras partes/fluxos.
+Caso múltiplos setores FE: um card no primeiro setor da ordem D36; mainSectors
+conserva demais vínculos. Base observada tem somente um setor FE por produto.
+
+112 testes passaram; revisão independente aprovada. Chrome com base real4902linhas
+validou186cards, programações (120VAZIO), multi/vazio, DES, tingimento sem informação,
+pendências empilhadas, temas claro/escuro e celular sem overflow. PDF amostra de oito
+cards conferido sem corte das pendências e sem folha exclusiva do resumo de filtro.
+Publicação em andamento.
+
 ## Raio X — filtros de cor e aviamento inclusivos
 
 Causa: Só cor/Só aviamento reutilizavam a regra exclusiva do Setor01, excluindo

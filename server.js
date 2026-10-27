@@ -12,6 +12,7 @@ const path = require('path');
 const { createDriveImageProxy } = require('./drive-image-cache');
 const { fetchEmbeddedFolder, fetchDriveHtml } = require('./drive-folder-list');
 const alertsEngine = require('./alerts-engine');
+const progFeira = require('./prog-feira');
 const { createAdminAuth } = require('./admin-auth');
 const {
     readRequestBody,
@@ -179,16 +180,18 @@ function validateCalendarRecords(records) {
 const PROG_FEIRA_PUBLIC_FIELDS = [
     'NUMERO', 'CODIGO', 'IMG_PRODUTO', 'OP', 'SETOR', 'ORDEM',
     'DT_SAIDA', 'TIPO', 'QTDE_PEND', 'ESTAMPAS', 'OBS',
-    'SETOR_TING', 'SETOR_FLUXO_EM', 'FICHA', 'COD_CLIENTE'
+    'SETOR_TING', 'SETOR_FLUXO_EM', 'FICHA', 'COD_CLIENTE', 'PARTE', 'FLUXO', 'COR', 'TAMANHO'
 ];
 
 function sanitizeProgFeiraRecords(records) {
-    const validRows = (Array.isArray(records) ? records : []).filter(record => {
+    const normalized = progFeira.normalizeSourceRecords(records);
+    const parallelSource = normalized.some(row => row.PARTE && row.FLUXO);
+    const validRows = normalized.filter(record => {
         const codigo = String(record?.CODIGO || '').trim();
         const tipo = Number(String(record?.TIPO || '').trim());
-        return codigo && [1, 2, 3].includes(tipo);
+        return codigo && [1, 2, 3].includes(tipo) && (!parallelSource || [['FE','D36'],['D6','D35'],['TF','D43'],['AV','D47'],['CO','D41']].some(([part,flow]) => record.PARTE === part && record.FLUXO === flow));
     });
-    if (!validRows.some(record => Number(String(record.TIPO || '').trim()) === 1)) {
+    if (parallelSource ? !validRows.length : !validRows.some(record => Number(String(record.TIPO || '').trim()) === 1)) {
         throw new Error('A planilha Prog Feira não contém produtos atuais (TIPO 1) válidos');
     }
     return validRows.map(record => Object.fromEntries(
@@ -1281,7 +1284,7 @@ async function requestHandler(req, res) {
             }
 
             const cachedAt = cachedData && Date.parse(cachedData.timestamp || '');
-            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS) {
+            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === 3)) {
                 sendJson(res, 200, { ...cachedData, cacheAgeMs: Date.now() - cachedAt });
                 return;
             }
@@ -1296,7 +1299,8 @@ async function requestHandler(req, res) {
                     const payload = {
                         success: true,
                         type: 'prog_feira',
-                        programColumnAvailable: records.some(record => Object.hasOwn(record, 'COD_CLIENTE') || Object.hasOwn(record, 'COD CLIENTE')),
+                        sourceSchemaVersion: 3,
+                        programColumnAvailable: records.some(record => Object.hasOwn(record, 'COD_CLIENTE') || Object.hasOwn(record, 'COD CLIENTE') || Object.keys(record).some(key => key.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[ _]/g, '').toUpperCase() === 'DESCRICAO2')),
                         title: cfg.name,
                         count: progRows.length,
                         records: progRows,

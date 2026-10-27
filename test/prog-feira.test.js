@@ -61,7 +61,7 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
     assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
-    assert.match(html, /style\.css\?v=20261026-raio-x-safe-print-2/);
+    assert.match(html, /style\.css\?v=20261027-prog-parallel-1/);
     assert.match(html, /app\.js\?v=[\w-]+/);
 });
 
@@ -122,4 +122,30 @@ test('distribuição por setor calcula contagens, percentuais e setores extras s
     assert.equal(rows.reduce((sum,r) => sum+r.percent,0),100);
     assert.equal(getSectorDistribution(filterByPrograms(products,['B44'])).find(r=>r.code==='02B').percent,100);
     assert.ok(getSectorDistribution([]).every(r=>r.count===0 && r.percent===0));
+});
+const { normalizeSourceRecords, getSectorDistribution } = require('../prog-feira');
+const erp = (part,flow,sector,extra={}) => ({ 'Número':'100', 'Código':'01.00.0001A', Parte:part, Fluxo:flow, Setor:sector, 'Desc Setor':sector, 'Qtde Pend':'4', Cor:'50', Tamanho:'6', 'Descrição2':' B44 ', Ficha:'30/10', 'Data Saída':'20/10/2026', ...extra });
+test('nova base usa somente FE/D36 pendente e reúne fluxos paralelos pela OF e código exato',()=>{
+    const records=[erp('FE','D36','01A'),erp('D6','D35','DES'),erp('TF','D43','M02'),erp('AV','D47','X01'),erp('CO','D41','D01'),erp('FE','D36','01B',{'Qtde Pend':'0','Código':'ZERO'}),erp('FE','D36','FIM',{'Código':'FINAL'}),erp('AV','D47','X01',{'Número':'OUTRA'}),erp('CO','D41','D01',{'Código':'01.00.0001'}),erp('FE','D35','DES',{'Código':'ERRADO'})];
+    const products=buildProducts(records,new Date(2026,9,27));
+    assert.equal(products.length,1);
+    const p=products[0];assert.equal(p.customerProgram,'B44');assert.equal(p.delivery,'30/10');assert.equal(p.sector,'01A');assert.equal(p.isDes,true);assert.equal(p.quantity,4);
+    assert.deepEqual(p.parallelPending.map(s=>s.sector),['DES','M02','X01','D01']);
+    assert.equal(p.parallelPending[0].days,7);
+    assert.equal(p.history.length,0,'a base ERP atual não deve inventar histórico');
+});
+test('estados resolvidos não viram pendência e ausência de TF não vira M00',()=>{
+    const resolved=buildProducts([erp('FE','D36','02B'),erp('D6','D35','FIM'),erp('TF','D43','M03'),erp('AV','D47','X02'),erp('CO','D41','D02')])[0];
+    assert.deepEqual(resolved.parallelPending,[]);assert.equal(resolved.isDes,false);assert.equal(resolved.ting,'M03');
+    const missing=buildProducts([erp('FE','D36','02B')])[0];assert.equal(missing.ting,'');assert.equal(missing.tingInfo.label,'Não informado');assert.equal(missing.missingParallel.length,4);
+});
+test('repetições de grade não duplicam cards ou somam quantidades dos fluxos complementares',()=>{
+    const records=[erp('FE','D36','01B'),erp('FE','D36','01B'),erp('FE','D36','01B',{Tamanho:'8'}),erp('FE','D36','02B'),erp('D6','D35','PCO'),erp('AV','D47','X01'),erp('AV','D47','X01')];
+    const [p]=buildProducts(records);assert.equal(buildProducts(records).length,1);assert.equal(p.quantity,8);assert.deepEqual(p.mainSectors,['01B','02B']);assert.equal(p.parallelPending.length,2);
+    assert.equal(filterByPrograms([p],['B44']).length,1);assert.equal(getSectorDistribution([p]).reduce((n,s)=>n+s.count,0),1);
+});
+test('quantidade preserva grades distribuídas em setores e reconhece estado resolvido com saldo zero',()=>{
+    const [p]=buildProducts([erp('FE','D36','01A'),erp('FE','D36','02B',{Tamanho:'8','Qtde Pend':'6'}),erp('TF','D43','M03',{'Qtde Pend':'0'}),erp('AV','D47','X02',{'Qtde Pend':'0'})]);
+    assert.equal(p.quantity,10);assert.equal(p.ting,'M03');assert.ok(!p.missingParallel.includes('Tingimento'));assert.ok(!p.missingParallel.includes('Aviamento'));assert.equal(p.parallelPending.length,0);
+    assert.equal(buildProducts([erp('FE','D36','01A',{'Qtde Pend':'0'}),erp('CO','D41','D01')]).length,0);
 });
