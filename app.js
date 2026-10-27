@@ -3946,7 +3946,7 @@
             client: 'Cliente', pending: 'Cor / aviamento', style: 'Status de estilo', model: 'Status de modelagem', malote: 'Malotes D7'
         };
         const labels = {
-            pending: { cor: 'Só cor (D01)', aviamento: 'Só aviamento (X01)', ambas: 'Cor e aviamento', nenhuma: 'Sem cor e aviamento' },
+            pending: { cor: 'Com cor pendente (D01)', aviamento: 'Com aviamento pendente (X01)', ambas: 'Cor e aviamento', nenhuma: 'Sem cor e aviamento' },
             style: { liberados: 'Produtos liberados', pendentes: 'Produtos pendentes' },
             malote: { pending: 'Com pendência (83/88)', none: 'Sem pendência', '83': 'Pendente no 83', '88': 'Pendente no 88' }
         };

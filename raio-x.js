@@ -48,7 +48,7 @@
         return products.filter(p => {
             if (filters.sectors?.length && !p.sectors.some(s => filters.sectors.includes(s))) return false;
             if (filters.client !== 'all' && p.cliente !== filters.client) return false;
-            if (!helpers.matchesPending(p, filters.pending)) return false;
+            if (!helpers.matchesPending(p, filters.pending, true)) return false;
             if (filters.style !== 'all' && !p.estilo.some(s => helpers.styleStatusGroup(s) === filters.style)) return false;
             if (filters.model !== 'all' && !p.modelagem.includes(filters.model)) return false;
             if (filters.malote === 'pending' && !p.malotes.length) return false;

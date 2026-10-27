@@ -27,12 +27,12 @@
         };
     }
 
-    function matchesPending(item, filter) {
+    function matchesPending(item, filter, includeCombined = false) {
         const cor = (item.setoresCor || []).includes('D01');
         const aviamento = (item.setoresAviamento || []).includes('X01');
         switch (filter) {
-            case 'cor': return cor && !aviamento;
-            case 'aviamento': return aviamento && !cor;
+            case 'cor': return cor && (includeCombined || !aviamento);
+            case 'aviamento': return aviamento && (includeCombined || !cor);
             case 'ambas': return cor && aviamento;
             case 'nenhuma': return !cor && !aviamento;
             default: return true;

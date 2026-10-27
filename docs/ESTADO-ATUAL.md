@@ -1,6 +1,19 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 26/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Raio X — filtros de cor e aviamento inclusivos
+
+Causa: Só cor/Só aviamento reutilizavam a regra exclusiva do Setor01, excluindo
+produtos com ambas pendências. Raio X agora usa Com cor e Com aviamento inclusivos;
+Cor e aviamento exige ambas e Sem cor e aviamento exige nenhuma. O helper recebe
+opção explícita somente no Raio X; comportamento exclusivo do Setor01 preservado.
+
+107 testes passaram; revisão independente aprovada. Chrome com dados reais validou
+o produto01.16.00.7896 OF77817 (setores01,D01,X01) nos três filtros e ausência em
+Nenhuma. Conferidas também as contagens globais dos quatro filtros (base409), sem
+erros JavaScript. Versões dos três scripts atualizadas para evitar cache antigo.
+Publicação em andamento.
 
 ## Raio X — impressão com margem segura e textos legíveis
 

@@ -76,3 +76,22 @@ test('Raio X imprime com margem segura e campos legíveis sem compressão de bad
     assert.match(app, /cards\.slice\(offset, offset \+ 6\)/);
     assert.match(app, /class="rx-print-details"/);
 });
+test('Raio X inclui pendência dupla em cor e aviamento sem alterar filtro exclusivo do Setor01', () => {
+    const target = { op: '77817', codigo: '01.16.00.7896' };
+    const products = rx.build([
+        row('01', target), row('D01', target), row('X01', target),
+        row('01', {op:'2'}), row('D01', {op:'2'}),
+        row('01', {op:'3'}), row('X01', {op:'3'}), row('01', {op:'4'})
+    ]);
+    const ids = pending => rx.filter(products, {...defaults,pending},helpers).map(p=>p.op).sort();
+    assert.deepEqual(ids('cor'),['2','77817']);
+    assert.deepEqual(ids('aviamento'),['3','77817']);
+    assert.deepEqual(ids('ambas'),['77817']);
+    assert.deepEqual(ids('nenhuma'),['4']);
+    assert.equal(rx.filter(products,{...defaults,pending:'cor',search:target.codigo,sectors:['01']},helpers).length,1);
+    assert.equal(rx.filter(products,{...defaults,pending:'aviamento',client:'Outro'},helpers).length,0);
+    const both=products.find(p=>p.op===target.op);
+    assert.equal(helpers.matchesPending(both,'cor'),false);
+    assert.equal(helpers.matchesPending(both,'aviamento'),false);
+    assert.equal(helpers.matchesPending(both,'ambas'),true);
+});

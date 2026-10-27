@@ -8,6 +8,9 @@ Um card por OF e código completo, reunindo os setores 01, 02, 03, 04, 05G, 43, 
 Os setores secundários não criam cards por si só.
 
 Cor D01 e aviamento X01 são cruzados pela mesma OF e código completo.
+Filtros Com cor e Com aviamento são inclusivos: o produto que tem ambas aparece
+nos dois. Cor e aviamento exige as duas; Sem cor e aviamento exige nenhuma.
+A regra exclusiva de Só cor/Só aviamento do Setor01 permanece inalterada.
 Malotes: parte D7 em 83/88, confirmada pelo usuário a partir da base atual.
 Os status de estilo reutilizam os grupos do Setor 01; status desconhecidos ficam
 em Todos. Quando há status distintos por setor, todos são apresentados e o filtro
