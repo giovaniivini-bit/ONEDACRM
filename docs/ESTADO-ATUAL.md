@@ -20,7 +20,10 @@ somente o tamanho da foto/tempos para preservar todos os complementos.
 CorD01=109; +TFM02=21; +CustoDES=20. Conferidos filtro combinado/programação,
 resolvidos/ausência, limpeza, temas e celular. Card01.18.00.7936:11diasD36/7diasD43,
 alinhamento e largura da imagem medidos. PDF de oito cards em uma página conferido,
-sem corte de complementos. Publicação em andamento.
+sem corte de complementos. Publicado no GitHub/VPS no commit a2e325b.
+Os 116 testes passaram na VPS; dados preservados no pull e saúde OK. Chrome no
+CRM público repetiu filtros, alinhamento11/7dias, foto inteira e impressão sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-prog-flow-filters-20261027-a2e325b.
 
 ## Prog Feira — dias no tingimento TF
 
