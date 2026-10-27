@@ -9,7 +9,10 @@ piscante, M03 verde fixo. Animação somente no número D43, não altera D36. Co
 ajustadas nos temas claro/escuro; impressão e redução de movimento não piscam.
 119 testes passaram; revisão independente aprovada. Chrome validou quatro setores,
 cores calculadas, animações, D36 estático e impressão estática, sem erros JavaScript.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit e3d1979. Os 119 testes passaram na VPS,
+saúde OK e dados preservados no pull. Chrome no CRM público confirmou os quatro
+estados, cores, animações e impressão sem erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-prog-d43-colors-20261027-e3d1979.
 
 ## Prog Feira — quadros A4 e filtro de etiquetas
 
