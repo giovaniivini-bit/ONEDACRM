@@ -15,7 +15,10 @@ Oculto na impressão para preservar paginação vigente.
 121 testes passaram; revisão independente aprovada. Chrome confirmou contagens e
 atualizações por programação, setor principal, cor e etiqueta; limpeza, temas,
 celular, vazio e impressão, sem erros JavaScript. Snapshot consultado: CF68 e CG56
-(valores dinâmicos, não monitoramento). Publicação em andamento.
+(valores dinâmicos, não monitoramento). Publicado no GitHub/VPS no commit fd0d288.
+Os 121 testes passaram na VPS; saúde OK e dados preservados no pull. Chrome na
+URL pública repetiu os filtros e contagens sem erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-prog-label-groups-20261027-fd0d288.
 
 ## Prog Feira — cores dos dias D43
 
