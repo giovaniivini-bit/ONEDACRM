@@ -268,3 +268,7 @@ test('nova exportação Prog Feira projeta campos operacionais sem preços e man
     assert.equal(sanitizeProgFeiraRecords(input.slice(1)).length,1);
     assert.equal(sanitizeProgFeiraRecords([{...input[0],'Qtde Pend':'0'}]).length,1);
 });
+test('API Prog Feira conserva somente o código Etiqueta e mantém projeção no cache',()=>{
+    const rows=sanitizeProgFeiraRecords([{'Número':'100','Código':'ABC',Parte:'FE',Fluxo:'D36',Setor:'01A',Etiqueta:' CFUN ','Desc Etiqueta':'descrição não solicitada','Qtde Pend':'4','Preço':'99'}]);
+    assert.equal(rows[0].ETIQUETA,'CFUN');assert.equal(Object.hasOwn(rows[0],'Desc Etiqueta'),false);assert.equal(Object.hasOwn(rows[0],'Preço'),false);assert.deepEqual(sanitizeProgFeiraRecords(rows),rows);
+});

@@ -2,6 +2,26 @@
 
 Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — quadros A4 e filtro de etiquetas
+
+Mídia em tela tem proporção fixa A4 paisagem297/210, mesma largura/altura por card,
+object-fit:contain para imagens verticais/horizontais sem cortar. Substitui altura
+natural variável. Etiqueta vem da coluna Etiqueta do FE/D36, código no card junto à
+Programação. Valores de grades diferentes preservados/deduplicados no mesmo card.
+
+Filtro Etiquetas alfabético e multisseleção (OU), cruzado com programa/setores/busca.
+Opções e contagens usam os demais filtros, sem excluir opções pela seleção da própria
+etiqueta; selecionadas ausentes permanecem com zero para desmarcar. Sem etiqueta
+quando houver produtos sem código. Limpar global remove seleção; limpar Etiquetas
+preserva os demais filtros. Resumo e PDF respeitam a seleção.
+
+API inclui somente ETIQUETA na whitelist; schema4 renova cache que não tinha coluna.
+Cache indisponível suspende seleção, em vez de confundir com Sem etiqueta.
+119 testes passaram; revisão independente aprovada. Chrome com base186produtos e
+26etiquetas validou ordem, múltiplas, faceta01B, custoDES, limpeza, celular e cores;
+quadros A4 iguais medidos para todas as mídias. PDF oito cards/uma folha sem corte
+de complementos. Publicação em andamento.
+
 ## Prog Feira — filtros por fluxo e card organizado
 
 Filtros separados Setores cor (D01/D02), Setores ting. caseiro (M00–M03) e Setores

@@ -124,7 +124,7 @@
                 PARTE: read('Parte').toUpperCase(), FLUXO: read('Fluxo').toUpperCase(),
                 OP: normalizeSector(read('Setor')), SETOR: read('Desc Setor'),
                 ORDEM: read('Ord Setor'), DT_SAIDA: read('Data Saída'), TIPO: '1',
-                QTDE_PEND: read('Qtde Pend'), COR: read('Cor'), TAMANHO: read('Tamanho'),
+                ETIQUETA: read('Etiqueta'), QTDE_PEND: read('Qtde Pend'), COR: read('Cor'), TAMANHO: read('Tamanho'),
                 ESTAMPAS: [read('Comp1'), read('Comp2')].filter(Boolean).join(' • '),
                 OBS: [read('Obs'), read('Observação OF2')].filter(Boolean).join(' • '),
                 FICHA: read('Ficha'), COD_CLIENTE: read('Descrição2')
@@ -180,11 +180,11 @@
                 });
             }
             canonical.push({ ...primary, PARTE: '', FLUXO: '', QTDE_PEND: String([...dimensions.values()].reduce((a,b) => a+b, 0)), SETOR_TING: ting, SETOR_FLUXO_EM: costSector });
-            complements.set(key, { pending, missing, ting, tingDays, parallelSectors, mainSectors: [...new Set(main.map(row => normalizeSector(field(row, 'OP'))))] });
+            complements.set(key, { pending, missing, ting, tingDays, parallelSectors, labels: [...new Set(main.map(row => normalizeLabel(field(row, 'ETIQUETA'))).filter(Boolean))], mainSectors: [...new Set(main.map(row => normalizeSector(field(row, 'OP'))))] });
         }
         return buildProducts(canonical, now).map(product => {
             const parallel = complements.get(product.key);
-            return { ...product, parallelPending: parallel.pending, parallelSectors: parallel.parallelSectors, missingParallel: parallel.missing, mainSectors: parallel.mainSectors, ting: parallel.ting, tingDays: parallel.tingDays,
+            return { ...product, parallelPending: parallel.pending, labels: parallel.labels, parallelSectors: parallel.parallelSectors, missingParallel: parallel.missing, mainSectors: parallel.mainSectors, ting: parallel.ting, tingDays: parallel.tingDays,
                 tingInfo: TINGIMENTO[parallel.ting] || { label: 'Não informado', color: '#64748b' },
                 isDes: parallel.pending.some(item => item.part === 'D6' && item.sector === 'DES'), sourceFormat: 'parallel' };
         });
@@ -244,6 +244,7 @@
                 tingInfo: TINGIMENTO[ting] || { label: ting || 'Não informado', color: '#64748b' },
                 program: groups.get(key) || '',
                 customerProgram: normalizeProgram(field(record, 'COD_CLIENTE') || field(record, 'COD CLIENTE')),
+                etiqueta: normalizeLabel(field(record, 'ETIQUETA')),
                 prints: field(record, 'ESTAMPAS'),
                 notes: field(record, 'OBS'),
                 quantity: Number(field(record, 'QTDE_PEND')) || 0,
@@ -270,6 +271,31 @@
     function filterByPrograms(products, selected = [], available = true) {
         const values = new Set(selected.map(normalizeProgram));
         return (products || []).filter(product => !available || !values.size || values.has(normalizeProgram(product.customerProgram)));
+    }
+
+    function normalizeLabel(value) { return text(value).toUpperCase(); }
+
+    function labelValues(product) {
+        const labels = product.labels || [product.etiqueta];
+        return [...new Set(labels.map(normalizeLabel).filter(Boolean))];
+    }
+
+    function getLabelOptions(products, selected = []) {
+        const counts = new Map(selected.map(value => [normalizeLabel(value), 0]));
+        (products || []).forEach(product => {
+            const labels = labelValues(product);
+            (labels.length ? labels : ['']).forEach(label => counts.set(label, (counts.get(label) || 0) + 1));
+        });
+        return [...counts].map(([value,count]) => ({value,count})).sort((a,b) => a.value === '' ? 1 : b.value === '' ? -1 : a.value.localeCompare(b.value,'pt-BR',{numeric:true}));
+    }
+
+    function filterByLabels(products, selected = [], available = true) {
+        const values = new Set(selected.map(normalizeLabel));
+        return (products || []).filter(product => {
+            if (!available || !values.size) return true;
+            const labels = labelValues(product);
+            return labels.length ? labels.some(label => values.has(label)) : values.has('');
+        });
     }
 
     const PARALLEL_FILTERS = {
@@ -327,5 +353,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

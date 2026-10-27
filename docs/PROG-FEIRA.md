@@ -25,7 +25,7 @@ CUSTO,TINT. CASEIRA,AVIAMENTO. Tingimento real também conserva badge e filtro; 
 Sem informação distingue ausência de M00. Busca considera pendências complementares.
 Impressão mantém oito cards e abrevia complementos para códigos sem omiti-los.
 
-O cache schema3 mantém o formato canônico com Parte/Fluxo. Evitar expor todos os
+O cache schema4 mantém o formato canônico com Parte/Fluxo. Evitar expor todos os
 campos da planilha: a API conserva whitelist, sem preços, CNPJ, endereços ou IDs.
 
 Dias: somente D36 e TF/D43 aparecem na tela. O badge de tingimento informa dias no
@@ -41,6 +41,16 @@ fluxo, Sem informação exige nenhum setor registrado. Estados resolvidos contin
 filtráveis; estados vazios não criam opção vazia. Produtos com múltiplos setores
 podem corresponder a qualquer setor daquele fluxo, sem duplicar cards.
 
-Imagem em tela ocupa largura inteira, proporcional, sem corte. Tempos D36 e D43
+Imagem em tela ocupa quadro fixo A4 paisagem (297/210), com object-fit:contain,
+sem corte e sem variar a altura conforme o arquivo original. Tempos D36 e D43
 lado a lado com números grandes e alinhados; datas ausentes ficam sem número.
 Impressão mantém oito cards, ajustando foto e tempos; inclui seleção no resumo.
+
+## Etiquetas
+
+ETIQUETA é projetada da coluna Etiqueta da parte FE/D36. Código mostrado no card,
+sem substituir por Desc Etiqueta. Grades com etiquetas diferentes preservam todas.
+Filtro multisseleção por OU, ordenado alfabeticamente; cruza por AND com os demais.
+Opções são facetadas pelos outros filtros, inclusive setor principal, sem aplicar
+a seleção da própria etiqueta. Retém selecionadas com contagem zero. Coluna ausente
+no cache sinaliza indisponibilidade e suspende esse filtro até carregar nova base.

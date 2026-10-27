@@ -180,7 +180,7 @@ function validateCalendarRecords(records) {
 const PROG_FEIRA_PUBLIC_FIELDS = [
     'NUMERO', 'CODIGO', 'IMG_PRODUTO', 'OP', 'SETOR', 'ORDEM',
     'DT_SAIDA', 'TIPO', 'QTDE_PEND', 'ESTAMPAS', 'OBS',
-    'SETOR_TING', 'SETOR_FLUXO_EM', 'FICHA', 'COD_CLIENTE', 'PARTE', 'FLUXO', 'COR', 'TAMANHO'
+    'SETOR_TING', 'SETOR_FLUXO_EM', 'FICHA', 'COD_CLIENTE', 'ETIQUETA', 'PARTE', 'FLUXO', 'COR', 'TAMANHO'
 ];
 
 function sanitizeProgFeiraRecords(records) {
@@ -1273,9 +1273,10 @@ async function requestHandler(req, res) {
                         cachedData = { ...cachedData, count: validCachedRows.length, records: validCachedRows };
                     }
                     if (type === 'prog_feira') {
+                        const labelColumnAvailable = cachedData.labelColumnAvailable !== false && cachedData.records?.some(record => Object.hasOwn(record, 'ETIQUETA'));
                         const programColumnAvailable = cachedData.programColumnAvailable !== false && cachedData.records?.some(record => Object.hasOwn(record, 'COD_CLIENTE'));
                         const safeCachedRows = sanitizeProgFeiraRecords(cachedData?.records);
-                        cachedData = { ...cachedData, programColumnAvailable: Boolean(programColumnAvailable), count: safeCachedRows.length, records: safeCachedRows };
+                        cachedData = { ...cachedData, labelColumnAvailable: Boolean(labelColumnAvailable), programColumnAvailable: Boolean(programColumnAvailable), count: safeCachedRows.length, records: safeCachedRows };
                     }
                 } catch (e) {
                     if (type === 'calendar') console.warn(`[CALENDÁRIO] Cache ignorado: ${e.message}`);
@@ -1284,7 +1285,7 @@ async function requestHandler(req, res) {
             }
 
             const cachedAt = cachedData && Date.parse(cachedData.timestamp || '');
-            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === 3)) {
+            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === 4)) {
                 sendJson(res, 200, { ...cachedData, cacheAgeMs: Date.now() - cachedAt });
                 return;
             }
@@ -1299,7 +1300,8 @@ async function requestHandler(req, res) {
                     const payload = {
                         success: true,
                         type: 'prog_feira',
-                        sourceSchemaVersion: 3,
+                        sourceSchemaVersion: 4,
+                        labelColumnAvailable: records.some(record => Object.keys(record).some(key => key.trim().toUpperCase() === 'ETIQUETA')),
                         programColumnAvailable: records.some(record => Object.hasOwn(record, 'COD_CLIENTE') || Object.hasOwn(record, 'COD CLIENTE') || Object.keys(record).some(key => key.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[ _]/g, '').toUpperCase() === 'DESCRICAO2')),
                         title: cfg.name,
                         count: progRows.length,

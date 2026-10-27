@@ -61,7 +61,7 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
     assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
-    assert.match(html, /style\.css\?v=20261027-prog-flow-filters-1/);
+    assert.match(html, /style\.css\?v=20261027-prog-labels-a4-1/);
     assert.match(html, /app\.js\?v=[\w-]+/);
 });
 
@@ -190,4 +190,22 @@ test('setor complementar em branco é Sem informação e nunca vira opção vazi
     assert.equal(filterByParallelSectors(ps,{color:'unknown',ting:'unknown',cost:'unknown'}).length,1);
     assert.equal(ps[0].tingDays,null);
     for(const kind of ['color','ting','cost'])assert.ok(getParallelFilterOptions(ps,kind).every(o=>o.value));
+});
+test('etiquetas vêm da parte FE, aparecem no card e filtram por união com ordem alfabética',()=>{
+    const {getLabelOptions,filterByLabels,labelValues}=require('../prog-feira');
+    const ps=buildProducts([erp('FE','D36','01A',{Etiqueta:' hxv '}),erp('FE','D36','01A',{'Número':'200',Etiqueta:'CFA'}),erp('FE','D36','01A',{'Número':'300',Etiqueta:'CFUN'}),erp('FE','D36','01A',{'Número':'400',Etiqueta:''}),erp('CO','D41','D01',{Etiqueta:'ERRADA'})]);
+    assert.deepEqual(getLabelOptions(ps).map(o=>o.value),['CFA','CFUN','HXV','']);
+    assert.deepEqual(labelValues(ps.find(p=>p.numero==='100')),['HXV']);
+    assert.equal(filterByLabels(ps,['CFA','HXV']).length,2);
+    assert.equal(filterByLabels(ps,['']).length,1);
+    assert.equal(filterByLabels(ps,[]).length,4);
+    assert.equal(filterByLabels(ps,['INDISPONIVEL'],false).length,4);
+    assert.equal(getLabelOptions(ps.filter(p=>p.numero==='200'),['HXV']).find(o=>o.value==='HXV').count,0);
+    assert.equal(filterByPrograms(filterByLabels(ps,['CFA']),['B44']).length,1);
+});
+test('etiquetas de grades diferentes são preservadas sem duplicar produtos ou contagens',()=>{
+    const {getLabelOptions,filterByLabels}=require('../prog-feira');
+    const ps=buildProducts([erp('FE','D36','01A',{Etiqueta:'CFA'}),erp('FE','D36','01A',{Etiqueta:'HXV',Tamanho:'8'}),erp('FE','D36','01A',{Etiqueta:'CFA'})]);
+    assert.equal(ps.length,1);assert.equal(filterByLabels(ps,['CFA','HXV']).length,1);
+    assert.deepEqual(getLabelOptions(ps),[{value:'CFA',count:1},{value:'HXV',count:1}]);
 });
