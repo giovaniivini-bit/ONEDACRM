@@ -6255,3 +6255,16 @@ body.light-mode .prog-feira-time-grid .prog-feira-time[data-prog-duration="ting"
 @media (prefers-reduced-motion:reduce),print {
  .prog-feira-time[data-prog-duration="ting"] strong { animation:none !important; opacity:1 !important; }
 }
+
+.prog-feira-label-groups { margin:10px 0 16px; padding:12px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; }
+.prog-feira-label-groups > header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; margin-bottom:10px; font-size:12px; }
+.prog-feira-label-groups > header > span, .prog-feira-label-groups > small { color:var(--text-secondary); font-size:10px; }
+.prog-feira-label-group-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:8px; margin-bottom:8px; }
+.prog-feira-label-group { display:grid; grid-template-columns:1fr auto; gap:3px 8px; align-items:center; padding:10px; border:1px solid var(--border-color); border-radius:7px; background:rgba(14,165,233,.07); }
+.prog-feira-label-group > span { color:var(--text-primary); font-size:13px; font-weight:800; }
+.prog-feira-label-group > strong { color:#38bdf8; font:800 24px/1 'Outfit',sans-serif; }
+.prog-feira-label-group > small { grid-column:1/-1; color:var(--text-secondary); font-size:10px; }
+body.light-mode .prog-feira-label-group > strong { color:#0369a1; }
+@media print { body.print-prog-feira .prog-feira-label-groups { display:none !important; } }
+.prog-feira-label-group { grid-template-columns:minmax(0,1fr) auto; }
+.prog-feira-label-group > span { min-width:0; overflow-wrap:anywhere; }

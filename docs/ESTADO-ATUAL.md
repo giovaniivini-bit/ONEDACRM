@@ -2,6 +2,21 @@
 
 Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — contador por grupo de etiqueta
+
+Contador próximo ao seletor de etiquetas, agrupa pelos primeiros dois caracteres
+(CF reúne CFA/CFAN etc.; CG reúne CGA/CGX etc.). Contagem por produto, não peças,
+e deduplica produto dentro de cada grupo mesmo com várias etiquetas do prefixo.
+Base é o conjunto visível após todos os filtros, inclusive etiquetas e setor D36.
+Prefixos em ordem alfabética, tooltip lista códigos presentes; Sem etiqueta quando
+aplicável e estado vazio explícito. Não adiciona filtros novos nem altera seleções.
+Oculto na impressão para preservar paginação vigente.
+
+121 testes passaram; revisão independente aprovada. Chrome confirmou contagens e
+atualizações por programação, setor principal, cor e etiqueta; limpeza, temas,
+celular, vazio e impressão, sem erros JavaScript. Snapshot consultado: CF68 e CG56
+(valores dinâmicos, não monitoramento). Publicação em andamento.
+
 ## Prog Feira — cores dos dias D43
 
 Número de dias do tingimento: M00 vermelho piscante, M01 azul fixo, M02 laranja

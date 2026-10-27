@@ -60,3 +60,11 @@ no cache sinaliza indisponibilidade e suspende esse filtro até carregar nova ba
 M00: vermelho piscante; M01: azul fixo; M02: laranja piscante; M03: verde fixo.
 Somente número de dias D43 anima; D36 mantém estilo anterior. Impressão e preferência
 por movimento reduzido desativam a animação, preservando a cor do estado.
+
+## Contadores por prefixo de etiqueta
+
+Cada grupo usa as primeiras duas posições do código normalizado (CF,CG,58 etc.).
+Contador aplica todos os filtros da tela e conta produtos, sem somar quantidade de
+peças. Mesmo produto com CFA e CFAN conta uma vez em CF; com CF e CG pode entrar em
+ambos. Grupos ordenados alfabeticamente, Sem etiqueta quando necessário. Apenas
+consulta, sem criar seleção adicional; bloco oculto na impressão.

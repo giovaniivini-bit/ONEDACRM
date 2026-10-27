@@ -61,7 +61,7 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
     assert.match(css, /grid-template-rows:repeat\(2,86mm\)/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-print-page[\s\S]*break-after:page/);
-    assert.match(html, /style\.css\?v=20261027-prog-d43-colors-1/);
+    assert.match(html, /style\.css\?v=20261027-prog-label-groups-1/);
     assert.match(html, /app\.js\?v=[\w-]+/);
 });
 
@@ -208,4 +208,20 @@ test('etiquetas de grades diferentes são preservadas sem duplicar produtos ou c
     const ps=buildProducts([erp('FE','D36','01A',{Etiqueta:'CFA'}),erp('FE','D36','01A',{Etiqueta:'HXV',Tamanho:'8'}),erp('FE','D36','01A',{Etiqueta:'CFA'})]);
     assert.equal(ps.length,1);assert.equal(filterByLabels(ps,['CFA','HXV']).length,1);
     assert.deepEqual(getLabelOptions(ps),[{value:'CFA',count:1},{value:'HXV',count:1}]);
+});
+test('contadores agrupam etiquetas pelo prefixo sem duplicar produto no mesmo grupo',()=>{
+    const {getLabelGroups}=require('../prog-feira');
+    const products=[{key:'1',labels:['CFA','CFAN','CGA']},{key:'2',labels:['CFAN']},{key:'3',labels:['CGX']},{key:'4',labels:['58A']},{key:'5',labels:[]}];
+    assert.deepEqual(getLabelGroups(products),[
+        {prefix:'58',count:1,labels:['58A']},{prefix:'CF',count:2,labels:['CFA','CFAN']},
+        {prefix:'CG',count:2,labels:['CGA','CGX']},{prefix:'',count:1,labels:[]}
+    ]);
+    assert.deepEqual(getLabelGroups([]),[]);
+    assert.equal(getLabelGroups([products[0],products[0]])[0].count,1);
+});
+test('contadores acompanham etiquetas e filtros aplicados ao conjunto visível',()=>{
+    const {getLabelGroups,filterByLabels,filterByParallelSectors}=require('../prog-feira');
+    const products=[{key:'1',etiqueta:'CFA',customerProgram:'B44',sector:'01B',parallelSectors:{CO:['D01']}},{key:'2',etiqueta:'CFAN',customerProgram:'B45',sector:'01A',parallelSectors:{CO:['D02']}},{key:'3',etiqueta:'CGA',customerProgram:'B44',sector:'01B',parallelSectors:{CO:['D01']}}];
+    const visible=filterByLabels(filterByPrograms(filterByParallelSectors(products,{color:'D01'}),['B44']),['CFA','CGA']).filter(p=>p.sector==='01B');
+    assert.deepEqual(getLabelGroups(visible).map(g=>[g.prefix,g.count]),[['CF',1],['CG',1]]);
 });

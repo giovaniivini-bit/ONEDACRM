@@ -10479,6 +10479,11 @@
                     <button type="button" class="filter-chip ${!selectedLabels.length ? 'active' : ''}" onclick="window.crmClearProgFeiraLabels()">Todas (${labelCandidates.length})</button>
                     ${labelUnavailable ? '' : labelOptions.map(option => `<label class="prog-feira-program-option ${selectedLabels.includes(option.value) ? 'active' : ''}"><input type="checkbox" data-prog-label value="${escapeHtml(option.value)}" ${selectedLabels.includes(option.value) ? 'checked' : ''} onchange="window.crmToggleProgFeiraLabel(this.value)"><span>${escapeHtml(option.value || 'Sem etiqueta')}</span><small>(${option.count})</small></label>`).join('')}
                 </fieldset>
+                ${labelUnavailable ? '' : `<section class="prog-feira-label-groups" aria-label="Produtos por grupo de etiqueta">
+                    <header><strong>Produtos por grupo de etiqueta</strong><span>${products.length} ${products.length === 1 ? 'produto no filtro' : 'produtos no filtro'}</span></header>
+                    <div class="prog-feira-label-group-grid">${api.getLabelGroups(products).map(group => `<article class="prog-feira-label-group" data-label-group="${escapeHtml(group.prefix)}" title="${escapeHtml(group.labels.join(', ') || 'Produtos sem etiqueta')}"><span>${escapeHtml(group.prefix || 'Sem etiqueta')}</span><strong>${formatNumber(group.count)}</strong><small>${group.count === 1 ? 'produto' : 'produtos'}</small></article>`).join('') || '<p>Nenhum produto nos filtros atuais.</p>'}</div>
+                    <small>Contagem por prefixo de duas posições. Cada produto conta uma vez por grupo.</small>
+                </section>`}
                 <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}</p>
 
                 <div class="prog-feira-legend">
