@@ -11,7 +11,9 @@ do App mantém a cópia completa existente. Reutiliza clipboard e fallback atuai
 
 127 testes passaram e revisão independente sem achados. Chrome com dados reais
 validou 15 ausentes, busca com 1 resultado, busca vazia e cópia dos 1701 produtos
-na aba total; sem erros JavaScript. Publicação em andamento.
+na aba total; sem erros JavaScript. Publicado no GitHub/VPS no commit 293c914.
+Os 127 testes passaram na VPS, saúde OK e dados preservados. Chrome público
+confirmou os mesmos cenários. Backup: /home/ubuntu/backups/oneda-crm-copy-missing-20261028-293c914.
 
 ## Raio X — botão azul sem expansão
 
