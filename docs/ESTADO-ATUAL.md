@@ -10,7 +10,10 @@ filtros complementares). Preserva a contagem única por grupo. Rodapé esclarece
 um produto pode participar de mais de um grupo, sem alterar contagens existentes.
 128 testes passaram; revisão independente sem achados. Chrome validou os nove
 grupos sobre 194 produtos, filtros de programação/etiqueta/setor e busca vazia.
-Exemplo: CF 67/194 = 34,5%; CG 56/194 = 28,9%. Publicação em andamento.
+Exemplo: CF 67/194 = 34,5%; CG 56/194 = 28,9%. Publicado no GitHub/VPS
+no commit 7431caf; 128 testes passaram na VPS, saúde OK e dados preservados.
+Chrome público confirmou percentuais e filtros sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-label-percent-20261028-7431caf.
 
 ## Raio X — redução de 25% nos botões de setores
 
