@@ -11,7 +11,10 @@ compactos. Sem alteração de dados, cruzamento ou impressão.
 
 126 testes passaram. Chrome com dados reais mediu395botões, todos34px, nos temas
 claro/escuro; verificado modo impressão sem botões. Captura dos quatro produtos da
-imagem do usuário conferida. Sem errosJavaScript. Publicação em andamento.
+imagem do usuário conferida. Sem errosJavaScript. Publicado no GitHub/VPS no
+commit7baf70c. Os126testes passaram na VPS; saúde OK e dados preservados no pull.
+Chrome público confirmou395botões com34px e impressão sem botões.
+Backup: /home/ubuntu/backups/oneda-crm-raio-button-20261028-7baf70c.
 
 ## Raio X — cruzamento com planilhas de cores e aviamentos
 
