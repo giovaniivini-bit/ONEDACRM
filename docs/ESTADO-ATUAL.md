@@ -1,6 +1,17 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 27/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 28/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Raio X — botão azul sem expansão
+
+Corrigida expansão de Detalhes da OP causada por flex:1 compartilhado com outras
+galerias e pelo alinhamento stretch da grade. Somente #raioXGallery usa cards no
+início da linha e botão de34px sem crescimento. Cards com menos informações ficam
+compactos. Sem alteração de dados, cruzamento ou impressão.
+
+126 testes passaram. Chrome com dados reais mediu395botões, todos34px, nos temas
+claro/escuro; verificado modo impressão sem botões. Captura dos quatro produtos da
+imagem do usuário conferida. Sem errosJavaScript. Publicação em andamento.
 
 ## Raio X — cruzamento com planilhas de cores e aviamentos
 

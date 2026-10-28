@@ -6302,3 +6302,5 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
  #raioXPrintReport .rx-sheet-delivery > span { color:#475569 !important; }
  #raioXPrintReport .rx-sheet-item + .rx-sheet-item { margin-top:1mm !important; padding-top:1mm !important; border-color:#cbd5e1 !important; }
 }
+#raioXGallery { align-items:start; }
+#raioXGallery .s13-btn-action { flex:0 0 34px; height:34px; min-height:34px; max-height:34px; }
