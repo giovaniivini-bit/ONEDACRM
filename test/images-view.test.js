@@ -46,3 +46,31 @@ test('copiar lista ausente respeita busca, preserva sufixos e mantém cópia tot
     context.window.crmCopyAllImageFilenames();assert.equal(copied,'01.00.0001A.jpg\n01.00.0001B.jpg\n01.00.0002.jpg');
     context.state.missingImagesSearch='INEXISTENTE';copied='';context.window.crmCopyAllImageFilenames(true);assert.equal(copied,'');assert.ok(notifications.length);
 });
+
+test('horário do índice atualiza mesmo quando o mapa de imagens permanece igual', async () => {
+    const vm = require('node:vm');
+    const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const source = app.slice(app.indexOf('    function getImageIndexTimestamp('), app.indexOf('    let adminLoginPromise'));
+    const state = { driveImages: {}, imagesUpdatedAt: null, activeSubmodule: 'imagens-ausentes' };
+    let timestamp = '2026-10-28T12:30:00.000Z';
+    let renders = 0;
+    const context = { state, window: {location:{protocol:'https:'}}, console,
+        PHOTO_SUBMODULES: new Set(['imagens-ausentes', 'raio-x']),
+        fetch: async () => ({ok:true,json:async()=>({success:true,data:{map:{},timestamp}})}),
+        updateSidebarBadges(){}, renderActiveView(){ renders++; } };
+    vm.runInNewContext(source, context);
+    await context.loadDriveImages();
+    assert.equal(state.imagesUpdatedAt, timestamp);
+    assert.equal(renders, 1);
+    await context.loadDriveImages();
+    assert.equal(renders, 1);
+    timestamp = '2026-10-28T13:00:00.000Z';
+    await context.loadDriveImages();
+    assert.equal(state.imagesUpdatedAt, timestamp);
+    assert.equal(renders, 2);
+    state.activeSubmodule = 'raio-x'; timestamp = '2026-10-28T14:00:00.000Z';
+    await context.loadDriveImages(); assert.equal(renders, 2);
+    assert.equal(context.getImageIndexTimestamp({data:{timestamp:'invalid'}}), null);
+    assert.equal(context.getImageIndexTimestamp({}), null);
+    assert.equal(context.getImageIndexTimestamp({timestamp}), timestamp);
+});

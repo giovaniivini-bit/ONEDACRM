@@ -95,6 +95,7 @@
         alertsPageLimit: 30,
         alertsLoading: true,
         imagesLoaded: false,
+        imagesUpdatedAt: null,
         driveImages: {}
     };
 
@@ -747,6 +748,11 @@
         }
     }
 
+    function getImageIndexTimestamp(payload) {
+        const timestamp = payload?.data?.timestamp || payload?.timestamp;
+        return typeof timestamp === 'string' && Number.isFinite(Date.parse(timestamp)) ? timestamp : null;
+    }
+
     // Carregamento assíncrono do índice de imagens da pasta do Google Drive
     async function loadDriveImages() {
         if (!window.location.protocol.startsWith('http')) return;
@@ -755,11 +761,14 @@
             if (!res.ok) return;
             const json = await res.json();
             if (json.success && json.data && json.data.map) {
-                if (JSON.stringify(state.driveImages) === JSON.stringify(json.data.map)) return;
+                const mapChanged = JSON.stringify(state.driveImages) !== JSON.stringify(json.data.map);
+                const updatedAt = getImageIndexTimestamp(json);
+                if (!mapChanged && state.imagesUpdatedAt === updatedAt) return;
+                state.imagesUpdatedAt = updatedAt;
                 state.driveImages = json.data.map;
                 state.imagesLoaded = true;
                 updateSidebarBadges();
-                if (PHOTO_SUBMODULES.has(state.activeSubmodule)) {
+                if (PHOTO_SUBMODULES.has(state.activeSubmodule) && (mapChanged || state.activeSubmodule === 'imagens-ausentes')) {
                     renderActiveView();
                 }
             }
@@ -11564,6 +11573,7 @@
                 <div class="module-view-title-group">
                     <h2><i class="fa-solid fa-images" style="color: #f59e0b;"></i> Controle de Imagens Ausentes</h2>
                     <p class="module-view-description">Produtos existentes no CRM que ainda não possuem uma imagem reconhecida na pasta local ou no Google Drive.</p>
+                    <p class="module-view-description" data-images-updated-at="${escapeHtml(state.imagesUpdatedAt || '')}"><i class="fa-regular fa-clock"></i> Última atualização do índice de imagens: <strong>${state.imagesUpdatedAt ? new Date(state.imagesUpdatedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + ' (horário de Brasília)' : 'Ainda não informada'}</strong></p>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button class="btn btn-primary js-copy-all-image-names" onclick="window.crmCopyAllImageFilenames(${showingAllImages ? 'false' : 'true'})" ${(showingAllImages ? products.length : visibleProducts.length) ? '' : 'disabled'}>
@@ -12122,6 +12132,7 @@
 
             if (json.data && json.data.map) {
                 state.driveImages = json.data.map;
+                state.imagesUpdatedAt = getImageIndexTimestamp(json);
                 state.imagesLoaded = true;
             }
             updateSidebarBadges();

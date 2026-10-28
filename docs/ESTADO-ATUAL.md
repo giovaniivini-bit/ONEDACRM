@@ -2,6 +2,17 @@
 
 Atualizado em 28/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Imagens Ausentes — horário geral da atualização
+
+Cabeçalho mostra uma informação macro: Última atualização do índice de imagens,
+com data/hora do timestamp real retornado por /api/drive-images, em pt-BR e fuso
+America/Sao_Paulo (horário de Brasília). Não representa data por arquivo nem hora
+de abertura da página. Ausência de timestamp válido: Ainda não informada.
+GET periódico e sincronização manual guardam timestamp; mudanças somente no horário
+atualizam a tela de imagens ausentes, sem redesenhar outras galerias.
+128 testes passaram, revisão sem achados bloqueantes. Chrome conferiu horário da
+API, fuso, temas e renovação automática com mapa idêntico. Publicação em andamento.
+
 ## Raio X — setores organizados e botões ampliados
 
 Filtro de setores organizado em quatro grupos visuais: Todos; 01/02/03/04/05G;
