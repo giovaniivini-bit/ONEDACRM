@@ -11,7 +11,10 @@ de abertura da página. Ausência de timestamp válido: Ainda não informada.
 GET periódico e sincronização manual guardam timestamp; mudanças somente no horário
 atualizam a tela de imagens ausentes, sem redesenhar outras galerias.
 128 testes passaram, revisão sem achados bloqueantes. Chrome conferiu horário da
-API, fuso, temas e renovação automática com mapa idêntico. Publicação em andamento.
+API, fuso, temas e renovação automática com mapa idêntico. Publicado no GitHub/VPS
+no commit f809965. 128 testes passaram na VPS; saúde OK e dados preservados.
+Chrome público confirmou horário e atualização automática sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-image-time-20261028-f809965.
 
 ## Raio X — setores organizados e botões ampliados
 
