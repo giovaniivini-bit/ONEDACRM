@@ -11537,17 +11537,19 @@
         `;
     }
 
+    function filterImageCoverageProducts(products, query) {
+        const search = String(query || '').toLowerCase().trim();
+        return products.filter(product => !search || [product.codigo, product.descricao, product.cliente, product.marca, ...product.ops, ...product.setores]
+            .some(value => String(value || '').toLowerCase().includes(search)));
+    }
+
     function renderMissingImagesView(container) {
         const products = getImageCoverageProducts();
         const missingProducts = products.filter(product => !product.hasImage);
         const showingAllImages = state.missingImagesTab === 'all';
         const sourceProducts = showingAllImages ? products : missingProducts;
         const query = String(state.missingImagesSearch || '').toLowerCase().trim();
-        const visibleProducts = sourceProducts.filter(product => {
-            if (!query) return true;
-            return [product.codigo, product.descricao, product.cliente, product.marca, ...product.ops, ...product.setores]
-                .some(value => String(value || '').toLowerCase().includes(query));
-        });
+        const visibleProducts = filterImageCoverageProducts(sourceProducts, query);
         const withImages = products.length - missingProducts.length;
         const coverage = products.length ? Math.round((withImages / products.length) * 100) : 0;
         const emptyTitle = sourceProducts.length
@@ -11564,11 +11566,9 @@
                     <p class="module-view-description">Produtos existentes no CRM que ainda não possuem uma imagem reconhecida na pasta local ou no Google Drive.</p>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    ${showingAllImages ? `
-                        <button class="btn btn-primary js-copy-all-image-names" onclick="window.crmCopyAllImageFilenames()" ${products.length ? '' : 'disabled'}>
-                            <i class="fa-regular fa-copy"></i> Copiar lista
-                        </button>
-                    ` : ''}
+                    <button class="btn btn-primary js-copy-all-image-names" onclick="window.crmCopyAllImageFilenames(${showingAllImages ? 'false' : 'true'})" ${(showingAllImages ? products.length : visibleProducts.length) ? '' : 'disabled'}>
+                        <i class="fa-regular fa-copy"></i> Copiar lista
+                    </button>
                     <button class="btn btn-secondary-action btn-sync-images-action" onclick="window.crmSyncImages()">
                         <i class="fa-solid fa-arrows-rotate"></i> Sincronizar Fotos
                     </button>
@@ -13023,8 +13023,10 @@
         }
     }
 
-    window.crmCopyAllImageFilenames = () => {
-        const filenames = [...new Set(getImageCoverageProducts().map(product => `${product.imageCode || product.codigo}.jpg`))];
+    window.crmCopyAllImageFilenames = (missingOnly = false) => {
+        const products = getImageCoverageProducts();
+        const productsToCopy = missingOnly ? filterImageCoverageProducts(products.filter(product => !product.hasImage), state.missingImagesSearch) : products;
+        const filenames = [...new Set(productsToCopy.map(product => `${product.imageCode || product.codigo}.jpg`))];
         if (!filenames.length) {
             showNotification('Nenhuma imagem necessária foi encontrada.', 'info', 'Lista vazia');
             return;

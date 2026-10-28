@@ -2,6 +2,17 @@
 
 Atualizado em 28/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Imagens Ausentes — copiar lista de arquivos
+
+Incluído botão Copiar lista na aba Imagens Ausentes, usando os nomes esperados
+com extensão .jpg, um por linha, sem duplicatas e preservando sufixos. Respeita a
+busca da lista e fica desabilitado quando não há resultados. A aba Imagens Totais
+do App mantém a cópia completa existente. Reutiliza clipboard e fallback atuais.
+
+127 testes passaram e revisão independente sem achados. Chrome com dados reais
+validou 15 ausentes, busca com 1 resultado, busca vazia e cópia dos 1701 produtos
+na aba total; sem erros JavaScript. Publicação em andamento.
+
 ## Raio X — botão azul sem expansão
 
 Corrigida expansão de Detalhes da OP causada por flex:1 compartilhado com outras
