@@ -9,7 +9,9 @@ padding/gaps/contador e altura mínima proporcionais; largura do grupo em deskto
 75%. Em celular mantém largura disponível para leitura. Ordem e seleção preservadas.
 128 testes passaram; Chrome validou ordem, filtros, temas e telas 1600/1401/1280/
 390/320px. Altura dos setores caiu de 106px para 80px (bordas preservadas).
-Publicação em andamento.
+Publicado no GitHub/VPS no commit 649246f. 128 testes passaram na VPS;
+saúde OK, dados preservados e Chrome público conferido sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-rx-size-20261028-649246f.
 
 ## Imagens Ausentes — horário geral da atualização
 
