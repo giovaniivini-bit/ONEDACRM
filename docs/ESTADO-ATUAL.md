@@ -2,6 +2,15 @@
 
 Atualizado em 28/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Raio X — redução de 25% nos botões de setores
+
+Tamanho dos botões reduzido para 75%: fonte 20→15px, código 22→16,5px,
+padding/gaps/contador e altura mínima proporcionais; largura do grupo em desktop
+75%. Em celular mantém largura disponível para leitura. Ordem e seleção preservadas.
+128 testes passaram; Chrome validou ordem, filtros, temas e telas 1600/1401/1280/
+390/320px. Altura dos setores caiu de 106px para 80px (bordas preservadas).
+Publicação em andamento.
+
 ## Imagens Ausentes — horário geral da atualização
 
 Cabeçalho mostra uma informação macro: Última atualização do índice de imagens,
