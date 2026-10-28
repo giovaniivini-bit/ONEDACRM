@@ -10,7 +10,9 @@ código e contador na primeira linha e descrição na segunda. Grade adapta para
 quatro/duas colunas em telas menores. Multisseleção e contagens preservadas.
 127 testes passaram, revisão independente sem achados bloqueantes; Chrome validou
 ordem, multisseleção, Todos, temas claro/escuro e larguras 1600/1280/390/320.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit e62aa36. Os 127 testes passaram na VPS;
+saúde OK, dados preservados. Chrome público confirmou todos os cenários,
+incluindo largura 1401px. Backup: /home/ubuntu/backups/oneda-crm-rx-sectors-20261028-e62aa36.
 
 ## Operação de imagens — Syncthing removido em 28/10/2026
 
