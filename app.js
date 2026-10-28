@@ -3970,11 +3970,11 @@
         };
         container.innerHTML = `<section id="raioXView">
             <div class="module-view-header"><h2>Raio X</h2><p class="module-view-description">Produtos por OF e código completo • Setores principais e pendências secundárias</p></div>
-            <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Selecione um ou mais setores. Passe o mouse para ver o nome completo.</p><div class="rx-sector-selector" role="group" aria-label="Selecionar setores do Raio X"><button type="button" class="rx-sector-toggle ${f.sectors.length ? '' : 'selected'}" data-rx-sector="all" aria-pressed="${!f.sectors.length}"><strong>Todos</strong><span></span><span class="rx-sector-quantity">${sectorCandidates.length}</span></button>${[...api.SECTORS].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true })).map(s => {
+            <div class="table-card rx-sector-summary"><h3>Produtos por setor</h3><p>Selecione um ou mais setores. Passe o mouse para ver o nome completo.</p><div class="rx-sector-selector" role="group" aria-label="Selecionar setores do Raio X"><div class="rx-sector-row"><button type="button" class="rx-sector-toggle ${f.sectors.length ? '' : 'selected'}" data-rx-sector="all" aria-pressed="${!f.sectors.length}"><strong>Todos</strong><span class="rx-sector-name"></span><span class="rx-sector-quantity">${sectorCandidates.length}</span></button></div>${[['01', '02', '03', '04', '05G'], ['05', '06', '12', '13', '26', '20', '31', '106'], ['43', 'CM1']].map(row => `<div class="rx-sector-row">${row.map(s => {
                 const count = sectorCandidates.filter(p => p.sectors.includes(s)).length;
                 const title = `${sectorLabel(s)}: ${count} produtos`;
                 return `<button type="button" class="rx-sector-toggle ${f.sectors.includes(s) ? 'selected' : ''}" data-rx-sector="${s}" aria-pressed="${f.sectors.includes(s)}" aria-label="Setor ${escapeHtml(title)}" title="${escapeHtml(title)}"><strong>${s}</strong><span class="rx-sector-name">${escapeHtml(shortSectorName(s))}</span><span class="rx-sector-quantity ${count > 1 ? 'high' : ''}">${count}</span></button>`;
-            }).join('')}</div></div>
+            }).join('')}</div>`).join('')}</div></div>
             <div class="table-card rx-filters pdf-screen-controls">
                 <label class="rx-filter rx-search"><span>Buscar produto ou OF</span><input class="crm-input" data-rx-search value="${escapeHtml(f.search)}" placeholder="Código, OF, descrição, cliente ou status..."></label>
                 ${select('client', 'Cliente', clients.map(s => [s, s]))}

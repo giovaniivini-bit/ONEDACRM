@@ -29,12 +29,12 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 
 ## Imagens — fluxo vigente
 
-PC `C:\ONEDA\Fotos-CRM` (Syncthing somente envio) → VPS
-`/home/ubuntu/data/oneda-crm/images` (somente recebimento) → índice automático CRM.
-Browser consulta índice a cada 15 segundos com aba visível. Prioridade Syncthing,
-incluindo substituições entre extensões. Drive e imagens empacotadas são contingência.
-Não requer GitHub/deploy/botão Sincronizar Fotos para imagens nessa pasta.
-O PC precisa estar ligado, conectado e com Syncthing ativo para enviar novas alterações.
+PC `C:\ONEDA\Fotos-CRM` → VPS `/home/ubuntu/data/oneda-crm/images` → índice automático CRM.
+Em 28/10/2026, a pedido do usuário, Syncthing foi desinstalado do PC e da VPS.
+Imagens preservadas; não há mais envio automático por Syncthing. O usuário pretende
+criar automação Python; ela ainda não foi implementada nesta sessão.
+Browser consulta índice a cada 15 segundos com aba visível. Drive e imagens
+empacotadas são contingência. Não requer GitHub/deploy para imagens nessa pasta.
 Guia: `docs/SINCRONIZACAO-DE-IMAGENS.md`.
 
 ## Módulos e regras acordadas

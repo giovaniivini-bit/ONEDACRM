@@ -2,6 +2,22 @@
 
 Atualizado em 28/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Raio X — setores organizados e botões ampliados
+
+Filtro de setores organizado em quatro grupos visuais: Todos; 01/02/03/04/05G;
+05/06/12/13/26/20/31/106; 43/CM1. Fonte, padding e espaçamento ampliados,
+código e contador na primeira linha e descrição na segunda. Grade adapta para
+quatro/duas colunas em telas menores. Multisseleção e contagens preservadas.
+127 testes passaram, revisão independente sem achados bloqueantes; Chrome validou
+ordem, multisseleção, Todos, temas claro/escuro e larguras 1600/1280/390/320.
+Publicação em andamento.
+
+## Operação de imagens — Syncthing removido em 28/10/2026
+
+A pedido do usuário, Syncthing desinstalado do PC e da VPS e serviço desativado.
+1554 imagens preservadas em cada máquina; CRM saudável. Envio por Syncthing
+encerrado; automação Python mencionada pelo usuário ainda não foi criada aqui.
+
 ## Imagens Ausentes — copiar lista de arquivos
 
 Incluído botão Copiar lista na aba Imagens Ausentes, usando os nomes esperados
