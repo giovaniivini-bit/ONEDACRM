@@ -2,6 +2,16 @@
 
 Atualizado em 28/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — participação percentual dos grupos de etiquetas
+
+Contadores por prefixo agora exibem quantidade e percentual com uma casa decimal
+sobre o total de produtos filtrados na tela (programação, setor, etiqueta, busca e
+filtros complementares). Preserva a contagem única por grupo. Rodapé esclarece que
+um produto pode participar de mais de um grupo, sem alterar contagens existentes.
+128 testes passaram; revisão independente sem achados. Chrome validou os nove
+grupos sobre 194 produtos, filtros de programação/etiqueta/setor e busca vazia.
+Exemplo: CF 67/194 = 34,5%; CG 56/194 = 28,9%. Publicação em andamento.
+
 ## Raio X — redução de 25% nos botões de setores
 
 Tamanho dos botões reduzido para 75%: fonte 20→15px, código 22→16,5px,
