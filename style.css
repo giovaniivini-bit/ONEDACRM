@@ -6314,3 +6314,8 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 .prog-feira-images-only [data-prog-images-only] { outline:2px solid #38bdf8; background:rgba(14,165,233,.12); }
 
 .alert-item-content .alert-item-observation { margin-top:8px; white-space:pre-wrap; overflow-wrap:anywhere; }
+
+.rx-sheet-item-heading { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; min-width:0; }
+.rx-sheet-item-heading > strong { min-width:0; overflow-wrap:anywhere; }
+.rx-sheet-observation { margin:0; font-size:10px; line-height:1.4; white-space:pre-wrap; overflow-wrap:anywhere; }
+@media print { #raioXPrintReport .rx-sheet-observation { color:#334155 !important; font-size:9px !important; } }

@@ -66,3 +66,11 @@ mais folhas: não reduzir fontes nem esconder conteúdo para forçar seis por fo
 Smoke opcional: fornecer Playwright via NODE_PATH, definir CRM_SMOKE_URL para a
 prévia e rodar node scripts/smoke-raio-x-sheets.cjs. CRM_SMOKE_PDF opcional grava
 PDF da fixture; o teste só intercepta leituras em seu navegador isolado.
+
+### Observações das planilhas (29/10/2026)
+
+Cada item de cor/aviamento conserva OBS/OBSERVAÇÃO da própria linha e a apresenta
+abaixo de envio/previsão, omitindo campos vazios. Cor e Pantone dividem a linha de
+título quando houver espaço; em telas estreitas quebram sem sobrepor. Observação
+preserva novas linhas, é escapada e integra a impressão. Demais regras de D01/X01,
+correspondência completa e preferência de ENV. CLIENTE permanecem iguais.

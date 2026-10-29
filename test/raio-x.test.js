@@ -131,3 +131,13 @@ test('linha que contém apenas o produto não cria complemento sem informação'
     const [p]=rx.enrichWithSheets(ps,[{PRODUTO:'01.00.123A',COR:'-',PANTONE:'','ENV CLIENTE':'',PREVISAO:''}],[{PRODUTO:'01.00.123A'}]);
     assert.deepEqual(p.colorSheet.items,[]);assert.deepEqual(p.trimSheet.items,[]);
 });
+
+test('observações do Raio X mantêm linha e sufixo, inclusive observação como única informação',()=>{
+    const ps=rx.build([row('01'),row('D01'),row('X01')]);
+    const colors=[{PRODUTO:'01.00.123A',COR:'AZUL',PANTONE:'19-4001',OBS:'Primeira linha\nAguardar cliente'},{PRODUTO:'01.00.123A',COR:'VERDE','OBSERVAÇÃO':'Outro item'},{PRODUTO:'01.00.123',COR:'ERRADA',OBS:'Não misturar'}];
+    const trims=[{PRODUTO:'01.00.123A','OBSERVACOES':'<script>texto</script>'},{PRODUTO:'01.00.123A','TIPO AVIAMENTO':'BOTÃO',OBS:'  '}];
+    const [p]=rx.enrichWithSheets(ps,colors,trims);
+    assert.deepEqual(p.colorSheet.items.map(i=>i.observation),['Primeira linha\nAguardar cliente','Outro item']);
+    assert.equal(p.colorSheet.items[0].description,'19-4001');
+    assert.deepEqual(p.trimSheet.items.map(i=>i.observation),['<script>texto</script>','']);
+});

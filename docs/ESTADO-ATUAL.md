@@ -2,6 +2,21 @@
 
 Atualizado em 29/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Raio X — observações e Pantone junto da cor
+
+Complementos das planilhas agora incluem observação da linha correspondente em
+D01/X01 (OBS/OBSERVAÇÃO e variantes), abaixo de envio/previsão. Campo vazio não
+cria parágrafo; conteúdo escapado, quebras preservadas e palavras longas quebram.
+Nome da cor e Pantone compartilham cabeçalho flexível, lado a lado quando couber.
+Descrição de aviamento permanece abaixo do nome. Linha contendo apenas observação
+útil pode complementar o produto. Código completo/sufixos, regra D01/X01 e
+prioridade de envio sobre previsão mantidos. Impressão reutiliza os complementos.
+134 testes passaram, revisão sem achados. Smoke ampliado validou notas por linha,
+multilinha, escaping, Pantone na mesma linha, campo vazio e cópia na impressão.
+Chrome com base real: 386 cards, 16 com cores/21 com aviamentos, 26 sem linha útil;
+temas/390px/PDF com 18 itens complementares conferidos, sem erros JavaScript.
+Publicação em andamento.
+
 ## Alertas — observação das previsões
 
 Alertas Andamento cores/aviamentos incluem Observação abaixo da mensagem/metadados,

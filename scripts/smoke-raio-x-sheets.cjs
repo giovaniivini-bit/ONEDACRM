@@ -11,12 +11,12 @@ const base = process.env.CRM_SMOKE_URL || 'http://127.0.0.1:3036';
     fixture.data = [main('900001',code,'01'),main('900001',code,'D01'),main('900001',code,'X01'),main('900002','01.99.00.0001','01'),main('900002','01.99.00.0001','D01'),main('900003','01.99.00.0001B','01')];
     const attack = '<img src=x onerror="window.__rxInjected=1">';
     const colors = { success:true, isLive:true, records:[
-        {PRODUTO:code,COR:'AZUL '+attack,PANTONE:'19-4001','ENV CLIENTE':'20/10/2026','PREVISÃO':'10/10/2026'},
-        {PRODUTO:code,COR:'VERDE','ENV CLIENTE':'','PREVISÃO':'30/10/2026'},
+        {PRODUTO:code,COR:'AZUL '+attack,PANTONE:'19-4001',OBS:'Aguardar cliente\n'+attack,'ENV CLIENTE':'20/10/2026','PREVISÃO':'10/10/2026'},
+        {PRODUTO:code,COR:'VERDE',PANTONE:'18-1234','ENV CLIENTE':'','PREVISÃO':'30/10/2026'},
         {PRODUTO:'01.99.00.0001B',COR:'NÃO DEVE APARECER'}
     ] };
     const trims = { success:true, isLive:true, records:[
-        {PRODUTO:code,'TIPO AVIAMENTO':'BOTÃO','DESCRIÇÃO':'18 mm','ENV. CLIENTE':'22/10/2026','PREVISÃO':'10/10/2026'},
+        {PRODUTO:code,'TIPO AVIAMENTO':'BOTÃO','DESCRIÇÃO':'18 mm','OBSERVAÇÃO':'Confirmar botão com cliente','ENV. CLIENTE':'22/10/2026','PREVISÃO':'10/10/2026'},
         {PRODUTO:code,'TIPO AVIAMENTO':'ETIQUETA','ENV. CLIENTE':'','PREVISÃO':'31/10/2026'}
     ] };
     const browser = await chromium.launch({headless:true,channel:process.env.CRM_SMOKE_BROWSER || 'chrome'});
@@ -45,6 +45,13 @@ const base = process.env.CRM_SMOKE_URL || 'http://127.0.0.1:3036';
         assert.equal(await a.locator('[data-rx-sheet="trim"] .rx-sheet-item').count(),2);
         const colorItems=a.locator('[data-rx-sheet="color"] .rx-sheet-item');
         assert.ok((await colorItems.first().textContent()).includes(attack));
+        assert.equal(await colorItems.first().locator('.rx-sheet-observation').textContent(),'Observação: Aguardar cliente\n'+attack);
+        assert.equal(await colorItems.nth(1).locator('.rx-sheet-observation').count(),0);
+        assert.equal(await a.locator('[data-rx-sheet="trim"] .rx-sheet-observation').textContent(),'Observação: Confirmar botão com cliente');
+        const heading=colorItems.nth(1).locator('.rx-sheet-item-heading');
+        assert.ok(await heading.evaluate(e=>Math.abs(e.querySelector('strong').getBoundingClientRect().top-e.querySelector('.rx-sheet-description').getBoundingClientRect().top)<4));
+        assert.equal(await colorItems.first().locator('.rx-sheet-observation').evaluate(e=>getComputedStyle(e).whiteSpace),'pre-wrap');
+        await a.screenshot({path: process.env.CRM_SMOKE_SHOT || '.tmp-rx-notes-fixture.png'});
         assert.equal(await a.locator('.rx-sheet-details img').count(),0);
         assert.equal(await page.evaluate(()=>window.__rxInjected),undefined);
         for(const [kind,values] of [['color',['20/10/2026','30/10/2026']],['trim',['22/10/2026','31/10/2026']]]){
@@ -56,11 +63,12 @@ const base = process.env.CRM_SMOKE_URL || 'http://127.0.0.1:3036';
         await page.emulateMedia({media:'print'});
         await page.evaluate(()=>window.dispatchEvent(new Event('beforeprint')));
         assert.equal(await page.locator('#raioXPrintReport .rx-sheet-item').count(),4);
+        assert.equal(await page.locator('#raioXPrintReport .rx-sheet-observation').count(),2);
         if(process.env.CRM_SMOKE_PDF) await page.pdf({path:process.env.CRM_SMOKE_PDF,preferCSSPageSize:true,printBackground:true});
         await page.evaluate(()=>window.dispatchEvent(new Event('afterprint')));
         assert.equal(await page.locator('#raioXPrintReport').count(),0);
         await page.emulateMedia({media:'screen'});
         assert.deepEqual(errors,[]);
-        console.log(JSON.stringify({cards:3,details:4,checks:'late load,exact suffix,sent priority,forecast,not found,escaping,print,cleanup',errors}));
+        console.log(JSON.stringify({cards:3,details:4,checks:'late load,exact suffix,sent priority,forecast,not found,notes,inline Pantone,escaping,print,cleanup',errors}));
     } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

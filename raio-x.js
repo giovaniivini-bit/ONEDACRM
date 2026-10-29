@@ -59,11 +59,12 @@
             const item = {
                 name: sheetValue(row, kind === 'color' ? ['COR'] : ['TIPO AVIAMENTO', 'TIPO DE AVIAMENTO']),
                 description: sheetValue(row, kind === 'color' ? ['PANTONE'] : ['DESCRIÇÃO', 'DESCRICAO']),
+                observation: sheetValue(row, ['OBSERVAÇÃO', 'OBSERVACAO', 'OBS', 'OBSERVAÇÕES', 'OBSERVACOES']),
                 delivery: sent ? { kind:'sent', label:'Enviado ao cliente', value:sent }
                     : forecast ? { kind:'forecast', label:'Previsão', value:forecast }
                     : { kind:'missing', label:'Envio / previsão', value:'Não informados' }
             };
-            if (!item.name && !item.description && item.delivery.kind === 'missing') continue;
+            if (!item.name && !item.description && !item.observation && item.delivery.kind === 'missing') continue;
             if (!index.has(code)) index.set(code, []);
             index.get(code).push(item);
         }
