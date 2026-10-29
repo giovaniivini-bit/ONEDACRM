@@ -55,7 +55,9 @@ completo e mantém filtros. Ampliação, cores dos tempos e impressão preservad
 134 testes passaram e revisão sem achados. Chrome validou botão/posição, 26 cards
 B44, valores dos dias preservados/alinhados, setores ocultos, restauração/filtros,
 lightbox, claro/escuro e impressão, sem erros JavaScript.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit c8f6dc7. 134 testes passaram na VPS;
+saúde OK e dados preservados. Chrome público confirmou os mesmos cenários.
+Backup: /home/ubuntu/backups/oneda-crm-prog-images-days-20261029-c8f6dc7.
 
 ## Prog Feira — participação percentual dos grupos de etiquetas
 
