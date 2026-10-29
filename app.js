@@ -11298,7 +11298,7 @@
             if (state.alertsSeverity !== 'all' && alert.severity !== state.alertsSeverity) return false;
             if (state.alertsCategory !== 'all' && getAlertCategory(alert).key !== state.alertsCategory) return false;
             if (!query) return true;
-            return [alert.title, alert.message, alert.op, alert.codigo, alert.setor, alert.cliente]
+            return [alert.title, alert.message, alert.observation, alert.op, alert.codigo, alert.setor, alert.cliente]
                 .some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(query));
         });
         const visibleAlerts = filteredAlerts.slice(0, state.alertsPageLimit || 30);
@@ -11377,6 +11377,7 @@
                                     ${alert.cliente ? `<span>${escapeHtml(alert.cliente)}</span>` : ''}
                                     ${['andamento-colors','andamento-trims'].includes(alert.ruleId) && (alert.ruleId === 'andamento-colors' ? state.coresExternalData : state.aviamentosExternalData)?.isLive === false ? '<span>Cache local da planilha</span>' : ''}
                                 </div>
+                                ${alert.observation ? `<p class="alert-item-observation"><strong>Observação:</strong> ${escapeHtml(alert.observation)}</p>` : ''}
                             </div>
                             ${alert.op ? `<button class="btn btn-glass js-alert-open-op" data-alert-op="${escapeHtml(alert.op)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir OF</button>` : ''}
                         </article>

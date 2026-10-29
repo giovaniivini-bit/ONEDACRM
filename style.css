@@ -6312,3 +6312,5 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 .prog-feira-images-only .prog-feira-delivery,
 .prog-feira-images-only .prog-feira-card-body > :not(.prog-feira-status-row):not(.prog-feira-parallel-pending) { display:none !important; }
 .prog-feira-images-only [data-prog-images-only] { outline:2px solid #38bdf8; background:rgba(14,165,233,.12); }
+
+.alert-item-content .alert-item-observation { margin-top:8px; white-space:pre-wrap; overflow-wrap:anywhere; }

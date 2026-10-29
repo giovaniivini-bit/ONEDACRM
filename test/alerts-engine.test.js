@@ -439,3 +439,11 @@ test('andamento inclui referências alfanuméricas ON completas sem misturar suf
     assert.deepEqual(alerts.map(a=>a.codigo).sort(), ['ON.11.0123','ON.12.0119','ON.12.0119A']);
     assert.ok(alerts.every(a=>a.severity==='critical'));
 });
+
+test('observações dos alertas pertencem à linha correspondente de cor ou aviamento', () => {
+    const row = extra => ({PRODUTO:'01.14.00.7887A', 'PREVISÃO':'01/01/2020', ...extra});
+    for (const kind of ['colors','trims']) {
+        const alerts = engine.buildForecastAlerts([row({'OBS':'Retorno do cliente\nAguardar aprovação'}), row({'OBSERVAÇÃO':'<img src=x onerror=alert(1)> & texto'}), row({'Observacoes':'Outro item'}), row({'OBS':'  '})],kind,new Date('2026-10-29T12:00:00Z'));
+        assert.deepEqual(alerts.map(a=>a.observation),['Retorno do cliente\nAguardar aprovação','<img src=x onerror=alert(1)> & texto','Outro item','']);
+    }
+});

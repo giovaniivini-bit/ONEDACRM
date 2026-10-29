@@ -2,6 +2,17 @@
 
 Atualizado em 29/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Alertas — observação das previsões
+
+Alertas Andamento cores/aviamentos incluem Observação abaixo da mensagem/metadados,
+extraída da mesma linha de origem (OBS, OBSERVAÇÃO/OBSERVACAO e plural). Campo vazio
+não cria bloco; texto escapado, quebra de linha preservada e palavras longas podem
+quebrar. Busca inclui observação. Critérios de prazo/conclusão/identidade mantidos.
+133 testes passaram e revisão independente sem achados. Chrome conferiu planilhas
+reais (3 cores/6 aviamentos, observações vazias nessas linhas) e fixtures com duas
+pendências do mesmo produto: nota apenas na linha correta, nova linha, texto HTML
+como texto e busca por observação. Publicação em andamento.
+
 ## Alertas — Andamento cores e aviamentos como tipos dos avisos ativos
 
 Ajuste solicitado após a primeira versão: Andamento cores e Andamento aviamentos

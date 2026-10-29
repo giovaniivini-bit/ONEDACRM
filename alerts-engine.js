@@ -803,6 +803,7 @@
             alerts.push({ id: `forecast-${kind}-${index}`, ruleId: `andamento-${kind}`, codigo, op: '', setor: '',
                 title: `${label} ${dueToday ? (color ? 'prevista' : 'previsto') + ' para hoje' : 'em atraso'}`,
                 severity: dueToday ? 'warning' : 'critical', forecast, forecastLabel, dueToday, item,
+                observation: getRecordField(record, ['OBSERVAÇÃO', 'OBSERVACAO', 'OBS', 'OBSERVAÇÕES', 'OBSERVACOES']),
                 cliente: getRecordField(record, ['RESPONSÁVEL', 'RESPONSAVEL']),
                 message: dueToday ? `Produto ${codigo}: ${label.toLowerCase()} ${detail} ${color ? 'prevista' : 'previsto'} para hoje (${forecastLabel}).`
                     : `Produto ${codigo} está em atraso. Previsão de ${label.toLowerCase()}: ${detail}, dia ${forecastLabel}.` });
