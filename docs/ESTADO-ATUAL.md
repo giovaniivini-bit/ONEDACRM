@@ -15,7 +15,10 @@ prioridade de envio sobre previsão mantidos. Impressão reutiliza os complement
 multilinha, escaping, Pantone na mesma linha, campo vazio e cópia na impressão.
 Chrome com base real: 386 cards, 16 com cores/21 com aviamentos, 26 sem linha útil;
 temas/390px/PDF com 18 itens complementares conferidos, sem erros JavaScript.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit d8fa96c. 134 testes passaram na VPS;
+saúde OK e dados operacionais preservados. Smoke e conferência real no Chrome
+público confirmaram os mesmos resultados sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-rx-notes-20261029-d8fa96c.
 
 ## Alertas — observação das previsões
 
