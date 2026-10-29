@@ -11,7 +11,10 @@ quebrar. Busca inclui observação. Critérios de prazo/conclusão/identidade ma
 133 testes passaram e revisão independente sem achados. Chrome conferiu planilhas
 reais (3 cores/6 aviamentos, observações vazias nessas linhas) e fixtures com duas
 pendências do mesmo produto: nota apenas na linha correta, nova linha, texto HTML
-como texto e busca por observação. Publicação em andamento.
+como texto e busca por observação. Publicado no GitHub/VPS no commit 959240d.
+133 testes passaram na VPS; saúde OK e dados preservados. Chrome público
+confirmou os mesmos cenários sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-forecast-notes-20261029-959240d.
 
 ## Alertas — Andamento cores e aviamentos como tipos dos avisos ativos
 
