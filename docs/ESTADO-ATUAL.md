@@ -2,28 +2,27 @@
 
 Atualizado em 29/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
-## Alertas — Andamento cores e Andamento aviamentos
+## Alertas — Andamento cores e aviamentos como tipos dos avisos ativos
 
-Duas novas abas independentes das regras operacionais existentes, baseadas nas
-linhas das planilhas cores/aviamentos. Comparam PREVISÃO ao dia civil atual em
-America/Sao_Paulo: vencido = crítico/Em atraso; mesmo dia = atenção/Para hoje;
-futuro ou previsão inválida/ausente não gera alerta. Data de hoje visível no topo.
-Cada linha traz produto completo (inclusive ON e sufixos), imagem/placeholder,
-nome da cor/Pantone ou tipo/descrição do aviamento e previsão. Várias pendências
-do mesmo produto permanecem separadas. Não exige presença nos setores D01/X01.
-Conforme resposta do usuário: data válida em RECEBIDO OU ENV. CLIENTE retira apenas
-a linha correspondente. Traço/erro não é data de conclusão. Fontes em cache são
-identificadas; fonte indisponível sinalizada. Busca, filtros, paginação e ampliação
-reutilizam a apresentação dos alertas. Trocar aba limpa filtros; relógio revisita
-o dia a cada minuto/retorno da aba e recalcúla mesmo sem mudança das planilhas.
-131 testes passaram, incluindo virada de dia/ano em Brasília, datas inválidas,
-recebido/enviado, futuro, múltiplos itens e códigos ON. Revisão independente aprovada.
-Chrome com dados reais: 3 cores atrasadas, 6 aviamentos (4 atrasados/2 para hoje),
-e cenários controlados de datas, cache, filtros, imagens/placeholder e escaping.
-Publicado no GitHub/VPS no commit 969a87e. 131 testes passaram na VPS;
-saúde OK e dados operacionais preservados. Chrome público confirmou ambas as abas,
-mensagens/datas/imagens, filtros e cenários controlados sem erros JavaScript.
-Backup: /home/ubuntu/backups/oneda-crm-forecast-alerts-20261029-969a87e.
+Ajuste solicitado após a primeira versão: Andamento cores e Andamento aviamentos
+agora são filtros de Tipo em Avisos ativos, junto de CQ/Malote/etc. Removidas as
+abas separadas. Previsões entram no conjunto comum, totais, badges, busca, filtros
+de prioridade e paginação. Mantidos dia de Brasília, critérios de atraso/hoje e
+retirada por RECEBIDO OU ENV. CLIENTE com data válida. Códigos completos inclusive
+ON/sufixos e múltiplos itens preservados; origem em cache sinalizada no card.
+Regras operacionais existentes e aba Regras vigentes mantidas.
+
+## Prog Feira — Apenas imagens e setores
+
+Botão no cabeçalho alterna a classe prog-feira-images-only. Cards mantêm apenas
+imagem, setor principal/tingimento e setores complementares; oculta código/OP,
+ribbon DES, entrega, dias, programação/etiqueta, observações e histórico. Segundo
+clique restaura o card completo, mantendo filtros e contagens. Lightbox preservado;
+o modo atual também se aplica à impressão. Preferência mantida na sessão do app.
+132 testes passaram e revisão independente sem achados. Chrome validou categorias
+com 3 cores/6 aviamentos reais, conjunto combinado, 26 cards B44 em modo compacto,
+restauração, preservação dos setores/filtros, lightbox, temas e impressão.
+Publicação em andamento.
 
 ## Prog Feira — participação percentual dos grupos de etiquetas
 

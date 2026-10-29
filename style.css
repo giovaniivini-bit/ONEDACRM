@@ -6306,3 +6306,9 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 }
 #raioXGallery { align-items:start; }
 #raioXGallery .s13-btn-action { flex:0 0 34px; height:34px; min-height:34px; max-height:34px; }
+
+/* Prog Feira: alternância de consulta visual, preservando os filtros. */
+.prog-feira-images-only .prog-feira-card > :not(.prog-feira-media):not(.prog-feira-card-body),
+.prog-feira-images-only .prog-feira-delivery,
+.prog-feira-images-only .prog-feira-card-body > :not(.prog-feira-status-row):not(.prog-feira-parallel-pending) { display:none !important; }
+.prog-feira-images-only [data-prog-images-only] { outline:2px solid #38bdf8; background:rgba(14,165,233,.12); }

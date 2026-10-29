@@ -55,6 +55,7 @@
         calendarExternalData: null,
         progFeiraExternalData: null,
         progFeiraSearch: '',
+        progFeiraImagesOnly: false,
         progFeiraSector: 'all',
         progFeiraTing: 'all',
         progFeiraColor: 'all',
@@ -1315,10 +1316,14 @@
             progFeiraProducts,
             state.calendarExternalData?.records || []
         );
-        state.activeAlerts = window.CRMAlertsEngine.evaluateRecords(
-            [...operationalRecords, ...progFeiraAlertRecords],
-            state.alertRules
-        );
+        state.forecastAlerts = {
+            colors: window.CRMAlertsEngine.buildForecastAlerts(state.coresExternalData?.records, 'colors', now),
+            trims: window.CRMAlertsEngine.buildForecastAlerts(state.aviamentosExternalData?.records, 'trims', now)
+        };
+        state.activeAlerts = [
+            ...window.CRMAlertsEngine.evaluateRecords([...operationalRecords, ...progFeiraAlertRecords], state.alertRules),
+            ...state.forecastAlerts.colors, ...state.forecastAlerts.trims
+        ];
         return state.activeAlerts;
     }
 
@@ -10436,13 +10441,14 @@
         };
 
         container.innerHTML = `
-            <section class="prog-feira-view">
+            <section class="prog-feira-view ${state.progFeiraImagesOnly ? 'prog-feira-images-only' : ''}">
                 <div class="module-view-header prog-feira-header">
                     <div class="module-view-title-group">
                         <h2><i class="fa-solid fa-route"></i> Prog Feira</h2>
                         <p class="module-view-description">Andamento das amostras com entrega, tingimento e pendência de custo em visão paralela.</p>
                     </div>
                     <div class="prog-feira-header-actions">
+                        <button type="button" class="btn btn-glass" data-prog-images-only aria-pressed="${state.progFeiraImagesOnly}" onclick="window.crmToggleProgFeiraImagesOnly()"><i class="fa-solid fa-images"></i> Apenas imagens e setores</button>
                         <span class="prog-feira-source ${source.isLive === false ? 'cached' : ''}"><i class="fa-solid fa-cloud"></i> ${source.isLive === false ? 'Cache local' : 'Planilha ao vivo'} • ${escapeHtml(syncText)}</span>
                         <a class="btn btn-glass" href="https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/edit" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive"></i> Abrir planilha</a>
                         <button class="btn btn-primary" onclick="window.crmSyncProgFeira()"><i class="fa-solid fa-arrows-rotate"></i> Atualizar</button>
@@ -11271,13 +11277,7 @@
         updateAlertsBadges();
         const today = window.CRMAlertsEngine.getSaoPauloDateKey();
         state.forecastAlertDay = today;
-        state.forecastAlerts = {
-            colors: window.CRMAlertsEngine.buildForecastAlerts(state.coresExternalData?.records, 'colors'),
-            trims: window.CRMAlertsEngine.buildForecastAlerts(state.aviamentosExternalData?.records, 'trims')
-        };
-        const forecastTab = ['colors', 'trims'].includes(state.alertsTab);
-        const forecastSource = state.alertsTab === 'colors' ? state.coresExternalData : state.aviamentosExternalData;
-        const alerts = forecastTab ? state.forecastAlerts[state.alertsTab] : (state.activeAlerts || []);
+        const alerts = state.activeAlerts || [];
         const rules = state.alertRules || [];
         const officialRules = state.alertRulesSource === 'api' ? rules : [];
         const calendarRecords = state.calendarExternalData?.records || [];
@@ -11308,13 +11308,12 @@
         }, { critical: 0, warning: 0, info: 0 });
 
         const severityMeta = {
-            critical: { label: forecastTab ? 'Em atraso' : 'Crítico', icon: 'fa-circle-exclamation', color: '#fb7185', className: 'rose' },
-            warning: { label: forecastTab ? 'Para hoje' : 'Atenção', icon: 'fa-triangle-exclamation', color: '#fbbf24', className: 'amber' },
+            critical: { label: 'Crítico', icon: 'fa-circle-exclamation', color: '#fb7185', className: 'rose' },
+            warning: { label: 'Atenção', icon: 'fa-triangle-exclamation', color: '#fbbf24', className: 'amber' },
             info: { label: 'Informativo', icon: 'fa-circle-info', color: '#38bdf8', className: 'cyan' }
         };
 
         const activeContent = `
-            ${forecastTab ? `<p class="module-view-description" data-forecast-summary>Hoje: <strong>${today.split('-').reverse().join('/')}</strong> (horário de Brasília) · ${alerts.filter(a => !a.dueToday).length} em atraso · ${alerts.filter(a => a.dueToday).length} para hoje. ${forecastSource?.records ? (forecastSource.isLive === false ? 'Fonte: cache local da planilha.' : 'Fonte: planilha do CRM.') : 'Planilha indisponível; os alertas desta fonte não puderam ser calculados.'} Itens com data em Recebido ou Env. Cliente não geram alertas.</p>` : ''}
             <div class="alerts-toolbar">
                 <div class="s13-search-box alerts-search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
@@ -11322,7 +11321,7 @@
                     ${query ? '<button class="search-clear-btn" onclick="window.crmSearchAlerts(\'\')" title="Limpar busca">&times;</button>' : ''}
                 </div>
                 <div class="alerts-filter-group">
-                    ${(forecastTab ? ['all', 'critical', 'warning'] : ['all', 'critical', 'warning', 'info']).map(severity => `
+                    ${['all', 'critical', 'warning', 'info'].map(severity => `
                         <button class="filter-chip ${state.alertsSeverity === severity ? 'active' : ''}" onclick="window.crmFilterAlerts('${severity}')">
                             ${severity === 'all' ? 'Todos' : severityMeta[severity].label}
                         </button>
@@ -11376,6 +11375,7 @@
                                     ${alert.codigo ? `<span>${escapeHtml(alert.codigo)}</span>` : ''}
                                     ${alert.setor ? `<span>Setor ${escapeHtml(alert.setor)}</span>` : ''}
                                     ${alert.cliente ? `<span>${escapeHtml(alert.cliente)}</span>` : ''}
+                                    ${['andamento-colors','andamento-trims'].includes(alert.ruleId) && (alert.ruleId === 'andamento-colors' ? state.coresExternalData : state.aviamentosExternalData)?.isLive === false ? '<span>Cache local da planilha</span>' : ''}
                                 </div>
                             </div>
                             ${alert.op ? `<button class="btn btn-glass js-alert-open-op" data-alert-op="${escapeHtml(alert.op)}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir OF</button>` : ''}
@@ -11385,7 +11385,7 @@
                     <div class="alerts-empty-state">
                         <i class="fa-solid fa-circle-check"></i>
                         <h3>Nenhum alerta encontrado</h3>
-                        <p>${alerts.length ? 'Ajuste os filtros para visualizar outros alertas.' : forecastTab ? 'Nenhuma previsão vencida ou para hoje nos dados disponíveis desta planilha.' : 'As regras ativas não encontraram pendências nos dados atuais.'}</p>
+                        <p>${alerts.length ? 'Ajuste os filtros para visualizar outros alertas.' : 'As regras ativas não encontraram pendências nos dados atuais.'}</p>
                     </div>
                 `}
                 ${filteredAlerts.length > visibleAlerts.length ? `
@@ -11467,18 +11467,16 @@
                 </div>
             `}
             <div class="kpi-grid alerts-kpi-grid">
-                <div class="kpi-card rose"><div class="kpi-header"><span class="kpi-label">${forecastTab ? 'Em atraso' : 'Críticos'}</span><div class="kpi-icon"><i class="fa-solid fa-circle-exclamation"></i></div></div><div class="kpi-value">${formatNumber(counts.critical)}</div><div class="kpi-footer">Ação imediata</div></div>
-                <div class="kpi-card amber"><div class="kpi-header"><span class="kpi-label">${forecastTab ? 'Para hoje' : 'Atenção'}</span><div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div></div><div class="kpi-value">${formatNumber(counts.warning)}</div><div class="kpi-footer">Requer acompanhamento</div></div>
+                <div class="kpi-card rose"><div class="kpi-header"><span class="kpi-label">Críticos</span><div class="kpi-icon"><i class="fa-solid fa-circle-exclamation"></i></div></div><div class="kpi-value">${formatNumber(counts.critical)}</div><div class="kpi-footer">Ação imediata</div></div>
+                <div class="kpi-card amber"><div class="kpi-header"><span class="kpi-label">Atenção</span><div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div></div><div class="kpi-value">${formatNumber(counts.warning)}</div><div class="kpi-footer">Requer acompanhamento</div></div>
                 <div class="kpi-card cyan"><div class="kpi-header"><span class="kpi-label">Informativos</span><div class="kpi-icon"><i class="fa-solid fa-circle-info"></i></div></div><div class="kpi-value">${formatNumber(counts.info)}</div><div class="kpi-footer">Controle preventivo</div></div>
                 <div class="kpi-card purple"><div class="kpi-header"><span class="kpi-label">Total ativo</span><div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div></div><div class="kpi-value">${formatNumber(alerts.length)}</div><div class="kpi-footer">Atualizado agora</div></div>
             </div>
             <div class="alerts-tabs" role="tablist" aria-label="Conteúdo dos alertas">
                 <button id="alertsTabActive" class="${state.alertsTab === 'active' ? 'active' : ''}" type="button" role="tab" aria-controls="alertsTabPanel" aria-selected="${state.alertsTab === 'active'}" onclick="window.crmSetAlertsTab('active')"><i class="fa-solid fa-bell"></i> Avisos ativos</button>
-                <button id="alertsTabColors" class="${state.alertsTab === 'colors' ? 'active' : ''}" type="button" role="tab" aria-controls="alertsTabPanel" aria-selected="${state.alertsTab === 'colors'}" onclick="window.crmSetAlertsTab('colors')">Andamento cores <span class="badge badge-rose">${state.forecastAlerts.colors.length}</span></button>
-                <button id="alertsTabTrims" class="${state.alertsTab === 'trims' ? 'active' : ''}" type="button" role="tab" aria-controls="alertsTabPanel" aria-selected="${state.alertsTab === 'trims'}" onclick="window.crmSetAlertsTab('trims')">Andamento aviamentos <span class="badge badge-rose">${state.forecastAlerts.trims.length}</span></button>
                 <button id="alertsTabRules" class="${state.alertsTab === 'rules' ? 'active' : ''}" type="button" role="tab" aria-controls="alertsTabPanel" aria-selected="${state.alertsTab === 'rules'}" onclick="window.crmSetAlertsTab('rules')"><i class="fa-solid fa-book-open"></i> Regras vigentes</button>
             </div>
-            <section id="alertsTabPanel" class="panel-card alerts-panel" role="tabpanel" aria-labelledby="${({ rules:'alertsTabRules', colors:'alertsTabColors', trims:'alertsTabTrims' })[state.alertsTab] || 'alertsTabActive'}">
+            <section id="alertsTabPanel" class="panel-card alerts-panel" role="tabpanel" aria-labelledby="${state.alertsTab === 'rules' ? 'alertsTabRules' : 'alertsTabActive'}">
                 ${state.alertsLoading ? '<div class="alerts-empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>Carregando alertas...</p></div>' : (state.alertsTab === 'rules' ? rulesContent : activeContent)}
             </section>
         `;
@@ -12340,7 +12338,7 @@
         renderActiveView();
     };
     window.crmSetAlertsTab = tab => {
-        state.alertsTab = ['rules', 'colors', 'trims'].includes(tab) ? tab : 'active';
+        state.alertsTab = tab === 'rules' ? 'rules' : 'active';
         state.alertsSearch = '';
         state.alertsSeverity = 'all';
         state.alertsCategory = 'all';
@@ -12348,7 +12346,7 @@
         renderActiveView();
     };
     window.crmFilterAlertsCategory = category => {
-        const availableCategories = new Set((state.forecastAlerts?.[state.alertsTab] || state.activeAlerts || []).map(alert => getAlertCategory(alert).key));
+        const availableCategories = new Set((state.activeAlerts || []).map(alert => getAlertCategory(alert).key));
         state.alertsCategory = category === 'all' || availableCategories.has(category) ? category : 'all';
         state.alertsPageLimit = 30;
         renderActiveView();
@@ -12368,7 +12366,7 @@
         recalculateAlerts();
         updateAlertsBadges();
         renderActiveView();
-        showNotification(`${state.forecastAlerts?.[state.alertsTab]?.length ?? state.activeAlerts.length} alertas recalculados com os dados atuais.`, 'success', 'Alertas Atualizados');
+        showNotification(`${state.activeAlerts.length} alertas recalculados com os dados atuais.`, 'success', 'Alertas Atualizados');
     };
     window.crmSearchProcesso = (query) => {
         state.processoSearch = query || '';
@@ -12606,6 +12604,10 @@
         progFeiraSearchTimer = setTimeout(renderActiveView, 180);
     };
 
+    window.crmToggleProgFeiraImagesOnly = () => {
+        state.progFeiraImagesOnly = !state.progFeiraImagesOnly;
+        renderActiveView();
+    };
     window.crmFilterProgFeiraSector = sector => {
         state.progFeiraSector = sector && sector !== state.progFeiraSector ? sector : 'all';
         renderActiveView();

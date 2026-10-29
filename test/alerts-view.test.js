@@ -73,7 +73,7 @@ test('filtro de tipo é dinâmico e o PDF respeita o conjunto filtrado', () => {
     assert.match(app, /alertas: 'print-alertas'/);
     assert.match(css, /body\.print-alertas \.alerts-panel\s*\{[\s\S]*?break-inside: auto !important/);
     assert.match(css, /body\.print-alertas \.alert-item\s*\{[\s\S]*?min-height: 26mm !important[\s\S]*?break-inside: avoid !important/);
-    assert.match(index, /style\.css\?v=20261028-rx-sector-size-75/);
+    assert.match(index, /style\.css\?v=20261029-alert-types-compact-feira-1/);
     assert.match(index, /light-theme\.css\?v=20261012-mpo-memory-1/);
     assert.match(index, /app\.js\?v=[\w-]+/);
 });
@@ -91,5 +91,22 @@ test('andamento CQ inclui REPROVADO como situação crítica vermelha e piscante
     assert.match(app, /buildCQAlertRecords/);
     assert.match(css, /@keyframes cqRejectedPulse/);
     assert.match(css, /\.cq-reprovado-pulse/);
-    assert.match(index, /alerts-engine\.js\?v=20261029-forecast-alerts-1/);
+    assert.match(index, /alerts-engine\.js\?v=20261029-alert-types-compact-feira-1/);
+});
+
+test('previsões integram os avisos ativos e recebem categorias próprias', () => {
+    const vm = require('node:vm');
+    const engine = require('../alerts-engine');
+    const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const state = { alertRules: [], allData: [], imagesLoaded:true,
+        coresExternalData:{records:[{PRODUTO:'01.14.00.7887A',COR:'AZUL','PREVISÃO':'01/01/2020'}]},
+        aviamentosExternalData:{records:[{PRODUTO:'ON.12.0119','TIPO AVIAMENTO':'BOTÃO','PREVISÃO':'01/01/2020'}]} };
+    const context = {state, window:{CRMAlertsEngine:engine}, getProductImage:()=>({hasImage:false})};
+    const source = app.slice(app.indexOf('    function recalculateAlerts('), app.indexOf('    function updateAlertsBadges('));
+    vm.runInNewContext(source,context);
+    context.recalculateAlerts();
+    assert.equal(state.activeAlerts.length,2);
+    assert.deepEqual(state.activeAlerts.map(a=>engine.getAlertCategory(a).label).join(','),'Andamento cores,Andamento aviamentos');
+    state.coresExternalData.records[0].RECEBIDO='02/01/2020';
+    context.recalculateAlerts();assert.equal(state.activeAlerts.length,1);
 });

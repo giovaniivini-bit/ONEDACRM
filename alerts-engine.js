@@ -748,6 +748,8 @@
 
     function getAlertCategory(alert) {
         const ruleId = String(alert?.ruleId || '').toLocaleLowerCase('pt-BR');
+        if (ruleId === 'andamento-colors') return { key: 'andamento-cores', label: 'Andamento cores' };
+        if (ruleId === 'andamento-trims') return { key: 'andamento-aviamentos', label: 'Andamento aviamentos' };
         if (ruleId === 'malotes-parte-principal') return { key: 'malote', label: 'Malote' };
         if (ruleId === 'setor01-limite-dias') return { key: 'setor01', label: 'Pedido Setor 01' };
         if (ruleId === 'setor13-calendario') return { key: 'modelagem', label: 'Modelagem' };
