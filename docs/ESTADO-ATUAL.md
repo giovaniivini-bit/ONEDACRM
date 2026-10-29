@@ -13,7 +13,10 @@ setores mantidas; última página pode ter menos itens. Sem mudança dos cálcul
 última com 3. pypdf confirmou contagem D36 em cada página e A4 paisagem; Poppler
 renderizou primeira/última página, imagens e contadores sem cortes. Conferidos
 carregamento do índice de fotos e geometria dos contadores dentro dos cards.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit a20f322. 134 testes passaram na VPS;
+saúde OK e dados preservados. Chrome público e extração dos PDFs confirmaram
+as mesmas contagens: 7 páginas compactas ou 13 completas, total 99 cards.
+Backup: /home/ubuntu/backups/oneda-crm-prog-print16-20261029-a20f322.
 
 ## Raio X — observações e Pantone junto da cor
 
