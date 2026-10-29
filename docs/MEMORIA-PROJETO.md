@@ -142,3 +142,7 @@ Prog Feira oferece alternância Apenas imagens e dias, antes dos grupos de image
 no modo compacto mantém somente ficha e contadores D36/D43, ocultando códigos e
 setores dos cards. Filtros/contagens preservados. Segundo clique restaura; imagem
 continua ampliável e impressão acompanha o modo escolhido.
+
+Impressão Prog Feira: 8 cards/página no modo completo; 16 (4×4) exclusivamente no
+modo Apenas imagens e dias. Paginação mantém setores separados e pode terminar
+com página parcial. Fotos contidas sem corte, com dias D36/D43 abaixo.

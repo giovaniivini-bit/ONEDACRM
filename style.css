@@ -6323,3 +6323,15 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 .prog-feira-gallery-actions { display:flex; justify-content:flex-end; }
 .prog-feira-gallery-actions .exec-action-btn { min-height:34px; }
 @media print { body.print-prog-feira .prog-feira-gallery-actions { display:none !important; } }
+
+/* Somente impressão simplificada: 16 fichas por folha, em quatro linhas. */
+@media print {
+ body.print-prog-feira .prog-feira-images-only .prog-feira-grid { grid-template-rows:repeat(4,42mm) !important; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-card { height:42mm !important; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-card .prog-feira-media { height:28mm !important; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-card-body { padding:1mm !important; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-time-grid .prog-feira-time { padding:.5mm !important; grid-template-rows:1.8mm 4mm 1.8mm !important; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-time-grid .prog-feira-time strong { font-size:13px !important; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-time > span,
+ body.print-prog-feira .prog-feira-images-only .prog-feira-time > small { font-size:5.5px !important; }
+}

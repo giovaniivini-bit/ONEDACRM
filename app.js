@@ -10429,8 +10429,9 @@
 
         const renderSectorPages = group => {
             const pages = [];
-            for (let index = 0; index < group.items.length; index += 8) {
-                pages.push(group.items.slice(index, index + 8));
+            const cardsPerPage = state.progFeiraImagesOnly ? 16 : 8;
+            for (let index = 0; index < group.items.length; index += cardsPerPage) {
+                pages.push(group.items.slice(index, index + cardsPerPage));
             }
             return pages.map((items, pageIndex) => `
                 <section class="prog-feira-sector prog-feira-print-page" data-sector="${escapeHtml(group.sector)}">

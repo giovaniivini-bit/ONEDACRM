@@ -2,6 +2,19 @@
 
 Atualizado em 29/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — impressão de 16 cards somente no modo simplificado
+
+Paginação por setor usa 16 itens com Apenas imagens e dias ativo e mantém 8 no
+modo completo. Somente CSS de impressão compacta usa grade 4×4, cards de 42mm,
+foto contida em 28mm e contadores D36/D43 alinhados. A4 paisagem e separação por
+setores mantidas; última página pode ter menos itens. Sem mudança dos cálculos.
+134 testes passaram e revisão sem achados. Chrome gerou PDFs de um setor real com
+99 produtos: compacto 7 páginas [16,16,16,16,16,16,3], completo 13 páginas com 8 e
+última com 3. pypdf confirmou contagem D36 em cada página e A4 paisagem; Poppler
+renderizou primeira/última página, imagens e contadores sem cortes. Conferidos
+carregamento do índice de fotos e geometria dos contadores dentro dos cards.
+Publicação em andamento.
+
 ## Raio X — observações e Pantone junto da cor
 
 Complementos das planilhas agora incluem observação da linha correspondente em
