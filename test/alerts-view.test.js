@@ -91,5 +91,5 @@ test('andamento CQ inclui REPROVADO como situação crítica vermelha e piscante
     assert.match(app, /buildCQAlertRecords/);
     assert.match(css, /@keyframes cqRejectedPulse/);
     assert.match(css, /\.cq-reprovado-pulse/);
-    assert.match(index, /alerts-engine\.js\?v=20261027-raio-x-sheet-details-1/);
+    assert.match(index, /alerts-engine\.js\?v=20261029-forecast-alerts-1/);
 });

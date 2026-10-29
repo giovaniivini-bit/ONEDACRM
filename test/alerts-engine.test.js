@@ -400,3 +400,42 @@ test('rejects unknown fields, operators and excessive rules', () => {
     assert.equal(engine.validateRules(invalid).valid, false);
     assert.equal(engine.validateRules(Array.from({ length: 51 }, (_, index) => ({ ...engine.cloneDefaults()[0], id: `r-${index}` }))).valid, false);
 });
+
+test('andamento compara dias em São Paulo inclusive virada de ano e datas inválidas', () => {
+    assert.equal(engine.getSaoPauloDateKey(new Date('2026-10-30T02:59:59Z')), '2026-10-29');
+    assert.equal(engine.getSaoPauloDateKey(new Date('2026-10-30T03:00:00Z')), '2026-10-30');
+    assert.equal(engine.getSaoPauloDateKey(new Date('2027-01-01T02:00:00Z')), '2026-12-31');
+    const make = (forecast, extra={}) => ({PRODUTO:'01.14.00.7887A',COR:'AZUL',PANTONE:'19-4024','PREVISÃO':forecast,...extra});
+    const rows = [make('28/10/2026'),make('29/10/26'),make('30/10/2026'),make('31/02/2026'),make('-'),make('#VALUE!'),make('29/10'),make('2026-10-29'),make('29/10/2026',{PRODUTO:'HERING'})];
+    const alerts = engine.buildForecastAlerts(rows, 'colors', new Date('2026-10-30T02:30:00Z'));
+    assert.equal(alerts.length, 3);
+    assert.deepEqual(alerts.map(a=>a.dueToday), [false,true,true]);
+    assert.ok(alerts[0].message.includes('está em atraso'));
+    assert.ok(alerts[0].message.includes('AZUL · 19-4024'));
+    assert.ok(alerts[0].message.includes('28/10/2026'));
+    assert.ok(alerts[1].message.includes('prevista para hoje'));
+    assert.equal(alerts[1].codigo, '01.14.00.7887A');
+    assert.deepEqual(engine.buildForecastAlerts(undefined, 'colors'), []);
+});
+
+test('andamento remove somente linhas recebidas/enviadas e preserva outros itens do produto', () => {
+    const make = extra => ({PRODUTO:'01.14.00.7887A','TIPO AVIAMENTO':'BOTÃO','DESCRIÇÃO':'MADEIRA','PREVISÃO':'29/10/2026',...extra});
+    const alerts = engine.buildForecastAlerts([
+        make({'RECEBIDO':'28/10/2026'}),make({'ENV. CLIENTE':'29/10/26'}),
+        make({'ENV CLIENTE':'2026-10-29'}),make({'RECEBIDO':'-', 'ENV. CLIENTE':'#VALUE!'}),
+        make({'TIPO AVIAMENTO':'ETIQUETA', 'DESCRIÇÃO':'MARCA'}),
+        make({PRODUTO:'01.14.00.7887B', 'TIPO AVIAMENTO':'CADARÇO'})
+    ], 'trims', new Date('2026-10-29T12:00:00Z'));
+    assert.equal(alerts.length, 3);
+    assert.ok(alerts.every(a=>a.dueToday && a.severity==='warning'));
+    assert.ok(alerts[0].message.includes('BOTÃO · MADEIRA previsto para hoje'));
+    assert.ok(alerts.some(a=>a.codigo.endsWith('B')));
+    assert.ok(alerts.some(a=>a.item==='ETIQUETA'));
+});
+
+test('andamento inclui referências alfanuméricas ON completas sem misturar sufixos', () => {
+    const rows = ['ON.12.0119','ON.12.0119A','ON.11.0123'].map(PRODUTO=>({PRODUTO,'PREVISÃO':'25/09/2026','TIPO AVIAMENTO':'RETILINEA'}));
+    const alerts = engine.buildForecastAlerts(rows, 'trims', new Date('2026-10-29T12:00:00Z'));
+    assert.deepEqual(alerts.map(a=>a.codigo).sort(), ['ON.11.0123','ON.12.0119','ON.12.0119A']);
+    assert.ok(alerts.every(a=>a.severity==='critical'));
+});

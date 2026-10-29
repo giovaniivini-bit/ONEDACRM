@@ -1,6 +1,26 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 28/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 29/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Alertas — Andamento cores e Andamento aviamentos
+
+Duas novas abas independentes das regras operacionais existentes, baseadas nas
+linhas das planilhas cores/aviamentos. Comparam PREVISÃO ao dia civil atual em
+America/Sao_Paulo: vencido = crítico/Em atraso; mesmo dia = atenção/Para hoje;
+futuro ou previsão inválida/ausente não gera alerta. Data de hoje visível no topo.
+Cada linha traz produto completo (inclusive ON e sufixos), imagem/placeholder,
+nome da cor/Pantone ou tipo/descrição do aviamento e previsão. Várias pendências
+do mesmo produto permanecem separadas. Não exige presença nos setores D01/X01.
+Conforme resposta do usuário: data válida em RECEBIDO OU ENV. CLIENTE retira apenas
+a linha correspondente. Traço/erro não é data de conclusão. Fontes em cache são
+identificadas; fonte indisponível sinalizada. Busca, filtros, paginação e ampliação
+reutilizam a apresentação dos alertas. Trocar aba limpa filtros; relógio revisita
+o dia a cada minuto/retorno da aba e recalcúla mesmo sem mudança das planilhas.
+131 testes passaram, incluindo virada de dia/ano em Brasília, datas inválidas,
+recebido/enviado, futuro, múltiplos itens e códigos ON. Revisão independente aprovada.
+Chrome com dados reais: 3 cores atrasadas, 6 aviamentos (4 atrasados/2 para hoje),
+e cenários controlados de datas, cache, filtros, imagens/placeholder e escaping.
+Publicação em andamento.
 
 ## Prog Feira — participação percentual dos grupos de etiquetas
 

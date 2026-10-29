@@ -767,7 +767,50 @@
         return { key: fallbackKey, label: fallbackLabel };
     }
 
+    function getSaoPauloDateKey(now = new Date()) {
+        const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+        const part = type => parts.find(p => p.type === type).value;
+        return `${part('year')}-${part('month')}-${part('day')}`;
+    }
+
+    function forecastDateKey(value) {
+        const raw = String(value ?? '').trim();
+        if (!/^(?:\d{1,2}\/\d{1,2}\/(?:\d{2}|\d{4})|\d{4}-\d{1,2}-\d{1,2})$/.test(raw)) return null;
+        const date = parseDate(raw);
+        return date ? `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}` : null;
+    }
+
+    function buildForecastAlerts(records, kind, now = new Date()) {
+        const today = getSaoPauloDateKey(now);
+        const color = kind === 'colors';
+        const alerts = [];
+        for (const [index, record] of (Array.isArray(records) ? records : []).entries()) {
+            const codigo = getRecordField(record, ['PRODUTO', 'PRODUTO / REF', 'PRODUTO_REF', 'REFERENCIA', 'CÓDIGO', 'CODIGO']).toUpperCase();
+            if (!/^(?=.*\d)[A-Z0-9]+(?:[.-][A-Z0-9]+)*$/.test(codigo)) continue;
+            const received = getRecordField(record, ['RECEBIDO', 'DATA RECEBIDO', 'DATA RECEBIMENTO']);
+            const sent = getRecordField(record, ['ENV CLIENTE', 'ENV. CLIENTE', 'ENVIADO CLIENTE', 'ENVIADO AO CLIENTE', 'ENVIO CLIENTE']);
+            if (forecastDateKey(received) || forecastDateKey(sent)) continue;
+            const forecast = forecastDateKey(getRecordField(record, ['PREVISÃO', 'PREVISAO', 'DATA PREVISÃO', 'DATA PREVISAO']));
+            if (!forecast || forecast > today) continue;
+            const dueToday = forecast === today;
+            const item = getRecordField(record, color ? ['COR'] : ['TIPO AVIAMENTO', 'TIPO DE AVIAMENTO']) || (color ? 'Cor não informada' : 'Aviamento não informado');
+            const description = getRecordField(record, color ? ['PANTONE'] : ['DESCRIÇÃO', 'DESCRICAO']);
+            const forecastLabel = forecast.split('-').reverse().join('/');
+            const label = color ? 'Cor' : 'Aviamento';
+            const detail = `${item}${description && description.toUpperCase() !== item.toUpperCase() ? ` · ${description}` : ''}`;
+            alerts.push({ id: `forecast-${kind}-${index}`, ruleId: `andamento-${kind}`, codigo, op: '', setor: '',
+                title: `${label} ${dueToday ? (color ? 'prevista' : 'previsto') + ' para hoje' : 'em atraso'}`,
+                severity: dueToday ? 'warning' : 'critical', forecast, forecastLabel, dueToday, item,
+                cliente: getRecordField(record, ['RESPONSÁVEL', 'RESPONSAVEL']),
+                message: dueToday ? `Produto ${codigo}: ${label.toLowerCase()} ${detail} ${color ? 'prevista' : 'previsto'} para hoje (${forecastLabel}).`
+                    : `Produto ${codigo} está em atraso. Previsão de ${label.toLowerCase()}: ${detail}, dia ${forecastLabel}.` });
+        }
+        return alerts.sort((a,b) => a.forecast.localeCompare(b.forecast) || a.codigo.localeCompare(b.codigo, 'pt-BR'));
+    }
+
     return {
+        getSaoPauloDateKey,
+        buildForecastAlerts,
         FIELD_DEFINITIONS,
         OPERATORS,
         DEFAULT_RULES,

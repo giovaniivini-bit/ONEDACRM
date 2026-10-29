@@ -128,3 +128,12 @@ Mostrar cor/Pantone ou tipo/descrição; ENV CLIENTE/ENV. CLIENTE prevalece sobr
 PREVISÃO. Se vazio, usar previsão; nunca RECEBIDO. Preservar todas as linhas e valores
 textuais. Sem informação correspondente não criar bloco nem inventar ausência de
 pendência; envio não resolve D01/X01 automaticamente. PDF conserva os complementos.
+
+## Acompanhamento de previsões em Alertas (29/10/2026)
+
+Abas Andamento cores e Andamento aviamentos comparam PREVISÃO ao dia civil de
+São Paulo: mostrar somente vencidos e hoje. Um alerta por linha, código completo
+inclusive ON/sufixos, sem restringir a D01/X01. Regra confirmada pelo usuário:
+retirar linha quando RECEBIDO ou ENV. CLIENTE tiver data válida. Linhas sem previsão
+válida ou produtos identificáveis não geram alerta. Itens de um produto podem ter
+previsões e conclusões independentes; não consolidar pela primeira ocorrência.
