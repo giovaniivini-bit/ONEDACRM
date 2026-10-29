@@ -22,7 +22,10 @@ o modo atual também se aplica à impressão. Preferência mantida na sessão do
 132 testes passaram e revisão independente sem achados. Chrome validou categorias
 com 3 cores/6 aviamentos reais, conjunto combinado, 26 cards B44 em modo compacto,
 restauração, preservação dos setores/filtros, lightbox, temas e impressão.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit bda1977. 132 testes passaram na VPS;
+saúde OK e dados operacionais preservados. Chrome público confirmou categorias,
+modo compacto/restauração, filtros, imagens, temas e impressão sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-alert-types-compact-20261029-bda1977.
 
 ## Prog Feira — participação percentual dos grupos de etiquetas
 
