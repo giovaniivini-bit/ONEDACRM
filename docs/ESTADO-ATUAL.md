@@ -20,7 +20,10 @@ o dia a cada minuto/retorno da aba e recalcúla mesmo sem mudança das planilhas
 recebido/enviado, futuro, múltiplos itens e códigos ON. Revisão independente aprovada.
 Chrome com dados reais: 3 cores atrasadas, 6 aviamentos (4 atrasados/2 para hoje),
 e cenários controlados de datas, cache, filtros, imagens/placeholder e escaping.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit 969a87e. 131 testes passaram na VPS;
+saúde OK e dados operacionais preservados. Chrome público confirmou ambas as abas,
+mensagens/datas/imagens, filtros e cenários controlados sem erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-forecast-alerts-20261029-969a87e.
 
 ## Prog Feira — participação percentual dos grupos de etiquetas
 
