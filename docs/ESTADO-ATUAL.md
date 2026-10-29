@@ -44,20 +44,18 @@ retirada por RECEBIDO OU ENV. CLIENTE com data válida. Códigos completos inclu
 ON/sufixos e múltiplos itens preservados; origem em cache sinalizada no card.
 Regras operacionais existentes e aba Regras vigentes mantidas.
 
-## Prog Feira — Apenas imagens e setores
+## Prog Feira — Apenas imagens e dias (refinamento)
 
-Botão no cabeçalho alterna a classe prog-feira-images-only. Cards mantêm apenas
-imagem, setor principal/tingimento e setores complementares; oculta código/OP,
-ribbon DES, entrega, dias, programação/etiqueta, observações e histórico. Segundo
-clique restaura o card completo, mantendo filtros e contagens. Lightbox preservado;
-o modo atual também se aplica à impressão. Preferência mantida na sessão do app.
-132 testes passaram e revisão independente sem achados. Chrome validou categorias
-com 3 cores/6 aviamentos reais, conjunto combinado, 26 cards B44 em modo compacto,
-restauração, preservação dos setores/filtros, lightbox, temas e impressão.
-Publicado no GitHub/VPS no commit bda1977. 132 testes passaram na VPS;
-saúde OK e dados operacionais preservados. Chrome público confirmou categorias,
-modo compacto/restauração, filtros, imagens, temas e impressão sem erros.
-Backup: /home/ubuntu/backups/oneda-crm-alert-types-compact-20261029-bda1977.
+Botão movido do cabeçalho para imediatamente antes dos grupos de imagens, após a
+legenda. Usa exec-action-btn no padrão existente, mínimo 34px, e nome Apenas
+imagens e dias. No modo compacto mantém somente a ficha e os contadores de dias
+D36/D43 lado a lado; oculta todos os badges/setores complementares, códigos de setor
+nos cabeçalhos dos contadores e demais detalhes. Segundo clique restaura o card
+completo e mantém filtros. Ampliação, cores dos tempos e impressão preservadas.
+134 testes passaram e revisão sem achados. Chrome validou botão/posição, 26 cards
+B44, valores dos dias preservados/alinhados, setores ocultos, restauração/filtros,
+lightbox, claro/escuro e impressão, sem erros JavaScript.
+Publicação em andamento.
 
 ## Prog Feira — participação percentual dos grupos de etiquetas
 

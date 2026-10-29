@@ -10415,8 +10415,8 @@
                 <div class="prog-feira-card-body">
                     <div class="prog-feira-status-row"><span class="prog-feira-sector-badge">${escapeHtml(item.sector)} • ${escapeHtml(item.sectorLabel)}</span><span class="prog-feira-ting-badge" style="--ting-color:${item.tingInfo.color}">${item.ting ? escapeHtml(item.ting) + ' • ' : ''}${escapeHtml(item.tingInfo.label)}</span></div>
                     <div class="prog-feira-time-grid" aria-label="Permanência nos fluxos D36 e D43">
-                        <div class="prog-feira-days prog-feira-time ${item.daysInSector == null ? 'unknown' : item.daysInSector > 2 ? 'late' : ''}" data-prog-duration="main"><span>D36 · ${escapeHtml(item.sector)}</span><strong>${item.daysInSector == null ? '—' : formatNumber(item.daysInSector)}</strong><small>${item.daysInSector == null ? 'Data não informada' : `${item.daysInSector === 1 ? 'dia' : 'dias'} no setor atual`}</small></div>
-                        <div class="prog-feira-days prog-feira-time ${item.tingDays == null ? 'unknown' : ''}" data-prog-duration="ting" data-ting-sector="${escapeHtml(item.ting)}"><span>D43 · ${escapeHtml(item.ting || 'Sem registro')}</span><strong>${item.tingDays == null ? '—' : formatNumber(item.tingDays)}</strong><small>${item.tingDays == null ? 'Data não informada' : `${item.tingDays === 1 ? 'dia' : 'dias'} no tingimento`}</small></div>
+                        <div class="prog-feira-days prog-feira-time ${item.daysInSector == null ? 'unknown' : item.daysInSector > 2 ? 'late' : ''}" data-prog-duration="main"><span>${state.progFeiraImagesOnly ? 'D36' : 'D36 · ' + escapeHtml(item.sector)}</span><strong>${item.daysInSector == null ? '—' : formatNumber(item.daysInSector)}</strong><small>${item.daysInSector == null ? 'Data não informada' : `${item.daysInSector === 1 ? 'dia' : 'dias'} no setor atual`}</small></div>
+                        <div class="prog-feira-days prog-feira-time ${item.tingDays == null ? 'unknown' : ''}" data-prog-duration="ting" data-ting-sector="${escapeHtml(item.ting)}"><span>${state.progFeiraImagesOnly ? 'D43' : 'D43 · ' + escapeHtml(item.ting || 'Sem registro')}</span><strong>${item.tingDays == null ? '—' : formatNumber(item.tingDays)}</strong><small>${item.tingDays == null ? 'Data não informada' : `${item.tingDays === 1 ? 'dia' : 'dias'} no tingimento`}</small></div>
                     </div>
                     ${item.program ? `<div class="prog-feira-program"><i class="fa-solid fa-layer-group"></i>${escapeHtml(item.program)}</div>` : ''}
                     <div class="prog-feira-customer-program"><span>Programação: ${programUnavailable ? 'indisponível' : escapeHtml(item.customerProgram || 'VAZIO / Sem programação')}</span><span>Etiqueta: <strong class="prog-feira-label-value">${labelUnavailable ? 'Indisponível' : escapeHtml(api.labelValues(item).join(' / ') || 'Sem etiqueta')}</strong></span></div>
@@ -10448,7 +10448,6 @@
                         <p class="module-view-description">Andamento das amostras com entrega, tingimento e pendência de custo em visão paralela.</p>
                     </div>
                     <div class="prog-feira-header-actions">
-                        <button type="button" class="btn btn-glass" data-prog-images-only aria-pressed="${state.progFeiraImagesOnly}" onclick="window.crmToggleProgFeiraImagesOnly()"><i class="fa-solid fa-images"></i> Apenas imagens e setores</button>
                         <span class="prog-feira-source ${source.isLive === false ? 'cached' : ''}"><i class="fa-solid fa-cloud"></i> ${source.isLive === false ? 'Cache local' : 'Planilha ao vivo'} • ${escapeHtml(syncText)}</span>
                         <a class="btn btn-glass" href="https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/edit" target="_blank" rel="noopener"><i class="fa-brands fa-google-drive"></i> Abrir planilha</a>
                         <button class="btn btn-primary" onclick="window.crmSyncProgFeira()"><i class="fa-solid fa-arrows-rotate"></i> Atualizar</button>
@@ -10505,6 +10504,10 @@
                 <div class="prog-feira-legend">
                     <strong>Cor da borda:</strong>${Object.entries(api.TINGIMENTO).map(([code, info]) => `<span><i style="background:${info.color}"></i>${code} — ${escapeHtml(info.label)}</span>`).join('')}
                     <span class="prog-feira-legend-des"><i></i> Tarja azul — custo pendente em DES</span>
+                </div>
+
+                <div class="prog-feira-gallery-actions">
+                    <button type="button" class="exec-action-btn" data-prog-images-only aria-pressed="${state.progFeiraImagesOnly}" onclick="window.crmToggleProgFeiraImagesOnly()"><i class="fa-solid fa-images"></i> Apenas imagens e dias</button>
                 </div>
 
                 ${groups.length ? groups.map(renderSectorPages).join('') : `

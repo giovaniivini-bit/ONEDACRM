@@ -138,6 +138,7 @@ retirar linha quando RECEBIDO ou ENV. CLIENTE tiver data válida. Linhas sem pre
 válida ou produtos identificáveis não geram alerta. Itens de um produto podem ter
 previsões e conclusões independentes; não consolidar pela primeira ocorrência.
 
-Prog Feira oferece alternância Apenas imagens e setores: oculta detalhes dos cards,
-mas mantém setor principal e complementares, filtros e contagens. Segundo clique
-restaura; imagem continua ampliável e impressão acompanha o modo escolhido.
+Prog Feira oferece alternância Apenas imagens e dias, antes dos grupos de imagens:
+no modo compacto mantém somente ficha e contadores D36/D43, ocultando códigos e
+setores dos cards. Filtros/contagens preservados. Segundo clique restaura; imagem
+continua ampliável e impressão acompanha o modo escolhido.
