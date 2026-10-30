@@ -2,6 +2,21 @@
 
 Atualizado em 30/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — busca corrigida e Etiquetas antes de Programação
+
+Busca do topo e busca local agora compartilham state.filters.search. Prog Feira
+filtra sua própria base com esse termo e atualiza o contador do topo. Texto de
+apresentação preserva caixa/espaços; debounce mantém foco/cursor. Trocar de módulo
+não restaura consultas antigas; Limpar limpa ambos os campos e demais filtros.
+Etiquetas agora vem antes de Programação. Opções de etiquetas consideram busca,
+setor e filtros paralelos, sem restringir pelas programações selecionadas. Opções
+e Todas de Programação consideram etiquetas selecionadas e demais filtros, sem
+restringir pela própria seleção de programação. VAZIO continua selecionável.
+135 testes passaram e revisão independente aprovada. Chrome validou buscas por
+produto e inexistente, ambas as caixas, foco/pausas/espaços, limpeza, navegação e
+contagens dependentes de etiquetas: CFI com 8 produtos, B44=1 e VAZIO=7 na base
+atual de 182. Publicação em andamento.
+
 ## Raio X — correção da busca do topo
 
 Busca global interrompia input antes de applyFiltersAndRender porque acessava

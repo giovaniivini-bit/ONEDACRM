@@ -54,7 +54,6 @@
         rotativosExternalData: null,
         calendarExternalData: null,
         progFeiraExternalData: null,
-        progFeiraSearch: '',
         progFeiraImagesOnly: false,
         progFeiraSector: 'all',
         progFeiraTing: 'all',
@@ -10358,25 +10357,31 @@
         }
 
         const allProducts = api.buildProducts(source.records || []);
-        const search = String(state.progFeiraSearch || '').trim().toLowerCase();
+        const search = String(state.filters.search || '').trim().toLowerCase();
+        const headerSearchText = document.getElementById('headerSearchInput')?.value;
+        const searchText = typeof headerSearchText === 'string' && headerSearchText.toLowerCase().trim() === search ? headerSearchText : (state.filters.search || '');
         const selectedPrograms = state.progFeiraPrograms;
         const selectedLabels = state.progFeiraLabels;
         const labelUnavailable = source.labelColumnAvailable === false;
         const labelSummary = labelUnavailable ? 'Etiquetas indisponíveis' : selectedLabels.length ? 'Etiquetas: ' + selectedLabels.map(value => value || 'Sem etiqueta').join(' + ') : '';
-        const programOptions = api.getProgramOptions(allProducts, selectedPrograms);
         const programUnavailable = source.programColumnAvailable === false;
         const parallelFilters = { color:state.progFeiraColor, ting:state.progFeiraTing, cost:state.progFeiraCost };
         const parallelSummary = Object.entries(parallelFilters).filter(([,value]) => value !== 'all').map(([kind,value]) => `${api.PARALLEL_FILTERS[kind].label}: ${value === 'unknown' ? 'Sem informação' : value}`).join(' • ');
         const renderParallelFilter = kind => `<label class="prog-feira-parallel-filter"><span>${escapeHtml(api.PARALLEL_FILTERS[kind].label)}</span><select data-prog-parallel-filter="${kind}" aria-label="${escapeHtml(api.PARALLEL_FILTERS[kind].label)}" onchange="window.crmFilterProgFeiraParallel('${kind}',this.value)"><option value="all">Todos</option>${api.getParallelFilterOptions(allProducts,kind,parallelFilters[kind]).map(option => `<option value="${escapeHtml(option.value)}" ${parallelFilters[kind] === option.value ? 'selected' : ''}>${escapeHtml(option.value)} — ${escapeHtml(option.label)} (${option.count})</option>`).join('')}<option value="unknown" ${parallelFilters[kind] === 'unknown' ? 'selected' : ''}>Sem informação</option></select></label>`;
-        const labelBaseProducts = api.filterByParallelSectors(api.filterByPrograms(allProducts, selectedPrograms, !programUnavailable), parallelFilters).filter(item => {
+        const labelBaseProducts = api.filterByParallelSectors(allProducts, parallelFilters).filter(item => {
             if (!search) return true;
             return [item.codigo, item.numero, item.sector, item.sectorLabel, item.program, item.customerProgram, item.prints, item.notes, ...api.labelValues(item), ...(item.parallelPending || []).map(p => [p.label,p.sector,p.description].join(' '))]
                 .some(value => String(value || '').toLowerCase().includes(search));
         });
         const labelCandidates = labelBaseProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
         const labelOptions = api.getLabelOptions(labelCandidates, selectedLabels);
-        const distributionProducts = api.filterByLabels(labelBaseProducts, selectedLabels, !labelUnavailable);
+        const labelFilteredProducts = api.filterByLabels(labelBaseProducts, selectedLabels, !labelUnavailable);
+        const programCandidates = labelFilteredProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
+        const programOptions = api.getProgramOptions(programCandidates, selectedPrograms);
+        const distributionProducts = api.filterByPrograms(labelFilteredProducts, selectedPrograms, !programUnavailable);
         const products = distributionProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
+        const toolbarCount = document.getElementById('toolbarActiveCount');
+        if (toolbarCount) toolbarCount.textContent = products.length;
         const distribution = api.getSectorDistribution(distributionProducts);
         const chartMax = Math.max(5, Math.ceil(Math.max(...distribution.map(step => step.count), 0) / 5) * 5);
         const groups = api.groupBySector(products);
@@ -10477,23 +10482,23 @@
                 </section>
 
                 <div class="prog-feira-toolbar">
-                    <label class="prog-feira-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" value="${escapeHtml(state.progFeiraSearch)}" placeholder="Buscar produto, OP, programação, estampa ou observação..." oninput="window.crmSearchProgFeira(this.value)"></label>
+                    <label class="prog-feira-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" value="${escapeHtml(searchText)}" placeholder="Buscar produto, OP, programação, estampa ou observação..." oninput="window.crmSearchProgFeira(this.value)"></label>
                     <select onchange="window.crmFilterProgFeiraSector(this.value)" aria-label="Filtrar setor"><option value="all">Todos os setores</option>${currentSectors.map(group => `<option value="${escapeHtml(group.sector)}" ${state.progFeiraSector === group.sector ? 'selected' : ''}>${escapeHtml(group.sector)} — ${escapeHtml(group.label)} (${group.items.length})</option>`).join('')}</select>
                     ${['color','ting','cost'].map(renderParallelFilter).join('')}
                     ${(state.progFeiraSector !== 'all' || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
                 </div>
 
-                <fieldset class="prog-feira-program-filter">
-                    <legend>Programação <small>Selecione uma ou mais opções</small></legend>
-                    ${programUnavailable ? '<p role="status">A programação não está disponível neste cache. Atualize a planilha para carregar a coluna Descrição2.</p>' : ''}
-                    <button type="button" class="filter-chip ${!selectedPrograms.length ? 'active' : ''}" onclick="window.crmClearProgFeiraPrograms()">Todas (${allProducts.length})</button>
-                    ${programUnavailable ? '' : programOptions.map(option => `<label class="prog-feira-program-option ${selectedPrograms.includes(option.value) ? 'active' : ''}"><input type="checkbox" value="${escapeHtml(option.value)}" ${selectedPrograms.includes(option.value) ? 'checked' : ''} onchange="window.crmToggleProgFeiraProgram(this.value)"><span>${escapeHtml(option.value || 'VAZIO / Sem programação')}</span><small>(${option.count})</small></label>`).join('')}
-                </fieldset>
                 <fieldset class="prog-feira-label-filter prog-feira-program-filter">
                     <legend>Etiquetas <small>Selecione uma ou mais opções</small></legend>
                     ${labelUnavailable ? '<p role="status">Etiquetas indisponíveis neste cache. Atualize a planilha para carregar a coluna Etiqueta.</p>' : ''}
                     <button type="button" class="filter-chip ${!selectedLabels.length ? 'active' : ''}" onclick="window.crmClearProgFeiraLabels()">Todas (${labelCandidates.length})</button>
                     ${labelUnavailable ? '' : labelOptions.map(option => `<label class="prog-feira-program-option ${selectedLabels.includes(option.value) ? 'active' : ''}"><input type="checkbox" data-prog-label value="${escapeHtml(option.value)}" ${selectedLabels.includes(option.value) ? 'checked' : ''} onchange="window.crmToggleProgFeiraLabel(this.value)"><span>${escapeHtml(option.value || 'Sem etiqueta')}</span><small>(${option.count})</small></label>`).join('')}
+                </fieldset>
+                <fieldset class="prog-feira-program-filter">
+                    <legend>Programação <small>Selecione uma ou mais opções</small></legend>
+                    ${programUnavailable ? '<p role="status">A programação não está disponível neste cache. Atualize a planilha para carregar a coluna Descrição2.</p>' : ''}
+                    <button type="button" class="filter-chip ${!selectedPrograms.length ? 'active' : ''}" onclick="window.crmClearProgFeiraPrograms()">Todas (${programCandidates.length})</button>
+                    ${programUnavailable ? '' : programOptions.map(option => `<label class="prog-feira-program-option ${selectedPrograms.includes(option.value) ? 'active' : ''}"><input type="checkbox" value="${escapeHtml(option.value)}" ${selectedPrograms.includes(option.value) ? 'checked' : ''} onchange="window.crmToggleProgFeiraProgram(this.value)"><span>${escapeHtml(option.value || 'VAZIO / Sem programação')}</span><small>(${option.count})</small></label>`).join('')}
                 </fieldset>
                 ${labelUnavailable ? '' : `<section class="prog-feira-label-groups" aria-label="Produtos por grupo de etiqueta">
                     <header><strong>Produtos por grupo de etiqueta</strong><span>${products.length} ${products.length === 1 ? 'produto no filtro' : 'produtos no filtro'}</span></header>
@@ -12604,9 +12609,23 @@
 
     let progFeiraSearchTimer = null;
     window.crmSearchProgFeira = query => {
-        state.progFeiraSearch = query || '';
+        state.filters.search = String(query || '').toLowerCase().trim();
+        const headerSearch = document.getElementById('headerSearchInput');
+        if (headerSearch) headerSearch.value = query || '';
+        const clearSearch = document.getElementById('clearSearchBtn');
+        if (clearSearch) clearSearch.style.display = state.filters.search ? 'block' : 'none';
         clearTimeout(progFeiraSearchTimer);
-        progFeiraSearchTimer = setTimeout(renderActiveView, 180);
+        progFeiraSearchTimer = setTimeout(() => {
+            const focused = document.activeElement;
+            const restoreFocus = focused?.matches('.prog-feira-search input');
+            const position = restoreFocus ? focused.selectionStart : null;
+            applyFiltersAndRender();
+            if (restoreFocus) {
+                const input = document.querySelector('.prog-feira-search input');
+                input?.focus({ preventScroll:true });
+                input?.setSelectionRange(position, position);
+            }
+        }, 180);
     };
 
     window.crmToggleProgFeiraImagesOnly = () => {
@@ -12650,14 +12669,18 @@
     };
 
     window.crmClearProgFeiraFilters = () => {
-        state.progFeiraSearch = '';
+        state.filters.search = '';
+        const headerSearch = document.getElementById('headerSearchInput');
+        if (headerSearch) headerSearch.value = '';
+        const clearSearch = document.getElementById('clearSearchBtn');
+        if (clearSearch) clearSearch.style.display = 'none';
         state.progFeiraSector = 'all';
         state.progFeiraTing = 'all';
         state.progFeiraColor = 'all';
         state.progFeiraCost = 'all';
         state.progFeiraPrograms = [];
         state.progFeiraLabels = [];
-        renderActiveView();
+        applyFiltersAndRender();
     };
 
     window.crmSyncProgFeira = async () => {
