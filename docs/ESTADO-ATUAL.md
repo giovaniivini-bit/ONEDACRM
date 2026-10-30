@@ -18,7 +18,11 @@ dados. Leitura periódica e atualização administrativa seguem o padrão existe
 histórico/detalhe, temas, celular, atualização com sucesso/falha, cache, ausência
 da semana atual/fonte e regressão de navegação para Raio X e Prog Feira.
 Novo cache data/producao_costura_external.json ignorado. Guia completo em
-PRODUCAO-COSTURA.md. Publicação em andamento.
+PRODUCAO-COSTURA.md. Publicado no GitHub/VPS no commit b3c81ba.
+145 testes passaram na VPS; saúde OK e dados operacionais preservados. Chrome
+público confirmou integração real, menu, métricas, histórico, responsividade e
+estados de cache/falha/semana ausente, sem erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-costura-20261030-b3c81ba.
 
 ## Prog Feira — busca corrigida e Etiquetas antes de Programação
 
