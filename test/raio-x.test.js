@@ -141,3 +141,19 @@ test('observações do Raio X mantêm linha e sufixo, inclusive observação com
     assert.equal(p.colorSheet.items[0].description,'19-4001');
     assert.deepEqual(p.trimSheet.items.map(i=>i.observation),['<script>texto</script>','']);
 });
+
+test('busca do topo aplica e limpa filtro mesmo sem botão de limpar no HTML',()=>{
+    const fs=require('node:fs'),vm=require('node:vm');
+    const app=fs.readFileSync(require('node:path').join(__dirname,'../app.js'),'utf8');
+    const source=app.slice(app.indexOf('        // Filtro de Busca do Topo'),app.indexOf('        // Switcher de Visão'));
+    let inputHandler;let renders=0;
+    const input={addEventListener:(event,fn)=>{if(event==='input')inputHandler=fn;}};
+    const state={filters:{search:''}};
+    vm.runInNewContext(source,{state,document:{getElementById:id=>id==='headerSearchInput'?input:null},applyFiltersAndRender:()=>renders++});
+    inputHandler({target:{value:' 01.16.32.0273 '}});
+    assert.equal(state.filters.search,'01.16.32.0273');assert.equal(renders,1);
+    inputHandler({target:{value:'ON.12.0119A'}});
+    assert.equal(state.filters.search,'on.12.0119a');assert.equal(renders,2);
+    inputHandler({target:{value:''}});
+    assert.equal(state.filters.search,'');assert.equal(renders,3);
+});

@@ -1553,7 +1553,7 @@
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 state.filters.search = e.target.value.toLowerCase().trim();
-                clearSearchBtn.style.display = state.filters.search ? 'block' : 'none';
+                if (clearSearchBtn) clearSearchBtn.style.display = state.filters.search ? 'block' : 'none';
                 applyFiltersAndRender();
             });
         }

@@ -1,6 +1,19 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 29/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 30/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Raio X — correção da busca do topo
+
+Busca global interrompia input antes de applyFiltersAndRender porque acessava
+clearSearchBtn.style, mas esse botão não existe no HTML atual. Acesso agora é
+condicional; filtragem executa mesmo sem botão de limpar. Sem alteração dos
+critérios de pesquisa ou filtros específicos do Raio X. Cache do app atualizado.
+Regressão automatizada cobre digitação/normalização/limpeza sem botão. 135 testes
+passaram. Chrome com dados reais: 386 cards antes, 2 para código existente,
+1 para OF, nenhum para texto inexistente; apagar restaura todos. Busca interna e
+Limpar filtros também conferidos sem erros. Código da captura 01.16.32.0273 não
+está no conjunto atual do Raio X e retorna zero após a correção.
+Publicação em andamento.
 
 ## Prog Feira — impressão de 16 cards somente no modo simplificado
 
