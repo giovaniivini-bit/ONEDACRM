@@ -15,7 +15,10 @@ restringir pela própria seleção de programação. VAZIO continua selecionáve
 135 testes passaram e revisão independente aprovada. Chrome validou buscas por
 produto e inexistente, ambas as caixas, foco/pausas/espaços, limpeza, navegação e
 contagens dependentes de etiquetas: CFI com 8 produtos, B44=1 e VAZIO=7 na base
-atual de 182. Publicação em andamento.
+atual de 182. Publicado no GitHub/VPS no commit 897a374.
+135 testes passaram na VPS; saúde OK e dados preservados. Chrome público confirmou
+busca/foco/navegação, frases com pausa e múltiplas etiquetas sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-prog-search-labels-20261030-897a374.
 
 ## Raio X — correção da busca do topo
 
