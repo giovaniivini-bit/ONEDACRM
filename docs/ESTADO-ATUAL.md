@@ -13,7 +13,9 @@ passaram. Chrome com dados reais: 386 cards antes, 2 para código existente,
 1 para OF, nenhum para texto inexistente; apagar restaura todos. Busca interna e
 Limpar filtros também conferidos sem erros. Código da captura 01.16.32.0273 não
 está no conjunto atual do Raio X e retorna zero após a correção.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit ad93f67. 135 testes passaram na VPS;
+saúde OK e dados preservados. Chrome público confirmou buscas e limpeza sem erros.
+Backup: /home/ubuntu/backups/oneda-crm-header-search-20261030-ad93f67.
 
 ## Prog Feira — impressão de 16 cards somente no modo simplificado
 
