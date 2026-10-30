@@ -13,3 +13,5 @@ data/drive_thumbnail_cache/
 *.production-before.txt
 .DS_Store
 Thumbs.db
+
+data/producao_costura_external.json

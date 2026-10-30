@@ -11,7 +11,7 @@ process.env.CRM_ADMIN_TOKEN = 'route-test-secret';
 process.env.CRM_ADMIN_PASSWORD_HASH = encodePasswordHash('Senha administrativa para rotas!');
 process.env.ALERT_RULES_PATH = rulesPath;
 
-const { requestHandler, validateCalendarRecords, sanitizeProgFeiraRecords } = require('../server');
+const { requestHandler, validateCalendarRecords, sanitizeProgFeiraRecords, parseCSVRows } = require('../server');
 
 let server;
 let port;
@@ -271,4 +271,11 @@ test('nova exportação Prog Feira projeta campos operacionais sem preços e man
 test('API Prog Feira conserva somente o código Etiqueta e mantém projeção no cache',()=>{
     const rows=sanitizeProgFeiraRecords([{'Número':'100','Código':'ABC',Parte:'FE',Fluxo:'D36',Setor:'01A',Etiqueta:' CFUN ','Desc Etiqueta':'descrição não solicitada','Qtde Pend':'4','Preço':'99'}]);
     assert.equal(rows[0].ETIQUETA,'CFUN');assert.equal(Object.hasOwn(rows[0],'Desc Etiqueta'),false);assert.equal(Object.hasOwn(rows[0],'Preço'),false);assert.deepEqual(sanitizeProgFeiraRecords(rows),rows);
+});
+
+test('costura preserva matriz CSV e protege atualização da nova fonte', async()=>{
+    const rows=parseCSVRows('\ufeff,26/10,26/10\r\nJÔ,"2,5","linha 1\nlinha 2"\r\n');
+    assert.deepEqual(rows,[['','26/10','26/10'],['JÔ','2,5','linha 1\nlinha 2']]);
+    for(const file of ['costura.js','costura-view.js','costura.css']) assert.equal((await request({route:'/'+file})).status,200);
+    assert.equal((await request({method:'POST',route:'/api/external-sheet?type=producao_costura&refresh=1'})).status,401);
 });

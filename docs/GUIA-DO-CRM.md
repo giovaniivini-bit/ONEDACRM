@@ -326,3 +326,12 @@ Evoluções recomendadas:
 3. CI/CD com publicação reproduzível;
 4. testes automatizados adicionais das telas e da correspondência produto-imagem;
 5. remoção futura da dependência do Drive depois do período de contingência.
+
+## Produção do costura
+
+Em Estilo Amostras, logo abaixo de Prog Feira. A primeira seção apresenta a meta
+da semana atual, realizado e atingimento; abaixo aparecem produção por dia e por
+costureira, atividades e composição da meta. O histórico permite comparar semanas,
+selecionar período e detalhar os resultados. As médias históricas excluem a semana
+atual e datas repetidas. Atualizar usa a autorização administrativa existente.
+Consulte [Produção do costura](PRODUCAO-COSTURA.md) para fonte e regras de cálculo.

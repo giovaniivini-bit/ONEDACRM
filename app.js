@@ -54,6 +54,11 @@
         rotativosExternalData: null,
         calendarExternalData: null,
         progFeiraExternalData: null,
+        costuraExternalData: null,
+        costuraLoading: false,
+        costuraError: '',
+        costuraHistoryLimit: '8',
+        costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
         progFeiraSector: 'all',
         progFeiraTing: 'all',
@@ -846,6 +851,31 @@
         return response;
     }
 
+    let costuraLoadTask = null;
+    function loadCosturaData(force = false) {
+        if (costuraLoadTask) return force ? costuraLoadTask.then(() => loadCosturaData(true)) : costuraLoadTask;
+        state.costuraLoading = true;
+        state.costuraError = '';
+        costuraLoadTask = (async () => {
+            try {
+                const url = `/api/external-sheet?type=producao_costura${force ? '&refresh=1' : ''}`;
+                const response = await (force ? adminFetch(url, {method:'POST'}) : fetch(url));
+                const payload = await response.json();
+                if (!response.ok || !payload.success || !Array.isArray(payload.weeks) || (force && payload.isLive === false)) throw new Error(payload.error || payload.warning || 'Não foi possível atualizar a produção da costura.');
+                state.costuraExternalData = payload;
+            } catch (error) {
+                state.costuraError = error.message;
+                if (state.costuraExternalData) state.costuraExternalData = {...state.costuraExternalData,isLive:false};
+                if (force) throw error;
+            } finally {
+                state.costuraLoading = false;
+                costuraLoadTask = null;
+                if (state.activeSubmodule === 'producao-costura') renderActiveView();
+            }
+        })();
+        return costuraLoadTask;
+    }
+
     async function loadAlertRules() {
         if (!window.CRMAlertsEngine) {
             console.error('[ALERTAS] Motor de regras não foi carregado.');
@@ -927,6 +957,7 @@
                 state.progFeiraExternalData = progFeiraRes;
             }
             const changed = previousRecords !== JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
+            if (state.activeSubmodule === 'producao-costura') await loadCosturaData(force);
             updateSidebarBadges();
             if ((changed || force || !sheetsWereLoaded || previousSheetSources !== JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive])) && ['raio-x', 'cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
@@ -1803,6 +1834,7 @@
         else if (state.activeSubmodule === 'malotes') label = 'Malotes (Setores 88 e 83)';
         else if (state.activeSubmodule === 'feira') label = 'Feira & Protótipos';
         else if (state.activeSubmodule === 'prog-feira') label = 'Prog Feira';
+        else if (state.activeSubmodule === 'producao-costura') label = 'Produção do costura';
         else if (state.activeSubmodule === 'mpo') label = 'MPO';
         else if (state.activeSubmodule === 'andamento-cq') label = 'Andamento do CQ (Qualidade)';
         else if (state.activeSubmodule === 'aproveitamento') label = 'Aproveitamento de Amostras';
@@ -1820,6 +1852,8 @@
     function renderActiveView() {
         const container = document.getElementById('viewContainer');
         if (!container) return;
+        const costuraView = state.activeSubmodule === 'producao-costura';
+        document.querySelectorAll('.toolbar-search-pill, .toolbar-stat-text').forEach(el => { el.style.display = costuraView ? 'none' : ''; });
 
         // Seletor de Views
         switch (state.activeSubmodule) {
@@ -1878,6 +1912,17 @@
                 break;
             case 'prog-feira':
                 renderProgFeiraView(container);
+                break;
+            case 'producao-costura':
+                if (!state.costuraExternalData && !state.costuraLoading && !state.costuraError) loadCosturaData();
+                if (!window.CRMCosturaView) { container.innerHTML = '<div class="empty-state">Atualize a página para carregar Produção do costura.</div>'; break; }
+                window.CRMCosturaView.render(container, state.costuraExternalData, {
+                    loading:state.costuraLoading, error:state.costuraError,
+                    historyLimit:state.costuraHistoryLimit, selectedWeek:state.costuraSelectedWeek,
+                    onRefresh:() => { loadCosturaData(true).catch(error => showNotification(error.message,'warning','Produção do costura')); renderActiveView(); },
+                    onHistory:value => { state.costuraHistoryLimit=value; renderActiveView(); },
+                    onSelect:id => { state.costuraSelectedWeek=id; renderActiveView(); }
+                });
                 break;
             case 'mpo':
                 window.renderMpoView(container);

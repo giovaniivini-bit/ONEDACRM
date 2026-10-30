@@ -146,3 +146,13 @@ continua ampliável e impressão acompanha o modo escolhido.
 Impressão Prog Feira: 8 cards/página no modo completo; 16 (4×4) exclusivamente no
 modo Apenas imagens e dias. Paginação mantém setores separados e pode terminar
 com página parcial. Fotos contidas sem corte, com dias D36/D43 abaixo.
+
+## Produção do costura (30/10/2026)
+
+Tela abaixo de Prog Feira, ligada exclusivamente à aba Produção Amostras do arquivo
+1h04pHGE4wYZ3FnhAT3M-IeSB8pIFAi-RHdsqwKxwMwU, gid2024325688. Semana atual sempre
+primeiro; depois produção diária/pessoa e histórico. Costura = Jô/Cleide/Josi;
+ações do corte ficam fora. Meta é quantidade de referências para entregar na semana.
+Calcular percentuais pelos totais exatos; médias principais arredondadas para inteiro
+(69/5→14,58/5→12). Novas semanas entram à esquerda: detectar nomes/datas, não letras
+fixas. Datas repetidas ficam sinalizadas, sem duplicar médias. Guia: PRODUCAO-COSTURA.md.

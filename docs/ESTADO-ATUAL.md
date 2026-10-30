@@ -2,6 +2,24 @@
 
 Atualizado em 30/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Produção do costura — nova tela
+
+Menu em Estilo Amostras, abaixo de Prog Feira. Fonte exclusiva Produção Amostras
+(gid 2024325688) do Painel Amostras. Semana atual com meta/entregas/atingimento,
+meta diária, média, saldo e ritmo. Abaixo: produção diária, pessoas/atividades,
+composição da meta, histórico, evolução e médias por costureira. Não soma o corte.
+Blocos detectados por nomes/datas, suportando semanas novas inseridas à esquerda.
+Meta usa componentes e cálculo exato; 69/58 → 84,1%, 11 restantes, 14/12 por dia
+arredondados. Histórico sem meta fica explícito; repetição de 24/08 sinalizada e
+não duplica médias. Fonte/cache indisponível e semana atual ausente não inventam
+dados. Leitura periódica e atualização administrativa seguem o padrão existente.
+145 testes e duas revisões independentes aprovados. Chrome real: 15 blocos,
+14 períodos únicos, 13 históricos encerrados, 58/69 na semana atual. Conferidos
+histórico/detalhe, temas, celular, atualização com sucesso/falha, cache, ausência
+da semana atual/fonte e regressão de navegação para Raio X e Prog Feira.
+Novo cache data/producao_costura_external.json ignorado. Guia completo em
+PRODUCAO-COSTURA.md. Publicação em andamento.
+
 ## Prog Feira — busca corrigida e Etiquetas antes de Programação
 
 Busca do topo e busca local agora compartilham state.filters.search. Prog Feira

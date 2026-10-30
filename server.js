@@ -13,6 +13,7 @@ const { createDriveImageProxy } = require('./drive-image-cache');
 const { fetchEmbeddedFolder, fetchDriveHtml } = require('./drive-folder-list');
 const alertsEngine = require('./alerts-engine');
 const progFeira = require('./prog-feira');
+const costura = require('./costura');
 const { createAdminAuth } = require('./admin-auth');
 const {
     readRequestBody,
@@ -53,7 +54,7 @@ const adminAuth = createAdminAuth({
     trustedProxyAddresses: CRM_TRUSTED_PROXY_IPS
 });
 const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE_TTL_MS) || 5 * 60_000);
-const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'raio-x.js', 'prog-feira.js', 'image-coverage.js', 'mpo-filters.js', 'mpo-view.js']);
+const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'raio-x.js', 'prog-feira.js', 'image-coverage.js', 'mpo-filters.js', 'mpo-view.js', 'costura.js', 'costura-view.js', 'costura.css']);
 
 if (!ADMIN_PASSWORD_HASH) {
     console.warn('⚠️  CRM_ADMIN_PASSWORD_HASH não configurado: login administrativo por senha está indisponível.');
@@ -326,7 +327,7 @@ const MIME_TYPES = {
 };
 
 // Simple & robust CSV Parser
-function parseCSV(csvText) {
+function parseCSVRows(csvText) {
     if (!csvText) return [];
 
     // Remove BOM if present
@@ -375,8 +376,13 @@ function parseCSV(csvText) {
         }
     }
     
+    return lines;
+}
+
+function parseCSV(csvText) {
+    const lines = parseCSVRows(csvText);
     if (lines.length < 2) return [];
-    
+
     // Clean headers
     const rawHeaders = lines[0];
     const headers = rawHeaders.map(h => h.replace(/\uFFFD/g, '').trim());
@@ -1250,6 +1256,14 @@ async function requestHandler(req, res) {
                 cacheFile: path.join(DATA_DIR, 'calendar_external.json'),
                 targetColIndex: 4 // Coluna E (limite de dias do Setor 01)
             },
+            producao_costura: {
+                name: 'Produção do costura',
+                id: '1h04pHGE4wYZ3FnhAT3M-IeSB8pIFAi-RHdsqwKxwMwU',
+                gid: '2024325688',
+                url: 'https://docs.google.com/spreadsheets/d/1h04pHGE4wYZ3FnhAT3M-IeSB8pIFAi-RHdsqwKxwMwU/export?format=csv&gid=2024325688',
+                cacheFile: path.join(DATA_DIR, 'producao_costura_external.json'),
+                targetColIndex: 0
+            },
             prog_feira: {
                 name: 'Programação Feira',
                 id: '1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s',
@@ -1268,6 +1282,7 @@ async function requestHandler(req, res) {
             if (fs.existsSync(cfg.cacheFile)) {
                 try {
                     cachedData = JSON.parse(fs.readFileSync(cfg.cacheFile, 'utf8'));
+                    if (type === 'producao_costura' && (cachedData.sourceSchemaVersion !== 1 || !Array.isArray(cachedData.weeks) || !cachedData.weeks.length || !cachedData.weeks.every(w => Array.isArray(w.people) && Array.isArray(w.dates) && Number.isFinite(w.total)))) cachedData = null;
                     if (type === 'calendar') {
                         const validCachedRows = validateCalendarRecords(cachedData?.records);
                         cachedData = { ...cachedData, count: validCachedRows.length, records: validCachedRows };
@@ -1293,6 +1308,16 @@ async function requestHandler(req, res) {
             try {
                 // Tenta baixar da nuvem Google Sheets
                 const csvText = await fetchGoogleSheetCSV(cfg.url);
+                if (type === 'producao_costura') {
+                    const weeks = costura.buildWeeks(parseCSVRows(csvText));
+                    if (!weeks.some(w => w.validDates)) throw new Error('Nenhuma semana válida de costura foi encontrada na aba Produção Amostras.');
+                    const payload = {success:true, type, title:cfg.name, sourceSchemaVersion:1,
+                        sheetTitle:'Produção Amostras', count:weeks.length, weeks,
+                        timestamp:new Date().toISOString(), isLive:true};
+                    atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
+                    sendJson(res, 200, payload);
+                    return;
+                }
                 const records = parseCSV(csvText);
 
                 if (type === 'prog_feira') {
@@ -1643,6 +1668,7 @@ function startServers() {
 if (require.main === module) startServers();
 
 module.exports = {
+    parseCSVRows,
     requestHandler,
     startServers,
     validateCalendarRecords,
