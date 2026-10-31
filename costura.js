@@ -5,8 +5,9 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function() {
     'use strict';
     const PEOPLE = ['Jô', 'Cleide', 'Josi'];
+    const CUTTING_PEOPLE = ['Andrea', 'Chico'];
     const norm = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
-    const nameOf = value => PEOPLE.find(name => norm(name) === norm(value));
+    const nameOf = (value,people=PEOPLE) => people.find(name => norm(name) === norm(value));
     const sum = values => values.reduce((a,b) => a+b, 0);
     const cell = (rows, r, c) => rows[r]?.[c] ?? '';
     function number(value) {
@@ -33,16 +34,17 @@
     }
     const addDays = (key, days) => new Date(Date.parse(key+'T12:00:00Z')+days*86400000).toISOString().slice(0,10);
 
-    function buildWeeks(rows, now = new Date()) {
+    function buildWeeks(rows, now = new Date(), options = {}) {
         if (!Array.isArray(rows) || !rows.length) return [];
-        const columns = [...new Set(rows.flatMap(row => (row || []).flatMap((value,c) => nameOf(value) ? [c] : [])))].sort((a,b) => a-b);
+        const peopleNames = options.team === 'cutting' ? CUTTING_PEOPLE : PEOPLE;
+        const columns = [...new Set(rows.flatMap(row => (row || []).flatMap((value,c) => nameOf(value,peopleNames) ? [c] : [])))].sort((a,b) => a-b);
         const width = Math.max(...rows.map(row => row?.length || 0));
         const weeks = [];
         let previousStart = null;
         const today = todayKey(now);
         for (let k=0;k<columns.length;k++) {
             const c = columns[k], limit = columns[k+1] ?? width;
-            const persons = PEOPLE.map(name => ({name,row:rows.findIndex(row => nameOf(row?.[c]) === name)})).filter(p => p.row >= 0);
+            const persons = peopleNames.map(name => ({name,row:rows.findIndex(row => nameOf(row?.[c],peopleNames) === name)})).filter(p => p.row >= 0);
             if (!persons.length) continue;
             const firstPerson = Math.min(...persons.map(p => p.row));
             let header = null;
@@ -84,7 +86,7 @@
                 for (let r=person.row+1;r<rows.length;r++) {
                     const label = String(cell(rows,r,c)).trim();
                     if (norm(label) === 'TOTAL') { totalRow=r;break; }
-                    if (nameOf(label) || norm(label).startsWith('QUANTIDADE DE AMOSTRAS')) break;
+                    if (nameOf(label,peopleNames) || norm(label).startsWith('QUANTIDADE DE AMOSTRAS')) break;
                     if (!label || /^[.\s]+$/.test(label)) continue;
                     const raw = header.map(d=>number(cell(rows,r,d.column)));
                     activities.push({label,values:raw.map(n=>n ?? 0),total:sum(raw.map(n=>n ?? 0)),hasEntries:raw.some(n=>n !== null)});
@@ -93,8 +95,8 @@
                 if (totalRow >= 0 && header.some((d,i)=>number(cell(rows,totalRow,d.column)) !== null && number(cell(rows,totalRow,d.column)) !== values[i])) issues.push(`Total diário de ${person.name} diverge das atividades.`);
                 return {name:person.name,values,total:sum(values),activities};
             });
-            if (people.length !== PEOPLE.length) issues.push('Há costureira sem bloco de produção nesta semana.');
-            const metaRow = rows.findIndex(row=>norm(row?.[c]).startsWith('QUANTIDADE DE AMOSTRAS DA SEMANA'));
+            if (people.length !== peopleNames.length) issues.push(options.team === 'cutting' ? 'Há colaborador do corte sem bloco de produção nesta semana.' : 'Há costureira sem bloco de produção nesta semana.');
+            const metaRow = options.team === 'cutting' ? -1 : rows.findIndex(row=>norm(row?.[c]).startsWith('QUANTIDADE DE AMOSTRAS DA SEMANA'));
             const targets = [];
             if (metaRow >= 0) {
                 for (let r=metaRow+1;r<Math.min(rows.length,metaRow+25);r++) {
@@ -136,7 +138,7 @@
             people:week.people.map(p=>({...p,average:days ? p.total/days : null,share:week.total ? p.total*100/week.total : 0}))};
     }
 
-    function dashboard(weeks, now = new Date()) {
+    function dashboard(weeks, now = new Date(), options = {}) {
         const today = todayKey(now);
         const valid = (weeks || []).filter(w=>w.validDates && !w.duplicate).sort((a,b)=>b.start.localeCompare(a.start));
         const current = valid.find(w=>w.start<=today && addDays(w.start,6)>=today) || null;
@@ -150,12 +152,23 @@
             closed,closedTotal,closedAverage:closed.length ? closedTotal/closed.length : null,
             best:closed.reduce((best,w)=>!best || w.total>best.total ? w : best,null),
             targetWeeks:withTarget.length,metWeeks:withTarget.filter(w=>w.total>=w.target).length,
-            people:PEOPLE.map(name=>{
+            people:(options.team === 'cutting' ? CUTTING_PEOPLE : PEOPLE).map(name=>{
                 const available=closed.filter(w=>w.people.some(p=>p.name===name));
                 const totals=available.map(w=>w.people.find(p=>p.name===name).total);
                 const total=sum(totals),days=sum(available.map(w=>w.dates.length));
                 return {name,total,weeks:available.length,average:available.length ? total/available.length : null,dailyAverage:days ? total/days : null,best:totals.length ? Math.max(...totals) : null,share:closedTotal ? total*100/closedTotal : 0};
             })};
     }
-    return {PEOPLE,number,todayKey,buildWeeks,summarize,dashboard};
+    function buildCuttingWeeks(rows, now = new Date()) { return buildWeeks(rows,now,{team:'cutting'}); }
+    function countReworks(week) {
+        return sum((week?.people || []).flatMap(p=>(p.activities || []).filter(a=>norm(a.label).includes('REPROCESS')).map(a=>a.total)));
+    }
+    function compareProduction(current,previous,days=null) {
+        if (!current || !previous || !Array.isArray(current.values) || !Array.isArray(previous.values)) return {delta:null,percent:null,trend:'Sem base anterior',current:null,previous:null};
+        const length=days===null?current.values.length:Math.max(0,Math.min(days,current.values.length,previous.values.length));
+        const a=sum(current.values.slice(0,length)),b=sum(previous.values.slice(0,length));
+        const delta=a-b;
+        return {current:a,previous:b,delta,percent:b?delta*100/b:null,trend:delta>0?'Subiu':delta<0?'Caiu':'Estável'};
+    }
+    return {PEOPLE,CUTTING_PEOPLE,number,todayKey,buildWeeks,buildCuttingWeeks,summarize,dashboard,countReworks,compareProduction};
 });

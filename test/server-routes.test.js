@@ -276,6 +276,6 @@ test('API Prog Feira conserva somente o código Etiqueta e mantém projeção no
 test('costura preserva matriz CSV e protege atualização da nova fonte', async()=>{
     const rows=parseCSVRows('\ufeff,26/10,26/10\r\nJÔ,"2,5","linha 1\nlinha 2"\r\n');
     assert.deepEqual(rows,[['','26/10','26/10'],['JÔ','2,5','linha 1\nlinha 2']]);
-    for(const file of ['costura.js','costura-view.js','costura.css']) assert.equal((await request({route:'/'+file})).status,200);
+    for(const file of ['costura.js','costura-view.js','corte-view.js','costura.css']) assert.equal((await request({route:'/'+file})).status,200);
     assert.equal((await request({method:'POST',route:'/api/external-sheet?type=producao_costura&refresh=1'})).status,401);
 });

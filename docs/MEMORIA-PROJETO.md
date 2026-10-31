@@ -27,6 +27,19 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 - Operações administrativas usam senha validada no servidor e sessão HttpOnly.
 - Antigravity também modifica os aplicativos: inspecionar o estado real antes de editar.
 
+## Produção time de amostras (31/10/2026)
+
+Nome atual da tela antes chamada Produção do costura, abaixo de Prog Feira.
+Abas Costura (validada; meta/entregas e histórico preservados) e Corte (Andrea e
+Chico; ações, incluindo reprocessos, produtividade e comparativos semanais).
+Datas próprias por equipe e semanas novas à esquerda são detectadas sem posições
+fixas. Meta é exclusiva da costura. Comparação parcial do corte usa mesmos dias
+da semana anterior disponível; histórico exclui datas inválidas/duplicadas.
+Mesma fonte Produção Amostras e API producao_costura, schema 2 com cuttingWeeks.
+Cache schema 1 continua mostrando costura em falha, corte informa indisponibilidade.
+151 testes e Chrome real validados: corte 156 (120/36), +60/+62,5%; costura 58/69.
+Detalhes em PRODUCAO-COSTURA.md e estado de deploy em ESTADO-ATUAL.md.
+
 ## Imagens — fluxo vigente
 
 PC `C:\ONEDA\Fotos-CRM` → VPS `/home/ubuntu/data/oneda-crm/images` → índice automático CRM.

@@ -30,10 +30,27 @@
         </section>`;
     }
 
+    function header(payload,options={}) {
+        const sourceStamp=payload?.timestamp?new Date(payload.timestamp).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'Ainda não carregada';
+        return `            <header class="sw-heading"><div><h2><i class="fa-solid fa-scissors"></i> Produção time de amostras</h2><p>${options.team==='cutting'?'Ações por colaborador, produção diária e evolução do corte.':'Meta de entrega, produção diária e evolução da equipe de costura.'}</p></div><div class="sw-actions"><a class="exec-action-btn" href="${url}" target="_blank" rel="noopener">Abrir planilha</a><button type="button" class="exec-action-btn" data-sw-refresh ${options.loading?'disabled':''}><i class="fa-solid fa-arrows-rotate ${options.loading?'fa-spin':''}"></i> ${options.loading?'Atualizando…':'Atualizar'}</button></div></header>
+            <p class="sw-source">${payload?(payload.isLive===false?'Cache local da planilha':'Fonte: Produção Amostras'):'Aguardando a planilha'} · Atualização: ${esc(sourceStamp)} · horário de Brasília</p>
+            ${options.error?`<div class="sw-warning" role="status">${esc(options.error)}${payload?' Os últimos dados disponíveis continuam exibidos.':''}</div>`:''}
+            <div class="alerts-tabs sw-team-tabs" role="tablist" aria-label="Equipe de amostras">
+                <button type="button" id="swTeamCosturaTab" data-sw-tab="sewing" role="tab" aria-controls="swTeamCosturaPanel" aria-selected="${options.team!=='cutting'}" class="${options.team!=='cutting'?'active':''}"><i class="fa-solid fa-shirt"></i> Costura</button>
+                <button type="button" id="swTeamCorteTab" data-sw-tab="cutting" role="tab" aria-controls="swTeamCortePanel" aria-selected="${options.team==='cutting'}" class="${options.team==='cutting'?'active':''}"><i class="fa-solid fa-scissors"></i> Corte</button>
+            </div>
+`;
+    }
+    function bindControls(container,options) {
+        container.querySelector('[data-sw-refresh]')?.addEventListener('click',()=>options.onRefresh?.());
+        container.querySelector('[data-sw-history]')?.addEventListener('change',e=>options.onHistory?.(e.target.value));
+        container.querySelectorAll('[data-sw-select]').forEach(button=>button.addEventListener('click',()=>options.onSelect?.(button.dataset.swSelect)));
+        container.querySelectorAll('[data-sw-tab]').forEach(button=>button.addEventListener('click',()=>options.onTab?.(button.dataset.swTab)));
+    }
+
     function render(container,payload,options={}) {
         const model=engine.dashboard(payload?.weeks||[],options.now||new Date());
         const current=model.current;
-        const sourceStamp=payload?.timestamp?new Date(payload.timestamp).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'Ainda não carregada';
         const validHistory=model.history.filter(w=>w.validDates&&!w.duplicate&&w.start<=model.today);
         const limit=options.historyLimit==='all'?Infinity:Number(options.historyLimit||8);
         const range=validHistory.slice(0,limit);
@@ -47,9 +64,8 @@
             return `${n>0?'+':''}${fmt(n)}${previous.total?` (${n>0?'+':''}${fmt(n*100/previous.total,1)}%)`:''}`;
         };
         container.innerHTML=`<section class="sw-view">
-            <header class="sw-heading"><div><h2><i class="fa-solid fa-scissors"></i> Produção do costura</h2><p>Meta de entrega, produção diária e evolução da equipe de costura.</p></div><div class="sw-actions"><a class="exec-action-btn" href="${url}" target="_blank" rel="noopener">Abrir planilha</a><button type="button" class="exec-action-btn" data-sw-refresh ${options.loading?'disabled':''}><i class="fa-solid fa-arrows-rotate ${options.loading?'fa-spin':''}"></i> ${options.loading?'Atualizando…':'Atualizar'}</button></div></header>
-            <p class="sw-source">${payload?(payload.isLive===false?'Cache local da planilha':'Fonte: Produção Amostras'):'Aguardando a planilha'} · Atualização: ${esc(sourceStamp)} · horário de Brasília</p>
-            ${options.error?`<div class="sw-warning" role="status">${esc(options.error)}${payload?' Os últimos dados disponíveis continuam exibidos.':''}</div>`:''}
+            ${header(payload,options)}
+            <div class="sw-team-panel" id="swTeamCosturaPanel" role="tabpanel" aria-labelledby="swTeamCosturaTab">
             ${!payload?`<section class="sw-panel sw-empty"><h3>${options.loading?'Carregando produção da costura…':'Dados indisponíveis'}</h3><p>${options.loading?'Buscando a semana atual e o histórico na planilha.':'Use Atualizar para tentar carregar a planilha.'}</p></section>`:`
             <section class="sw-panel sw-current" data-sw-current><header><h3>Semana atual</h3><span>Hoje: ${date(model.today)}${current?' · '+period(current):''}</span></header>
             ${current?`<div class="sw-hero"><div class="sw-main-goal"><span>Meta da semana</span><strong data-sw-target>${fmt(current.target)}</strong><small>referências para entregar</small></div><div class="sw-progress-area"><div class="sw-status ${current.target>0&&current.remaining===0?'met':'pending'}">${esc(current.status)}</div><div class="sw-progress-caption"><strong data-sw-realized>${fmt(current.total)} entregues</strong><b data-sw-attainment>${percent(current.attainment)}</b></div><div class="sw-progress" role="progressbar" aria-label="Atingimento da meta semanal" aria-valuenow="${Math.min(100,current.attainment||0)}" aria-valuemin="0" aria-valuemax="100"><span style="width:${Math.min(100,current.attainment||0)}%"></span></div><p>${current.remaining===null?'Meta não informada.':current.target===0?'Não há meta prevista para comparar nesta semana.':current.remaining>0?`Faltam <b>${fmt(current.remaining)}</b> referências para a meta.`:`Meta atingida${current.excess?` com ${fmt(current.excess)} referências acima do previsto`:''}.`}</p></div></div>
@@ -66,10 +82,8 @@
             ${selected?`<h3 class="sw-section-title">Detalhe histórico · ${period(selected)}</h3>${weekDetails(selected)}`:''}
             ${issues.length?`<details class="sw-panel sw-quality"><summary>Conferência da planilha · ${issues.length} bloco(s) com observações</summary><p>Períodos repetidos ou datas inválidas não duplicam as médias. O bloco repetido permanece listado aqui para conferência.</p><ul>${issues.map(w=>`<li><b>${period(w)}</b> · ${fmt(w.total)} entregas · ${w.issues.map(esc).join(' ')}</li>`).join('')}</ul></details>`:''}
             <p class="sw-caption">Indicadores exclusivos da costura. Totais e metas vêm das atividades e da composição semanal da aba Produção Amostras. Média diária = total ÷ dias previstos; valores principais arredondados para facilitar a leitura.</p>`}
-        </section>`;
-        container.querySelector('[data-sw-refresh]')?.addEventListener('click',()=>options.onRefresh?.());
-        container.querySelector('[data-sw-history]')?.addEventListener('change',e=>options.onHistory?.(e.target.value));
-        container.querySelectorAll('[data-sw-select]').forEach(button=>button.addEventListener('click',()=>options.onSelect?.(button.dataset.swSelect)));
+        </div></section>`;
+        bindControls(container,options);
     }
-    return {render};
+    return {render,header,bindControls,helpers:{esc,fmt,date,period,percent,kpi}};
 });

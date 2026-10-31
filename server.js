@@ -54,7 +54,7 @@ const adminAuth = createAdminAuth({
     trustedProxyAddresses: CRM_TRUSTED_PROXY_IPS
 });
 const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE_TTL_MS) || 5 * 60_000);
-const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'raio-x.js', 'prog-feira.js', 'image-coverage.js', 'mpo-filters.js', 'mpo-view.js', 'costura.js', 'costura-view.js', 'costura.css']);
+const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'raio-x.js', 'prog-feira.js', 'image-coverage.js', 'mpo-filters.js', 'mpo-view.js', 'costura.js', 'costura-view.js', 'corte-view.js', 'costura.css']);
 
 if (!ADMIN_PASSWORD_HASH) {
     console.warn('⚠️  CRM_ADMIN_PASSWORD_HASH não configurado: login administrativo por senha está indisponível.');
@@ -1257,7 +1257,7 @@ async function requestHandler(req, res) {
                 targetColIndex: 4 // Coluna E (limite de dias do Setor 01)
             },
             producao_costura: {
-                name: 'Produção do costura',
+                name: 'Produção time de amostras',
                 id: '1h04pHGE4wYZ3FnhAT3M-IeSB8pIFAi-RHdsqwKxwMwU',
                 gid: '2024325688',
                 url: 'https://docs.google.com/spreadsheets/d/1h04pHGE4wYZ3FnhAT3M-IeSB8pIFAi-RHdsqwKxwMwU/export?format=csv&gid=2024325688',
@@ -1282,7 +1282,7 @@ async function requestHandler(req, res) {
             if (fs.existsSync(cfg.cacheFile)) {
                 try {
                     cachedData = JSON.parse(fs.readFileSync(cfg.cacheFile, 'utf8'));
-                    if (type === 'producao_costura' && (cachedData.sourceSchemaVersion !== 1 || !Array.isArray(cachedData.weeks) || !cachedData.weeks.length || !cachedData.weeks.every(w => Array.isArray(w.people) && Array.isArray(w.dates) && Number.isFinite(w.total)))) cachedData = null;
+                    if (type === 'producao_costura' && (![1,2].includes(cachedData.sourceSchemaVersion) || (cachedData.sourceSchemaVersion === 2 && !Array.isArray(cachedData.cuttingWeeks)) || !Array.isArray(cachedData.weeks) || !cachedData.weeks.length || !cachedData.weeks.every(w => Array.isArray(w.people) && Array.isArray(w.dates) && Number.isFinite(w.total)))) cachedData = null;
                     if (type === 'calendar') {
                         const validCachedRows = validateCalendarRecords(cachedData?.records);
                         cachedData = { ...cachedData, count: validCachedRows.length, records: validCachedRows };
@@ -1300,7 +1300,7 @@ async function requestHandler(req, res) {
             }
 
             const cachedAt = cachedData && Date.parse(cachedData.timestamp || '');
-            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === 4)) {
+            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === 4) && (type !== 'producao_costura' || cachedData.sourceSchemaVersion === 2)) {
                 sendJson(res, 200, { ...cachedData, cacheAgeMs: Date.now() - cachedAt });
                 return;
             }
@@ -1309,10 +1309,12 @@ async function requestHandler(req, res) {
                 // Tenta baixar da nuvem Google Sheets
                 const csvText = await fetchGoogleSheetCSV(cfg.url);
                 if (type === 'producao_costura') {
-                    const weeks = costura.buildWeeks(parseCSVRows(csvText));
+                    const matrix = parseCSVRows(csvText);
+                    const weeks = costura.buildWeeks(matrix);
+                    const cuttingWeeks = costura.buildCuttingWeeks(matrix);
                     if (!weeks.some(w => w.validDates)) throw new Error('Nenhuma semana válida de costura foi encontrada na aba Produção Amostras.');
-                    const payload = {success:true, type, title:cfg.name, sourceSchemaVersion:1,
-                        sheetTitle:'Produção Amostras', count:weeks.length, weeks,
+                    const payload = {success:true, type, title:cfg.name, sourceSchemaVersion:2,
+                        sheetTitle:'Produção Amostras', count:weeks.length, weeks, cuttingWeeks,
                         timestamp:new Date().toISOString(), isLive:true};
                     atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
                     sendJson(res, 200, payload);

@@ -1,6 +1,22 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 30/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 31/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Produção time de amostras — abas Costura e Corte
+
+Renomeada no menu, título e controles; continua abaixo de Prog Feira. Abas com
+histórico/detalhe independentes. Costura preservada (58 de 69, 84,1%). Novas datas
+e metas continuam dinâmicas com semanas inseridas à esquerda. Corte conta ações
+de Andrea e Chico, incluindo reprocessos e com calendário próprio, sem meta da
+costura. Atual: 156 ações (120/36), 13 reprocessos, 31,2/dia; anterior 96, alta de
+60 (+62,5%). Comparação principal em semana parcial usa dias equivalentes.
+Histórico com evolução por pessoa/atividade, médias, variação e detalhe.
+Schema 2 acrescenta cuttingWeeks; cache legado preserva costura em falha e informa
+indisponibilidade do corte. Fonte única Produção Amostras. Datas inválidas e
+repetidas sinalizadas/excluídas das médias; não cruza os calendários.
+151 testes passaram; Chrome real conferiu números, menu, abas, histórico, temas,
+celular, atualização/falha, cache legado, semana ausente e navegação sem erros JS.
+Publicação em andamento; detalhes de operação em PRODUCAO-COSTURA.md.
 
 ## Produção do costura — nova tela
 

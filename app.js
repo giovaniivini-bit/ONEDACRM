@@ -58,6 +58,9 @@
         costuraLoading: false,
         costuraError: '',
         costuraHistoryLimit: '8',
+        costuraTab: 'sewing',
+        corteHistoryLimit: '8',
+        corteSelectedWeek: '',
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
         progFeiraSector: 'all',
@@ -861,7 +864,7 @@
                 const url = `/api/external-sheet?type=producao_costura${force ? '&refresh=1' : ''}`;
                 const response = await (force ? adminFetch(url, {method:'POST'}) : fetch(url));
                 const payload = await response.json();
-                if (!response.ok || !payload.success || !Array.isArray(payload.weeks) || (force && payload.isLive === false)) throw new Error(payload.error || payload.warning || 'Não foi possível atualizar a produção da costura.');
+                if (!response.ok || !payload.success || !Array.isArray(payload.weeks) || (force && payload.isLive === false)) throw new Error(payload.error || payload.warning || 'Não foi possível atualizar a produção do time de amostras.');
                 state.costuraExternalData = payload;
             } catch (error) {
                 state.costuraError = error.message;
@@ -1834,7 +1837,7 @@
         else if (state.activeSubmodule === 'malotes') label = 'Malotes (Setores 88 e 83)';
         else if (state.activeSubmodule === 'feira') label = 'Feira & Protótipos';
         else if (state.activeSubmodule === 'prog-feira') label = 'Prog Feira';
-        else if (state.activeSubmodule === 'producao-costura') label = 'Produção do costura';
+        else if (state.activeSubmodule === 'producao-costura') label = 'Produção time de amostras';
         else if (state.activeSubmodule === 'mpo') label = 'MPO';
         else if (state.activeSubmodule === 'andamento-cq') label = 'Andamento do CQ (Qualidade)';
         else if (state.activeSubmodule === 'aproveitamento') label = 'Aproveitamento de Amostras';
@@ -1913,17 +1916,22 @@
             case 'prog-feira':
                 renderProgFeiraView(container);
                 break;
-            case 'producao-costura':
+            case 'producao-costura': {
                 if (!state.costuraExternalData && !state.costuraLoading && !state.costuraError) loadCosturaData();
-                if (!window.CRMCosturaView) { container.innerHTML = '<div class="empty-state">Atualize a página para carregar Produção do costura.</div>'; break; }
-                window.CRMCosturaView.render(container, state.costuraExternalData, {
-                    loading:state.costuraLoading, error:state.costuraError,
-                    historyLimit:state.costuraHistoryLimit, selectedWeek:state.costuraSelectedWeek,
-                    onRefresh:() => { loadCosturaData(true).catch(error => showNotification(error.message,'warning','Produção do costura')); renderActiveView(); },
-                    onHistory:value => { state.costuraHistoryLimit=value; renderActiveView(); },
-                    onSelect:id => { state.costuraSelectedWeek=id; renderActiveView(); }
+                const cutting = state.costuraTab === 'cutting';
+                const renderer = cutting ? window.CRMCorteView : window.CRMCosturaView;
+                if (!renderer) { container.innerHTML = '<div class="empty-state">Atualize a página para carregar Produção time de amostras.</div>'; break; }
+                renderer.render(container, state.costuraExternalData, {
+                    loading:state.costuraLoading, error:state.costuraError, team:state.costuraTab,
+                    historyLimit:cutting ? state.corteHistoryLimit : state.costuraHistoryLimit,
+                    selectedWeek:cutting ? state.corteSelectedWeek : state.costuraSelectedWeek,
+                    onRefresh:() => { loadCosturaData(true).catch(error => showNotification(error.message,'warning','Produção time de amostras')); renderActiveView(); },
+                    onHistory:value => { if (cutting) state.corteHistoryLimit=value; else state.costuraHistoryLimit=value; renderActiveView(); },
+                    onSelect:id => { if (cutting) state.corteSelectedWeek=id; else state.costuraSelectedWeek=id; renderActiveView(); },
+                    onTab:value => { state.costuraTab=value === 'cutting' ? 'cutting' : 'sewing'; renderActiveView(); document.querySelector(`[data-sw-tab="${state.costuraTab}"]`)?.focus({preventScroll:true}); }
                 });
                 break;
+            }
             case 'mpo':
                 window.renderMpoView(container);
                 break;

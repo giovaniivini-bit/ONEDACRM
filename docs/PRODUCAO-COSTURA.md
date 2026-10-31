@@ -1,6 +1,8 @@
-# Produção do costura
+# Produção time de amostras
 
-Tela em Estilo Amostras, imediatamente abaixo de Prog Feira.
+Tela em Estilo Amostras, imediatamente abaixo de Prog Feira. Abas Costura e Corte.
+O identificador de navegação `producao-costura` e o tipo da API foram mantidos
+para compatibilidade; os nomes apresentados ao usuário foram atualizados.
 
 ## Fonte e atualização
 
@@ -11,6 +13,9 @@ Tela em Estilo Amostras, imediatamente abaixo de Prog Feira.
 - Cache: `data/producao_costura_external.json`, ignorado pelo Git. Não substituir em deploy.
 - Consulta periódica enquanto a tela está aberta; cache segue TTL existente de cinco minutos. Atualizar ou Sincronizar Sheets pode forçar uma nova leitura.
 - Falha de rede mantém os últimos dados, identificados como cache, com timestamp. Sem cache disponível não inventa números.
+- Payload schema 2: `weeks` da costura e `cuttingWeeks` do corte, obtidos da mesma leitura.
+  Cache schema 1 continua disponível em falha de rede para a costura; o corte informa
+  indisponibilidade até a próxima leitura, sem criar números zero.
 
 ## Leitura dos blocos
 
@@ -37,6 +42,35 @@ A meta é a soma dos componentes sob Quantidade de amostras da semana: CQ, progr
 
 Exemplo validado: meta 69, realizado 58, atingimento 84,1%, faltam 11; meta diária 13,8 → 14 e média diária 11,6 → 12.
 
+## Corte — produtividade por ações
+
+`buildCuttingWeeks` reutiliza o parser semanal para Andrea e Chico. Procura o
+cabeçalho próprio do corte acima desses colaboradores, sem aproveitar as datas ou
+a meta da costura. Contabiliza todas as atividades, incluindo reprocessos, como
+ações: um produto pode gerar mais de uma ação. Não mede referências únicas nem
+aplica uma meta de entrega ao corte.
+
+Primeiro plano: ações da semana atual, média por dia, comparação anterior e
+reprocessos. Depois: ações por dia, totais/participações/médias/reprocessos por
+pessoa e distribuição por atividade. Na semana em andamento, a comparação
+principal considera os mesmos dias da semana anterior disponível. O total semanal
+bruto fica identificado como potencialmente parcial.
+
+O histórico inclui evolução semanal da equipe e de cada colaborador, variação em
+ações e percentual (Subiu/Caiu/Estável), gráfico empilhado por pessoa, médias de
+semanas encerradas, melhor semana e detalhamento. Sem base anterior não inventa
+variação; base zero não produz percentual infinito. A seleção de período e de
+detalhe é independente entre as abas.
+
+Exemplo 26–30/10/2026: 156 ações (Andrea 120, Chico 36), média de 31,2/dia,
+13 reprocessos. Semana anterior: 96 ações; aumento de 60 (+62,5%). Andrea
+subiu de 77 para 120 e Chico de 19 para 36.
+
+Datas inválidas e duplicadas são sinalizadas e ficam fora das médias, com
+precedência para o bloco mais à esquerda. O cabeçalho malformado de janeiro no
+histórico do corte não é corrigido com as datas da costura. Quando não há datas
+da semana atual, a última semana fica explicitamente identificada.
+
 ## Hierarquia da tela
 
 1. Semana atual, identificada pela data de São Paulo: meta, realizado, atingimento, saldo e ritmo.
@@ -48,10 +82,15 @@ Métricas históricas consideram somente semanas encerradas no período selecion
 
 ## Arquivos e validação
 
-- `costura.js`: normalização e métricas.
-- `costura-view.js` / `costura.css`: tela e responsividade.
+- `costura.js`: normalização e métricas das duas equipes.
+- `costura-view.js` / `corte-view.js` / `costura.css`: abas, controles compartilhados e responsividade.
 - `server.js`: matriz CSV, nova fonte e cache.
 - `app.js` / `index.html`: navegação, carregamento e atualização.
-- `test/costura.test.js` e `test/server-routes.test.js`: datas, cálculos, ausência de dados, CSV, texto seguro e autorização.
+- `test/costura.test.js`, `test/corte.test.js` e `test/server-routes.test.js`: datas, cálculos, ausência de dados, CSV, texto seguro e autorização.
 
-145 testes passaram na implementação. Chrome com a fonte real confirmou 15 blocos, 14 períodos únicos, semana atual 58/69 e 13 semanas anteriores. Conferidos temas, 390px, detalhe, filtro de histórico, cache em falha, atualização, fonte indisponível, semana atual ausente e retorno às telas Raio X/Prog Feira.
+151 testes passaram na divisão em abas. Chrome com a fonte real confirmou 15
+blocos da costura (58/69 preservados) e 16 do corte, com 14 períodos válidos únicos
+do corte após excluir um cabeçalho inválido e uma duplicação. Conferidos menu,
+troca de abas, estados independentes, métricas 156/120/36 e +62,5%, histórico,
+detalhe, temas, 390px, atualização com sucesso/falha, cache legado, semana atual
+ausente e retorno às telas Raio X/Prog Feira.

@@ -327,11 +327,16 @@ Evoluções recomendadas:
 4. testes automatizados adicionais das telas e da correspondência produto-imagem;
 5. remoção futura da dependência do Drive depois do período de contingência.
 
-## Produção do costura
+## Produção time de amostras
 
-Em Estilo Amostras, logo abaixo de Prog Feira. A primeira seção apresenta a meta
+Em Estilo Amostras, logo abaixo de Prog Feira, com abas Costura e Corte.
+Na Costura, a primeira seção apresenta a meta
 da semana atual, realizado e atingimento; abaixo aparecem produção por dia e por
 costureira, atividades e composição da meta. O histórico permite comparar semanas,
 selecionar período e detalhar os resultados. As médias históricas excluem a semana
 atual e datas repetidas. Atualizar usa a autorização administrativa existente.
-Consulte [Produção do costura](PRODUCAO-COSTURA.md) para fonte e regras de cálculo.
+No Corte, Andrea e Chico têm ações semanais/diárias, reprocessos, médias por
+colaborador e comparação com semanas anteriores. A unidade é ação, com calendário
+próprio e sem meta da costura. Datas e metas novas são lidas pelos blocos da planilha,
+mesmo com semanas inseridas à esquerda. Consulte
+[Produção time de amostras](PRODUCAO-COSTURA.md) para fonte e regras de cálculo.
