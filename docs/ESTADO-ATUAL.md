@@ -16,7 +16,13 @@ indisponibilidade do corte. Fonte única Produção Amostras. Datas inválidas e
 repetidas sinalizadas/excluídas das médias; não cruza os calendários.
 151 testes passaram; Chrome real conferiu números, menu, abas, histórico, temas,
 celular, atualização/falha, cache legado, semana ausente e navegação sem erros JS.
-Publicação em andamento; detalhes de operação em PRODUCAO-COSTURA.md.
+Revisão independente aprovada. Publicado no GitHub e VPS no commit bba5876.
+151 testes passaram também na VPS; saúde OK e dados operacionais preservados.
+Chrome público confirmou as duas abas, 58/69 e 156/120/36, comparativo +62,5%,
+histórico, estados independentes, temas/celular, cache/falha/semana ausente,
+sem erros JavaScript. Backup:
+/home/ubuntu/backups/oneda-crm-amostras-tabs-20261031-bba5876.
+Detalhes de operação em PRODUCAO-COSTURA.md.
 
 ## Produção do costura — nova tela
 
