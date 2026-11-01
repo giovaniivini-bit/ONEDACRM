@@ -170,5 +170,26 @@
         const delta=a-b;
         return {current:a,previous:b,delta,percent:b?delta*100/b:null,trend:delta>0?'Subiu':delta<0?'Caiu':'Estável'};
     }
-    return {PEOPLE,CUTTING_PEOPLE,number,todayKey,buildWeeks,buildCuttingWeeks,summarize,dashboard,countReworks,compareProduction};
+    function cuttingActivityTotals(week,name) {
+        const activities=new Map();
+        for(const person of week?.people || []) {
+            if(name && person.name!==name) continue;
+            for(const activity of person.activities || []) {
+                const key=norm(activity.label).replace(/\s+/g,' ').replace(/\s*\/\s*/g,'/');
+                if(!activities.has(key)) activities.set(key,{key,label:activity.label,values:activity.values.map(()=>0)});
+                const row=activities.get(key);
+                activity.values.forEach((value,i)=>row.values[i]=(row.values[i]||0)+value);
+            }
+        }
+        return activities;
+    }
+    function compareCuttingActivities(current,previous,name,days=null) {
+        const a=cuttingActivityTotals(current,name),b=cuttingActivityTotals(previous,name);
+        const keys=[...new Set([...a.keys(),...b.keys()])];
+        return keys.map(key=>({key,label:(a.get(key)||b.get(key)).label,
+            current:a.has(key)?sum(a.get(key).values.slice(0,days??undefined)):null,
+            previous:b.has(key)?sum(b.get(key).values.slice(0,days??undefined)):null,
+            comparison:compareProduction(a.get(key),b.get(key),days)}));
+    }
+    return {PEOPLE,CUTTING_PEOPLE,number,todayKey,buildWeeks,buildCuttingWeeks,summarize,dashboard,countReworks,compareProduction,cuttingActivityTotals,compareCuttingActivities};
 });

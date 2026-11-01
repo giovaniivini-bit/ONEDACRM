@@ -69,3 +69,68 @@ test('tela do corte usa unidade ações e não mostra meta da costura; cache leg
     assert.ok(c.innerHTML.includes('Este cache contém apenas a costura'));
     assert.ok(!c.innerHTML.includes('data-cut-total'));
 });
+
+test('atividades comparam cada colaborador sem misturar volumes, com dias equivalentes',()=>{
+    const previousRows=matrix(['19/10','20/10','21/10','22/10','23/10']);
+    previousRows[2]=[' corte  feira ',2,2,2,2,2];
+    previousRows[4][0]='CORTE MALHA P/TINGIR';
+    const [current,previous]=engine.buildCuttingWeeks(join(matrix(),previousRows),now);
+    const andrea=engine.compareCuttingActivities(current,previous,'Andrea');
+    const feira=andrea.find(a=>a.key==='CORTE FEIRA');
+    assert.equal(feira.current,16);assert.equal(feira.previous,10);
+    assert.equal(feira.comparison.delta,6);assert.equal(feira.comparison.percent,60);
+    assert.equal(andrea.filter(a=>a.key==='CORTE MALHA P/TINGIR').length,1);
+    assert.equal(engine.compareCuttingActivities(current,previous,'Chico').find(a=>a.key==='CORTE FEIRA').comparison.delta,0);
+    const partial=engine.compareCuttingActivities(current,previous,'Andrea',2).find(a=>a.key==='CORTE FEIRA');
+    assert.equal(partial.current,9);assert.equal(partial.previous,4);assert.equal(partial.comparison.delta,5);
+});
+
+test('atividade ausente difere de linha zerada e novas atividades não geram percentuais fictícios',()=>{
+    const week=(activities)=>({people:[{name:'Andrea',activities}]});
+    const a=(label,values)=>({label,values,total:values.reduce((x,y)=>x+y,0)});
+    const current=week([a('CORTE FEIRA',[3,0]),a('CORTE CQ',[0,0]),a('NOVA',[2,0]),a('<img onerror=alert(1)>',[1,0])]);
+    const previous=week([a('CORTE FEIRA',[0,0]),a('CORTE CQ',[4,0]),a('ANTIGA',[1,0])]);
+    const rows=engine.compareCuttingActivities(current,previous,'Andrea');
+    assert.equal(rows.find(r=>r.key==='CORTE FEIRA').comparison.delta,3);
+    assert.equal(rows.find(r=>r.key==='CORTE FEIRA').comparison.percent,null);
+    assert.equal(rows.find(r=>r.key==='CORTE CQ').comparison.trend,'Caiu');
+    assert.equal(rows.find(r=>r.key==='NOVA').previous,null);
+    assert.equal(rows.find(r=>r.key==='ANTIGA').current,null);
+    assert.equal(engine.compareCuttingActivities(current,null,'Andrea')[0].comparison.delta,null);
+    assert.deepEqual(engine.compareCuttingActivities(current,previous,'Chico'),[]);
+});
+
+test('última semana prioriza atividades individuais antes dos totais diários e histórico detalha atividade por semana',()=>{
+    const previousRows=matrix(['19/10','20/10','21/10','22/10','23/10']);previousRows[2]=['CORTE FEIRA',2,2,2,2,2];
+    const cuttingWeeks=engine.buildCuttingWeeks(join(matrix(),previousRows),now);
+    const c={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+    view.render(c,{cuttingWeeks},{now:new Date('2026-11-03T12:00:00Z'),historyLimit:'4'});
+    assert.ok(c.innerHTML.indexOf('data-cut-activities=')<c.innerHTML.indexOf('data-cut-week='));
+    assert.match(c.innerHTML,/data-cut-activity-person="Andrea"/);
+    assert.match(c.innerHTML,/data-cut-activity-person="Chico"/);
+    assert.match(c.innerHTML,/Subiu · \+6 ações \(\+60,0%\)/);
+    assert.match(c.innerHTML,/data-cut-activity-history="Andrea"/);
+    assert.match(c.innerHTML,/data-cut-activity-history="Chico"/);
+    assert.equal((c.innerHTML.match(/data-sw-history /g)||[]).length,1);
+    assert.match(c.innerHTML,/26\/10\/2026 a 30\/10\/2026/);
+    assert.ok(!c.innerHTML.includes('data-cut-total'));
+    const malicious=structuredClone(cuttingWeeks);malicious[0].people[0].activities[0].label='<img onerror=alert(1)>';
+    view.render(c,{cuttingWeeks:malicious},{now});
+    assert.ok(!c.innerHTML.includes('<img onerror='));assert.ok(c.innerHTML.includes('&lt;img onerror='));
+});
+
+test('histórico limita semanas e mantém comparação de atividade com anterior fora da janela',()=>{
+    const weeks=Array.from({length:6},(_,i)=>{
+        const dates=Array.from({length:5},(_,day)=>new Date(Date.UTC(2026,9,26-i*7+day)).toISOString().slice(0,10).split('-').reverse().slice(0,2).join('/'));
+        const rows=matrix(dates);rows[2]=['CORTE FEIRA',i+1,0,0,0,0];
+        return engine.buildCuttingWeeks(rows,now)[0];
+    });
+    const c={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+    view.render(c,{cuttingWeeks:weeks},{now,historyLimit:'4'});
+    const table=c.innerHTML.split('data-cut-activity-history="Andrea"')[1].split('</table>')[0];
+    const header=table.split('</thead>')[0];
+    assert.ok(header.includes('05/10/2026'));assert.ok(!header.includes('28/09/2026'));
+    const row=table.split('data-cut-activity="CORTE FEIRA"')[1].split('</tr>')[0];
+    assert.equal((row.match(/<td>/g)||[]).length,4);
+    assert.match(row,/<b>4<\/b><small class="sw-trend down">Caiu · -1 ações \(-20,0%\)/);
+});

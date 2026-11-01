@@ -336,7 +336,10 @@ costureira, atividades e composição da meta. O histórico permite comparar sem
 selecionar período e detalhar os resultados. As médias históricas excluem a semana
 atual e datas repetidas. Atualizar usa a autorização administrativa existente.
 No Corte, Andrea e Chico têm ações semanais/diárias, reprocessos, médias por
-colaborador e comparação com semanas anteriores. A unidade é ação, com calendário
+colaborador e comparação com semanas anteriores. A última semana tem destaque
+por atividade, com quantidade atual/anterior e variação. As matrizes do histórico
+mostram cada atividade por semana, separadas por colaborador, incluindo as variações.
+A unidade é ação, com calendário
 próprio e sem meta da costura. Datas e metas novas são lidas pelos blocos da planilha,
 mesmo com semanas inseridas à esquerda. Consulte
 [Produção time de amostras](PRODUCAO-COSTURA.md) para fonte e regras de cálculo.

@@ -27,7 +27,7 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 - Operações administrativas usam senha validada no servidor e sessão HttpOnly.
 - Antigravity também modifica os aplicativos: inspecionar o estado real antes de editar.
 
-## Produção time de amostras (31/10/2026)
+## Produção time de amostras (01/11/2026)
 
 Nome atual da tela antes chamada Produção do costura, abaixo de Prog Feira.
 Abas Costura (validada; meta/entregas e histórico preservados) e Corte (Andrea e
@@ -39,6 +39,11 @@ Mesma fonte Produção Amostras e API producao_costura, schema 2 com cuttingWeek
 Cache schema 1 continua mostrando costura em falha, corte informa indisponibilidade.
 151 testes e Chrome real validados: corte 156 (120/36), +60/+62,5%; costura 58/69.
 Detalhes em PRODUCAO-COSTURA.md e estado de deploy em ESTADO-ATUAL.md.
+No corte, destacar atividades individuais da última semana válida disponível,
+com quantidades e variação por atividade. Histórico apresenta matrizes de
+atividade × semana por colaborador. Ausência não vira zero; linha existente
+em branco vale zero. Comparação na última semana parcial usa dias equivalentes;
+matriz histórica usa totais semanais com indicação de parcial.
 
 ## Imagens — fluxo vigente
 

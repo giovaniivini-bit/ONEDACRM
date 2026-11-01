@@ -1,6 +1,22 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 31/10/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 01/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Corte — detalhamento por atividade e semana
+
+Na aba Corte de Produção time de amostras, a última semana válida disponível tem
+prioridade: tabelas de Andrea e Chico por atividade, quantidade atual/anterior e
+variação absoluta/percentual, logo após o resumo. Histórico com duas matrizes
+atividade × semana, mais recentes à esquerda, com variações em cada célula.
+Seletor 4/8/12/todas compartilhado com os totais; comparação usa base anterior
+mesmo fora da janela. Detalhar semana inclui atividades. Ausência permanece —,
+linha em branco vale zero, base zero não cria percentual. Semana parcial usa dias
+equivalentes na seção em destaque e fica identificada nas matrizes históricas.
+Costura e totais existentes preservados. Alterações em costura.js, corte-view.js,
+costura.css, index.html e test/corte.test.js. Revisão independente aprovada.
+Chrome com dados reais conferiu Andrea Corte Feira 16 vs. 12 (+33,3%) e Chico
+23 vs. 12 (+91,7%), prioridade, filtros, histórico, temas/celular e navegação.
+Publicação em andamento.
 
 ## Produção time de amostras — abas Costura e Corte
 

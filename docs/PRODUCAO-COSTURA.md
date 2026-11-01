@@ -66,6 +66,25 @@ Exemplo 26–30/10/2026: 156 ações (Andrea 120, Chico 36), média de 31,2/dia,
 13 reprocessos. Semana anterior: 96 ações; aumento de 60 (+62,5%). Andrea
 subiu de 77 para 120 e Chico de 19 para 36.
 
+Logo após o resumo, a última semana válida disponível tem duas tabelas de
+atividades (Andrea e Chico). Cada linha mostra a quantidade na semana, a anterior
+e a variação absoluta/percentual com Subiu/Caiu/Estável. Comparações dessa seção
+usam dias equivalentes em semana parcial. Exemplo de CORTE FEIRA: Andrea 16 vs.
+12 (+4; +33,3%) e Chico 23 vs. 12 (+11; +91,7%).
+
+O histórico por atividade tem uma matriz para cada colaborador: atividades nas
+linhas e semanas nas colunas, mais recentes à esquerda. Cada célula mostra o total
+semanal e a variação frente à semana anterior disponível, inclusive quando a base
+está fora da janela de 4/8/12/todas. O mesmo seletor controla o histórico agregado.
+Na matriz histórica, totais de semana em andamento ficam identificados como
+parciais. Detalhar uma semana também mostra atividades e comparativo.
+
+Rótulos são agrupados ignorando caixa, acentos, espaços repetidos e espaços junto
+à barra. Ausência de uma atividade/pessoa no bloco permanece — e não gera
+variação fictícia. Linha existente em branco conta zero como na planilha. Base
+zero permite variação absoluta, sem percentual. Reprocessos continuam sendo ações;
+seu aumento não representa por si só melhoria da qualidade.
+
 Datas inválidas e duplicadas são sinalizadas e ficam fora das médias, com
 precedência para o bloco mais à esquerda. O cabeçalho malformado de janeiro no
 histórico do corte não é corrigido com as datas da costura. Quando não há datas
