@@ -16,7 +16,11 @@ Costura e totais existentes preservados. Alterações em costura.js, corte-view.
 costura.css, index.html e test/corte.test.js. Revisão independente aprovada.
 Chrome com dados reais conferiu Andrea Corte Feira 16 vs. 12 (+33,3%) e Chico
 23 vs. 12 (+91,7%), prioridade, filtros, histórico, temas/celular e navegação.
-Publicação em andamento.
+Publicado no GitHub e VPS no commit 77df865. 155 testes passaram localmente e na
+VPS, com saúde OK e dados operacionais preservados. Chrome público confirmou
+quantidades/variações, prioridade da última semana, matrizes por colaborador,
+seleção de período, detalhes, temas/celular, cache e navegação sem erros JS.
+Backup: /home/ubuntu/backups/oneda-crm-corte-activities-20261101-77df865.
 
 ## Produção time de amostras — abas Costura e Corte
 
