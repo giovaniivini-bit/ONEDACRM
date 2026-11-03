@@ -1,5 +1,14 @@
 # Raio X
 
+## Estilista responsável
+
+Seletor Todos, Camila, Ketlyn, Joyce, Thamires e Sem estilista. Regras compartilhadas
+com Prog Feira em product-stylist.js: Camila 01.11/12/14/16; Ketlyn 01.13/15;
+Joyce 02.10–19, 05 e 13.10–19; Thamires 01.17/18/19/20, 03.01 e 15. Códigos fora
+dessas salas ficam Sem estilista. Combina com busca, setor e filtros existentes.
+Totais/setores e resumo acompanham seleção; Limpar restaura Todos. Códigos
+completos e sufixos preservados.
+
 Fonte: mesma planilha `testess` sincronizada pelo CRM. A tela fica em Estilo Pedido,
 logo após Pend. Setor 01.
 

@@ -1,6 +1,19 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 01/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 03/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Estilista responsável — Raio X e Prog Feira
+
+Seletor Todos/Camila/Ketlyn/Joyce/Thamires/Sem estilista nas duas telas, com
+estados independentes e limpeza integrada. Classificação única product-stylist.js:
+Camila 01.11/12/14/16; Ketlyn 01.13/15; Joyce 02.10–19, 05 e 13.10–19;
+Thamires 01.17/18/19/20, 03.01 e 15. Demais códigos: Sem estilista. Limites de
+sala não confundem 01.12 com 01.120 nem 05 com 050. Usuário confirmou 01.11/12
+Camila e 01.19/20 Thamires; demais prefixos originais preservados.
+Etiquetas/programações, gráfico e totais acompanham filtro; resumo de tela/PDF
+identifica seleção. Fontes e produtos preservados. 159 testes passaram e revisão
+independente aprovada. Chrome real conferiu grupos, busca, limpar, estados
+independentes, resumo/PDF e temas/celular sem erros JS. Publicação em andamento.
 
 ## Corte — detalhamento por atividade e semana
 

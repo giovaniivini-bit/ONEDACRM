@@ -27,6 +27,15 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 - Operações administrativas usam senha validada no servidor e sessão HttpOnly.
 - Antigravity também modifica os aplicativos: inspecionar o estado real antes de editar.
 
+## Estilistas por código (03/11/2026)
+
+Raio X e Prog Feira compartilham product-stylist.js. Camila: 01.11/12/14/16;
+Ketlyn: 01.13/15; Joyce: 02.10–19, 05, 13.10–19; Thamires: 01.17/18/19/20,
+03.01, 15. Sem regra: Sem estilista. Confirmação do usuário atribui 01.11/12 a
+Camila e 01.19/20 a Thamires, preservando demais prefixos; não usar o exemplo
+inicial conflitante 01.12 para Thamires. Não altera registros da planilha.
+Filtro combina com existentes e recalcula contagens; Limpar restaura Todos.
+
 ## Produção time de amostras (01/11/2026)
 
 Nome atual da tela antes chamada Produção do costura, abaixo de Prog Feira.

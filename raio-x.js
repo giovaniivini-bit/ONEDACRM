@@ -1,8 +1,9 @@
 (function (root, factory) {
-    const api = factory(typeof module === 'object' && module.exports ? require('./alerts-engine') : root.CRMAlertsEngine);
+    const api = factory(typeof module === 'object' && module.exports ? require('./alerts-engine') : root.CRMAlertsEngine,
+        typeof module === 'object' && module.exports ? require('./product-stylist') : root.CRMProductStylist);
     if (typeof module === 'object' && module.exports) module.exports = api;
     if (root) root.CRMRaioX = api;
-}(typeof globalThis !== 'undefined' ? globalThis : this, function (sheetHelpers) {
+}(typeof globalThis !== 'undefined' ? globalThis : this, function (sheetHelpers,stylists) {
     const SECTORS = ['01', '02', '03', '04', '05G', '43', 'CM1', '05', '06', '12', '13', '20', '26', '31', '106'];
     const norm = value => String(value || '').trim().toUpperCase();
     const sector = value => /^\d+$/.test(norm(value)) ? norm(value).replace(/^0+(?=\d)/, '').padStart(2, '0') : norm(value);
@@ -83,6 +84,7 @@
     function filter(products, filters, helpers) {
         const q = norm(filters.search);
         return products.filter(p => {
+            if (filters.stylist && filters.stylist !== 'all' && stylists.classify(p.codigo) !== filters.stylist) return false;
             if (filters.sectors?.length && !p.sectors.some(s => filters.sectors.includes(s))) return false;
             if (filters.client !== 'all' && p.cliente !== filters.client) return false;
             if (!helpers.matchesPending(p, filters.pending, true)) return false;

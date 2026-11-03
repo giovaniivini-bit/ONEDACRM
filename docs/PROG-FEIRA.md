@@ -1,5 +1,13 @@
 # Prog Feira — partes e fluxos
 
+## Estilista responsável
+
+Seletor Todos, Camila, Ketlyn, Joyce, Thamires e Sem estilista na barra de filtros.
+Regras compartilhadas com Raio X em product-stylist.js (mapeamento em RAIO-X.md).
+Seleção antecede etiquetas/programação, recalculando suas opções, gráfico de
+setores, grupos de etiquetas e contagens visíveis. Combina com busca e filtros
+paralelos; Limpar restaura Todos. Resumos de tela/PDF identificam a seleção.
+
 A tela mantém setores/gráfico do fluxo principal D36. A planilha bruta é projetada
 por normalizeSourceRecords (prog-feira.js) antes da sanitização no servidor.
 Somente linhas FE/D36 com Qtde Pend positiva em setores conhecidos geram cards.

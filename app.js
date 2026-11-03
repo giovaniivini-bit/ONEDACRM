@@ -34,7 +34,7 @@
         setor01Filter: null,
         setor01PendingFilter: 'all',
         setor01StyleFilter: 'all',
-        raioXFilters: { search: '', sectors: [], client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all' },
+        raioXFilters: { search: '', sectors: [], client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all', stylist: 'all' },
         setor01Search: '',
         setor01ViewMode: 'grid', // 'grid' (4 fotos por linha) ou 'table'
         coresFilter: null,
@@ -64,6 +64,7 @@
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
         progFeiraSector: 'all',
+        progFeiraStylist: 'all',
         progFeiraTing: 'all',
         progFeiraColor: 'all',
         progFeiraCost: 'all',
@@ -4018,9 +4019,10 @@
         const models = [...new Set(products.flatMap(p => p.modelagem))].sort();
         const select = (field, title, options) => `<label class="rx-filter"><span>${title}</span><select class="crm-input" data-rx-filter="${field}">${[['all', 'Todos'], ...options].map(([value, label]) => `<option value="${escapeHtml(value)}" ${f[field] === value ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></label>`;
         const filterLabels = {
-            client: 'Cliente', pending: 'Cor / aviamento', style: 'Status de estilo', model: 'Status de modelagem', malote: 'Malotes D7'
+            client: 'Cliente', pending: 'Cor / aviamento', style: 'Status de estilo', model: 'Status de modelagem', malote: 'Malotes D7', stylist: 'Estilista responsável'
         };
         const labels = {
+            stylist: Object.fromEntries(window.CRMProductStylist.OPTIONS),
             pending: { cor: 'Com cor pendente (D01)', aviamento: 'Com aviamento pendente (X01)', ambas: 'Cor e aviamento', nenhuma: 'Sem cor e aviamento' },
             style: { liberados: 'Produtos liberados', pendentes: 'Produtos pendentes' },
             malote: { pending: 'Com pendência (83/88)', none: 'Sem pendência', '83': 'Pendente no 83', '88': 'Pendente no 88' }
@@ -4047,6 +4049,7 @@
             <div class="table-card rx-filters pdf-screen-controls">
                 <label class="rx-filter rx-search"><span>Buscar produto ou OF</span><input class="crm-input" data-rx-search value="${escapeHtml(f.search)}" placeholder="Código, OF, descrição, cliente ou status..."></label>
                 ${select('client', 'Cliente', clients.map(s => [s, s]))}
+                ${select('stylist', 'Estilista responsável', window.CRMProductStylist.OPTIONS)}
                 ${select('pending', 'Cor / aviamento', Object.entries(labels.pending))}
                 ${select('style', 'Status de estilo', Object.entries(labels.style))}
                 ${select('model', 'Status de modelagem', models.map(s => [s, s]))}
@@ -4101,7 +4104,7 @@
             next.focus(); next.setSelectionRange(position, position);
         });
         container.querySelector('[data-rx-clear]').addEventListener('click', () => {
-            Object.assign(f, { search: '', sectors: [], client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all' });
+            Object.assign(f, { search: '', sectors: [], client: 'all', pending: 'all', style: 'all', model: 'all', malote: 'all', stylist: 'all' });
             renderActiveView();
         });
         container.querySelectorAll('[data-rx-sector]').forEach(el => el.addEventListener('click', () => {
@@ -10421,7 +10424,7 @@
         const parallelFilters = { color:state.progFeiraColor, ting:state.progFeiraTing, cost:state.progFeiraCost };
         const parallelSummary = Object.entries(parallelFilters).filter(([,value]) => value !== 'all').map(([kind,value]) => `${api.PARALLEL_FILTERS[kind].label}: ${value === 'unknown' ? 'Sem informação' : value}`).join(' • ');
         const renderParallelFilter = kind => `<label class="prog-feira-parallel-filter"><span>${escapeHtml(api.PARALLEL_FILTERS[kind].label)}</span><select data-prog-parallel-filter="${kind}" aria-label="${escapeHtml(api.PARALLEL_FILTERS[kind].label)}" onchange="window.crmFilterProgFeiraParallel('${kind}',this.value)"><option value="all">Todos</option>${api.getParallelFilterOptions(allProducts,kind,parallelFilters[kind]).map(option => `<option value="${escapeHtml(option.value)}" ${parallelFilters[kind] === option.value ? 'selected' : ''}>${escapeHtml(option.value)} — ${escapeHtml(option.label)} (${option.count})</option>`).join('')}<option value="unknown" ${parallelFilters[kind] === 'unknown' ? 'selected' : ''}>Sem informação</option></select></label>`;
-        const labelBaseProducts = api.filterByParallelSectors(allProducts, parallelFilters).filter(item => {
+        const labelBaseProducts = window.CRMProductStylist.filter(api.filterByParallelSectors(allProducts, parallelFilters), state.progFeiraStylist).filter(item => {
             if (!search) return true;
             return [item.codigo, item.numero, item.sector, item.sectorLabel, item.program, item.customerProgram, item.prints, item.notes, ...api.labelValues(item), ...(item.parallelPending || []).map(p => [p.label,p.sector,p.description].join(' '))]
                 .some(value => String(value || '').toLowerCase().includes(search));
@@ -10493,7 +10496,7 @@
             }
             return pages.map((items, pageIndex) => `
                 <section class="prog-feira-sector prog-feira-print-page" data-sector="${escapeHtml(group.sector)}">
-                    <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}${pageIndex ? ' • continuação' : ''}</span><small class="prog-feira-print-filter-summary">Programação: ${selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO')).join(' + ') : 'Todas'}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}</small></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
+                    <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}${pageIndex ? ' • continuação' : ''}</span><small class="prog-feira-print-filter-summary">Programação: ${selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO')).join(' + ') : 'Todas'}${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}</small></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
                     <div class="prog-feira-grid">${items.map(renderProductCard).join('')}</div>
                 </section>
             `).join('');
@@ -10537,8 +10540,9 @@
                 <div class="prog-feira-toolbar">
                     <label class="prog-feira-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" value="${escapeHtml(searchText)}" placeholder="Buscar produto, OP, programação, estampa ou observação..." oninput="window.crmSearchProgFeira(this.value)"></label>
                     <select onchange="window.crmFilterProgFeiraSector(this.value)" aria-label="Filtrar setor"><option value="all">Todos os setores</option>${currentSectors.map(group => `<option value="${escapeHtml(group.sector)}" ${state.progFeiraSector === group.sector ? 'selected' : ''}>${escapeHtml(group.sector)} — ${escapeHtml(group.label)} (${group.items.length})</option>`).join('')}</select>
+                    <label class="prog-feira-parallel-filter"><span>Estilista responsável</span><select data-prog-stylist aria-label="Estilista responsável" onchange="window.crmFilterProgFeiraStylist(this.value)">${[['all','Todos'],...window.CRMProductStylist.OPTIONS].map(([value,label])=>`<option value="${value}" ${state.progFeiraStylist===value?'selected':''}>${label}</option>`).join('')}</select></label>
                     ${['color','ting','cost'].map(renderParallelFilter).join('')}
-                    ${(state.progFeiraSector !== 'all' || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
+                    ${(state.progFeiraStylist !== 'all' || state.progFeiraSector !== 'all' || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
                 </div>
 
                 <fieldset class="prog-feira-label-filter prog-feira-program-filter">
@@ -10558,7 +10562,7 @@
                     <div class="prog-feira-label-group-grid">${api.getLabelGroups(products).map(group => `<article class="prog-feira-label-group" data-label-group="${escapeHtml(group.prefix)}" title="${escapeHtml(group.labels.join(', ') || 'Produtos sem etiqueta')}"><span>${escapeHtml(group.prefix || 'Sem etiqueta')}</span><strong>${formatNumber(group.count)}</strong><small>${group.count === 1 ? 'produto' : 'produtos'} · <b>${(products.length ? group.count * 100 / products.length : 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</b> do total</small></article>`).join('') || '<p>Nenhum produto nos filtros atuais.</p>'}</div>
                     <small>Contagem por prefixo de duas posições. Percentuais sobre o total filtrado. Cada produto conta uma vez por grupo; grupos podem se sobrepor.</small>
                 </section>`}
-                <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}</p>
+                <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}</p>
 
                 <div class="prog-feira-legend">
                     <strong>Cor da borda:</strong>${Object.entries(api.TINGIMENTO).map(([code, info]) => `<span><i style="background:${info.color}"></i>${code} — ${escapeHtml(info.label)}</span>`).join('')}
@@ -12721,6 +12725,11 @@
         renderActiveView();
     };
 
+    window.crmFilterProgFeiraStylist = value => {
+        state.progFeiraStylist = ['all',...window.CRMProductStylist.OPTIONS.map(([id])=>id)].includes(value) ? value : 'all';
+        renderActiveView();
+    };
+
     window.crmClearProgFeiraFilters = () => {
         state.filters.search = '';
         const headerSearch = document.getElementById('headerSearchInput');
@@ -12728,6 +12737,7 @@
         const clearSearch = document.getElementById('clearSearchBtn');
         if (clearSearch) clearSearch.style.display = 'none';
         state.progFeiraSector = 'all';
+        state.progFeiraStylist = 'all';
         state.progFeiraTing = 'all';
         state.progFeiraColor = 'all';
         state.progFeiraCost = 'all';
