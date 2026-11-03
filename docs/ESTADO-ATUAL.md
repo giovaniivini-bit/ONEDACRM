@@ -13,7 +13,10 @@ Camila e 01.19/20 Thamires; demais prefixos originais preservados.
 Etiquetas/programações, gráfico e totais acompanham filtro; resumo de tela/PDF
 identifica seleção. Fontes e produtos preservados. 159 testes passaram e revisão
 independente aprovada. Chrome real conferiu grupos, busca, limpar, estados
-independentes, resumo/PDF e temas/celular sem erros JS. Publicação em andamento.
+independentes, resumo/PDF e temas/celular sem erros JS. Publicado no GitHub/VPS
+no commit 4455cdd. 159 testes passaram também na VPS; saúde OK e dados preservados.
+Chrome público confirmou todos os grupos nas duas telas, busca, limpar e PDF.
+Backup: /home/ubuntu/backups/oneda-crm-stylist-20261103-4455cdd.
 
 ## Corte — detalhamento por atividade e semana
 
