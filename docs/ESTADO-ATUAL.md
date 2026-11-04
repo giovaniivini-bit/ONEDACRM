@@ -1,6 +1,21 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 03/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 04/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Prog Feira — filtro múltiplo por data de entrega
+
+Novo fieldset após Programação e antes dos grupos de etiquetas. Datas da mesma
+FICHA exibida no card FE/D36, normalizadas e ordenadas cronologicamente, com ano
+e SEM DATA para vazio/inválido. Seleção múltipla por união; Todas/Limpar restauram
+a base. Opções/contagens consideram busca, setor, estilista, fluxos paralelos,
+etiquetas e programação, excluindo a própria seleção de entrega. Seleções fora do
+conjunto atual permanecem visíveis com zero. Gráfico, cards, grupos, resumos de
+tela/PDF e os quatro KPIs acompanham os filtros; total geral permanece identificado.
+Reuso de parseDelivery mantém filtro alinhado à data/ordem já usada pelo card.
+162 testes e revisão independente aprovados. Chrome real: 189 produtos, nove
+datas e 104 SEM DATA; conferidos cada opção, múltiplas datas, estilista/busca,
+zero resultado, seleção preservada, limpeza, KPIs, resumo/PDF e temas/celular.
+Publicação em andamento.
 
 ## Estilista responsável — Raio X e Prog Feira
 

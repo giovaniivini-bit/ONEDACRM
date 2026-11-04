@@ -65,6 +65,7 @@
         progFeiraImagesOnly: false,
         progFeiraSector: 'all',
         progFeiraStylist: 'all',
+        progFeiraDeliveries: [],
         progFeiraTing: 'all',
         progFeiraColor: 'all',
         progFeiraCost: 'all',
@@ -10417,6 +10418,8 @@
         const headerSearchText = document.getElementById('headerSearchInput')?.value;
         const searchText = typeof headerSearchText === 'string' && headerSearchText.toLowerCase().trim() === search ? headerSearchText : (state.filters.search || '');
         const selectedPrograms = state.progFeiraPrograms;
+        const selectedDeliveries = state.progFeiraDeliveries;
+        const deliverySummary = selectedDeliveries.length ? 'Entregas: '+selectedDeliveries.map(api.deliveryLabel).join(' + ') : '';
         const selectedLabels = state.progFeiraLabels;
         const labelUnavailable = source.labelColumnAvailable === false;
         const labelSummary = labelUnavailable ? 'Etiquetas indisponíveis' : selectedLabels.length ? 'Etiquetas: ' + selectedLabels.map(value => value || 'Sem etiqueta').join(' + ') : '';
@@ -10434,16 +10437,19 @@
         const labelFilteredProducts = api.filterByLabels(labelBaseProducts, selectedLabels, !labelUnavailable);
         const programCandidates = labelFilteredProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
         const programOptions = api.getProgramOptions(programCandidates, selectedPrograms);
-        const distributionProducts = api.filterByPrograms(labelFilteredProducts, selectedPrograms, !programUnavailable);
+        const deliveryBaseProducts = api.filterByPrograms(labelFilteredProducts, selectedPrograms, !programUnavailable);
+        const deliveryCandidates = deliveryBaseProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
+        const deliveryOptions = api.getDeliveryOptions(deliveryCandidates,selectedDeliveries);
+        const distributionProducts = api.filterByDeliveries(deliveryBaseProducts,selectedDeliveries);
         const products = distributionProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
         const toolbarCount = document.getElementById('toolbarActiveCount');
         if (toolbarCount) toolbarCount.textContent = products.length;
         const distribution = api.getSectorDistribution(distributionProducts);
         const chartMax = Math.max(5, Math.ceil(Math.max(...distribution.map(step => step.count), 0) / 5) * 5);
         const groups = api.groupBySector(products);
-        const desCount = allProducts.filter(item => item.isDes).length;
-        const readyCount = allProducts.filter(item => item.sector === '01F').length;
-        const cancelledCount = allProducts.filter(item => item.sector === '01Z').length;
+        const desCount = products.filter(item => item.isDes).length;
+        const readyCount = products.filter(item => item.sector === '01F').length;
+        const cancelledCount = products.filter(item => item.sector === '01Z').length;
         const currentSectors = api.groupBySector(allProducts);
         const syncText = source.timestamp
             ? new Date(source.timestamp).toLocaleString('pt-BR')
@@ -10496,7 +10502,7 @@
             }
             return pages.map((items, pageIndex) => `
                 <section class="prog-feira-sector prog-feira-print-page" data-sector="${escapeHtml(group.sector)}">
-                    <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}${pageIndex ? ' • continuação' : ''}</span><small class="prog-feira-print-filter-summary">Programação: ${selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO')).join(' + ') : 'Todas'}${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}</small></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
+                    <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}${pageIndex ? ' • continuação' : ''}</span><small class="prog-feira-print-filter-summary">Programação: ${selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO')).join(' + ') : 'Todas'}${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}</small></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
                     <div class="prog-feira-grid">${items.map(renderProductCard).join('')}</div>
                 </section>
             `).join('');
@@ -10517,8 +10523,8 @@
                 </div>
 
                 <div class="prog-feira-kpis">
-                    <article><span>Referências ativas</span><strong>${formatNumber(allProducts.length - cancelledCount)}</strong><small>${formatNumber(allProducts.length)} no relatório</small></article>
-                    <article><span>Setores com pendência</span><strong>${formatNumber(currentSectors.length)}</strong><small>Fluxo D36</small></article>
+                    <article><span>Referências ativas</span><strong data-prog-active-count>${formatNumber(products.length - cancelledCount)}</strong><small>${formatNumber(products.length)} nos filtros · ${formatNumber(allProducts.length)} no relatório</small></article>
+                    <article><span>Setores com pendência</span><strong>${formatNumber(groups.length)}</strong><small>Fluxo D36 · nos filtros</small></article>
                     <article class="des"><span>Pendentes em custo DES</span><strong>${formatNumber(desCount)}</strong><small>Identificados pela tarja azul</small></article>
                     <article class="ready"><span>Peças prontas</span><strong>${formatNumber(readyCount)}</strong><small>Setor 01F</small></article>
                 </div>
@@ -10542,7 +10548,7 @@
                     <select onchange="window.crmFilterProgFeiraSector(this.value)" aria-label="Filtrar setor"><option value="all">Todos os setores</option>${currentSectors.map(group => `<option value="${escapeHtml(group.sector)}" ${state.progFeiraSector === group.sector ? 'selected' : ''}>${escapeHtml(group.sector)} — ${escapeHtml(group.label)} (${group.items.length})</option>`).join('')}</select>
                     <label class="prog-feira-parallel-filter"><span>Estilista responsável</span><select data-prog-stylist aria-label="Estilista responsável" onchange="window.crmFilterProgFeiraStylist(this.value)">${[['all','Todos'],...window.CRMProductStylist.OPTIONS].map(([value,label])=>`<option value="${value}" ${state.progFeiraStylist===value?'selected':''}>${label}</option>`).join('')}</select></label>
                     ${['color','ting','cost'].map(renderParallelFilter).join('')}
-                    ${(state.progFeiraStylist !== 'all' || state.progFeiraSector !== 'all' || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
+                    ${(selectedDeliveries.length || state.progFeiraStylist !== 'all' || state.progFeiraSector !== 'all' || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
                 </div>
 
                 <fieldset class="prog-feira-label-filter prog-feira-program-filter">
@@ -10557,12 +10563,17 @@
                     <button type="button" class="filter-chip ${!selectedPrograms.length ? 'active' : ''}" onclick="window.crmClearProgFeiraPrograms()">Todas (${programCandidates.length})</button>
                     ${programUnavailable ? '' : programOptions.map(option => `<label class="prog-feira-program-option ${selectedPrograms.includes(option.value) ? 'active' : ''}"><input type="checkbox" value="${escapeHtml(option.value)}" ${selectedPrograms.includes(option.value) ? 'checked' : ''} onchange="window.crmToggleProgFeiraProgram(this.value)"><span>${escapeHtml(option.value || 'VAZIO / Sem programação')}</span><small>(${option.count})</small></label>`).join('')}
                 </fieldset>
+                <fieldset class="prog-feira-program-filter" data-prog-delivery-filter>
+                    <legend>Data de entrega <small>Selecione uma ou mais opções · coluna FICHA</small></legend>
+                    <button type="button" class="filter-chip ${!selectedDeliveries.length?'active':''}" data-prog-delivery-all onclick="window.crmClearProgFeiraDeliveries()">Todas (${deliveryCandidates.length})</button>
+                    ${deliveryOptions.map(option=>`<label class="prog-feira-program-option ${selectedDeliveries.includes(option.value)?'active':''}"><input type="checkbox" data-prog-delivery value="${escapeHtml(option.value)}" ${selectedDeliveries.includes(option.value)?'checked':''} onchange="window.crmToggleProgFeiraDelivery(this.value)"><span>${escapeHtml(option.label)}</span><small>(${option.count})</small></label>`).join('')}
+                </fieldset>
                 ${labelUnavailable ? '' : `<section class="prog-feira-label-groups" aria-label="Produtos por grupo de etiqueta">
                     <header><strong>Produtos por grupo de etiqueta</strong><span>${products.length} ${products.length === 1 ? 'produto no filtro' : 'produtos no filtro'}</span></header>
                     <div class="prog-feira-label-group-grid">${api.getLabelGroups(products).map(group => `<article class="prog-feira-label-group" data-label-group="${escapeHtml(group.prefix)}" title="${escapeHtml(group.labels.join(', ') || 'Produtos sem etiqueta')}"><span>${escapeHtml(group.prefix || 'Sem etiqueta')}</span><strong>${formatNumber(group.count)}</strong><small>${group.count === 1 ? 'produto' : 'produtos'} · <b>${(products.length ? group.count * 100 / products.length : 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</b> do total</small></article>`).join('') || '<p>Nenhum produto nos filtros atuais.</p>'}</div>
                     <small>Contagem por prefixo de duas posições. Percentuais sobre o total filtrado. Cada produto conta uma vez por grupo; grupos podem se sobrepor.</small>
                 </section>`}
-                <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}</p>
+                <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}</p>
 
                 <div class="prog-feira-legend">
                     <strong>Cor da borda:</strong>${Object.entries(api.TINGIMENTO).map(([code, info]) => `<span><i style="background:${info.color}"></i>${code} — ${escapeHtml(info.label)}</span>`).join('')}
@@ -12730,6 +12741,17 @@
         renderActiveView();
     };
 
+    window.crmToggleProgFeiraDelivery = value => {
+        const values = new Set(state.progFeiraDeliveries);
+        if(values.has(value)) values.delete(value); else values.add(value);
+        state.progFeiraDeliveries = [...values];
+        renderActiveView();
+    };
+    window.crmClearProgFeiraDeliveries = () => {
+        state.progFeiraDeliveries = [];
+        renderActiveView();
+    };
+
     window.crmClearProgFeiraFilters = () => {
         state.filters.search = '';
         const headerSearch = document.getElementById('headerSearchInput');
@@ -12738,6 +12760,7 @@
         if (clearSearch) clearSearch.style.display = 'none';
         state.progFeiraSector = 'all';
         state.progFeiraStylist = 'all';
+        state.progFeiraDeliveries = [];
         state.progFeiraTing = 'all';
         state.progFeiraColor = 'all';
         state.progFeiraCost = 'all';

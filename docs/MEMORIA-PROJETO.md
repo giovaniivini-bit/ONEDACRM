@@ -27,6 +27,15 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 - Operações administrativas usam senha validada no servidor e sessão HttpOnly.
 - Antigravity também modifica os aplicativos: inspecionar o estado real antes de editar.
 
+## Entregas na Prog Feira (04/11/2026)
+
+Filtro múltiplo após Programação, por FICHA da parte FE/D36, igual ao card.
+Datas normalizadas/ordenadas com parser existente; SEM DATA inclui vazio/inválido.
+Opções respeitam filtros anteriores e setor; próprias seleções não restringem suas
+contagens. Seleção pode combinar datas e SEM DATA. Limpar restaura Todas. Cards,
+gráfico, grupos, KPIs e resumo/PDF refletem a seleção. KPIs superiores agora
+consideram os produtos filtrados; total da base continua identificado no subtítulo.
+
 ## Estilistas por código (03/11/2026)
 
 Raio X e Prog Feira compartilham product-stylist.js. Camila: 01.11/12/14/16;

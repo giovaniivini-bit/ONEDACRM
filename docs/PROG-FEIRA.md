@@ -1,5 +1,22 @@
 # Prog Feira — partes e fluxos
 
+## Data de entrega
+
+Filtro múltiplo após Programação, antes dos grupos de etiquetas. Lê a FICHA do
+produto FE/D36 consolidado, a mesma informação exibida no card. Reutiliza
+parseDelivery para normalizar formatos e inferir ano em DD/MM. Opções com ano,
+em ordem cronológica; vazio ou data inválida entram em SEM DATA, sempre disponível.
+Não utiliza datas das linhas de cor, custo, tingimento ou aviamento.
+
+As opções consideram busca, estilista, filtros paralelos, etiquetas, programação
+e setor, sem a seleção do próprio filtro; opção selecionada sem correspondência
+permanece com zero. Seleção por união permite combinar datas com SEM DATA.
+Todas limpa só as datas; Limpar limpa todos os filtros. Cards, gráfico, contadores,
+grupos e os quatro KPIs acompanham filtros. Total global aparece identificado.
+Resumos da tela e impressão incluem as entregas selecionadas. Regras nos helpers
+deliveryKey/getDeliveryOptions/filterByDeliveries, com cobertura de virada de ano,
+datas inválidas, múltipla escolha e FICHA exclusiva FE/D36.
+
 ## Estilista responsável
 
 Seletor Todos, Camila, Ketlyn, Joyce, Thamires e Sem estilista na barra de filtros.

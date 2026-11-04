@@ -225,3 +225,40 @@ test('contadores acompanham etiquetas e filtros aplicados ao conjunto visível',
     const visible=filterByLabels(filterByPrograms(filterByParallelSectors(products,{color:'D01'}),['B44']),['CFA','CGA']).filter(p=>p.sector==='01B');
     assert.deepEqual(getLabelGroups(visible).map(g=>[g.prefix,g.count]),[['CF',1],['CG',1]]);
 });
+
+test('entregas da FICHA normalizam datas, ordenam por calendário e incluem SEM DATA',()=>{
+    const {getDeliveryOptions,deliveryKey}=require('../prog-feira');
+    const now=new Date(2026,10,4,12);
+    const products=['3/11','03/11/2026','27/11','02/01','','-','31/02','SEM PREVISÃO'].map(delivery=>({delivery}));
+    assert.deepEqual(getDeliveryOptions(products,[],now),[
+        {value:'2026-11-03',label:'03/11/2026',count:2},
+        {value:'2026-11-27',label:'27/11/2026',count:1},
+        {value:'2027-01-02',label:'02/01/2027',count:1},
+        {value:'',label:'SEM DATA',count:4}
+    ]);
+    assert.equal(deliveryKey({delivery:'03-11-26'},now),'2026-11-03');
+    assert.deepEqual(getDeliveryOptions([],['2026-11-27'],now),[{value:'2026-11-27',label:'27/11/2026',count:0},{value:'',label:'SEM DATA',count:0}]);
+});
+
+test('entregas permitem múltipla escolha, SEM DATA e combinação sem duplicar referências',()=>{
+    const {filterByDeliveries,getDeliveryOptions,getLabelGroups}=require('../prog-feira');
+    const now=new Date(2026,10,4,12);
+    const products=[{key:'1',delivery:'03/11',etiqueta:'CFA',customerProgram:'B44'},{key:'2',delivery:'27/11',etiqueta:'CGA',customerProgram:'B44'},{key:'3',delivery:'',etiqueta:'CFA',customerProgram:'B44'},{key:'4',delivery:'03/11',etiqueta:'CFA',customerProgram:'B45'}];
+    assert.equal(filterByDeliveries(products,[],now).length,4);
+    assert.deepEqual(filterByDeliveries(products,['2026-11-03','2026-11-27'],now).map(p=>p.key),['1','2','4']);
+    assert.deepEqual(filterByDeliveries(products,[''],now).map(p=>p.key),['3']);
+    const candidates=filterByPrograms(products,['B44']);
+    assert.equal(getDeliveryOptions(candidates,[],now).find(o=>o.value==='2026-11-03').count,1);
+    const filtered=filterByDeliveries(candidates,['2026-11-03',''],now);
+    assert.deepEqual(getLabelGroups(filtered),[{prefix:'CF',count:2,labels:['CFA']}]);
+});
+
+test('filtro de entrega usa a mesma FICHA do card FE D36 e não a de fluxos paralelos',()=>{
+    const {filterByDeliveries,deliveryKey}=require('../prog-feira');
+    const now=new Date(2026,10,4,12);
+    const products=buildProducts([erp('FE','D36','01B',{Ficha:'27/11'}),erp('CO','D41','D01',{Ficha:'03/11'}),erp('TF','D43','M00',{Ficha:'01/12'})],now);
+    assert.equal(products.length,1);assert.equal(products[0].delivery,'27/11');
+    assert.equal(deliveryKey(products[0],now),'2026-11-27');
+    assert.equal(filterByDeliveries(products,['2026-11-03'],now).length,0);
+    assert.equal(filterByDeliveries(products,['2026-11-27'],now).length,1);
+});

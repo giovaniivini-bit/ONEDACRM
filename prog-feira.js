@@ -258,6 +258,24 @@
         return String(value ?? '').trim().toUpperCase();
     }
 
+    function deliveryKey(product,now=new Date()) {
+        const date=parseDelivery(product?.delivery,now);
+        return date?`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`:'';
+    }
+    function deliveryLabel(key) { return key?key.split('-').reverse().join('/'):'SEM DATA'; }
+    function getDeliveryOptions(products,selected=[],now=new Date()) {
+        const counts=new Map([['',0],...selected.map(key=>[key,0])]);
+        for(const product of products||[]) {
+            const key=deliveryKey(product,now);
+            counts.set(key,(counts.get(key)||0)+1);
+        }
+        return [...counts].map(([value,count])=>({value,count,label:deliveryLabel(value)}))
+            .sort((a,b)=>a.value&&b.value?a.value.localeCompare(b.value):a.value?-1:b.value?1:0);
+    }
+    function filterByDeliveries(products,selected=[],now=new Date()) {
+        return (products||[]).filter(product=>!selected.length||selected.includes(deliveryKey(product,now)));
+    }
+
     function getProgramOptions(products, selected = []) {
         const counts = new Map([['', 0], ...selected.map(value => [normalizeProgram(value), 0])]);
         (products || []).forEach(product => {
@@ -370,5 +388,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { deliveryKey,deliveryLabel,getDeliveryOptions,filterByDeliveries,getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });
