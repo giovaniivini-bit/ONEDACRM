@@ -15,7 +15,11 @@ Reuso de parseDelivery mantém filtro alinhado à data/ordem já usada pelo card
 162 testes e revisão independente aprovados. Chrome real: 189 produtos, nove
 datas e 104 SEM DATA; conferidos cada opção, múltiplas datas, estilista/busca,
 zero resultado, seleção preservada, limpeza, KPIs, resumo/PDF e temas/celular.
-Publicação em andamento.
+Publicado no GitHub/VPS no commit d690d3e. 162 testes passaram também na VPS,
+saúde OK e dados preservados. Chrome público confirmou cada data, SEM DATA,
+múltipla seleção, contagens/KPIs, estilista/busca, zero resultado, limpeza,
+resumo/PDF e temas/celular sem erros JS.
+Backup: /home/ubuntu/backups/oneda-crm-delivery-20261104-d690d3e.
 
 ## Estilista responsável — Raio X e Prog Feira
 
