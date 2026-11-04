@@ -8,7 +8,10 @@ Modo Apenas imagens e dias agora mantém o selo ENTREGA da FICHA no canto da
 imagem, em tela e impressão compacta. Removida somente a regra CSS que ocultava
 esse selo; demais informações continuam ocultas e os contadores D36/D43 mantidos.
 162 testes passaram; Chrome confirmou 04/11 no produto 05.20.00.0178 em modo
-completo/compacto e impressão, sem erros JS. Publicação em andamento.
+completo/compacto e impressão, sem erros JS. Publicado no GitHub/VPS no commit
+657acd7; 162 testes também passaram na VPS, saúde OK e dados preservados.
+Chrome público confirmou o selo em tela/impressão. Backup:
+/home/ubuntu/backups/oneda-crm-compact-delivery-20261104-657acd7.
 
 ## Prog Feira — filtro múltiplo por data de entrega
 
