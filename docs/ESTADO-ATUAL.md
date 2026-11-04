@@ -10,9 +10,12 @@ para identificar a semana atual, sem estender terça até segunda seguinte. Grá
 mostram dias reais e o prazo usa a data final planejada. Costura e Corte mantêm
 calendários próprios. Schema 3 reprocessa cache legado 1/2 na próxima leitura,
 preservando fallback em falha. 165 testes passaram e revisão independente aprovada.
-Chrome com fonte real confirmou 03–07/11, costura 14/meta62 (novos lançamentos
-durante a validação; antes 11), corte35 (Andrea29/Chico6), histórico e cache na
-falha, sem erros JS. Publicação em andamento.
+Chrome com fonte real confirmou 03–07/11, meta62 e lançamentos novos sendo lidos
+(11→14→21 durante as conferências), corte35 (Andrea29/Chico6), histórico e cache
+na falha, sem erros JS. Publicado no GitHub/VPS no commit 5926444. 165 testes
+passaram também na VPS; saúde OK e dados preservados. Chrome público confirmou
+costura21/meta62 e corte35, dias terça–sábado e schema3 após a migração do cache.
+Backup: /home/ubuntu/backups/oneda-crm-team-calendar-20261104-5926444.
 
 ## Prog Feira — entrega visível no card simplificado
 
