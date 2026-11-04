@@ -2,6 +2,14 @@
 
 Atualizado em 04/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — entrega visível no card simplificado
+
+Modo Apenas imagens e dias agora mantém o selo ENTREGA da FICHA no canto da
+imagem, em tela e impressão compacta. Removida somente a regra CSS que ocultava
+esse selo; demais informações continuam ocultas e os contadores D36/D43 mantidos.
+162 testes passaram; Chrome confirmou 04/11 no produto 05.20.00.0178 em modo
+completo/compacto e impressão, sem erros JS. Publicação em andamento.
+
 ## Prog Feira — filtro múltiplo por data de entrega
 
 Novo fieldset após Programação e antes dos grupos de etiquetas. Datas da mesma

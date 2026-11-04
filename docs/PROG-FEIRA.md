@@ -2,6 +2,9 @@
 
 ## Data de entrega
 
+O selo ENTREGA permanece visível no canto superior da imagem também no modo
+Apenas imagens e dias e em sua impressão de 16 cards por página (ajuste 04/11/2026).
+
 Filtro múltiplo após Programação, antes dos grupos de etiquetas. Lê a FICHA do
 produto FE/D36 consolidado, a mesma informação exibida no card. Reutiliza
 parseDelivery para normalizar formatos e inferir ano em DD/MM. Opções com ano,

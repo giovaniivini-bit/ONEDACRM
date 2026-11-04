@@ -6309,7 +6309,6 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 
 /* Prog Feira: alternância de consulta visual, preservando os filtros. */
 .prog-feira-images-only .prog-feira-card > :not(.prog-feira-media):not(.prog-feira-card-body),
-.prog-feira-images-only .prog-feira-delivery,
 .prog-feira-images-only .prog-feira-card-body > :not(.prog-feira-time-grid) { display:none !important; }
 .prog-feira-images-only [data-prog-images-only] { border-color:#38bdf8; background:rgba(14,165,233,.12); }
 
