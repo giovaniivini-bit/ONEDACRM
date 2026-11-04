@@ -33,6 +33,8 @@
         return date.toISOString().slice(0,10);
     }
     const addDays = (key, days) => new Date(Date.parse(key+'T12:00:00Z')+days*86400000).toISOString().slice(0,10);
+    const calendarWeekStart=key=>addDays(key,-((new Date(key+'T12:00:00Z').getUTCDay()+6)%7));
+    const weekday=key=>key?['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(key+'T12:00:00Z').getUTCDay()]||'—':'—';
 
     function buildWeeks(rows, now = new Date(), options = {}) {
         if (!Array.isArray(rows) || !rows.length) return [];
@@ -76,9 +78,9 @@
                 previousMonth = d.month;
                 return dateKey(d,dayYear);
             });
-            const validDates = dates.length === 5 && dates.every((d,i)=>d && d === addDays(dates[0],i)) && new Date(dates[0]+'T12:00:00Z').getUTCDay() === 1;
+            const validDates = dates.length === 5 && dates.every((d,i)=>d && d === addDays(dates[0],i));
             const issues = [];
-            if (!validDates) issues.push('Datas não formam uma semana de segunda a sexta.');
+            if (!validDates) issues.push('Datas não formam cinco dias consecutivos válidos.');
             if (!dates[0] || !dates[dates.length-1]) continue;
             const people = persons.map(person => {
                 const activities = [];
@@ -141,7 +143,7 @@
     function dashboard(weeks, now = new Date(), options = {}) {
         const today = todayKey(now);
         const valid = (weeks || []).filter(w=>w.validDates && !w.duplicate).sort((a,b)=>b.start.localeCompare(a.start));
-        const current = valid.find(w=>w.start<=today && addDays(w.start,6)>=today) || null;
+        const current = valid.find(w=>calendarWeekStart(w.start)===calendarWeekStart(today) || (w.start<=today && w.end>=today)) || null;
         const latest = valid.find(w=>w.start<=today) || null;
         const closed = valid.filter(w=>w.end<today && w.id !== current?.id);
         const previous = current ? closed[0] : null;
@@ -191,5 +193,5 @@
             previous:b.has(key)?sum(b.get(key).values.slice(0,days??undefined)):null,
             comparison:compareProduction(a.get(key),b.get(key),days)}));
     }
-    return {PEOPLE,CUTTING_PEOPLE,number,todayKey,buildWeeks,buildCuttingWeeks,summarize,dashboard,countReworks,compareProduction,cuttingActivityTotals,compareCuttingActivities};
+    return {PEOPLE,CUTTING_PEOPLE,number,todayKey,weekday,buildWeeks,buildCuttingWeeks,summarize,dashboard,countReworks,compareProduction,cuttingActivityTotals,compareCuttingActivities};
 });

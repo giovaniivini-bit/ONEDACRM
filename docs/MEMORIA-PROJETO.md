@@ -27,6 +27,14 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 - Operações administrativas usam senha validada no servidor e sessão HttpOnly.
 - Antigravity também modifica os aplicativos: inspecionar o estado real antes de editar.
 
+## Semana planejada de amostras (04/11/2026)
+
+Não exigir início na segunda: planilha usa 03–07/11/2026 (terça–sábado). Aceitar
+cinco datas consecutivas válidas, preservando calendários de cada equipe. Dias
+dos gráficos e prazo devem acompanhar datas reais. Identificação pelo calendário
+ou intervalo efetivo, sem manter terça–sábado atual na segunda seguinte.
+Schema atual 3 força releitura de caches 1/2, que continuam fallback em falha.
+
 ## Entregas na Prog Feira (04/11/2026)
 
 Filtro múltiplo após Programação, por FICHA da parte FE/D36, igual ao card.

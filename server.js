@@ -1282,7 +1282,7 @@ async function requestHandler(req, res) {
             if (fs.existsSync(cfg.cacheFile)) {
                 try {
                     cachedData = JSON.parse(fs.readFileSync(cfg.cacheFile, 'utf8'));
-                    if (type === 'producao_costura' && (![1,2].includes(cachedData.sourceSchemaVersion) || (cachedData.sourceSchemaVersion === 2 && !Array.isArray(cachedData.cuttingWeeks)) || !Array.isArray(cachedData.weeks) || !cachedData.weeks.length || !cachedData.weeks.every(w => Array.isArray(w.people) && Array.isArray(w.dates) && Number.isFinite(w.total)))) cachedData = null;
+                    if (type === 'producao_costura' && (![1,2,3].includes(cachedData.sourceSchemaVersion) || (cachedData.sourceSchemaVersion >= 2 && !Array.isArray(cachedData.cuttingWeeks)) || !Array.isArray(cachedData.weeks) || !cachedData.weeks.length || !cachedData.weeks.every(w => Array.isArray(w.people) && Array.isArray(w.dates) && Number.isFinite(w.total)))) cachedData = null;
                     if (type === 'calendar') {
                         const validCachedRows = validateCalendarRecords(cachedData?.records);
                         cachedData = { ...cachedData, count: validCachedRows.length, records: validCachedRows };
@@ -1300,7 +1300,7 @@ async function requestHandler(req, res) {
             }
 
             const cachedAt = cachedData && Date.parse(cachedData.timestamp || '');
-            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === 4) && (type !== 'producao_costura' || cachedData.sourceSchemaVersion === 2)) {
+            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === 4) && (type !== 'producao_costura' || cachedData.sourceSchemaVersion === 3)) {
                 sendJson(res, 200, { ...cachedData, cacheAgeMs: Date.now() - cachedAt });
                 return;
             }
@@ -1313,7 +1313,7 @@ async function requestHandler(req, res) {
                     const weeks = costura.buildWeeks(matrix);
                     const cuttingWeeks = costura.buildCuttingWeeks(matrix);
                     if (!weeks.some(w => w.validDates)) throw new Error('Nenhuma semana válida de costura foi encontrada na aba Produção Amostras.');
-                    const payload = {success:true, type, title:cfg.name, sourceSchemaVersion:2,
+                    const payload = {success:true, type, title:cfg.name, sourceSchemaVersion:3,
                         sheetTitle:'Produção Amostras', count:weeks.length, weeks, cuttingWeeks,
                         timestamp:new Date().toISOString(), isLive:true};
                     atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');

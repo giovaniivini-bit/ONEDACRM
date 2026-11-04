@@ -134,3 +134,17 @@ test('histórico limita semanas e mantém comparação de atividade com anterior
     assert.equal((row.match(/<td>/g)||[]).length,4);
     assert.match(row,/<b>4<\/b><small class="sw-trend down">Caiu · -1 ações \(-20,0%\)/);
 });
+
+test('corte acompanha terça a sábado com calendário próprio e nomes dos dias corretos',()=>{
+    const today=new Date('2026-11-04T12:00:00Z');
+    const cut=engine.buildCuttingWeeks(matrix(['03/11','04/11','05/11','06/11','07/11']),today);
+    assert.equal(engine.dashboard(cut,today,{team:'cutting'}).current.total,156);
+    const c={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+    view.render(c,{cuttingWeeks:cut},{now:today});
+    assert.match(c.innerHTML,/<strong>Ter<\/strong><small>03\/11<\/small>/);
+    assert.match(c.innerHTML,/<strong>Sáb<\/strong><small>07\/11<\/small>/);
+    view.render(c,{cuttingWeeks:cut},{now:new Date('2026-11-02T12:00:00Z')});
+    assert.match(c.innerHTML,/data-cut-total>156/);
+    assert.match(c.innerHTML,/data-cut-history/);
+    assert.match(c.innerHTML,/class="sw-current-row"/);
+});

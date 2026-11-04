@@ -13,9 +13,9 @@ para compatibilidade; os nomes apresentados ao usuário foram atualizados.
 - Cache: `data/producao_costura_external.json`, ignorado pelo Git. Não substituir em deploy.
 - Consulta periódica enquanto a tela está aberta; cache segue TTL existente de cinco minutos. Atualizar ou Sincronizar Sheets pode forçar uma nova leitura.
 - Falha de rede mantém os últimos dados, identificados como cache, com timestamp. Sem cache disponível não inventa números.
-- Payload schema 2: `weeks` da costura e `cuttingWeeks` do corte, obtidos da mesma leitura.
-  Cache schema 1 continua disponível em falha de rede para a costura; o corte informa
-  indisponibilidade até a próxima leitura, sem criar números zero.
+- Payload schema 3: `weeks` da costura e `cuttingWeeks` do corte, obtidos da mesma leitura.
+  Cache schema 1/2 continua disponível em falha de rede; leitura bem-sucedida migra
+  para schema 3 e reprocessa datas. Cache 1 sem corte informa indisponibilidade.
 
 ## Leitura dos blocos
 
@@ -23,7 +23,15 @@ para compatibilidade; os nomes apresentados ao usuário foram atualizados.
 
 Conta as atividades de cada costureira até a linha TOTAL, sem somar TOTAL novamente. Confronta as linhas TOTAL preenchidas com a soma das atividades e sinaliza divergências. Valores em branco entram como zero nos somatórios, conforme SUM da planilha. Ausência de um bloco de pessoa é sinalizada e não cria média individual fictícia.
 
-As datas devem formar segunda a sexta. Cabeçalhos DD/MM recebem o ano do ciclo industrial CQs semana AASS, quando disponível; os primeiros ciclos em novembro/dezembro pertencem ao ano anterior. Sem ciclo, usa proximidade da data atual para a primeira semana e acompanha a virada de ano nos blocos seguintes. Datas completas prevalecem.
+As datas devem formar cinco dias consecutivos válidos; o início não é fixado na
+segunda. O período 03–07/11/2026 (terça–sábado) é válido. A semana atual usa a semana
+do calendário que contém o início, ou as datas efetivas do período quando este
+atravessa a semana. Assim o período terça–sábado não permanece atual na segunda
+seguinte. Nomes dos dias e prazo de dias restantes são derivados das datas reais.
+Cabeçalhos DD/MM recebem o ano do ciclo industrial CQs semana AASS, quando disponível;
+os primeiros ciclos em novembro/dezembro pertencem ao ano anterior. Sem ciclo, usa
+proximidade da data atual para a primeira semana e acompanha a virada de ano nos
+blocos seguintes. Datas completas prevalecem.
 
 Cada período repetido permanece registrado para conferência. Apenas o bloco mais à esquerda participa dos indicadores agregados. Datas inválidas não entram nas médias. A aba original não é editada.
 

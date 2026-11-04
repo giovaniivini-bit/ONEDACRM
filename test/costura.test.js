@@ -98,3 +98,32 @@ test('view preserva números da semana, estados indisponíveis/cache e texto esc
     assert.ok(container.innerHTML.includes('Não há meta prevista para comparar'));
     assert.ok(!container.innerHTML.includes('Meta atingida com'));
 });
+
+test('semana de terça a sábado é reconhecida, com meta e dias reais, sem deslocar o histórico',()=>{
+    const rows=join(block(['03/11','04/11','05/11','06/11','07/11'],62),block());
+    const today=new Date('2026-11-04T12:00:00Z');
+    const weeks=api.buildWeeks(rows,today),model=api.dashboard(weeks,today);
+    assert.equal(weeks[0].validDates,true);
+    assert.equal(model.current.start,'2026-11-03');assert.equal(model.current.end,'2026-11-07');
+    assert.equal(model.current.target,62);assert.equal(model.current.total,58);
+    assert.equal(model.current.elapsed,2);assert.equal(model.current.remainingDays,4);
+    assert.equal(model.previous.start,'2026-10-26');
+    assert.deepEqual(model.current.dates.map(api.weekday),['Ter','Qua','Qui','Sex','Sáb']);
+    const view=require('../costura-view');const container={innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
+    view.render(container,{weeks},{now:today});
+    assert.match(container.innerHTML,/data-sw-target>62/);
+    assert.match(container.innerHTML,/<strong>Ter<\/strong><small>03\/11<\/small>/);
+    assert.match(container.innerHTML,/<strong>Sáb<\/strong><small>07\/11<\/small>/);
+    assert.ok(container.innerHTML.includes('4 dias previstos até 07/11/2026'));
+    assert.ok(!container.innerHTML.includes('até sexta'));
+    assert.ok(!container.innerHTML.includes('A semana atual ainda não está na planilha'));
+});
+
+test('semana deslocada vale no calendário correto e não permanece atual na segunda seguinte',()=>{
+    const weeks=api.buildWeeks(join(block(['03/11','04/11','05/11','06/11','07/11'],62),block()),new Date('2026-11-04T12:00:00Z'));
+    const monday=api.dashboard(weeks,new Date('2026-11-02T12:00:00Z'));
+    assert.equal(monday.current.start,'2026-11-03');assert.equal(monday.current.elapsed,0);
+    assert.equal(api.dashboard(weeks,new Date('2026-11-08T12:00:00Z')).current.start,'2026-11-03');
+    assert.equal(api.dashboard(weeks,new Date('2026-11-09T12:00:00Z')).current,null);
+    assert.equal(api.dashboard(weeks,new Date('2026-10-31T12:00:00Z')).current.start,'2026-10-26');
+});

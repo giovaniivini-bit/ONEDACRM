@@ -2,6 +2,18 @@
 
 Atualizado em 04/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Produção time de amostras — reconhecimento da semana 03–07/11
+
+Parser exigia seg–sex e descartava as datas válidas terça–sábado da nova semana.
+Agora aceita cinco datas consecutivas reais e usa calendário/intervalo efetivo
+para identificar a semana atual, sem estender terça até segunda seguinte. Gráficos
+mostram dias reais e o prazo usa a data final planejada. Costura e Corte mantêm
+calendários próprios. Schema 3 reprocessa cache legado 1/2 na próxima leitura,
+preservando fallback em falha. 165 testes passaram e revisão independente aprovada.
+Chrome com fonte real confirmou 03–07/11, costura 14/meta62 (novos lançamentos
+durante a validação; antes 11), corte35 (Andrea29/Chico6), histórico e cache na
+falha, sem erros JS. Publicação em andamento.
+
 ## Prog Feira — entrega visível no card simplificado
 
 Modo Apenas imagens e dias agora mantém o selo ENTREGA da FICHA no canto da

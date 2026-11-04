@@ -38,7 +38,7 @@
         const max=Math.max(1,...w.values);
         const days=w.elapsed<w.days?w.elapsed:w.days;
         return `<section class="sw-panel sw-cut-details" data-cut-week="${esc(w.id)}"><header><h3>Ações por dia e colaborador</h3><span>${period(w)}</span></header>
-            <div class="sw-daily-chart" role="img" aria-label="Ações diárias do corte">${w.dates.map((d,i)=>`<div class="sw-day"><div class="sw-day-plot"><div class="sw-day-bar" style="height:${w.values[i]*100/max}%"><b>${fmt(w.values[i])}</b></div></div><strong>${['Seg','Ter','Qua','Qui','Sex'][i]||''}</strong><small>${date(d).slice(0,5)}</small></div>`).join('')}</div>
+            <div class="sw-daily-chart" role="img" aria-label="Ações diárias do corte">${w.dates.map((d,i)=>`<div class="sw-day"><div class="sw-day-plot"><div class="sw-day-bar" style="height:${w.values[i]*100/max}%"><b>${fmt(w.values[i])}</b></div></div><strong>${engine.weekday(d)}</strong><small>${date(d).slice(0,5)}</small></div>`).join('')}</div>
             <div class="sw-people-cards sw-cut-people">${w.people.map(p=>{
                 const before=previous?.people.find(x=>x.name===p.name);
                 const c=engine.compareProduction(p,before,days);
@@ -53,7 +53,7 @@
         const weeks=Array.isArray(payload?.cuttingWeeks)?payload.cuttingWeeks:[];
         const model=engine.dashboard(weeks,options.now||new Date(),{team:'cutting'});
         const current=model.current;
-        const valid=model.history.filter(w=>w.validDates&&!w.duplicate&&w.start<=model.today);
+        const valid=model.history.filter(w=>w.validDates&&!w.duplicate&&(w.start<=model.today||w.id===current?.id));
         const limit=options.historyLimit==='all'?Infinity:Number(options.historyLimit||8);
         const range=valid.slice(0,limit);
         const history=engine.dashboard(range,options.now||new Date(),{team:'cutting'});
