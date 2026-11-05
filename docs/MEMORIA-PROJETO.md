@@ -27,6 +27,16 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 - Operações administrativas usam senha validada no servidor e sessão HttpOnly.
 - Antigravity também modifica os aplicativos: inspecionar o estado real antes de editar.
 
+## Relatórios automáticos (05/11/2026)
+
+Gerar somente às 07:00 e 13:30 de São Paulo, nunca ao sincronizar planilhas.
+Timer sem recuperação de horários perdidos/repetições tardias; gate local e de
+horário no servidor/runner/fila. schedule-runs.json persiste deduplicação por
+data/horário e deve sobreviver a Excluir todos e deploy. PDFs/snapshots/índice em
+data/automatic-reports, fora do Git. Seleção e exclusão individual/em lote/todos
+com confirmação e login; não executar exclusão de produção como teste de deploy.
+Guia RELATORIOS-AUTOMATICOS.md descreve tipos, fontes, API e recuperação de falhas.
+
 ## Semana planejada de amostras (04/11/2026)
 
 Não exigir início na segunda: planilha usa 03–07/11/2026 (terça–sábado). Aceitar

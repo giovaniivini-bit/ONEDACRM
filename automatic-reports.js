@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const prog = require('./prog-feira');
 const alerts = require('./alerts-engine');
 const {STYLIST_IDS,normalizeOrderReportRecords,buildStylistReports} = require('./stylist-reports');
+const {requireReportSlot}=require('./report-schedule');
 const REPORT_TYPES=new Set(['tingimento','entregas','malotes','cores',...STYLIST_IDS.map(id=>`estilista-${id}`)]);
 
 function referenceDay(now) {
@@ -102,6 +103,46 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
         running = pending.catch(() => {});
         return pending;
     };
+    const removeJob=ids=>{
+        const index=readIndex(),wanted=new Set(ids),found=index.filter(meta=>wanted.has(meta.id));
+        const result={deletedIds:[],missingIds:ids.filter(id=>!found.some(meta=>meta.id===id)),failedIds:[]};
+        if(!found.length)return result;
+        atomic(indexPath,index.map(meta=>wanted.has(meta.id)?{...meta,deletionPending:true}:meta));
+        for(const meta of found) {
+            try {
+                for(const extension of ['pdf','json']) {
+                    try {fs.unlinkSync(path.join(directory,`${meta.id}.${extension}`));}
+                    catch(error) {if(error.code!=='ENOENT')throw error;}
+                }
+                result.deletedIds.push(meta.id);
+            } catch(error) {result.failedIds.push(meta.id);result.error=error;}
+        }
+        const deleted=new Set(result.deletedIds);
+        atomic(indexPath,index.filter(meta=>!deleted.has(meta.id)).map(meta=>wanted.has(meta.id)?{...meta,deletionPending:true}:meta));
+        return result;
+    };
+    const generateJob=async(records,sourceTimestamp,sources,slot=null)=>{
+        if (!Array.isArray(records) || !records.length) throw new Error('Fonte indisponível: relatórios anteriores foram preservados');
+        if (!Array.isArray(sources?.mainRecords) || !sources.mainRecords.length || !Array.isArray(sources?.colorRecords) || !Array.isArray(sources?.trimRecords)) throw new Error('Fontes de malotes e cores ou aviamentos indisponíveis: relatórios anteriores foram preservados');
+        const generatedAt=slot?new Date(slot.startedAt):now();
+        const reports=buildReports(records,generatedAt,sources),batch=crypto.randomBytes(16).toString('hex');
+        fs.mkdirSync(directory,{recursive:true});
+        const metas=[];
+        for(const report of reports) {
+            const id=`${batch}-${report.type}`;
+            const reportTimestamp=report.type==='malotes'?sources.mainTimestamp:report.type==='cores'?sources.colorTimestamp:sourceTimestamp;
+            const snapshot={...report,id,generatedAt:generatedAt.toISOString(),sourceTimestamp:reportTimestamp||sourceTimestamp};
+            if(slot)snapshot.scheduleKey=slot.key;
+            if(report.stylist)snapshot.sourceTimestamps={pedido:sources.mainTimestamp||sourceTimestamp,amostra:sourceTimestamp,cores:sources.colorTimestamp||sourceTimestamp,aviamentos:sources.trimTimestamp||sourceTimestamp};
+            const pdf=path.join(directory,`${id}.pdf`);
+            await renderPdf(snapshot,`${pdf}.tmp`);
+            fs.renameSync(`${pdf}.tmp`,pdf);
+            atomic(path.join(directory,`${id}.json`),snapshot);
+            metas.push({id,type:report.type,title:report.title,referenceDay:report.referenceDay,generatedAt:snapshot.generatedAt,sourceTimestamp:snapshot.sourceTimestamp,count:report.items.length,countLabel:report.countLabel,uniqueProducts:report.uniqueProducts,warnings:report.warnings,...(slot?{scheduleKey:slot.key}:{})});
+        }
+        atomic(indexPath,[...metas,...readIndex()]);
+        return metas;
+    };
     return {
         list: () => readIndex(),
         read(id) {
@@ -112,44 +153,37 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
         remove(id) {
             return enqueue(() => {
                 if (!validId(id)) return false;
-                const index = readIndex();
-                if (!index.some(meta => meta.id === id)) return false;
-                // Persist intent before touching files. A partial failure stays in
-                // the history as a retryable deletion, including after a restart.
-                atomic(indexPath,index.map(meta => meta.id===id?{...meta,deletionPending:true}:meta));
-                for (const extension of ['pdf','json']) {
-                    try { fs.unlinkSync(path.join(directory,`${id}.${extension}`)); }
-                    catch(error) { if(error.code !== 'ENOENT') throw error; }
-                }
-                atomic(indexPath,index.filter(meta => meta.id !== id));
-                return true;
+                const result=removeJob([id]);
+                if(result.error)throw result.error;
+                return result.deletedIds.includes(id);
             });
         },
+        removeMany(ids) {
+            if(!Array.isArray(ids)||!ids.length||ids.length>10000||!ids.every(validId))return Promise.reject(Object.assign(new Error('Selecione uma lista válida de relatórios para excluir.'),{status:400}));
+            return enqueue(()=>{const result=removeJob([...new Set(ids)]);delete result.error;return result;});
+        },
         generate(records, sourceTimestamp, sources) {
-            const job = async () => {
-                if (!Array.isArray(records) || !records.length) throw new Error('Fonte indisponível: relatórios anteriores foram preservados');
-                if (!Array.isArray(sources?.mainRecords) || !sources.mainRecords.length || !Array.isArray(sources?.colorRecords) || !Array.isArray(sources?.trimRecords)) throw new Error('Fontes de malotes e cores ou aviamentos indisponíveis: relatórios anteriores foram preservados');
-                const generatedAt = now();
-                const reports = buildReports(records, generatedAt, sources);
-                const batch = crypto.randomBytes(16).toString('hex');
+            return enqueue(()=>generateJob(records,sourceTimestamp,sources));
+        },
+        async generateScheduled(loadSources) {
+            const slot=requireReportSlot(now());
+            return enqueue(async()=>{
+                if(requireReportSlot(now()).key!==slot.key)throw Object.assign(new Error('O horário agendado já terminou.'),{status:409});
                 fs.mkdirSync(directory,{recursive:true});
-                const metas = [];
-                for (const report of reports) {
-                    const id = `${batch}-${report.type}`;
-                    const reportTimestamp = report.type === 'malotes' ? sources.mainTimestamp : report.type === 'cores' ? sources.colorTimestamp : sourceTimestamp;
-                    const snapshot = { ...report, id, generatedAt:generatedAt.toISOString(), sourceTimestamp:reportTimestamp || sourceTimestamp };
-                    if(report.stylist)snapshot.sourceTimestamps={pedido:sources.mainTimestamp || sourceTimestamp,amostra:sourceTimestamp,
-                        cores:sources.colorTimestamp || sourceTimestamp,aviamentos:sources.trimTimestamp || sourceTimestamp};
-                    const pdf = path.join(directory,`${id}.pdf`);
-                    await renderPdf(snapshot, `${pdf}.tmp`);
-                    fs.renameSync(`${pdf}.tmp`, pdf);
-                    atomic(path.join(directory,`${id}.json`), snapshot);
-                    metas.push({ id, type:report.type, title:report.title, referenceDay:report.referenceDay, generatedAt:snapshot.generatedAt, sourceTimestamp:snapshot.sourceTimestamp, count:report.items.length, countLabel:report.countLabel, uniqueProducts:report.uniqueProducts, warnings:report.warnings });
+                const ledgerPath=path.join(directory,'schedule-runs.json');
+                const ledger=fs.existsSync(ledgerPath)?JSON.parse(fs.readFileSync(ledgerPath,'utf8')):{};
+                if(ledger[slot.key]?.state==='completed'||readIndex().some(meta=>meta.scheduleKey===slot.key)) {
+                    ledger[slot.key]={state:'completed',startedAt:ledger[slot.key]?.startedAt||slot.startedAt};atomic(ledgerPath,ledger);
+                    return {skipped:true,generatedReports:[],scheduleKey:slot.key};
                 }
-                atomic(indexPath, [...metas, ...readIndex()]);
-                return metas;
-            };
-            return enqueue(job);
+                ledger[slot.key]={state:'started',startedAt:slot.startedAt};atomic(ledgerPath,ledger);
+                try {
+                    const {records,sourceTimestamp,sources}=await loadSources();
+                    const generatedReports=await generateJob(records,sourceTimestamp,sources,slot);
+                    ledger[slot.key]={state:'completed',startedAt:slot.startedAt};atomic(ledgerPath,ledger);
+                    return {skipped:false,generatedReports,scheduleKey:slot.key};
+                } catch(error) {ledger[slot.key]={state:'failed',startedAt:slot.startedAt};atomic(ledgerPath,ledger);throw error;}
+            });
         }
     };
 }

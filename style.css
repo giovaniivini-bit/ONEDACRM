@@ -6335,10 +6335,18 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
  body.print-prog-feira .prog-feira-images-only .prog-feira-time > small { font-size:5.5px !important; }
 }
 .automatic-reports-history, .automatic-report-intro { padding:18px; gap:10px; margin:18px 0; }
+.main-content:has(.automatic-reports-view) { min-width:0; }
+.automatic-reports-view { min-width:0; width:100%; }
+.automatic-report-entry { overflow-wrap:anywhere; }
 .automatic-report-entry { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; padding:12px; border:1px solid var(--border-base); background:var(--bg-surface); color:var(--text-primary); border-radius:7px; text-align:left; cursor:pointer; }
 .automatic-report-entry span { font-size:12px; color:var(--text-secondary); }
 .automatic-report-entry.selected { outline:2px solid #38bdf8; }
 .automatic-report-row { display:flex; align-items:stretch; gap:8px; margin:8px 0; }
+.automatic-report-checkbox { display:flex; align-items:center; padding:8px; flex:none; cursor:pointer; }
+.automatic-report-checkbox input,.automatic-report-bulk input { width:17px; height:17px; accent-color:#0ea5e9; cursor:pointer; }
+.automatic-report-bulk { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin:14px 0; padding:12px; border:1px solid var(--border-base); border-radius:7px; }
+.automatic-report-bulk label { display:flex; align-items:center; gap:8px; font-size:12px; }
+.automatic-report-bulk>span { color:var(--text-secondary); font-size:12px; margin-right:auto; }
 .automatic-report-row .automatic-report-entry { flex:1; min-width:0; }
 .automatic-report-delete { flex:none; padding:8px 12px; color:#ef4444; background:transparent; border:1px solid #ef4444; border-radius:7px; cursor:pointer; }
 .automatic-report-delete:disabled { opacity:.5; cursor:wait; }
@@ -6359,3 +6367,8 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 .automatic-report-cards p, .automatic-report-intro p { font-size:12px; color:var(--text-secondary); overflow-wrap:anywhere; }
 @media(max-width:1100px) { .automatic-report-cards { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:580px) { .automatic-report-cards { grid-template-columns:1fr; } }
+@media(max-width:580px) {
+    .automatic-report-row { display:grid; grid-template-columns:28px minmax(0,1fr); }
+    .automatic-report-row>.automatic-report-delete { grid-column:2; justify-self:start; }
+    .automatic-report-bulk .automatic-report-delete { max-width:100%; white-space:normal; }
+}

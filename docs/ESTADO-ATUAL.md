@@ -1,6 +1,20 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 04/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 05/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Relatórios automáticos — horários exclusivos e exclusão em lote
+
+Recuperadas atualizações de outro agente até 66a8617: oito tipos de PDFs, por
+tema e estilista, persistência/histórico e timer da VPS. Correção atual remove
+geração das sincronizações geral/Prog Feira; endpoint local autenticado exclusivo
+para 07:00/13:30 de São Paulo. Runner e fila validam horário; ledger persistente
+impede duplicação, mesmo após reiniciar ou excluir todos. Sem catchup/retries tardios.
+UI com seleção individual/todos e Excluir selecionados/Excluir todos os PDFs,
+confirmação e login administrativo. IDs explícitos, fila compartilhada, falha
+parcial com retentativa e reconciliação de seleção/versão aberta. Histórico da
+VPS não é apagado no deploy. 201 testes e Chrome com arquivos temporários passaram;
+revisões independentes realizadas, achados corrigidos. Publicação em andamento.
+Detalhes e operação em RELATORIOS-AUTOMATICOS.md.
 
 ## Produção time de amostras — reconhecimento da semana 03–07/11
 

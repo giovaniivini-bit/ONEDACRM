@@ -1,15 +1,14 @@
 # Relatórios automáticos
 
-Gerar e guardar PDFs e snapshots diariamente às 07:00 e 13:30 de America/Sao_Paulo,
-e a cada sincronização bem-sucedida geral e do Prog Feira (POST autenticado).
-A atualização complementar após o sync geral não duplica o lote já gerado.
+Gerar e guardar PDFs e snapshots somente às 07:00 e 13:30 de America/Sao_Paulo.
+Sincronização geral e do Prog Feira atualiza dados sem gerar PDFs.
 O agendamento roda na VPS, sem dependência de navegador ou computador do usuário.
 Não há envio externo nesta fase.
 
 1. Regras e testes: M00 >5, M02 >7 dias na própria parte TF/D43; entrega anterior
    ao dia de referência de São Paulo, com os critérios atuais do Prog Feira;
    malotes e cores com as mesmas funções de domínio usadas pelos alertas.
-2. PDFs persistidos e índice atômico: uma sincronização guarda oito versões novas,
+2. PDFs persistidos e índice atômico: cada horário guarda oito versões novas,
    sem apagar versões anteriores; falha não publica relatório parcial.
 3. Tela de histórico com descrição, data da fonte, cards e PDF já pronto para abrir.
 4. Validar regras nas fronteiras, reinício/falha da fonte, rotas e PDF renderizado;
@@ -21,10 +20,12 @@ incorporam as imagens disponíveis no momento da geração. Fonte sem data váli
 não é classificada silenciosamente: o relatório informa a exclusão. A geração
 é serial para preservar o índice mesmo com sincronizações concorrentes.
 
-Retenção: versões são mantidas até exclusão individual pelo usuário. A tela oferece
-"Excluir PDF" com confirmação e autenticação administrativa. DELETE remove somente
-o PDF, snapshot e entrada de histórico escolhidos; pedidos e outras versões não
-mudam. Exclusão compartilha a fila da geração. Uma intenção persistente
+Retenção: versões são mantidas até exclusão pelo usuário. A tela oferece seleção
+individual, Selecionar todos, Excluir selecionados e Excluir todos os PDFs, além de
+Excluir PDF por linha, com confirmação e autenticação administrativa. DELETE recebe
+IDs explícitos da lista apresentada; não atinge PDFs gerados depois da seleção.
+Remove somente PDF, snapshot e entrada de histórico escolhidos; pedidos não mudam.
+Exclusão compartilha a fila da geração. Uma intenção persistente
 `deletionPending` permite tentar novamente se a remoção física falhar parcialmente,
 inclusive após reiniciar o servidor. Não há limpeza automática de histórico.
 A data de referência não muda ao reabrir PDF.
@@ -79,7 +80,7 @@ Plano: reutilizar classificação e critérios existentes; compor snapshots por 
 renderizar os grupos na tela e no PDF; testar variantes, datas e permanência;
 conferir PDFs com fotos e navegador, revisar e publicar.
 
-Cada sincronização acrescenta os quatro relatórios gerais e um relatório para
+Cada horário acrescenta os quatro relatórios gerais e um relatório para
 Camila, Ketlyn, Joyce e Thamires. A atribuição usa `product-stylist.js`, sem mudar
 prefixos nem incluir produtos classificados como "Sem estilista".
 
@@ -135,15 +136,41 @@ sudo install -m 644 deploy/oneda-crm-reports.timer /etc/systemd/system/oneda-crm
 sudo systemd-analyze verify /etc/systemd/system/oneda-crm-reports.service /etc/systemd/system/oneda-crm-reports.timer
 sudo systemctl daemon-reload
 sudo systemctl enable --now oneda-crm-reports.timer
-sudo systemctl start oneda-crm-reports.service
+sudo systemctl restart oneda-crm-reports.timer
 systemctl list-timers oneda-crm-reports.timer
 journalctl -u oneda-crm-reports.service -n 10 --no-pager
 ```
 
-O timer tem dois OnCalendar com fuso explícito, sem atraso aleatório; Persistent
-recupera uma execução perdida quando a VPS voltar. O serviço admite três tentativas
-totais por hora (inicial e duas repetições, separadas por cinco minutos).
-`scripts/generate-scheduled-reports.cjs` chama o endpoint local existente, autentica
+O timer tem dois OnCalendar com fuso explícito, sem atraso aleatório. Persistent
+é false: horário perdido não é recuperado depois. Restart=no impede repetições
+cinco minutos depois. O runner e o servidor admitem início somente nos minutos
+07:00 e 13:30 de São Paulo. Uma execução admitida pode terminar depois; sua data
+de geração registra o início, não a conclusão do processamento.
+`scripts/generate-scheduled-reports.cjs` chama POST /api/automatic-reports/scheduled,
+exclusivo para acesso direto loopback, Host local e token administrativo, sem
+cabeçalhos de proxy. Autentica
 com `/home/ubuntu/.config/oneda-crm/admin-token` (modo 600) e valida os oito tipos
 gerados com fonte ao vivo. Não envia credencial a destinos externos nem segue
 redirecionamentos. Logs contêm apenas resultado, tipos e quantidades.
+
+## Correção de 05/11/2026 — somente horários e exclusão em lote
+
+Removidos os disparos da sincronização geral e do refresh de Prog Feira. A fila
+confere novamente o horário antes de iniciar. schedule-runs.json, no mesmo diretório
+protegido dos PDFs, registra cada data/horário concluído. Repetições concorrentes,
+reinício e exclusão de todo o histórico não geram um segundo lote naquele horário.
+Se houver falha entre publicar índice e concluir o registro, os metadados scheduleKey
+permitem recuperar a conclusão. Falha de fonte não publica lote vazio/parcial.
+
+DELETE /api/automatic-reports aceita JSON {ids:[...]}; DELETE com ?id= continua
+compatível. IDs são validados antes de qualquer exclusão, com deduplicação. Falha
+parcial devolve deletedIds/missingIds/failedIds (HTTP 207); itens que falharam ficam
+deletionPending para retentativa e demais selecionados são removidos. A interface
+reconcilia seleção, versão aberta e histórico. Excluir todos usa somente IDs atuais
+confirmados, preservando gerações posteriores e o registro de horários.
+
+Testes cobrem fuso/fronteiras de minuto, não geração em sync, deduplicação/reinício,
+perda do horário na fila, exclusão autenticada em lote, IDs inválidos e falha parcial.
+Chrome com histórico temporário conferiu seleção, confirmação/cancelamento, login,
+exclusão em lote/todos, retentativa, atualização, temas e celular. Nenhum PDF de
+produção é removido pela implantação ou pelas verificações.

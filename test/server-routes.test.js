@@ -20,7 +20,7 @@ let port;
 
 function request({ method = 'GET', route = '/', headers = {}, body = '' }) {
     return new Promise((resolve, reject) => {
-        const req = http.request({ hostname: '127.0.0.1', port, path: route, method, headers }, res => {
+        const req = http.request({ hostname: '127.0.0.1', port, path: route, method, headers:{...headers,...(body?{'Content-Length':Buffer.byteLength(body)}:{})} }, res => {
             const chunks = [];
             res.on('data', chunk => chunks.push(chunk));
             res.on('end', () => resolve({
@@ -335,4 +335,49 @@ test('excluir relatório exige autorização, valida ID e remove PDF e snapshot 
     assert.equal(fs.existsSync(path.join(reportsDir,`${id}.json`)),false);
     assert.deepEqual(JSON.parse(fs.readFileSync(path.join(reportsDir,'index.json'),'utf8')),[{id:other}]);
     assert.equal((await request({method:'DELETE',route,headers})).status,404);
+});
+
+test('excluir PDFs selecionados ou todos exige autorização e valida todo o lote antes de apagar',async()=>{
+    const ids=['c'.repeat(32)+'-entregas','d'.repeat(32)+'-cores','e'.repeat(32)+'-malotes'];
+    fs.writeFileSync(path.join(reportsDir,'index.json'),JSON.stringify(ids.map(id=>({id}))));
+    for(const id of ids)for(const ext of ['pdf','json'])fs.writeFileSync(path.join(reportsDir,`${id}.${ext}`),ext==='json'?'{}':'PDF');
+    const headers={'X-CRM-Admin-Token':'route-test-secret','Content-Type':'application/json'};
+    assert.equal((await request({method:'DELETE',route:'/api/automatic-reports',body:JSON.stringify({ids})})).status,401);
+    for(const body of [null,{}, {ids:[]},{ids:[ids[0],'../index']}] )assert.equal((await request({method:'DELETE',route:'/api/automatic-reports',headers,body:JSON.stringify(body)})).status,400);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(reportsDir,'index.json'))).length,3);
+    const response=await request({method:'DELETE',route:'/api/automatic-reports',headers,body:JSON.stringify({ids:ids.slice(0,2)})});
+    assert.equal(response.status,200);assert.deepEqual(JSON.parse(response.body).deletedIds,ids.slice(0,2));
+    assert.equal((await request({route:`/api/automatic-reports?id=${ids[0]}&format=pdf`})).status,404);
+    assert.equal((await request({route:`/api/automatic-reports?id=${ids[2]}&format=pdf`})).status,200);
+    assert.equal((await request({method:'DELETE',route:'/api/automatic-reports',headers,body:JSON.stringify({ids:[ids[2]]})})).status,200);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(reportsDir,'index.json'))),[]);
+});
+
+test('rota agendada exige POST autenticado e mantém recursos internos inacessíveis',async()=>{
+    assert.equal((await request({route:'/api/automatic-reports/scheduled'})).status,405);
+    assert.equal((await request({method:'POST',route:'/api/automatic-reports/scheduled'})).status,401);
+    const headers={'X-CRM-Admin-Token':'route-test-secret'};
+    assert.equal((await request({method:'POST',route:'/api/automatic-reports/scheduled',headers:{...headers,Host:'crm.example'}})).status,403);
+    assert.equal((await request({method:'POST',route:'/api/automatic-reports/scheduled',headers:{...headers,'X-Forwarded-For':'203.0.113.1'}})).status,403);
+    assert.equal((await request({route:'/report-schedule.js'})).status,404);
+    assert.equal((await request({route:'/data/automatic-reports/schedule-runs.json'})).status,404);
+});
+
+test('sincronizar Prog Feira atualiza a fonte sem gerar PDFs nem baixar fontes dos relatórios',async()=>{
+    const https=require('node:https'),{EventEmitter}=require('node:events');
+    const cache=path.join(__dirname,'../data/prog_feira_external.json');
+    const saved=fs.existsSync(cache)?fs.readFileSync(cache):null;
+    const reportsBefore=fs.readFileSync(path.join(reportsDir,'index.json'),'utf8');
+    const original=https.get,urls=[];
+    try {
+        https.get=(url,callback)=>{
+            urls.push(String(url));const req=new EventEmitter();req.setTimeout=()=>req;req.destroy=()=>{};
+            setImmediate(()=>{const res=new EventEmitter();res.statusCode=200;res.headers={};res.setEncoding=()=>{};callback(res);
+                res.emit('data','Número,Código,Parte,Fluxo,Setor,Qtde Pend\n'+Array.from({length:40},(_,i)=>`${i+1},01.12.00.1000,FE,D36,01B,4`).join('\n'));res.emit('end');});return req;
+        };
+        const response=await request({method:'POST',route:'/api/external-sheet?type=prog_feira&refresh=1',headers:{'X-CRM-Admin-Token':'route-test-secret'}});
+        assert.equal(response.status,200);const payload=JSON.parse(response.body);assert.equal(payload.success,true);assert.equal(payload.isLive,true);assert.equal(payload.records.length,40);
+        assert.equal(Object.hasOwn(payload,'generatedReports'),false);assert.equal(urls.length,1);
+        assert.equal(fs.readFileSync(path.join(reportsDir,'index.json'),'utf8'),reportsBefore);
+    } finally {https.get=original;if(saved)fs.writeFileSync(cache,saved);else if(fs.existsSync(cache))fs.unlinkSync(cache);}
 });

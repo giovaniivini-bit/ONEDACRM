@@ -208,3 +208,59 @@ test('falha parcial de exclusão fica persistida para tentar novamente após rei
     assert.equal(restarted.list().length,7);
     assert.equal(fs.existsSync(path.join(dir,`${meta.id}.json`)),false);
 });
+
+test('exclusão em lote valida toda a seleção e preserva relatórios fora dela ou gerados depois',async t=>{
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-report-bulk-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+    const store=createReportStore({directory:dir,renderPdf:async(_,file)=>fs.writeFileSync(file,'PDF'),now:()=>now});
+    const batch=await store.generate([main('A')],now.toISOString(),sources);
+    await assert.rejects(store.removeMany([batch[0].id,'../index']),/lista válida/);
+    assert.equal(store.list().length,8);
+    const [next,result]=await Promise.all([store.generate([main('B')],now.toISOString(),sources),store.removeMany([batch[0].id,batch[1].id,batch[0].id])]);
+    assert.equal(result.deletedIds.length,2);assert.equal(result.failedIds.length,0);
+    assert.ok(store.read(next[0].id));assert.ok(store.read(batch[2].id));
+    const rest=store.list().map(meta=>meta.id);await store.removeMany(rest);assert.equal(store.list().length,0);
+    for(const id of [...batch,...next].map(meta=>meta.id))assert.equal(store.read(id),null);
+    assert.equal((await store.removeMany([batch[0].id])).missingIds.length,1);
+});
+
+test('lote com falha parcial exclui demais PDFs e mantém apenas os itens pendentes para retentativa',async t=>{
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-bulk-failure-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+    const options={directory:dir,renderPdf:async(_,file)=>fs.writeFileSync(file,'PDF'),now:()=>now};const store=createReportStore(options);
+    const batch=await store.generate([main('A')],now.toISOString(),sources),original=fs.unlinkSync;
+    try{
+        fs.unlinkSync=file=>{if(file===path.join(dir,`${batch[0].id}.json`))throw Object.assign(new Error('Access denied'),{code:'EACCES'});return original(file);};
+        const result=await store.removeMany([batch[0].id,batch[1].id]);assert.deepEqual(result.failedIds,[batch[0].id]);assert.deepEqual(result.deletedIds,[batch[1].id]);
+    }finally{fs.unlinkSync=original;}
+    const restarted=createReportStore(options);assert.equal(restarted.list().find(meta=>meta.id===batch[0].id).deletionPending,true);
+    assert.equal(restarted.read(batch[0].id),null);assert.equal(restarted.read(batch[1].id),null);
+    assert.deepEqual((await restarted.removeMany([batch[0].id])).deletedIds,[batch[0].id]);assert.equal(restarted.list().length,6);
+});
+
+test('agendamento gera um lote por horário e persiste a deduplicação mesmo após excluir todos e reiniciar',async t=>{
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-report-slot-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+    let clock=new Date('2026-11-06T10:00:00Z'),loads=0;
+    const options={directory:dir,renderPdf:async(_,file)=>fs.writeFileSync(file,'PDF'),now:()=>clock};
+    const load=async()=>{loads++;return{records:[main('A')],sourceTimestamp:now.toISOString(),sources};};
+    const store=createReportStore(options);const results=await Promise.all([store.generateScheduled(load),store.generateScheduled(load)]);
+    assert.equal(loads,1);assert.equal(results[0].generatedReports.length,8);assert.equal(results[1].skipped,true);
+    assert.equal(store.list()[0].generatedAt,'2026-11-06T10:00:00.000Z');
+    // Recover a crash between publishing the index and completing the ledger.
+    fs.writeFileSync(path.join(dir,'schedule-runs.json'),JSON.stringify({'2026-11-06T07:00':{state:'started'}}));
+    assert.equal((await createReportStore(options).generateScheduled(load)).skipped,true);
+    await store.removeMany(store.list().map(meta=>meta.id));assert.equal(store.list().length,0);
+    const restarted=createReportStore(options);assert.equal((await restarted.generateScheduled(load)).skipped,true);assert.equal(loads,1);
+    clock=new Date('2026-11-06T16:30:00Z');assert.equal((await restarted.generateScheduled(load)).generatedReports.length,8);assert.equal(loads,2);
+    clock=new Date('2026-11-06T16:31:00Z');await assert.rejects(restarted.generateScheduled(load),/somente às/);assert.equal(loads,2);
+});
+
+test('falha de fonte preserva histórico; fila que perde o horário não gera depois',async t=>{
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-report-slot-error-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+    let clock=new Date('2026-11-06T10:00:00Z');let fail=true;
+    const store=createReportStore({directory:dir,renderPdf:async(_,file)=>{fs.writeFileSync(file,'PDF');if(fail)clock=new Date('2026-11-06T10:01:00Z');},now:()=>clock});
+    await assert.rejects(store.generateScheduled(async()=>{throw new Error('Fonte indisponível');}),/Fonte indisponível/);assert.equal(store.list().length,0);
+    const load=async()=>({records:[main('A')],sourceTimestamp:now.toISOString(),sources});
+    // A generation admitted on time may finish later; another queued run must not start late.
+    const admitted=store.generateScheduled(load),late=store.generateScheduled(()=>assert.fail('Não buscar fonte após o horário'));
+    assert.equal((await admitted).generatedReports.length,8);await assert.rejects(late,/somente às/);
+    assert.equal(store.list().length,8);fail=false;
+});

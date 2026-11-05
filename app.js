@@ -99,6 +99,7 @@
         automaticReportsLoaded: false,
         automaticReportsLoading: false,
         automaticReportDeleting: false,
+        automaticReportSelection: [],
         automaticReportsError: '',
         alertRules: [],
         alertRulesSource: 'loading',
@@ -916,7 +917,7 @@
     }
 
     // Carregamento assíncrono das planilhas externas do Drive (Cores, Aviamentos e CQ)
-    async function loadExternalSheets(force = false, reportsAlreadyGenerated = false) {
+    async function loadExternalSheets(force = false) {
         const sheetsWereLoaded = state.externalSheetsLoaded;
         const previousSheetSources = JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive]);
         if (!window.location.protocol.startsWith('http')) return;
@@ -924,7 +925,7 @@
         const failures = [];
         try {
             const requestExternal = type => {
-                const url = `/api/external-sheet?type=${type}${force ? '&refresh=1' : ''}${type==='prog_feira' && reportsAlreadyGenerated ? '&reports=skip' : ''}`;
+                const url = `/api/external-sheet?type=${type}${force ? '&refresh=1' : ''}`;
                 const request = force ? adminFetch(url, { method: 'POST' }) : fetch(url);
                 return request.then(async response => {
                     const payload = await response.json().catch(() => null);
@@ -968,7 +969,6 @@
                 state.progFeiraExternalData = progFeiraRes;
                 if (force) {
                     state.automaticReportsLoaded = false;
-                    if (progFeiraRes.reportsError) showNotification(progFeiraRes.reportsError,'warning','Relatórios automáticos');
                     if (state.activeSubmodule === 'relatorios-automaticos') loadAutomaticReports();
                 }
             }
@@ -1871,7 +1871,12 @@
                     reports:state.automaticReports, selected:state.automaticReport,
                     loading:state.automaticReportsLoading, error:state.automaticReportsError,
                     escape:escapeHtml, image:getProductImage, choose:loadAutomaticReport, refresh:loadAutomaticReports,
-                    remove:deleteAutomaticReport, deleting:state.automaticReportDeleting
+                    remove:deleteAutomaticReport, deleting:state.automaticReportDeleting,
+                    selection:state.automaticReportSelection,
+                    toggle:id=>{state.automaticReportSelection=state.automaticReportSelection.includes(id)?state.automaticReportSelection.filter(value=>value!==id):[...state.automaticReportSelection,id];renderActiveView();},
+                    selectAll:()=>{state.automaticReportSelection=state.automaticReportSelection.length===state.automaticReports.length?[]:state.automaticReports.map(r=>r.id);renderActiveView();},
+                    removeSelected:()=>deleteAutomaticReports(state.automaticReportSelection),
+                    removeAll:()=>deleteAutomaticReports(state.automaticReports.map(r=>r.id),true)
                 });
                 if (!state.automaticReportsLoaded && !state.automaticReportsLoading) loadAutomaticReports();
                 break;
@@ -4207,6 +4212,7 @@
             if(!response.ok||!data.success) throw new Error(data.error||'Não foi possível carregar os relatórios.');
             if(request===automaticReportListRequest) {
                 state.automaticReports=data.reports;
+                state.automaticReportSelection=state.automaticReportSelection.filter(id=>data.reports.some(r=>r.id===id));
                 if(state.automaticReport && !data.reports.some(r=>r.id===state.automaticReport.id&&!r.deletionPending))state.automaticReport=null;
             }
         } catch(error) { if(request===automaticReportListRequest)state.automaticReportsError=error.message; }
@@ -4220,22 +4226,30 @@
         return automaticReportListTask;
     }
     let automaticReportRequest=0;
-    async function deleteAutomaticReport(id) {
+    function deleteAutomaticReport(id) { return deleteAutomaticReports([id]); }
+    async function deleteAutomaticReports(selectedIds,all=false) {
         if(state.automaticReportDeleting)return;
-        const report=state.automaticReports.find(r=>r.id===id);
-        if(!report || !window.confirm(`Excluir o PDF e o registro de "${report.title}", gerado em ${new Date(report.generatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}? Esta ação não altera os pedidos do CRM.`))return;
+        const ids=[...new Set(selectedIds)].filter(id=>state.automaticReports.some(r=>r.id===id));
+        if(!ids.length)return;
+        const report=state.automaticReports.find(r=>r.id===ids[0]);
+        const scope=all?`TODOS os ${ids.length} PDFs deste histórico`:ids.length===1?`o PDF "${report.title}", gerado em ${new Date(report.generatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}`:`os ${ids.length} PDFs selecionados`;
+        if(!window.confirm(`Excluir ${scope} e seus registros? Esta ação é permanente e não altera os pedidos do CRM.`))return;
+        ++automaticReportRequest;
         state.automaticReportDeleting=true;
         state.automaticReportsError='';
         if(state.activeSubmodule==='relatorios-automaticos')renderActiveView();
         try {
-            const response=await adminFetch(`/api/automatic-reports?id=${encodeURIComponent(id)}`,{method:'DELETE'});
+            const response=await adminFetch('/api/automatic-reports',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})});
             const data=await response.json();
+            const removed=new Set([...(data.deletedIds||[]),...(data.missingIds||[])]);
+            if(removed.size) {
+                ++automaticReportListRequest;
+                state.automaticReports=state.automaticReports.filter(r=>!removed.has(r.id));
+                state.automaticReportSelection=state.automaticReportSelection.filter(id=>!removed.has(id));
+                if(removed.has(state.automaticReport?.id))state.automaticReport=null;
+            }
             if(!response.ok||!data.success)throw new Error(data.error||'Não foi possível excluir o relatório.');
-            ++automaticReportRequest;
-            ++automaticReportListRequest;
-            state.automaticReports=state.automaticReports.filter(r=>r.id!==id);
-            if(state.automaticReport?.id===id)state.automaticReport=null;
-            showNotification('Relatório excluído.','success','Relatórios automáticos');
+            showNotification(`${data.deletedIds.length} PDF(s) excluído(s).`,'success','Relatórios automáticos');
         } catch(error) {
             await loadAutomaticReports(true);
             state.automaticReportsError=error.message;
@@ -12250,8 +12264,7 @@
             if (!json.success) throw new Error(json.error || 'Erro desconhecido retornado pelo servidor');
 
             await loadCRMData('full');
-            await Promise.all([loadExternalSheets(true, !json.reportsError), loadDriveImages()]);
-            if(json.reportsError) showNotification(json.reportsError,'warning','Relatórios automáticos');
+            await Promise.all([loadExternalSheets(true), loadDriveImages()]);
             showNotification(`Planilha atualizada com sucesso! ${formatNumber(json.count)} registros carregados diretamente do Google Drive.`, 'success', 'Sincronização Concluída');
             updateSystemStatus('Online (Sincronizado)', true);
         } catch (e) {

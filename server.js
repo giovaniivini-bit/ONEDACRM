@@ -19,6 +19,7 @@ const costura = require('./costura');
 const { createAdminAuth } = require('./admin-auth');
 const {
     readRequestBody,
+    safeTokenEquals,
     requestIsSameOrigin,
     applySecurityHeaders
 } = require('./server-security');
@@ -284,11 +285,13 @@ async function fetchAutomaticReportSources(mainSource = {}, fetchSheet = fetchGo
         trimRecords:trims.records,trimTimestamp:trims.timestamp,colors,trims};
 }
 
-async function generateAutomaticReports(progSource, mainSource) {
-    const sources = await fetchAutomaticReportSources(mainSource);
+async function loadScheduledReportSources() {
+    const progSource=await fetchProgFeiraReportSource();
+    const sources = await fetchAutomaticReportSources();
+    atomicWriteFileSync(path.join(DATA_DIR,'prog_feira_external.json'),JSON.stringify(progSource,null,2),'utf8');
     atomicWriteFileSync(path.join(DATA_DIR,'cores_external.json'),JSON.stringify(sources.colors,null,2),'utf8');
     atomicWriteFileSync(path.join(DATA_DIR,'aviamentos_external.json'),JSON.stringify(sources.trims,null,2),'utf8');
-    return automaticReports.generate(progSource.records,progSource.timestamp,sources);
+    return {records:progSource.records,sourceTimestamp:progSource.timestamp,sources};
 }
 
 // O mesmo modelo comprovado do Studeoneda: imagens versionadas em /images e
@@ -1278,15 +1281,38 @@ async function requestHandler(req, res) {
     }
 
     // API: Obter Dados de Planilhas Externas (Cores e Aviamentos do Drive)
+    if(pathname==='/api/automatic-reports/scheduled') {
+        if(req.method!=='POST'){res.writeHead(405,{Allow:'POST'});res.end();return;}
+        if(!requireAdmin(req,res))return;
+        const localHost=/^(?:127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/i.test(req.headers.host||'');
+        const forwarded=['forwarded','x-forwarded-for','x-forwarded-host','x-real-ip'].some(header=>Boolean(req.headers[header]));
+        if(!localHost||forwarded||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress)||!safeTokenEquals(req.headers['x-crm-admin-token'],ADMIN_TOKEN)) {
+            sendJson(res,403,{success:false,error:'Geração disponível somente para o agendamento local.'});return;
+        }
+        try {
+            const result=await automaticReports.generateScheduled(loadScheduledReportSources);
+            sendJson(res,200,{success:true,isLive:true,...result});
+        } catch(error) {
+            console.error('[RELATÓRIOS] Agendamento:',error.message);
+            sendJson(res,error.status||500,{success:false,error:error.status?error.message:'Falha na geração agendada. O histórico anterior foi preservado.'});
+        }
+        return;
+    }
     if (pathname === '/api/automatic-reports') {
         if (req.method === 'DELETE') {
             if (!requireAdmin(req,res)) return;
             try {
                 const id=parsedUrl.searchParams.get('id');
-                if (!id) {sendJson(res,400,{success:false,error:'Selecione um relatório para excluir.'});return;}
+                if(!id) {
+                    let body;
+                    try {body=JSON.parse(await readRequestBody(req,1024*1024)||'{}');}
+                    catch(error) {sendJson(res,error.statusCode||400,{success:false,error:'Lista de relatórios inválida.'});return;}
+                    const result=await automaticReports.removeMany(body?.ids);
+                    sendJson(res,result.failedIds.length?207:200,{success:!result.failedIds.length,...result,...(result.failedIds.length?{error:'Alguns PDFs não puderam ser excluídos. Tente novamente os itens pendentes.'}:{})});return;
+                }
                 const removed=await automaticReports.remove(id);
                 sendJson(res,removed?200:404,removed?{success:true}:{success:false,error:'Relatório não encontrado'});
-            } catch(error) {console.error('[RELATÓRIOS] Exclusão falhou:',error.message);sendJson(res,500,{success:false,error:'Não foi possível concluir a exclusão. Tente novamente pelo histórico.'});}
+            } catch(error) {console.error('[RELATÓRIOS] Exclusão falhou:',error.message);sendJson(res,error.status||500,{success:false,error:error.status?error.message:'Não foi possível concluir a exclusão. Tente novamente pelo histórico.'});}
             return;
         }
         if (req.method !== 'GET') { res.writeHead(405, { Allow:'GET, DELETE' }); res.end(); return; }
@@ -1445,13 +1471,6 @@ async function requestHandler(req, res) {
                 if (type === 'prog_feira') {
                     const payload = createProgFeiraPayload(records);
                     atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
-                    if (force && parsedUrl.searchParams.get('reports') !== 'skip') {
-                        try { payload.generatedReports = await generateAutomaticReports(payload); }
-                        catch (err) {
-                            console.error('[RELATÓRIOS] Geração falhou:',err.message);
-                            payload.reportsError = 'Os dados foram sincronizados, mas os novos relatórios não puderam ser gerados. Os relatórios anteriores foram preservados.';
-                        }
-                    }
                     sendJson(res, 200, payload);
                     return;
                 }
@@ -1676,17 +1695,6 @@ async function requestHandler(req, res) {
             // Aguarda o índice atualizado antes de confirmar a sincronização.
             await fetchGoogleDriveImages();
 
-            let generatedReports = [];
-            let reportsError = '';
-            try {
-                const progSource = await fetchProgFeiraReportSource();
-                atomicWriteFileSync(path.join(DATA_DIR,'prog_feira_external.json'),JSON.stringify(progSource,null,2),'utf8');
-                generatedReports = await generateAutomaticReports(progSource,{mainRecords:originalRecords,mainTimestamp:new Date().toISOString()});
-            }
-            catch(err) {
-                console.error('[RELATÓRIOS] Geração após sync falhou:',err.message);
-                reportsError = 'Os dados foram sincronizados, mas os relatórios não puderam ser gerados. O histórico anterior foi preservado.';
-            }
             
             console.log(`[SYNC] Sincronização concluída com sucesso! ${originalRecords.length} registros atualizados.`);
 
@@ -1696,8 +1704,6 @@ async function requestHandler(req, res) {
                 message: 'Planilha e Imagens sincronizadas com sucesso diretamente da nuvem!',
                 count: originalRecords.length,
                 imagesCount: driveImagesCache.count,
-                generatedReports,
-                reportsError,
                 timestamp: new Date().toISOString()
             }));
         } catch (err) {

@@ -2,8 +2,6 @@
 Description=Geracao dos relatorios automaticos do Oneda CRM
 Wants=network-online.target
 After=network-online.target
-StartLimitIntervalSec=1h
-StartLimitBurst=3
 
 [Service]
 Type=oneshot
@@ -13,8 +11,7 @@ Environment=CRM_REPORTS_BASE_URL=http://127.0.0.1:3036
 Environment=CRM_ADMIN_TOKEN_FILE=/home/ubuntu/.config/oneda-crm/admin-token
 ExecStart=/usr/bin/node /home/ubuntu/apps/ONEDACRM/scripts/generate-scheduled-reports.cjs
 TimeoutStartSec=9min
-Restart=on-failure
-RestartSec=5min
+Restart=no
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=read-only
