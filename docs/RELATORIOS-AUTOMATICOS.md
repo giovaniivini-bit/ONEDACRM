@@ -8,7 +8,7 @@ agendamento por horário ou envio externo nesta fase.
 1. Regras e testes: M00 >5, M02 >7 dias na própria parte TF/D43; entrega anterior
    ao dia de referência de São Paulo, com os critérios atuais do Prog Feira;
    malotes e cores com as mesmas funções de domínio usadas pelos alertas.
-2. PDFs persistidos e índice atômico: uma sincronização guarda quatro versões novas,
+2. PDFs persistidos e índice atômico: uma sincronização guarda oito versões novas,
    sem apagar versões anteriores; falha não publica relatório parcial.
 3. Tela de histórico com descrição, data da fonte, cards e PDF já pronto para abrir.
 4. Validar regras nas fronteiras, reinício/falha da fonte, rotas e PDF renderizado;
@@ -71,3 +71,35 @@ O excedente continua na mesma metade da folha seguinte. A tela também separa os
 setores. Testes cobrem divisão física, grupo vazio e continuação, exclusão
 autenticada, IDs inválidos, arquivo inacessível após exclusão, falha parcial com
 retentativa e concorrência entre geração e exclusão.
+
+## Pendências por estilista
+
+Plano: reutilizar classificação e critérios existentes; compor snapshots por tema;
+renderizar os grupos na tela e no PDF; testar variantes, datas e permanência;
+conferir PDFs com fotos e navegador, revisar e publicar.
+
+Cada sincronização acrescenta os quatro relatórios gerais e um relatório para
+Camila, Ketlyn, Joyce e Thamires. A atribuição usa `product-stylist.js`, sem mudar
+prefixos nem incluir produtos classificados como "Sem estilista".
+
+Os seis grupos, sempre visíveis mesmo vazios, são:
+
+- PEDIDO / PRODUTOS COM PENDÊNCIA DE ESTAMPA: universo e vínculos do Raio X,
+  classificação de status compartilhada com a tela Sit. Estampa. Não usa o local
+  de modelagem como status de produto.
+- PEDIDO / PRODUTOS COM PENDÊNCIA DE AVIAMENTO: X01 na mesma OF e código completo.
+- PEDIDO / PRODUTOS COM PENDÊNCIA DE COR: D01 na mesma OF e código completo.
+- AMOSTRA / PRODUTOS EM ATRASO: fonte Prog Feira, entrega anterior ao dia de São
+  Paulo. Entregas de hoje não estão atrasadas.
+- AMOSTRA / PRODUTOS SEM DATA DE ENTREGA VÁLIDA: datas vazias ou inválidas; as
+  inválidas recebem identificação explícita e aviso.
+- AMOSTRA / MAIS DE 15 DIAS EM 01A, 01B OU 1B2: setor principal atual FE/D36 e dias
+  da sua movimentação. Exatamente 15 dias não entra; fluxos paralelos não mudam
+  esse prazo. Sem movimentação válida não é possível classificar permanência.
+
+Um produto com várias pendências aparece em cada subtema correspondente. O total
+de pendências distingue essas ocorrências da contagem de produtos/OFs únicos.
+Pedidos consolidam tamanhos antes do Raio X, com semana, descrição, setores,
+status e peças. Amostras mantêm entrega, programação, peças e tempo no setor.
+Snapshots registram timestamps de PEDIDO e AMOSTRA separadamente. Os PDFs antigos
+continuam intactos; os novos tipos também permitem exclusão individual.

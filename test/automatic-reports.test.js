@@ -58,7 +58,7 @@ test('histórico persiste após reinício, serializa geração e não publica lo
     const store=createReportStore({directory:dir,renderPdf,now:()=>now});
     const records=[main('A'),tf('A','M00','01/10/2026')];
     await Promise.all([store.generate(records,now.toISOString(),sources),store.generate(records,now.toISOString(),sources)]);
-    assert.equal(store.list().length,8);
+    assert.equal(store.list().length,16);
     const restarted=createReportStore({directory:dir,renderPdf,now:()=>now});
     const id=restarted.list()[0].id;
     assert.ok(restarted.read(id).report.items.length);
@@ -66,9 +66,9 @@ test('histórico persiste após reinício, serializa geração e não publica lo
     let count=0;
     const failing=createReportStore({directory:dir,renderPdf:async(_,file)=>{if(++count===2)throw new Error('disk full');fs.writeFileSync(file,'PDF');},now:()=>now});
     await assert.rejects(failing.generate(records,now.toISOString(),sources),/disk full/);
-    assert.equal(restarted.list().length,8);
+    assert.equal(restarted.list().length,16);
     await assert.rejects(store.generate([],now.toISOString()),/Fonte indisponível/);
-    assert.equal(restarted.list().length,8);
+    assert.equal(restarted.list().length,16);
 });
 
 test('erro real de escrita durante carregamento da imagem é rejeitado sem encerrar Node',async t=>{
@@ -143,11 +143,11 @@ test('novos tipos persistem e são acessíveis por ID; falha de qualquer fonte p
     t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
     const store=createReportStore({directory:dir,renderPdf:async(_,file)=>fs.writeFileSync(file,'PDF'),now:()=>now});
     const metas=await store.generate([main('A')],now.toISOString(),{...sources,mainTimestamp:'MAIN',colorTimestamp:'COLORS'});
-    assert.deepEqual(metas.map(m=>m.type),['tingimento','entregas','malotes','cores']);
+    assert.deepEqual(metas.map(m=>m.type),['tingimento','entregas','malotes','cores','estilista-camila','estilista-ketlyn','estilista-joyce','estilista-thamires']);
     assert.equal(store.read(metas[2].id).report.sourceTimestamp,'MAIN');
     assert.equal(store.read(metas[3].id).report.sourceTimestamp,'COLORS');
     await assert.rejects(store.generate([main('A')],now.toISOString()),/Fontes de malotes e cores/);
-    assert.equal(store.list().length,4);
+    assert.equal(store.list().length,8);
 });
 
 test('malotes reservam metade superior para 88 e inferior para 83, continuando quatro por setor',()=>{
@@ -175,14 +175,14 @@ test('exclusão remove apenas o PDF e snapshot escolhidos e serializa com geraç
     const metas=await store.generate([main('A')],now.toISOString(),sources);
     const [next,removed]=await Promise.all([store.generate([main('B')],now.toISOString(),sources),store.remove(metas[0].id)]);
     assert.equal(removed,true);
-    assert.equal(store.list().length,7);
+    assert.equal(store.list().length,15);
     assert.equal(store.read(metas[0].id),null);
     for(const extension of ['pdf','json'])assert.equal(fs.existsSync(path.join(dir,`${metas[0].id}.${extension}`)),false);
     assert.ok(store.read(next[0].id));
     assert.ok(store.read(metas[1].id));
     assert.equal(await store.remove(metas[0].id),false);
     assert.equal(await store.remove('../index'),false);
-    assert.equal(store.list().length,7);
+    assert.equal(store.list().length,15);
 });
 
 test('falha parcial de exclusão fica persistida para tentar novamente após reinício',async t=>{
@@ -205,6 +205,6 @@ test('falha parcial de exclusão fica persistida para tentar novamente após rei
     assert.equal(fs.existsSync(path.join(dir,`${meta.id}.pdf`)),false);
     assert.equal(fs.existsSync(path.join(dir,`${meta.id}.json`)),true);
     assert.equal(await restarted.remove(meta.id),true);
-    assert.equal(restarted.list().length,3);
+    assert.equal(restarted.list().length,7);
     assert.equal(fs.existsSync(path.join(dir,`${meta.id}.json`)),false);
 });

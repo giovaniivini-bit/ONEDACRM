@@ -3,6 +3,8 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const prog = require('./prog-feira');
 const alerts = require('./alerts-engine');
+const {STYLIST_IDS,normalizeOrderReportRecords,buildStylistReports} = require('./stylist-reports');
+const REPORT_TYPES=new Set(['tingimento','entregas','malotes','cores',...STYLIST_IDS.map(id=>`estilista-${id}`)]);
 
 function referenceDay(now) {
     return new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' }).format(now);
@@ -67,14 +69,7 @@ function buildReports(records, now = new Date(), sources = {}) {
     aging.sort((a,b) => a.groupKey.localeCompare(b.groupKey) || a.movementDays-b.movementDays || byProduct(a,b));
     late.sort((a,b) => b.groupKey.localeCompare(a.groupKey) || byProduct(a,b));
     // Same operational rule as Alertas, with only the fields needed by that rule.
-    const mainRecords = (sources.mainRecords || []).map(r => {
-        const field = names => alerts.getRecordField(r,names);
-        return { op:field(['Número','Numero','Nmero','OF','Ordem','OP']),
-            codigo:field(['Código','Codigo','Cdigo','Referência','Referencia','Produto','Cod Produto']),
-            setor:field(['SETOR','Setor Pendente','Setor Atual']),
-            descSetor:field(['Desc Setor','Descrição Setor','Descricao Setor']),
-            etiqueta:field(['Etiqueta','Etq','Desc Etiqueta']) };
-    });
+    const mainRecords = normalizeOrderReportRecords(sources.mainRecords);
     const maloteRule = alerts.cloneDefaults().filter(r => r.id === 'malotes-parte-principal');
     const malotes = alerts.evaluateRecords(alerts.buildOperationalAlertRecords(mainRecords,[],{now:reference}),maloteRule,{now:reference})
         .map(a => ({...item({numero:a.op,codigo:a.codigo,sector:a.record.maloteSetor,sectorLabel:a.record.descSetor,etiqueta:a.record.etiqueta},a.message)})).sort(byProduct);
@@ -86,7 +81,8 @@ function buildReports(records, now = new Date(), sources = {}) {
         { type:'tingimento', grouping:'sector', title:'Permanência em M00 e M02', description:'M00 acima de 5 dias, depois M02 acima de 7 dias. Em cada setor, da movimentação menos atrasada para a mais atrasada no fluxo TF/D43. Um produto pendente nos dois setores aparece nos dois grupos.', warnings: missingMovement ? `${missingMovement} linhas sem data válida de movimentação não foram classificadas.` : '', items:aging },
         { type:'entregas', grouping:'delivery', title:'Prog Feira - entregas em atraso', description:'Produtos ativos com entrega anterior ao dia de referência, agrupados da data menos atrasada para a mais atrasada. Hoje não é atraso. Datas sem ano seguem a regra do Prog Feira.', warnings: missingDelivery ? `${missingDelivery} produtos sem entrega válida não foram classificados.` : '', items:late },
         { type:'malotes', grouping:'malote-halves', title:'Malotes pendentes', description:'Pedidos com malote nos setores 88/83 e parte principal em 20/26. Setor 88 na metade superior e setor 83 na inferior de cada folha.', warnings:'', items:malotes },
-        { type:'cores', title:'Cores - previsões para hoje e em atraso', description:'Mesma regra do alerta de cores: previsão para hoje ou vencida, sem data de recebimento nem envio ao cliente. Cada card representa uma pendência de cor.', warnings:'', items:cores }
+        { type:'cores', title:'Cores - previsões para hoje e em atraso', description:'Mesma regra do alerta de cores: previsão para hoje ou vencida, sem data de recebimento nem envio ao cliente. Cada card representa uma pendência de cor.', warnings:'', items:cores },
+        ...buildStylistReports(mainRecords,products,reference,day)
     ].map(report => ({ ...report, referenceDay:day }));
 }
 
@@ -100,7 +96,7 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
         return result;
     };
     const atomic = (file, value) => { const tmp = `${file}.tmp`; fs.writeFileSync(tmp, JSON.stringify(value)); fs.renameSync(tmp,file); };
-    const validId = id => /^[a-f0-9]{32}-(tingimento|entregas|malotes|cores)$/.test(id);
+    const validId = id => typeof id==='string'&&/^[a-f0-9]{32}-/.test(id)&&REPORT_TYPES.has(id.slice(33));
     const enqueue = job => {
         const pending = running.then(job);
         running = pending.catch(() => {});
@@ -142,11 +138,12 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
                     const id = `${batch}-${report.type}`;
                     const reportTimestamp = report.type === 'malotes' ? sources.mainTimestamp : report.type === 'cores' ? sources.colorTimestamp : sourceTimestamp;
                     const snapshot = { ...report, id, generatedAt:generatedAt.toISOString(), sourceTimestamp:reportTimestamp || sourceTimestamp };
+                    if(report.stylist)snapshot.sourceTimestamps={pedido:sources.mainTimestamp || sourceTimestamp,amostra:sourceTimestamp};
                     const pdf = path.join(directory,`${id}.pdf`);
                     await renderPdf(snapshot, `${pdf}.tmp`);
                     fs.renameSync(`${pdf}.tmp`, pdf);
                     atomic(path.join(directory,`${id}.json`), snapshot);
-                    metas.push({ id, type:report.type, title:report.title, referenceDay:report.referenceDay, generatedAt:snapshot.generatedAt, sourceTimestamp:snapshot.sourceTimestamp, count:report.items.length, warnings:report.warnings });
+                    metas.push({ id, type:report.type, title:report.title, referenceDay:report.referenceDay, generatedAt:snapshot.generatedAt, sourceTimestamp:snapshot.sourceTimestamp, count:report.items.length, countLabel:report.countLabel, uniqueProducts:report.uniqueProducts, warnings:report.warnings });
                 }
                 atomic(indexPath, [...metas, ...readIndex()]);
                 return metas;

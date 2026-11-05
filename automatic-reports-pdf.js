@@ -30,7 +30,15 @@ function planReportPages(report) {
         if(title) {page.headings.push({title,y});y+=22;}
     };
     groupReportItems(report).forEach((group,index)=>{
-        if (!group.items.length) return;
+        if (!group.items.length) {
+            if(report.sections) {
+                if(y+50>bottom)nextPage();
+                heading(group.title);
+                (page.emptyTexts ||= []).push({text:'Nenhuma pendência neste subtema.',y});
+                y+=28;
+            }
+            return;
+        }
         if(index && report.grouping==='delivery') {
             // Preserve a half sheet of whitespace between dates, including
             // whitespace crossing the page boundary (without blank pages).
@@ -82,13 +90,13 @@ function createPdfRenderer(resolveImage) {
             const w=doc.page.width;
             const first=pageNumber===0;
             doc.font('Helvetica-Bold').fontSize(14).fillColor('#122234').text(report.title,24,18,{width:w-48,height:20});
-            line(`Referência: ${report.referenceDay.split('-').reverse().join('/')} | Gerado: ${new Date(report.generatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})} | ${report.items.length} ${report.type==='cores'?'pendências':'produtos'} | Folha ${pageNumber+1} de ${pages.length}`,24,38,w-48,8);
+            line(`Referência: ${report.referenceDay.split('-').reverse().join('/')} | Gerado: ${new Date(report.generatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})} | ${report.items.length} ${report.countLabel || (report.type==='cores'?'pendências':'produtos')}${report.stylist?` | ${report.uniqueProducts} produtos/OFs`:''} | Folha ${pageNumber+1} de ${pages.length}`,24,38,w-48,8);
             const top=first?93:58;
             if(first) {
                 line(report.description,24,51,w-48,8,'#263445',20);
                 if(report.warnings) line(report.warnings,24,73,w-48,7,'#a14d00',16);
             }
-            if(!report.items.length && report.type!=='malotes') { line('Nenhum produto atende aos critérios nesta sincronização.',24,top,w-48,12); continue; }
+            if(!report.items.length && report.type!=='malotes'&&!report.sections) { line('Nenhum produto atende aos critérios nesta sincronização.',24,top,w-48,12); continue; }
             for(const section of layout.headings) {
                 doc.roundedRect(24,section.y,w-48,18,3).fill('#e0f2fe');
                 doc.font('Helvetica-Bold').fontSize(10).fillColor('#075985').text(section.title,30,section.y+3,{width:w-60,height:14});
@@ -96,7 +104,8 @@ function createPdfRenderer(resolveImage) {
             for(const empty of layout.emptyTexts || []) line(empty.text,30,empty.y,w-60,10,'#64748b');
             layout.cards.forEach(({item,x,y,width:cw,height:ch},i) => {
                 const reasonHeight=report.type==='cores'?40:22;
-                const imgH=ch-54-reasonHeight;
+                const extraHeight=report.stylist?28:0;
+                const imgH=ch-54-reasonHeight-extraHeight;
                 doc.roundedRect(x,y,cw,ch,5).fillAndStroke('#ffffff','#cbd5e1');
                 if(images[i]) {
                     try { doc.image(images[i],x+3,y+3,{fit:[cw-6,imgH],align:'center',valign:'center'}); }
@@ -106,8 +115,12 @@ function createPdfRenderer(resolveImage) {
                 doc.font('Helvetica-Bold').fontSize(9).fillColor('#075985').text(item.codigo,x+5,b,{width:cw-10,height:12,ellipsis:true});
                 line(`${item.numero?`OF ${item.numero} | `:''}${item.sector} - ${item.sectorLabel}`,x+5,b+13,cw-10,7,'#334155',18);
                 line(`${item.detailLabel || 'Entrega'}: ${item.delivery || 'Não informada'} | ${item.etiqueta || ''}`,x+5,b+31,cw-10,7,'#334155',12);
-                doc.roundedRect(x+4,b+44,cw-8,reasonHeight,3).fill('#fff1e6');
-                line(item.reason,x+7,b+47,cw-14,7,'#9a3412',reasonHeight-4);
+                if(report.stylist) {
+                    line(item.theme==='PEDIDO'?`${item.description || ''} | ${item.quantity || 0} peças`:`Prog.: ${item.customerProgram || '—'} | ${item.quantity} peças | ${item.daysInSector ?? '—'} dias no setor`,x+5,b+44,cw-10,7,'#334155',12);
+                    line(item.theme==='PEDIDO'?`Status: ${item.styleStatus || 'Não informado'}`:`Movimentação: ${item.movementDate || 'Não informada'}`,x+5,b+57,cw-10,7,'#334155',12);
+                }
+                doc.roundedRect(x+4,b+44+extraHeight,cw-8,reasonHeight,3).fill('#fff1e6');
+                line(item.reason,x+7,b+47+extraHeight,cw-14,7,'#9a3412',reasonHeight-4);
             });
         }
         doc.end();

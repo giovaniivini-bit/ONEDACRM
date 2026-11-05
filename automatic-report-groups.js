@@ -4,6 +4,10 @@
     if (root) root.CRMAutomaticReportGroups = api;
 })(typeof window !== 'undefined' ? window : globalThis, function() {
     function groupReportItems(report) {
+        if(report.sections) return report.sections.map(section=>({
+            key:section.key,title:`${section.theme} / ${section.title}`,
+            items:report.items.filter(item=>item.groupKey===section.key)
+        }));
         if (report.type === 'malotes') return ['88','83'].map(sector => ({
             key:sector, title:`Setor ${sector} - Malotes`,
             items:report.items.filter(item => String(item.sector).replace(/^0(?=\d{2}$)/,'') === sector)

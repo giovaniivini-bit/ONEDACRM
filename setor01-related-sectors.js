@@ -46,5 +46,37 @@
         return 'outros';
     }
 
-    return { buildMap, resolve, matchesPending, styleStatusGroup };
+    function isEstampaStatusPendente(status) {
+        if (!status) return false;
+        const s = status.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        // 1. Excluir explicitamente todos os liberados / aprovados
+        // Exemplos: LIBERADO PRODUCAO, pp sample aprovada, LIB p producao / falta PP sample, LIB p producao / falta PP conceito
+        if (
+            s.includes('aprovad') ||
+            s.includes('liberado') ||
+            s.startsWith('lib ') ||
+            s.startsWith('liber') ||
+            s.includes('lib p ') ||
+            s.includes('lib para') ||
+            s.includes('lib producao')
+        ) {
+            return false;
+        }
+
+        // 2. Pendentes:
+        // "pendente desenvolvimento", "aguar aprov. lic / conceito", "aguar aprovação pp sample", "ag conceito", "agu. pp sample"
+        if (s.includes('desenv') && (s.includes('pend') || s.includes('desenvolvimento'))) return true;
+        if (s.includes('conceito') || s.includes('lic')) return true;
+        if (s.includes('sample') || s.includes('pp')) return true;
+        if (s.includes('aguar') || s.includes('agu') || s.startsWith('ag ') || s.includes('pendente') || s.includes('pendent')) return true;
+
+        return false;
+    }
+
+    return { buildMap, resolve, matchesPending, styleStatusGroup, isEstampaStatusPendente };
 }));
