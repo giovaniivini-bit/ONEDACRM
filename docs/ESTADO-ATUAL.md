@@ -13,7 +13,13 @@ UI com seleção individual/todos e Excluir selecionados/Excluir todos os PDFs,
 confirmação e login administrativo. IDs explícitos, fila compartilhada, falha
 parcial com retentativa e reconciliação de seleção/versão aberta. Histórico da
 VPS não é apagado no deploy. 201 testes e Chrome com arquivos temporários passaram;
-revisões independentes realizadas, achados corrigidos. Publicação em andamento.
+duas revisões independentes aprovadas. Publicado no GitHub/VPS no commit b37e1cf.
+201 testes passaram na VPS, saúde OK. Timer ativo, Persistent=no e Restart=no,
+próximo disparo 06/11 às 07h de São Paulo. Runner executado fora de horário
+retornou skipped=true sem gerar PDFs; hashes dos arquivos preservados. Chrome
+público conferiu seleção, confirmações canceladas, detalhe e celular sem erros;
+23 versões existentes preservadas. Backup de código, unidades e histórico:
+/home/ubuntu/backups/oneda-crm-reports-controls-20261105-b37e1cf.
 Detalhes e operação em RELATORIOS-AUTOMATICOS.md.
 
 ## Produção time de amostras — reconhecimento da semana 03–07/11
