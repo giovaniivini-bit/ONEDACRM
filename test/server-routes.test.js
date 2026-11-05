@@ -7,6 +7,8 @@ const path = require('node:path');
 const { encodePasswordHash } = require('../admin-auth');
 
 const rulesPath = path.join(os.tmpdir(), `oneda-alert-rules-${process.pid}.json`);
+const reportsDir=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-routes-reports-'));
+process.env.CRM_REPORTS_DIR=reportsDir;
 process.env.CRM_ADMIN_TOKEN = 'route-test-secret';
 process.env.CRM_ADMIN_PASSWORD_HASH = encodePasswordHash('Senha administrativa para rotas!');
 process.env.ALERT_RULES_PATH = rulesPath;
@@ -45,6 +47,7 @@ before(async () => {
 after(async () => {
     if (server) await new Promise(resolve => server.close(resolve));
     if (fs.existsSync(rulesPath)) fs.rmSync(rulesPath, { force: true });
+    fs.rmSync(reportsDir,{recursive:true,force:true});
 });
 
 test('serves health and blocks internal static files and malformed URLs', async () => {
@@ -310,4 +313,24 @@ test('fontes dos relatórios usam base principal para malotes e cores filtradas 
     await assert.rejects(fetchAutomaticReportSources({},async()=>'<html>Erro Google</html>'),/Fonte de malotes inválida/);
     await assert.rejects(fetchAutomaticReportSources({mainRecords:sources.mainRecords},async()=>'Produto,Previsão\n01.A,03/11/2026'),/Fonte de cores inválida/);
     assert.equal((await request({route:'/automatic-report-groups.js'})).status,200);
+});
+
+test('excluir relatório exige autorização, valida ID e remove PDF e snapshot sem atingir outros',async()=>{
+    const id='a'.repeat(32)+'-malotes', other='b'.repeat(32)+'-cores';
+    const metas=[{id},{id:other}];
+    fs.writeFileSync(path.join(reportsDir,'index.json'),JSON.stringify(metas));
+    for(const meta of metas)for(const extension of ['json','pdf'])fs.writeFileSync(path.join(reportsDir,`${meta.id}.${extension}`),extension==='json'?'{}':'PDF');
+    const route=`/api/automatic-reports?id=${id}`;
+    const headers={'X-CRM-Admin-Token':'route-test-secret'};
+    assert.equal((await request({method:'DELETE',route})).status,401);
+    assert.equal(fs.existsSync(path.join(reportsDir,`${id}.pdf`)),true);
+    assert.equal((await request({method:'DELETE',route:'/api/automatic-reports',headers})).status,400);
+    assert.equal((await request({method:'DELETE',route:'/api/automatic-reports?id=..%2Findex',headers})).status,404);
+    assert.equal((await request({method:'DELETE',route,headers})).status,200);
+    assert.equal((await request({route})).status,404);
+    assert.equal((await request({route:route+'&format=pdf'})).status,404);
+    assert.equal(fs.existsSync(path.join(reportsDir,`${id}.pdf`)),false);
+    assert.equal(fs.existsSync(path.join(reportsDir,`${id}.json`)),false);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(reportsDir,'index.json'),'utf8')),[{id:other}]);
+    assert.equal((await request({method:'DELETE',route,headers})).status,404);
 });

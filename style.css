@@ -6338,6 +6338,10 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 .automatic-report-entry { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; padding:12px; border:1px solid var(--border-base); background:var(--bg-surface); color:var(--text-primary); border-radius:7px; text-align:left; cursor:pointer; }
 .automatic-report-entry span { font-size:12px; color:var(--text-secondary); }
 .automatic-report-entry.selected { outline:2px solid #38bdf8; }
+.automatic-report-row { display:flex; align-items:stretch; gap:8px; margin:8px 0; }
+.automatic-report-row .automatic-report-entry { flex:1; min-width:0; }
+.automatic-report-delete { flex:none; padding:8px 12px; color:#ef4444; background:transparent; border:1px solid #ef4444; border-radius:7px; cursor:pointer; }
+.automatic-report-delete:disabled { opacity:.5; cursor:wait; }
 .automatic-report-intro a { display:inline-flex; align-items:center; width:fit-content; padding:9px 14px; border-radius:6px; background:#0284c7; color:#fff; text-decoration:none; font-weight:700; font-size:13px; }
 .automatic-report-cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
 .automatic-report-group { margin:24px 0; }

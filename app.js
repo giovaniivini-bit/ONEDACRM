@@ -98,6 +98,7 @@
         automaticReport: null,
         automaticReportsLoaded: false,
         automaticReportsLoading: false,
+        automaticReportDeleting: false,
         automaticReportsError: '',
         alertRules: [],
         alertRulesSource: 'loading',
@@ -1897,7 +1898,8 @@
                 window.CRMAutomaticReportsView.render(container, {
                     reports:state.automaticReports, selected:state.automaticReport,
                     loading:state.automaticReportsLoading, error:state.automaticReportsError,
-                    escape:escapeHtml, image:getProductImage, choose:loadAutomaticReport, refresh:loadAutomaticReports
+                    escape:escapeHtml, image:getProductImage, choose:loadAutomaticReport, refresh:loadAutomaticReports,
+                    remove:deleteAutomaticReport, deleting:state.automaticReportDeleting
                 });
                 if (!state.automaticReportsLoaded && !state.automaticReportsLoading) loadAutomaticReports();
                 break;
@@ -4219,23 +4221,58 @@
         document.getElementById('raioXPrintReport')?.remove();
     });
 
-    async function loadAutomaticReports() {
-        if (state.automaticReportsLoading) return;
+    let automaticReportListRequest=0;
+    let automaticReportListTask=null;
+    function loadAutomaticReports(force=false) {
+        if (automaticReportListTask) return force===true ? automaticReportListTask.then(()=>loadAutomaticReports()) : automaticReportListTask;
+        automaticReportListTask=(async()=>{
+        const request=++automaticReportListRequest;
         state.automaticReportsLoading=true;
         state.automaticReportsError='';
         try {
             const response=await fetch('/api/automatic-reports');
             const data=await response.json();
             if(!response.ok||!data.success) throw new Error(data.error||'Não foi possível carregar os relatórios.');
-            state.automaticReports=data.reports;
-        } catch(error) { state.automaticReportsError=error.message; }
+            if(request===automaticReportListRequest) {
+                state.automaticReports=data.reports;
+                if(state.automaticReport && !data.reports.some(r=>r.id===state.automaticReport.id&&!r.deletionPending))state.automaticReport=null;
+            }
+        } catch(error) { if(request===automaticReportListRequest)state.automaticReportsError=error.message; }
         finally {
             state.automaticReportsLoading=false;
             state.automaticReportsLoaded=true;
+            automaticReportListTask=null;
             if(state.activeSubmodule==='relatorios-automaticos') renderActiveView();
         }
+        })();
+        return automaticReportListTask;
     }
     let automaticReportRequest=0;
+    async function deleteAutomaticReport(id) {
+        if(state.automaticReportDeleting)return;
+        const report=state.automaticReports.find(r=>r.id===id);
+        if(!report || !window.confirm(`Excluir o PDF e o registro de "${report.title}", gerado em ${new Date(report.generatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})}? Esta ação não altera os pedidos do CRM.`))return;
+        state.automaticReportDeleting=true;
+        state.automaticReportsError='';
+        if(state.activeSubmodule==='relatorios-automaticos')renderActiveView();
+        try {
+            const response=await adminFetch(`/api/automatic-reports?id=${encodeURIComponent(id)}`,{method:'DELETE'});
+            const data=await response.json();
+            if(!response.ok||!data.success)throw new Error(data.error||'Não foi possível excluir o relatório.');
+            ++automaticReportRequest;
+            ++automaticReportListRequest;
+            state.automaticReports=state.automaticReports.filter(r=>r.id!==id);
+            if(state.automaticReport?.id===id)state.automaticReport=null;
+            showNotification('Relatório excluído.','success','Relatórios automáticos');
+        } catch(error) {
+            await loadAutomaticReports(true);
+            state.automaticReportsError=error.message;
+        }
+        finally {
+            state.automaticReportDeleting=false;
+            if(state.activeSubmodule==='relatorios-automaticos')renderActiveView();
+        }
+    }
     async function loadAutomaticReport(id) {
         const request=++automaticReportRequest;
         try {

@@ -5,6 +5,23 @@ const { groupReportItems } = require('./automatic-report-groups');
 function planReportPages(report) {
     const width=841.89, height=595.28, bottom=height-24, gap=8, cardHeight=214;
     const cardWidth=(width-48-gap*3)/4;
+    if (report.type === 'malotes') {
+        const groups=groupReportItems(report);
+        const count=Math.max(1,...groups.map(group=>Math.ceil(group.items.length/4)));
+        return Array.from({length:count},(_,number)=>{
+            const top=number===0?77:58, split=height/2;
+            const halfCardHeight=Math.min(cardHeight,split-top-22-8);
+            const page={cards:[],headings:[],emptyTexts:[]};
+            groups.forEach((group,index)=>{
+                const y=index===0?top:split+8;
+                page.headings.push({title:`${group.title} (${group.items.length} produtos)${number?' - continuação':''}`,y});
+                const items=group.items.slice(number*4,number*4+4);
+                if(!items.length)page.emptyTexts.push({text:'Sem malotes deste setor nesta folha.',y:y+30});
+                items.forEach((item,column)=>page.cards.push({item,x:24+column*(cardWidth+gap),y:y+22,width:cardWidth,height:halfCardHeight}));
+            });
+            return page;
+        });
+    }
     const pages=[];
     let page, y;
     const nextPage=()=>{page={cards:[],headings:[]};pages.push(page);y=pages.length===1?93:58;};
@@ -71,11 +88,12 @@ function createPdfRenderer(resolveImage) {
                 line(report.description,24,51,w-48,8,'#263445',20);
                 if(report.warnings) line(report.warnings,24,73,w-48,7,'#a14d00',16);
             }
-            if(!report.items.length) { line('Nenhum produto atende aos critérios nesta sincronização.',24,top,w-48,12); continue; }
+            if(!report.items.length && report.type!=='malotes') { line('Nenhum produto atende aos critérios nesta sincronização.',24,top,w-48,12); continue; }
             for(const section of layout.headings) {
                 doc.roundedRect(24,section.y,w-48,18,3).fill('#e0f2fe');
                 doc.font('Helvetica-Bold').fontSize(10).fillColor('#075985').text(section.title,30,section.y+3,{width:w-60,height:14});
             }
+            for(const empty of layout.emptyTexts || []) line(empty.text,30,empty.y,w-60,10,'#64748b');
             layout.cards.forEach(({item,x,y,width:cw,height:ch},i) => {
                 const reasonHeight=report.type==='cores'?40:22;
                 const imgH=ch-54-reasonHeight;

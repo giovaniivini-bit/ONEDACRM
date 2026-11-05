@@ -18,6 +18,7 @@ const {resolveImageEntry}=require('../image-coverage');
     assert.ok(source.success&&Array.isArray(source.records));
     const directory=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-auto-report-preview-'));
     process.env.CRM_REPORTS_DIR=directory;
+    process.env.CRM_ADMIN_TOKEN='local-smoke-only';
     const {requestHandler,fetchAutomaticReportSources}=require('../server');
     const sources=await fetchAutomaticReportSources({mainRecords:main.data,mainTimestamp:main.timestamp});
     const renderer=createPdfRenderer(async item=>{
@@ -52,7 +53,7 @@ const {resolveImageEntry}=require('../image-coverage');
         const errors=[];page.on('pageerror',e=>errors.push(e.message));
         await page.route('**/api/**',route=>{
             const url=new URL(route.request().url());
-            if(url.pathname==='/api/automatic-reports')return route.continue();
+            if(url.pathname==='/api/automatic-reports')return route.continue(route.request().method()==='DELETE'?{headers:{...route.request().headers(),'x-crm-admin-token':'local-smoke-only'}}:{});
             if(['/api/image-file','/api/proxy-image'].includes(url.pathname))return route.fetch({url:`${origin}${url.pathname}${url.search}`}).then(response=>route.fulfill({response}));
             const payload=url.pathname==='/api/data'?main:url.pathname==='/api/drive-images'?index:{success:true,records:[],rules:[],count:0};
             return route.fulfill({json:payload});
@@ -74,6 +75,15 @@ const {resolveImageEntry}=require('../image-coverage');
         }
         await page.setViewportSize({width:390,height:844});
         assert.equal(await page.locator('.automatic-reports-view').evaluate(el=>el.scrollWidth>el.clientWidth+2),false);
+        page.once('dialog',dialog=>dialog.dismiss());
+        await page.locator('[data-report-delete="3"]').click();
+        assert.equal(await page.locator('[data-report-index]').count(),4);
+        page.once('dialog',dialog=>dialog.accept());
+        await page.locator('[data-report-delete="3"]').click();
+        await page.waitForFunction(()=>document.querySelectorAll('[data-report-index]').length===3);
+        assert.equal(await page.locator('.automatic-report-detail').count(),0);
+        assert.equal((await fetch(`${base}/api/automatic-reports?id=${metas[3].id}&format=pdf`)).status,404);
+        assert.equal((await fetch(`${base}/api/automatic-reports?id=${metas[2].id}&format=pdf`)).status,200);
         assert.deepEqual(errors,[]);
         console.log(JSON.stringify({directory,reports:metas.map(m=>({id:m.id,type:m.type,count:m.count})),errors}));
     } finally {

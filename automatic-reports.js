@@ -85,7 +85,7 @@ function buildReports(records, now = new Date(), sources = {}) {
     return [
         { type:'tingimento', grouping:'sector', title:'Permanência em M00 e M02', description:'M00 acima de 5 dias, depois M02 acima de 7 dias. Em cada setor, da movimentação menos atrasada para a mais atrasada no fluxo TF/D43. Um produto pendente nos dois setores aparece nos dois grupos.', warnings: missingMovement ? `${missingMovement} linhas sem data válida de movimentação não foram classificadas.` : '', items:aging },
         { type:'entregas', grouping:'delivery', title:'Prog Feira - entregas em atraso', description:'Produtos ativos com entrega anterior ao dia de referência, agrupados da data menos atrasada para a mais atrasada. Hoje não é atraso. Datas sem ano seguem a regra do Prog Feira.', warnings: missingDelivery ? `${missingDelivery} produtos sem entrega válida não foram classificados.` : '', items:late },
-        { type:'malotes', title:'Malotes pendentes', description:'Mesma regra do alerta de malotes: pedidos com malote pendente nos setores 83/88 e parte principal nos setores 20/26.', warnings:'', items:malotes },
+        { type:'malotes', grouping:'malote-halves', title:'Malotes pendentes', description:'Pedidos com malote nos setores 88/83 e parte principal em 20/26. Setor 88 na metade superior e setor 83 na inferior de cada folha.', warnings:'', items:malotes },
         { type:'cores', title:'Cores - previsões para hoje e em atraso', description:'Mesma regra do alerta de cores: previsão para hoje ou vencida, sem data de recebimento nem envio ao cliente. Cada card representa uma pendência de cor.', warnings:'', items:cores }
     ].map(report => ({ ...report, referenceDay:day }));
 }
@@ -100,12 +100,34 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
         return result;
     };
     const atomic = (file, value) => { const tmp = `${file}.tmp`; fs.writeFileSync(tmp, JSON.stringify(value)); fs.renameSync(tmp,file); };
+    const validId = id => /^[a-f0-9]{32}-(tingimento|entregas|malotes|cores)$/.test(id);
+    const enqueue = job => {
+        const pending = running.then(job);
+        running = pending.catch(() => {});
+        return pending;
+    };
     return {
         list: () => readIndex(),
         read(id) {
-            if (!/^[a-f0-9]{32}-(tingimento|entregas|malotes|cores)$/.test(id)) return null;
+            if (!validId(id)) return null;
             const meta = readIndex().find(r => r.id === id);
-            return meta ? { report:JSON.parse(fs.readFileSync(path.join(directory,`${id}.json`),'utf8')), pdf:path.join(directory,`${id}.pdf`) } : null;
+            return meta && !meta.deletionPending ? { report:JSON.parse(fs.readFileSync(path.join(directory,`${id}.json`),'utf8')), pdf:path.join(directory,`${id}.pdf`) } : null;
+        },
+        remove(id) {
+            return enqueue(() => {
+                if (!validId(id)) return false;
+                const index = readIndex();
+                if (!index.some(meta => meta.id === id)) return false;
+                // Persist intent before touching files. A partial failure stays in
+                // the history as a retryable deletion, including after a restart.
+                atomic(indexPath,index.map(meta => meta.id===id?{...meta,deletionPending:true}:meta));
+                for (const extension of ['pdf','json']) {
+                    try { fs.unlinkSync(path.join(directory,`${id}.${extension}`)); }
+                    catch(error) { if(error.code !== 'ENOENT') throw error; }
+                }
+                atomic(indexPath,index.filter(meta => meta.id !== id));
+                return true;
+            });
         },
         generate(records, sourceTimestamp, sources) {
             const job = async () => {
@@ -129,9 +151,7 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
                 atomic(indexPath, [...metas, ...readIndex()]);
                 return metas;
             };
-            const pending = running.then(job);
-            running = pending.catch(() => {});
-            return pending;
+            return enqueue(job);
         }
     };
 }

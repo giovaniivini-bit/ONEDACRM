@@ -20,8 +20,13 @@ incorporam as imagens disponíveis no momento da geração. Fonte sem data váli
 não é classificada silenciosamente: o relatório informa a exclusão. A geração
 é serial para preservar o índice mesmo com sincronizações concorrentes.
 
-Retenção: todas as versões são mantidas nesta fase. Uma política de limpeza será
-definida antes de excluir históricos. A data de referência não muda ao reabrir PDF.
+Retenção: versões são mantidas até exclusão individual pelo usuário. A tela oferece
+"Excluir PDF" com confirmação e autenticação administrativa. DELETE remove somente
+o PDF, snapshot e entrada de histórico escolhidos; pedidos e outras versões não
+mudam. Exclusão compartilha a fila da geração. Uma intenção persistente
+`deletionPending` permite tentar novamente se a remoção física falhar parcialmente,
+inclusive após reiniciar o servidor. Não há limpeza automática de histórico.
+A data de referência não muda ao reabrir PDF.
 
 Implantação: instalar a dependência versionada com npm ci antes dos testes e do
 restart do CRM. Preservar data/automatic-reports em deploys e backups. Versões
@@ -59,3 +64,10 @@ relatórios, validando falha da fonte; (4) testes completos, smoke e revisão in
 Validação desta atualização: 177 testes passaram; navegador desktop/mobile sem
 erros. Smoke com as fontes de 05/11 encontrou 83 entradas M00/M02, 21 entregas,
 8 malotes e 6 pendências de cor. PDFs com fotos renderizados e conferidos.
+
+Atualização adicional: malotes agora reserva a metade física superior de cada
+folha para o setor 88 e a inferior para o setor 83, com quatro cards por setor.
+O excedente continua na mesma metade da folha seguinte. A tela também separa os
+setores. Testes cobrem divisão física, grupo vazio e continuação, exclusão
+autenticada, IDs inválidos, arquivo inacessível após exclusão, falha parcial com
+retentativa e concorrência entre geração e exclusão.

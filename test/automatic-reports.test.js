@@ -149,3 +149,62 @@ test('novos tipos persistem e são acessíveis por ID; falha de qualquer fonte p
     await assert.rejects(store.generate([main('A')],now.toISOString()),/Fontes de malotes e cores/);
     assert.equal(store.list().length,4);
 });
+
+test('malotes reservam metade superior para 88 e inferior para 83, continuando quatro por setor',()=>{
+    const item=(sector,i)=>({sector,codigo:`${sector}-${i}`});
+    const report={type:'malotes',items:[...Array.from({length:9},(_,i)=>item('88',i)),...Array.from({length:5},(_,i)=>item('83',i))]};
+    const groups=groupReportItems(report);
+    assert.deepEqual(groups.map(g=>g.key),['88','83']);
+    const pages=planReportPages(report);
+    assert.equal(pages.length,3);
+    assert.deepEqual(pages.map(p=>p.cards.length),[8,5,1]);
+    for(const page of pages) {
+        const split=595.28/2;
+        assert.equal(page.headings[1].y,split+8);
+        assert.ok(page.cards.filter(c=>c.item.sector==='88').every(c=>c.y+c.height<=split));
+        assert.ok(page.cards.filter(c=>c.item.sector==='83').every(c=>c.y>=split+22));
+        assert.ok(page.cards.every(c=>c.y+c.height<=595.28-24));
+    }
+    assert.equal(planReportPages({type:'malotes',items:[]})[0].emptyTexts.length,2);
+});
+
+test('exclusão remove apenas o PDF e snapshot escolhidos e serializa com geração',async t=>{
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-report-delete-'));
+    t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+    const store=createReportStore({directory:dir,renderPdf:async(_,file)=>fs.writeFileSync(file,'PDF'),now:()=>now});
+    const metas=await store.generate([main('A')],now.toISOString(),sources);
+    const [next,removed]=await Promise.all([store.generate([main('B')],now.toISOString(),sources),store.remove(metas[0].id)]);
+    assert.equal(removed,true);
+    assert.equal(store.list().length,7);
+    assert.equal(store.read(metas[0].id),null);
+    for(const extension of ['pdf','json'])assert.equal(fs.existsSync(path.join(dir,`${metas[0].id}.${extension}`)),false);
+    assert.ok(store.read(next[0].id));
+    assert.ok(store.read(metas[1].id));
+    assert.equal(await store.remove(metas[0].id),false);
+    assert.equal(await store.remove('../index'),false);
+    assert.equal(store.list().length,7);
+});
+
+test('falha parcial de exclusão fica persistida para tentar novamente após reinício',async t=>{
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-report-delete-error-'));
+    t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+    const options={directory:dir,renderPdf:async(_,file)=>fs.writeFileSync(file,'PDF'),now:()=>now};
+    const store=createReportStore(options);
+    const [meta]=await store.generate([main('A')],now.toISOString(),sources);
+    const original=fs.unlinkSync;
+    try {
+        fs.unlinkSync=file=>{
+            if(file===path.join(dir,`${meta.id}.json`))throw Object.assign(new Error('Access denied'),{code:'EACCES'});
+            return original(file);
+        };
+        await assert.rejects(store.remove(meta.id),/Access denied/);
+    } finally {fs.unlinkSync=original;}
+    const restarted=createReportStore(options);
+    assert.equal(restarted.list().find(r=>r.id===meta.id).deletionPending,true);
+    assert.equal(restarted.read(meta.id),null);
+    assert.equal(fs.existsSync(path.join(dir,`${meta.id}.pdf`)),false);
+    assert.equal(fs.existsSync(path.join(dir,`${meta.id}.json`)),true);
+    assert.equal(await restarted.remove(meta.id),true);
+    assert.equal(restarted.list().length,3);
+    assert.equal(fs.existsSync(path.join(dir,`${meta.id}.json`)),false);
+});

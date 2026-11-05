@@ -1059,7 +1059,7 @@ async function requestHandler(req, res) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Vary', 'Origin');
     }
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-CRM-Admin-Token');
     
     if (req.method === 'OPTIONS') {
@@ -1263,7 +1263,17 @@ async function requestHandler(req, res) {
 
     // API: Obter Dados de Planilhas Externas (Cores e Aviamentos do Drive)
     if (pathname === '/api/automatic-reports') {
-        if (req.method !== 'GET') { res.writeHead(405, { Allow:'GET' }); res.end(); return; }
+        if (req.method === 'DELETE') {
+            if (!requireAdmin(req,res)) return;
+            try {
+                const id=parsedUrl.searchParams.get('id');
+                if (!id) {sendJson(res,400,{success:false,error:'Selecione um relatório para excluir.'});return;}
+                const removed=await automaticReports.remove(id);
+                sendJson(res,removed?200:404,removed?{success:true}:{success:false,error:'Relatório não encontrado'});
+            } catch(error) {console.error('[RELATÓRIOS] Exclusão falhou:',error.message);sendJson(res,500,{success:false,error:'Não foi possível concluir a exclusão. Tente novamente pelo histórico.'});}
+            return;
+        }
+        if (req.method !== 'GET') { res.writeHead(405, { Allow:'GET, DELETE' }); res.end(); return; }
         try {
             const id = parsedUrl.searchParams.get('id');
             if (!id) { sendJson(res,200,{success:true,reports:automaticReports.list()},{'Cache-Control':'no-store'}); return; }
