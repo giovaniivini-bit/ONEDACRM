@@ -1,7 +1,7 @@
 /**
  * Oneda CRM - Servidor Local de Controle de Atividades e Métricas
  * Confecções Oneda & Equipe
- * Zero dependências externas - utiliza Node.js nativo (http, https, fs, path)
+ * HTTP nativo; relatórios automáticos em PDF gerados com PDFKit.
  */
 
 const http = require('http');
@@ -13,6 +13,8 @@ const { createDriveImageProxy } = require('./drive-image-cache');
 const { fetchEmbeddedFolder, fetchDriveHtml } = require('./drive-folder-list');
 const alertsEngine = require('./alerts-engine');
 const progFeira = require('./prog-feira');
+const { createReportStore } = require('./automatic-reports');
+const { createPdfRenderer } = require('./automatic-reports-pdf');
 const costura = require('./costura');
 const { createAdminAuth } = require('./admin-auth');
 const {
@@ -20,12 +22,32 @@ const {
     requestIsSameOrigin,
     applySecurityHeaders
 } = require('./server-security');
-const { sanitizeImageMap, imageEntryMatchesKey } = require('./image-coverage');
+const { sanitizeImageMap, imageEntryMatchesKey, resolveImageEntry } = require('./image-coverage');
 
 const PORT = process.env.PORT || 3000;
 const ALT_PORT = 8080;
 const BASE_DIR = __dirname;
 const DATA_DIR = path.join(BASE_DIR, 'data');
+const automaticReports = createReportStore({
+    directory: process.env.CRM_REPORTS_DIR || path.join(DATA_DIR, 'automatic-reports'),
+    renderPdf: createPdfRenderer(async item => {
+        const entry = resolveImageEntry(driveImagesCache.map, item.imageCode, item.numero);
+        const filename = entry?.filename || `${item.imageCode}.jpg`;
+        const file = findLocalImagePath(filename);
+        if (file && fs.statSync(file).size <= 8 * 1024 * 1024) return fs.promises.readFile(file);
+        if (!entry?.id || !/^[A-Za-z0-9_-]{10,}$/.test(entry.id)) return null;
+        const response = await fetch(`https://drive.google.com/thumbnail?id=${encodeURIComponent(entry.id)}&sz=w1200`, {signal:AbortSignal.timeout(12000)});
+        if (!response.ok || !/^image\/(jpeg|png)/i.test(response.headers.get('content-type')||'')) return null;
+        const reader=response.body.getReader(); const chunks=[]; let size=0;
+        for (;;) {
+            const {done,value}=await reader.read(); if(done) break;
+            size+=value.length;
+            if(size>8*1024*1024) {await reader.cancel();return null;}
+            chunks.push(Buffer.from(value));
+        }
+        return Buffer.concat(chunks);
+    })
+});
 const CURRENT_DATA_PATH = path.join(DATA_DIR, 'current_data.csv');
 const FULL_DATA_PATH = path.join(DATA_DIR, 'full_dataset.csv');
 const DRIVE_IMAGES_PATH = path.join(DATA_DIR, 'drive_images.json');
@@ -56,12 +78,14 @@ const adminAuth = createAdminAuth({
 const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE_TTL_MS) || 5 * 60_000);
 const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'raio-x.js', 'product-stylist.js', 'prog-feira.js', 'image-coverage.js', 'mpo-filters.js', 'mpo-view.js', 'costura.js', 'costura-view.js', 'corte-view.js', 'costura.css']);
 
+PUBLIC_FILES.add('automatic-reports-view.js');
 if (!ADMIN_PASSWORD_HASH) {
     console.warn('⚠️  CRM_ADMIN_PASSWORD_HASH não configurado: login administrativo por senha está indisponível.');
 }
 const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
 
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
+const PROG_FEIRA_CSV_URL = 'https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/export?format=csv&gid=0';
 const GOOGLE_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
 const DRIVE_FOLDER_SORT_PARAMS = [
     '',
@@ -198,6 +222,20 @@ function sanitizeProgFeiraRecords(records) {
     return validRows.map(record => Object.fromEntries(
         PROG_FEIRA_PUBLIC_FIELDS.map(field => [field, String((field === 'COD_CLIENTE' ? record.COD_CLIENTE ?? record['COD CLIENTE'] : record[field]) ?? '').trim()])
     ));
+}
+
+function createProgFeiraPayload(records) {
+    const safe = sanitizeProgFeiraRecords(records);
+    return {
+        success:true, type:'prog_feira', sourceSchemaVersion:4,
+        labelColumnAvailable:records.some(record=>Object.keys(record).some(key=>key.trim().toUpperCase()==='ETIQUETA')),
+        programColumnAvailable:records.some(record=>Object.keys(record).some(key=>['CODCLIENTE','DESCRICAO2'].includes(key.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[ _]/g,'').toUpperCase()))),
+        title:'Programação Feira', count:safe.length, records:safe, timestamp:new Date().toISOString(), isLive:true
+    };
+}
+
+async function fetchProgFeiraReportSource(fetchSheet = fetchGoogleSheetCSV) {
+    return createProgFeiraPayload(parseCSV(await fetchSheet(PROG_FEIRA_CSV_URL)));
 }
 
 // O mesmo modelo comprovado do Studeoneda: imagens versionadas em /images e
@@ -1187,6 +1225,25 @@ async function requestHandler(req, res) {
     }
 
     // API: Obter Dados de Planilhas Externas (Cores e Aviamentos do Drive)
+    if (pathname === '/api/automatic-reports') {
+        if (req.method !== 'GET') { res.writeHead(405, { Allow:'GET' }); res.end(); return; }
+        try {
+            const id = parsedUrl.searchParams.get('id');
+            if (!id) { sendJson(res,200,{success:true,reports:automaticReports.list()},{'Cache-Control':'no-store'}); return; }
+            const found = automaticReports.read(id);
+            if (!found) { sendJson(res,404,{success:false,error:'Relatório não encontrado'}); return; }
+            if (parsedUrl.searchParams.get('format') === 'pdf') {
+                const stat = fs.statSync(found.pdf);
+                res.writeHead(200,{'Content-Type':'application/pdf','Content-Length':stat.size,'Content-Disposition':`inline; filename="${id}.pdf"`,'Cache-Control':'private, no-store'});
+                const stream=fs.createReadStream(found.pdf);
+                stream.on('error',()=>res.destroy());
+                res.on('close',()=>stream.destroy());
+                stream.pipe(res);
+            } else sendJson(res,200,{success:true,report:found.report},{'Cache-Control':'no-store'});
+        } catch (err) { console.error('[RELATÓRIOS]',err.message); sendJson(res,500,{success:false,error:'Não foi possível ler os relatórios guardados.'}); }
+        return;
+    }
+
     if (pathname === '/api/external-sheet') {
         res.setHeader('Cache-Control', 'no-store');
         const type = (parsedUrl.searchParams.get('type') || 'aviamentos').toLowerCase();
@@ -1268,7 +1325,7 @@ async function requestHandler(req, res) {
                 name: 'Programação Feira',
                 id: '1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s',
                 gid: '0',
-                url: 'https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/export?format=csv&gid=0',
+                url: PROG_FEIRA_CSV_URL,
                 cacheFile: path.join(DATA_DIR, 'prog_feira_external.json'),
                 targetColIndex: 0
             }
@@ -1323,20 +1380,15 @@ async function requestHandler(req, res) {
                 const records = parseCSV(csvText);
 
                 if (type === 'prog_feira') {
-                    const progRows = sanitizeProgFeiraRecords(records);
-                    const payload = {
-                        success: true,
-                        type: 'prog_feira',
-                        sourceSchemaVersion: 4,
-                        labelColumnAvailable: records.some(record => Object.keys(record).some(key => key.trim().toUpperCase() === 'ETIQUETA')),
-                        programColumnAvailable: records.some(record => Object.hasOwn(record, 'COD_CLIENTE') || Object.hasOwn(record, 'COD CLIENTE') || Object.keys(record).some(key => key.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[ _]/g, '').toUpperCase() === 'DESCRICAO2')),
-                        title: cfg.name,
-                        count: progRows.length,
-                        records: progRows,
-                        timestamp: new Date().toISOString(),
-                        isLive: true
-                    };
+                    const payload = createProgFeiraPayload(records);
                     atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
+                    if (force && parsedUrl.searchParams.get('reports') !== 'skip') {
+                        try { payload.generatedReports = await automaticReports.generate(payload.records, payload.timestamp); }
+                        catch (err) {
+                            console.error('[RELATÓRIOS] Geração falhou:',err.message);
+                            payload.reportsError = 'Os dados foram sincronizados, mas os novos relatórios não puderam ser gerados. Os relatórios anteriores foram preservados.';
+                        }
+                    }
                     sendJson(res, 200, payload);
                     return;
                 }
@@ -1562,6 +1614,18 @@ async function requestHandler(req, res) {
 
             // Aguarda o índice atualizado antes de confirmar a sincronização.
             await fetchGoogleDriveImages();
+
+            let generatedReports = [];
+            let reportsError = '';
+            try {
+                const progSource = await fetchProgFeiraReportSource();
+                atomicWriteFileSync(path.join(DATA_DIR,'prog_feira_external.json'),JSON.stringify(progSource,null,2),'utf8');
+                generatedReports = await automaticReports.generate(progSource.records,progSource.timestamp);
+            }
+            catch(err) {
+                console.error('[RELATÓRIOS] Geração após sync falhou:',err.message);
+                reportsError = 'Os dados foram sincronizados, mas os relatórios não puderam ser gerados. O histórico anterior foi preservado.';
+            }
             
             console.log(`[SYNC] Sincronização concluída com sucesso! ${originalRecords.length} registros atualizados.`);
 
@@ -1571,6 +1635,8 @@ async function requestHandler(req, res) {
                 message: 'Planilha e Imagens sincronizadas com sucesso diretamente da nuvem!',
                 count: originalRecords.length,
                 imagesCount: driveImagesCache.count,
+                generatedReports,
+                reportsError,
                 timestamp: new Date().toISOString()
             }));
         } catch (err) {
@@ -1670,6 +1736,7 @@ function startServers() {
 if (require.main === module) startServers();
 
 module.exports = {
+    fetchProgFeiraReportSource,
     parseCSVRows,
     requestHandler,
     startServers,

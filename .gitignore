@@ -1,5 +1,6 @@
 cloudflared.exe
 node_modules/
+data/automatic-reports/
 data/mpo_snapshot.json
 data/mpo_snapshot.json.tmp
 data/alert_rules.json

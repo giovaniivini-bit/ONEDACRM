@@ -58,6 +58,18 @@ test('serves health and blocks internal static files and malformed URLs', async 
     assert.equal((await request({ route: '/images/%E0%A4%A' })).status, 400);
 });
 
+test('sync dos relatórios busca explicitamente a fonte Prog Feira em vez da base principal',async()=>{
+    const {fetchProgFeiraReportSource}=require('../server');
+    let target;
+    const payload=await fetchProgFeiraReportSource(async url=>{
+        target=url;
+        return 'NUMERO,CODIGO,TIPO,OP,SETOR,QTDE_PEND,FICHA\n123,PROG-ONLY,1,01B,ESTILO,4,03/11/2026';
+    });
+    assert.ok(target.includes('1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s'));
+    assert.equal(payload.records[0].CODIGO,'PROG-ONLY');
+    assert.equal(payload.sourceSchemaVersion,4);
+});
+
 test('enforces method and admin authorization on write routes', async () => {
     assert.equal((await request({ route: '/api/sync' })).status, 405);
     assert.equal((await request({ method: 'PUT', route: '/api/alert-rules', body: '{}' })).status, 405);

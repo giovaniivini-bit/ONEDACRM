@@ -94,6 +94,11 @@
         leadtimeExternalData: null,
         missingImagesSearch: '',
         missingImagesTab: 'missing',
+        automaticReports: [],
+        automaticReport: null,
+        automaticReportsLoaded: false,
+        automaticReportsLoading: false,
+        automaticReportsError: '',
         alertRules: [],
         alertRulesSource: 'loading',
         alertRulesError: '',
@@ -910,7 +915,7 @@
     }
 
     // Carregamento assíncrono das planilhas externas do Drive (Cores, Aviamentos e CQ)
-    async function loadExternalSheets(force = false) {
+    async function loadExternalSheets(force = false, reportsAlreadyGenerated = false) {
         const sheetsWereLoaded = state.externalSheetsLoaded;
         const previousSheetSources = JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive]);
         if (!window.location.protocol.startsWith('http')) return;
@@ -918,7 +923,7 @@
         const failures = [];
         try {
             const requestExternal = type => {
-                const url = `/api/external-sheet?type=${type}${force ? '&refresh=1' : ''}`;
+                const url = `/api/external-sheet?type=${type}${force ? '&refresh=1' : ''}${type==='prog_feira' && reportsAlreadyGenerated ? '&reports=skip' : ''}`;
                 const request = force ? adminFetch(url, { method: 'POST' }) : fetch(url);
                 return request.then(async response => {
                     const payload = await response.json().catch(() => null);
@@ -960,6 +965,11 @@
             }
             if (progFeiraRes && progFeiraRes.success) {
                 state.progFeiraExternalData = progFeiraRes;
+                if (force) {
+                    state.automaticReportsLoaded = false;
+                    if (progFeiraRes.reportsError) showNotification(progFeiraRes.reportsError,'warning','Relatórios automáticos');
+                    if (state.activeSubmodule === 'relatorios-automaticos') loadAutomaticReports();
+                }
             }
             const changed = previousRecords !== JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
             if (state.activeSubmodule === 'producao-costura') await loadCosturaData(force);
@@ -1830,6 +1840,7 @@
         else if (state.activeSubmodule === 'setor13') label = 'Setor 13 (Modelagem)';
         else if (state.activeSubmodule === 'processo') label = 'Em Processo (05, 06, 12)';
         else if (state.activeSubmodule === 'setor01') label = 'Pend. Setor 01';
+        else if (state.activeSubmodule === 'relatorios-automaticos') label = 'Relatórios automáticos';
         else if (state.activeSubmodule === 'raio-x') label = 'Raio X';
         else if (state.activeSubmodule === 'estampa') label = 'Sit. Estampa';
         else if (state.activeSubmodule === 'cores-pendentes') label = 'Cores Pendentes (Setor D01)';
@@ -1881,6 +1892,14 @@
             // Estilo Pedido
             case 'setor01':
                 renderSetor01View(container);
+                break;
+            case 'relatorios-automaticos':
+                window.CRMAutomaticReportsView.render(container, {
+                    reports:state.automaticReports, selected:state.automaticReport,
+                    loading:state.automaticReportsLoading, error:state.automaticReportsError,
+                    escape:escapeHtml, image:getProductImage, choose:loadAutomaticReport, refresh:loadAutomaticReports
+                });
+                if (!state.automaticReportsLoaded && !state.automaticReportsLoading) loadAutomaticReports();
                 break;
             case 'raio-x':
                 renderRaioXView(container);
@@ -4199,6 +4218,36 @@
         document.body.classList.remove('print-raio-x');
         document.getElementById('raioXPrintReport')?.remove();
     });
+
+    async function loadAutomaticReports() {
+        if (state.automaticReportsLoading) return;
+        state.automaticReportsLoading=true;
+        state.automaticReportsError='';
+        try {
+            const response=await fetch('/api/automatic-reports');
+            const data=await response.json();
+            if(!response.ok||!data.success) throw new Error(data.error||'Não foi possível carregar os relatórios.');
+            state.automaticReports=data.reports;
+        } catch(error) { state.automaticReportsError=error.message; }
+        finally {
+            state.automaticReportsLoading=false;
+            state.automaticReportsLoaded=true;
+            if(state.activeSubmodule==='relatorios-automaticos') renderActiveView();
+        }
+    }
+    let automaticReportRequest=0;
+    async function loadAutomaticReport(id) {
+        const request=++automaticReportRequest;
+        try {
+            const response=await fetch(`/api/automatic-reports?id=${encodeURIComponent(id)}`);
+            const data=await response.json();
+            if(!response.ok||!data.success) throw new Error(data.error||'Relatório indisponível');
+            if(request!==automaticReportRequest) return;
+            state.automaticReport=data.report;
+            state.automaticReportsError='';
+        } catch(error) { if(request===automaticReportRequest) state.automaticReportsError=error.message; }
+        if(state.activeSubmodule==='relatorios-automaticos') renderActiveView();
+    }
 
     function renderSetor01StyleBadge(item) {
         const status = item.statusEstilo || item.statusProd || 'Não informado';
@@ -12192,7 +12241,8 @@
             if (!json.success) throw new Error(json.error || 'Erro desconhecido retornado pelo servidor');
 
             await loadCRMData('full');
-            await Promise.all([loadExternalSheets(true), loadDriveImages()]);
+            await Promise.all([loadExternalSheets(true, !json.reportsError), loadDriveImages()]);
+            if(json.reportsError) showNotification(json.reportsError,'warning','Relatórios automáticos');
             showNotification(`Planilha atualizada com sucesso! ${formatNumber(json.count)} registros carregados diretamente do Google Drive.`, 'success', 'Sincronização Concluída');
             updateSystemStatus('Online (Sincronizado)', true);
         } catch (e) {
@@ -13236,6 +13286,11 @@
     };
 
     window.crmGeneratePDFReport = () => {
+        if(state.activeSubmodule==='relatorios-automaticos') {
+            if(state.automaticReport) window.open(`/api/automatic-reports?id=${encodeURIComponent(state.automaticReport.id)}&format=pdf`,'_blank','noopener');
+            else showNotification('Selecione um relatório do histórico para abrir o PDF.','info','Relatórios automáticos');
+            return;
+        }
         const originalSetor13ViewMode = state.setor13ViewMode;
         const originalSetor01ViewMode = state.setor01ViewMode;
         const originalProcessoFilter = state.processoFilter;
