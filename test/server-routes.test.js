@@ -291,3 +291,23 @@ test('costura preserva matriz CSV e protege atualização da nova fonte', async(
     for(const file of ['costura.js','costura-view.js','corte-view.js','costura.css','product-stylist.js']) assert.equal((await request({route:'/'+file})).status,200);
     assert.equal((await request({method:'POST',route:'/api/external-sheet?type=producao_costura&refresh=1'})).status,401);
 });
+
+test('fontes dos relatórios usam base principal para malotes e cores filtradas como na tela',async()=>{
+    const {fetchAutomaticReportSources,createColorPayload}=require('../server');
+    const colors='TINTURARIA,RESPONSÁVEL,PRODUTO,COR,PREVISÃO,PANTONE\nT,ANA,01.A,AZUL,03/11/2026,19-4052\nT,ANA,01.B,VERDE,03/11/2026,-\n';
+    const urls=[];
+    const fetchSheet=async url=>{urls.push(url);return url.includes('1j7k8')?colors:'Número,Código,Setor\n77,01.A,88\n';};
+    const sources=await fetchAutomaticReportSources({},fetchSheet);
+    assert.equal(urls.length,2);
+    assert.ok(urls.some(url=>url.includes('1CWbwOq6')));
+    assert.ok(urls.some(url=>url.includes('1j7k8WWv')&&url.includes('722944309')));
+    assert.equal(sources.mainRecords[0]['Setor'],'88');
+    assert.deepEqual(sources.colorRecords.map(r=>r.PRODUTO),['01.A']);
+    assert.equal(createColorPayload(sources.colorRecords).byResponsavel.ANA,1);
+    urls.length=0;
+    await fetchAutomaticReportSources({mainRecords:sources.mainRecords},fetchSheet);
+    assert.equal(urls.length,1,'sync geral reutiliza a base que acabou de sincronizar');
+    await assert.rejects(fetchAutomaticReportSources({},async()=>'<html>Erro Google</html>'),/Fonte de malotes inválida/);
+    await assert.rejects(fetchAutomaticReportSources({mainRecords:sources.mainRecords},async()=>'Produto,Previsão\n01.A,03/11/2026'),/Fonte de cores inválida/);
+    assert.equal((await request({route:'/automatic-report-groups.js'})).status,200);
+});

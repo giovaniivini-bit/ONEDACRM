@@ -6340,6 +6340,10 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 .automatic-report-entry.selected { outline:2px solid #38bdf8; }
 .automatic-report-intro a { display:inline-flex; align-items:center; width:fit-content; padding:9px 14px; border-radius:6px; background:#0284c7; color:#fff; text-decoration:none; font-weight:700; font-size:13px; }
 .automatic-report-cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+.automatic-report-group { margin:24px 0; }
+.automatic-report-group h3 { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px; background:rgba(14,165,233,.12); border-left:3px solid #0ea5e9; border-radius:5px; }
+.automatic-report-group h3 small { font-size:12px; font-weight:400; color:var(--text-secondary); }
+.automatic-report-date-group + .automatic-report-date-group { margin-top:clamp(100px,35vh,300px); }
 .automatic-report-cards .prog-feira-media { height:260px; display:flex; align-items:center; justify-content:center; }
 .automatic-report-cards img { width:100%; height:100%; object-fit:contain; }
 .automatic-report-reason { display:block; background:rgba(249,115,22,.13); color:#f97316; border:1px solid #f97316; padding:8px; border-radius:5px; }

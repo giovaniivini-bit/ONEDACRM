@@ -17,6 +17,9 @@ const {resolveImageEntry}=require('../image-coverage');
     ]);
     assert.ok(source.success&&Array.isArray(source.records));
     const directory=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-auto-report-preview-'));
+    process.env.CRM_REPORTS_DIR=directory;
+    const {requestHandler,fetchAutomaticReportSources}=require('../server');
+    const sources=await fetchAutomaticReportSources({mainRecords:main.data,mainTimestamp:main.timestamp});
     const renderer=createPdfRenderer(async item=>{
         const entry=resolveImageEntry(index.data.map,item.imageCode,item.numero);
         const url=entry?.isLocal!==false
@@ -28,9 +31,7 @@ const {resolveImageEntry}=require('../image-coverage');
         return Buffer.from(await response.arrayBuffer());
     });
     const store=createReportStore({directory,renderPdf:renderer});
-    const metas=await store.generate(source.records,source.timestamp);
-    process.env.CRM_REPORTS_DIR=directory;
-    const {requestHandler}=require('../server');
+    const metas=await store.generate(source.records,source.timestamp,sources);
     const server=http.createServer(requestHandler);
     await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
     let browser;
@@ -38,7 +39,7 @@ const {resolveImageEntry}=require('../image-coverage');
         const base=`http://127.0.0.1:${server.address().port}`;
         const response=await fetch(`${base}/api/automatic-reports`);
         assert.equal(response.status,200);
-        assert.equal((await response.json()).reports.length,2);
+        assert.equal((await response.json()).reports.length,4);
         assert.equal((await fetch(`${base}/api/automatic-reports?id=..%2Findex`)).status,404);
         assert.equal((await fetch(`${base}/api/automatic-reports`,{method:'POST'})).status,405);
         for(const m of metas) {
@@ -58,11 +59,19 @@ const {resolveImageEntry}=require('../image-coverage');
         });
         await page.goto(base);
         await page.locator('.nav-link[data-submodule="relatorios-automaticos"]').click();
-        await page.waitForFunction(()=>document.querySelectorAll('[data-report-index]').length===2);
-        await page.locator('[data-report-index="0"]').click();
-        await page.waitForFunction(()=>document.querySelector('.automatic-report-detail'));
-        assert.equal(await page.locator('.automatic-report-cards .prog-feira-card').count(),metas[0].count);
-        await page.screenshot({path:path.join(directory,'tela.png'),fullPage:false});
+        await page.waitForFunction(()=>document.querySelectorAll('[data-report-index]').length===4);
+        for(const [i,meta] of metas.entries()) {
+            await page.locator(`[data-report-index="${i}"]`).click();
+            await page.waitForFunction(id=>document.querySelector('.automatic-report-intro a')?.href.includes(id),meta.id);
+            assert.equal(await page.locator('.automatic-report-cards .prog-feira-card').count(),meta.count);
+            const snapshot=store.read(meta.id).report;
+            const {groupReportItems}=require('../automatic-report-groups');
+            const expected=groupReportItems(snapshot).filter(g=>g.title).map(g=>g.title);
+            const titles=await page.locator('.automatic-report-group h3').evaluateAll(els=>els.map(el=>el.childNodes[0].textContent.trim()));
+            assert.deepEqual(titles,expected);
+            await page.locator('.automatic-report-intro').scrollIntoViewIfNeeded();
+            await page.screenshot({path:path.join(directory,`tela-${meta.type}.png`),fullPage:false});
+        }
         await page.setViewportSize({width:390,height:844});
         assert.equal(await page.locator('.automatic-reports-view').evaluate(el=>el.scrollWidth>el.clientWidth+2),false);
         assert.deepEqual(errors,[]);

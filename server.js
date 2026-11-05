@@ -79,6 +79,7 @@ const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE
 const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'raio-x.js', 'product-stylist.js', 'prog-feira.js', 'image-coverage.js', 'mpo-filters.js', 'mpo-view.js', 'costura.js', 'costura-view.js', 'corte-view.js', 'costura.css']);
 
 PUBLIC_FILES.add('automatic-reports-view.js');
+PUBLIC_FILES.add('automatic-report-groups.js');
 if (!ADMIN_PASSWORD_HASH) {
     console.warn('⚠️  CRM_ADMIN_PASSWORD_HASH não configurado: login administrativo por senha está indisponível.');
 }
@@ -86,6 +87,7 @@ const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
 
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
 const PROG_FEIRA_CSV_URL = 'https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/export?format=csv&gid=0';
+const COLORS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1j7k8WWvE9m4YZrw7qadANIcx_XtOzAlwYfWnm0AC5sA/export?format=csv&gid=722944309';
 const GOOGLE_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
 const DRIVE_FOLDER_SORT_PARAMS = [
     '',
@@ -236,6 +238,41 @@ function createProgFeiraPayload(records) {
 
 async function fetchProgFeiraReportSource(fetchSheet = fetchGoogleSheetCSV) {
     return createProgFeiraPayload(parseCSV(await fetchSheet(PROG_FEIRA_CSV_URL)));
+}
+
+function createColorPayload(records) {
+    // Keep exactly the same Pantone eligibility as the Cores screen / alerts.
+    const rows = records.filter(r => {
+        const keys = Object.keys(r);
+        const pantone = String(r[keys.find(k => k.toUpperCase().includes('PANTONE')) || keys[5]] || '').trim();
+        return pantone && !['-','�'].includes(pantone);
+    });
+    const byResponsavel = Object.create(null);
+    for (const r of rows) {
+        const responsible = String(r[Object.keys(r)[1]] || r['RESPONSÁVEL'] || r['Responsável'] || '').trim() || 'NÃO INFORMADO';
+        byResponsavel[responsible] = (byResponsavel[responsible] || 0) + 1;
+    }
+    return {success:true,type:'cores',title:'Cores Pendentes',count:rows.length,byResponsavel,records:rows,timestamp:new Date().toISOString(),isLive:true};
+}
+
+async function fetchAutomaticReportSources(mainSource = {}, fetchSheet = fetchGoogleSheetCSV) {
+    const [mainRecords,colorCsv] = await Promise.all([
+        mainSource.mainRecords || fetchSheet(GOOGLE_SHEET_CSV_URL).then(parseCSV),
+        fetchSheet(COLORS_CSV_URL)
+    ]);
+    const colorMatrix = parseCSVRows(colorCsv);
+    const key = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase();
+    const hasFields = (headers,fields) => fields.every(field => headers.some(h => key(h) === field));
+    if (!mainRecords.length || !hasFields(Object.keys(mainRecords[0]),['numero','codigo','setor'])) throw new Error('Fonte de malotes inválida');
+    if (!hasFields(colorMatrix[0] || [],['produto','previsao','pantone'])) throw new Error('Fonte de cores inválida');
+    const colors = createColorPayload(parseCSV(colorCsv));
+    return {mainRecords,mainTimestamp:mainSource.mainTimestamp || new Date().toISOString(),colorRecords:colors.records,colorTimestamp:colors.timestamp,colors};
+}
+
+async function generateAutomaticReports(progSource, mainSource) {
+    const sources = await fetchAutomaticReportSources(mainSource);
+    atomicWriteFileSync(path.join(DATA_DIR,'cores_external.json'),JSON.stringify(sources.colors,null,2),'utf8');
+    return automaticReports.generate(progSource.records,progSource.timestamp,sources);
 }
 
 // O mesmo modelo comprovado do Studeoneda: imagens versionadas em /images e
@@ -1260,7 +1297,7 @@ async function requestHandler(req, res) {
                 name: 'Cores Pendentes',
                 id: '1j7k8WWvE9m4YZrw7qadANIcx_XtOzAlwYfWnm0AC5sA',
                 gid: '722944309',
-                url: 'https://docs.google.com/spreadsheets/d/1j7k8WWvE9m4YZrw7qadANIcx_XtOzAlwYfWnm0AC5sA/export?format=csv&gid=722944309',
+                url: COLORS_CSV_URL,
                 cacheFile: path.join(DATA_DIR, 'cores_external.json'),
                 targetColIndex: 1 // Coluna B (Responsável)
             },
@@ -1383,7 +1420,7 @@ async function requestHandler(req, res) {
                     const payload = createProgFeiraPayload(records);
                     atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
                     if (force && parsedUrl.searchParams.get('reports') !== 'skip') {
-                        try { payload.generatedReports = await automaticReports.generate(payload.records, payload.timestamp); }
+                        try { payload.generatedReports = await generateAutomaticReports(payload); }
                         catch (err) {
                             console.error('[RELATÓRIOS] Geração falhou:',err.message);
                             payload.reportsError = 'Os dados foram sincronizados, mas os novos relatórios não puderam ser gerados. Os relatórios anteriores foram preservados.';
@@ -1469,6 +1506,13 @@ async function requestHandler(req, res) {
                     return;
                 }
 
+                if (type === 'cores') {
+                    const payload = createColorPayload(records);
+                    atomicWriteFileSync(cfg.cacheFile,JSON.stringify(payload,null,2),'utf8');
+                    sendJson(res,200,payload);
+                    return;
+                }
+
                 // Agrupamento por Responsável
                 const respMap = {};
                 let validCount = 0;
@@ -1483,17 +1527,8 @@ async function requestHandler(req, res) {
                     const respRaw = (r[targetColKey] || r['RESPONSÁVEL'] || r['Responsável'] || '').trim();
                     const resp = respRaw || 'NÃO INFORMADO';
 
-                    // Regra Atualizada (Setor D01 - Cores): Contar baseado na Coluna F (PANTONE)
-                    // Ignorar se o Pantone estiver vazio ou for apenas um tra�o.
-                    if (type === 'cores') {
-                        const pantoneKey = keys.find(k => k.toUpperCase().includes('PANTONE')) || keys[5];
-                        const pantone = (r[pantoneKey] || '').trim();
-                        if (!pantone || pantone === '-' || pantone === '�') return;
-                    } else {
-                        // Para aviamentos e outros, checa se a linha possui algum conte�do
-                        const hasContent = Object.values(r).some(v => v && String(v).trim().length > 0);
-                        if (!hasContent) return;
-                    }
+                    const hasContent = Object.values(r).some(v => v && String(v).trim().length > 0);
+                    if (!hasContent) return;
 
                     validCount++;
                     respMap[resp] = (respMap[resp] || 0) + 1;
@@ -1620,7 +1655,7 @@ async function requestHandler(req, res) {
             try {
                 const progSource = await fetchProgFeiraReportSource();
                 atomicWriteFileSync(path.join(DATA_DIR,'prog_feira_external.json'),JSON.stringify(progSource,null,2),'utf8');
-                generatedReports = await automaticReports.generate(progSource.records,progSource.timestamp);
+                generatedReports = await generateAutomaticReports(progSource,{mainRecords:originalRecords,mainTimestamp:new Date().toISOString()});
             }
             catch(err) {
                 console.error('[RELATÓRIOS] Geração após sync falhou:',err.message);
@@ -1736,6 +1771,8 @@ function startServers() {
 if (require.main === module) startServers();
 
 module.exports = {
+    fetchAutomaticReportSources,
+    createColorPayload,
     fetchProgFeiraReportSource,
     parseCSVRows,
     requestHandler,
