@@ -1,0 +1,13 @@
+[Unit]
+Description=Relatorios do CRM diariamente as 07h e 13h30 de Sao Paulo
+
+[Timer]
+OnCalendar=*-*-* 07:00:00 America/Sao_Paulo
+OnCalendar=*-*-* 13:30:00 America/Sao_Paulo
+Persistent=true
+AccuracySec=1s
+RandomizedDelaySec=0
+Unit=oneda-crm-reports.service
+
+[Install]
+WantedBy=timers.target

@@ -299,9 +299,9 @@ test('fontes dos relatórios usam base principal para malotes e cores filtradas 
     const {fetchAutomaticReportSources,createColorPayload}=require('../server');
     const colors='TINTURARIA,RESPONSÁVEL,PRODUTO,COR,PREVISÃO,PANTONE\nT,ANA,01.A,AZUL,03/11/2026,19-4052\nT,ANA,01.B,VERDE,03/11/2026,-\n';
     const urls=[];
-    const fetchSheet=async url=>{urls.push(url);return url.includes('1j7k8')?colors:'Número,Código,Setor\n77,01.A,88\n';};
+    const fetchSheet=async url=>{urls.push(url);return url.includes('1j7k8')?colors:url.includes('1aAsiic')?'TIPO AVIAMENTO,RESPONSÁVEL,PRODUTO,PREVISÃO\nBOTÃO,ANA,01.A,04/11/2026\n':'Número,Código,Setor\n77,01.A,88\n';};
     const sources=await fetchAutomaticReportSources({},fetchSheet);
-    assert.equal(urls.length,2);
+    assert.equal(urls.length,3);
     assert.ok(urls.some(url=>url.includes('1CWbwOq6')));
     assert.ok(urls.some(url=>url.includes('1j7k8WWv')&&url.includes('722944309')));
     assert.equal(sources.mainRecords[0]['Setor'],'88');
@@ -309,9 +309,11 @@ test('fontes dos relatórios usam base principal para malotes e cores filtradas 
     assert.equal(createColorPayload(sources.colorRecords).byResponsavel.ANA,1);
     urls.length=0;
     await fetchAutomaticReportSources({mainRecords:sources.mainRecords},fetchSheet);
-    assert.equal(urls.length,1,'sync geral reutiliza a base que acabou de sincronizar');
+    assert.equal(urls.length,2,'sync geral reutiliza a base que acabou de sincronizar');
+    assert.equal(sources.trimRecords[0].PRODUTO,'01.A');
     await assert.rejects(fetchAutomaticReportSources({},async()=>'<html>Erro Google</html>'),/Fonte de malotes inválida/);
     await assert.rejects(fetchAutomaticReportSources({mainRecords:sources.mainRecords},async()=>'Produto,Previsão\n01.A,03/11/2026'),/Fonte de cores inválida/);
+    await assert.rejects(fetchAutomaticReportSources({mainRecords:sources.mainRecords},async url=>url.includes('1j7k8')?colors:'Produto,Previsão\n01.A,03/11/2026'),/Fonte de aviamentos inválida/);
     assert.equal((await request({route:'/automatic-report-groups.js'})).status,200);
 });
 

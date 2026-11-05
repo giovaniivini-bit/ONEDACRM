@@ -64,8 +64,9 @@ const {resolveImageEntry}=require('../image-coverage');
         for(const [i,meta] of metas.entries()) {
             await page.locator(`[data-report-index="${i}"]`).click();
             await page.waitForFunction(id=>document.querySelector('.automatic-report-intro a')?.href.includes(id),meta.id);
-            assert.equal(await page.locator('.automatic-report-cards .prog-feira-card').count(),meta.count);
             const snapshot=store.read(meta.id).report;
+            const {getReportCardItems}=require('../automatic-report-groups');
+            assert.equal(await page.locator('.automatic-report-cards .prog-feira-card').count(),snapshot.items.flatMap(getReportCardItems).length);
             const {groupReportItems}=require('../automatic-report-groups');
             const expected=groupReportItems(snapshot).filter(g=>g.title).map(g=>g.title);
             const titles=await page.locator('.automatic-report-group h3').evaluateAll(els=>els.map(el=>el.childNodes[0].textContent.trim()));
@@ -73,6 +74,13 @@ const {resolveImageEntry}=require('../image-coverage');
             await page.locator('.automatic-report-intro').scrollIntoViewIfNeeded();
             await page.screenshot({path:path.join(directory,`tela-${meta.type}.png`),fullPage:false});
         }
+        await page.locator('[data-report-index="4"]').click();
+        await page.waitForFunction(id=>document.querySelector('.automatic-report-intro a')?.href.includes(id),metas[4].id);
+        const forecastCard=page.locator('.automatic-report-forecast-card').first();
+        await forecastCard.scrollIntoViewIfNeeded();
+        assert.ok(await forecastCard.locator('.automatic-report-forecasts p').count());
+        assert.equal(await forecastCard.locator('.prog-feira-card-body').evaluate(el=>el.scrollHeight>el.clientHeight),false);
+        await page.screenshot({path:path.join(directory,'tela-previsoes.png'),fullPage:false});
         await page.setViewportSize({width:390,height:844});
         assert.equal(await page.locator('.automatic-reports-view').evaluate(el=>el.scrollWidth>el.clientWidth+2),false);
         await page.locator('[data-report-index="0"]').click();

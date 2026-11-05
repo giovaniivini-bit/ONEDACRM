@@ -83,3 +83,44 @@ test('títulos tema/subtema e seções vazias ficam no PDF sem perder cards em c
     assert.equal(emptyPages[0].headings.length,6);
     assert.equal(emptyPages[0].emptyTexts.length,6);
 });
+
+test('previsões usam o vínculo completo e a prioridade de envio ao cliente do Raio X',()=>{
+    const code='01.14.00.1000';
+    const colorRecords=[{PRODUTO:code,COR:'AZUL',PANTONE:'19-4052',PREVISÃO:'10/11/2026','ENV. CLIENTE':'05/11/2026'},
+        {PRODUTO:code+'A',COR:'VERDE',PREVISÃO:'20/11/2026'}];
+    const trimRecords=[{PRODUTO:code,'TIPO AVIAMENTO':'BOTÃO',DESCRIÇÃO:'AZUL',PREVISÃO:'11/11/2026',RECEBIDO:'04/11/2026'}];
+    const mainRecords=[order(code,'01'),order(code,'D01'),order(code,'X01')];
+    const report=buildReports([],now,{mainRecords,colorRecords,trimRecords}).find(r=>r.stylist==='camila');
+    assert.equal(report.items.length,3);
+    for(const item of report.items)assert.deepEqual(item.forecasts.map(f=>[f.sector,f.kind,f.value]),[
+        ['D01','sent','05/11/2026'],['X01','forecast','11/11/2026']
+    ]);
+    assert.ok(report.items.every(item=>!JSON.stringify(item.forecasts).includes('20/11/2026')));
+    const missing=buildReports([],now,{mainRecords,colorRecords:[],trimRecords:[]}).find(r=>r.stylist==='camila');
+    assert.ok(missing.items[0].forecasts.every(f=>f.value==='Não informada'));
+});
+
+test('amostra só recebe previsões quando os fluxos CO/D41 e AV/D47 estão pendentes em D01/X01',()=>{
+    const code='01.14.00.1000';
+    const records=[sample(code),sample(code,{PARTE:'CO',FLUXO:'D41',OP:'D01'}),sample(code,{PARTE:'AV',FLUXO:'D47',OP:'X01'}),
+        sample(code+'A'),sample(code+'A',{PARTE:'CO',FLUXO:'D41',OP:'D01',QTDE_PEND:'0'})];
+    const sources={mainRecords:[],colorRecords:[{PRODUTO:code,COR:'AZUL',PREVISÃO:'10/11/2026'},{PRODUTO:code+'A',COR:'VERDE',PREVISÃO:'15/11/2026'}],
+        trimRecords:[{PRODUTO:code,'TIPO AVIAMENTO':'ELÁSTICO',PREVISÃO:'12/11/2026'}]};
+    const report=buildReports(records,now,sources).find(r=>r.stylist==='camila');
+    assert.deepEqual(report.items.find(p=>p.codigo===code).forecasts.map(f=>f.sector),['D01','X01']);
+    assert.deepEqual(report.items.find(p=>p.codigo===code+'A').forecasts,[]);
+});
+
+test('mais de quatro previsões continuam em cards iguais, sem perder datas ou aumentar dimensões',()=>{
+    const {getReportCardItems,formatForecastLine}=require('../automatic-report-groups');
+    const item={codigo:'01.14.00.1000',numero:'1',groupKey:'pedido-cor',forecasts:Array.from({length:9},(_,i)=>({sector:'D01',kind:'forecast',value:`${i+1}/11/2026`,name:`COR ${i}`}))};
+    const fragments=getReportCardItems(item);
+    assert.deepEqual(fragments.map(f=>f.forecasts.length),[4,4,1]);
+    assert.deepEqual(fragments.flatMap(f=>f.forecasts),item.forecasts);
+    assert.equal(formatForecastLine(item.forecasts[0]),'D01 prev.: 1/11/2026 | COR 0');
+    const base={stylist:'camila',sections:[{key:'pedido-cor',theme:'PEDIDO',title:'COR'}]};
+    const original=planReportPages({...base,items:[{...item,forecasts:[]}]})[0].cards[0];
+    const expanded=planReportPages({...base,items:[item]})[0].cards;
+    assert.equal(expanded.length,3);
+    assert.ok(expanded.every(card=>card.width===original.width&&card.height===original.height));
+});

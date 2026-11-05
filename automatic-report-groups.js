@@ -3,6 +3,17 @@
     if (typeof module === 'object' && module.exports) module.exports = api;
     if (root) root.CRMAutomaticReportGroups = api;
 })(typeof window !== 'undefined' ? window : globalThis, function() {
+    function formatForecastLine(entry) {
+        const label=entry.kind==='sent'?'env. cliente':entry.kind==='forecast'?'prev.':'previsão';
+        return `${entry.sector} ${label}: ${entry.value}${entry.name?` | ${entry.name}`:''}`;
+    }
+    function getReportCardItems(item) {
+        if(!item.forecasts?.length)return [item];
+        const cards=[];
+        for(let start=0;start<item.forecasts.length;start+=4)cards.push({...item,forecasts:item.forecasts.slice(start,start+4),
+            forecastPart:item.forecasts.length>4?`${Math.floor(start/4)+1}/${Math.ceil(item.forecasts.length/4)}`:''});
+        return cards;
+    }
     function groupReportItems(report) {
         if(report.sections) return report.sections.map(section=>({
             key:section.key,title:`${section.theme} / ${section.title}`,
@@ -21,5 +32,5 @@
         }
         return [...groups.values()];
     }
-    return { groupReportItems };
+    return { groupReportItems, formatForecastLine, getReportCardItems };
 });

@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const PDFDocument = require('pdfkit');
-const { groupReportItems } = require('./automatic-report-groups');
+const { groupReportItems,formatForecastLine,getReportCardItems } = require('./automatic-report-groups');
 
 function planReportPages(report) {
     const width=841.89, height=595.28, bottom=height-24, gap=8, cardHeight=214;
@@ -49,9 +49,10 @@ function planReportPages(report) {
         } else if(index) y+=18;
         if(y+(group.title?22:0)+cardHeight>bottom) nextPage();
         heading(group.title);
-        for(let start=0;start<group.items.length;start+=4) {
+        const cards=group.items.flatMap(getReportCardItems);
+        for(let start=0;start<cards.length;start+=4) {
             if(y+cardHeight>bottom) {nextPage();heading(group.title ? `${group.title} (continuação)` : '');}
-            group.items.slice(start,start+4).forEach((item,column)=>page.cards.push({item,x:24+column*(cardWidth+gap),y,width:cardWidth,height:cardHeight}));
+            cards.slice(start,start+4).forEach((item,column)=>page.cards.push({item,x:24+column*(cardWidth+gap),y,width:cardWidth,height:cardHeight}));
             y+=cardHeight+gap;
         }
     });
@@ -103,16 +104,28 @@ function createPdfRenderer(resolveImage) {
             }
             for(const empty of layout.emptyTexts || []) line(empty.text,30,empty.y,w-60,10,'#64748b');
             layout.cards.forEach(({item,x,y,width:cw,height:ch},i) => {
+                const hasForecasts=Boolean(report.stylist&&item.forecasts?.length);
                 const reasonHeight=report.type==='cores'?40:22;
                 const extraHeight=report.stylist?28:0;
                 const imgH=ch-54-reasonHeight-extraHeight;
                 doc.roundedRect(x,y,cw,ch,5).fillAndStroke('#ffffff','#cbd5e1');
                 if(images[i]) {
-                    try { doc.image(images[i],x+3,y+3,{fit:[cw-6,imgH],align:'center',valign:'center'}); }
+                    try { doc.image(images[i],x+3,y+3,{fit:[cw-6,imgH-(hasForecasts?4:0)],align:'center',valign:'center'}); }
                     catch (_) { line('Imagem indisponível',x+5,y+imgH/2,cw-10,9,'#64748b'); }
                 } else line('Imagem indisponível',x+5,y+imgH/2,cw-10,9,'#64748b');
-                const b=y+imgH+5;
+                const b=y+imgH+(hasForecasts?1:5);
                 doc.font('Helvetica-Bold').fontSize(9).fillColor('#075985').text(item.codigo,x+5,b,{width:cw-10,height:12,ellipsis:true});
+                if(hasForecasts) {
+                    const sectors=item.theme==='PEDIDO'?item.sectorLabel.replace(/:\s*(\d+)\s*dias?/g,' $1d').replace(/\s*\|\s*/g,' / '):`${item.sector} - ${item.sectorLabel}`;
+                    line(`OF ${item.numero} | ${sectors}${item.forecastPart?` | Prev. ${item.forecastPart}`:''}`,x+5,b+12,cw-10,7,'#334155',9);
+                    line(`${item.detailLabel || 'Entrega'}: ${item.delivery || 'Não informada'} | ${item.etiqueta || ''}`,x+5,b+21,cw-10,7,'#334155',9);
+                    line(item.theme==='PEDIDO'?`${item.description || ''} | ${item.quantity} peças`:`Prog.: ${item.customerProgram || '—'} | ${item.quantity} peças | ${item.daysInSector ?? '—'} dias no setor`,x+5,b+30,cw-10,7,'#334155',9);
+                    line(item.theme==='PEDIDO'?`Status: ${item.styleStatus || 'Não informado'}`:`Mov.: ${item.movementDate || 'Não informada'}`,x+5,b+39,cw-10,7,'#334155',9);
+                    doc.roundedRect(x+4,b+48,cw-8,18,3).fill('#fff1e6');
+                    line(item.reason,x+7,b+49,cw-14,7,'#9a3412',17);
+                    item.forecasts.forEach((entry,n)=>line(formatForecastLine(entry),x+5,b+66+n*9,cw-10,7,'#075985',9));
+                    return;
+                }
                 line(`${item.numero?`OF ${item.numero} | `:''}${item.sector} - ${item.sectorLabel}`,x+5,b+13,cw-10,7,'#334155',18);
                 line(`${item.detailLabel || 'Entrega'}: ${item.delivery || 'Não informada'} | ${item.etiqueta || ''}`,x+5,b+31,cw-10,7,'#334155',12);
                 if(report.stylist) {

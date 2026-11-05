@@ -6,7 +6,7 @@ const path=require('node:path');
 const {buildReports,referenceDay,createReportStore}=require('../automatic-reports');
 const {createPdfRenderer,planReportPages}=require('../automatic-reports-pdf');
 const {groupReportItems}=require('../automatic-report-groups');
-const sources={mainRecords:[{'Número':'1','Código':'A','Setor':'01'}],colorRecords:[]};
+const sources={mainRecords:[{'Número':'1','Código':'A','Setor':'01'}],colorRecords:[],trimRecords:[]};
 const now=new Date('2026-11-05T01:00:00Z'); // 04/11 in São Paulo.
 const main=(code,extra={})=>({NUMERO:'123',CODIGO:code,OP:'01B',SETOR:'ESTILO',PARTE:'FE',FLUXO:'D36',QTDE_PEND:'4',DT_SAIDA:'01/11/2026',FICHA:'03/11/2026',TIPO:'1',...extra});
 const tf=(code,sector,date,extra={})=>main(code,{PARTE:'TF',FLUXO:'D43',OP:sector,DT_SAIDA:date,...extra});

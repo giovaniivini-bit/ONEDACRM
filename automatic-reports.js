@@ -82,7 +82,7 @@ function buildReports(records, now = new Date(), sources = {}) {
         { type:'entregas', grouping:'delivery', title:'Prog Feira - entregas em atraso', description:'Produtos ativos com entrega anterior ao dia de referência, agrupados da data menos atrasada para a mais atrasada. Hoje não é atraso. Datas sem ano seguem a regra do Prog Feira.', warnings: missingDelivery ? `${missingDelivery} produtos sem entrega válida não foram classificados.` : '', items:late },
         { type:'malotes', grouping:'malote-halves', title:'Malotes pendentes', description:'Pedidos com malote nos setores 88/83 e parte principal em 20/26. Setor 88 na metade superior e setor 83 na inferior de cada folha.', warnings:'', items:malotes },
         { type:'cores', title:'Cores - previsões para hoje e em atraso', description:'Mesma regra do alerta de cores: previsão para hoje ou vencida, sem data de recebimento nem envio ao cliente. Cada card representa uma pendência de cor.', warnings:'', items:cores },
-        ...buildStylistReports(mainRecords,products,reference,day)
+        ...buildStylistReports(mainRecords,products,reference,day,sources)
     ].map(report => ({ ...report, referenceDay:day }));
 }
 
@@ -128,7 +128,7 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
         generate(records, sourceTimestamp, sources) {
             const job = async () => {
                 if (!Array.isArray(records) || !records.length) throw new Error('Fonte indisponível: relatórios anteriores foram preservados');
-                if (!Array.isArray(sources?.mainRecords) || !sources.mainRecords.length || !Array.isArray(sources?.colorRecords)) throw new Error('Fontes de malotes e cores indisponíveis: relatórios anteriores foram preservados');
+                if (!Array.isArray(sources?.mainRecords) || !sources.mainRecords.length || !Array.isArray(sources?.colorRecords) || !Array.isArray(sources?.trimRecords)) throw new Error('Fontes de malotes e cores ou aviamentos indisponíveis: relatórios anteriores foram preservados');
                 const generatedAt = now();
                 const reports = buildReports(records, generatedAt, sources);
                 const batch = crypto.randomBytes(16).toString('hex');
@@ -138,7 +138,8 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
                     const id = `${batch}-${report.type}`;
                     const reportTimestamp = report.type === 'malotes' ? sources.mainTimestamp : report.type === 'cores' ? sources.colorTimestamp : sourceTimestamp;
                     const snapshot = { ...report, id, generatedAt:generatedAt.toISOString(), sourceTimestamp:reportTimestamp || sourceTimestamp };
-                    if(report.stylist)snapshot.sourceTimestamps={pedido:sources.mainTimestamp || sourceTimestamp,amostra:sourceTimestamp};
+                    if(report.stylist)snapshot.sourceTimestamps={pedido:sources.mainTimestamp || sourceTimestamp,amostra:sourceTimestamp,
+                        cores:sources.colorTimestamp || sourceTimestamp,aviamentos:sources.trimTimestamp || sourceTimestamp};
                     const pdf = path.join(directory,`${id}.pdf`);
                     await renderPdf(snapshot, `${pdf}.tmp`);
                     fs.renameSync(`${pdf}.tmp`, pdf);
@@ -152,4 +153,4 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
         }
     };
 }
-module.exports = { referenceDay, buildReports, createReportStore };
+module.exports = { referenceDay, buildReports, createReportStore, REPORT_TYPES };

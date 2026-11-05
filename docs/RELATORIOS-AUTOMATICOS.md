@@ -1,9 +1,10 @@
 # Relatórios automáticos
 
-Plano inicial: gerar e guardar PDFs e snapshots a cada sincronização bem-sucedida
-geral e do Prog Feira (POST autenticado). A atualização complementar após o sync
-geral não duplica o lote que já foi gerado. Nenhuma dependência de navegador aberto,
-agendamento por horário ou envio externo nesta fase.
+Gerar e guardar PDFs e snapshots diariamente às 07:00 e 13:30 de America/Sao_Paulo,
+e a cada sincronização bem-sucedida geral e do Prog Feira (POST autenticado).
+A atualização complementar após o sync geral não duplica o lote já gerado.
+O agendamento roda na VPS, sem dependência de navegador ou computador do usuário.
+Não há envio externo nesta fase.
 
 1. Regras e testes: M00 >5, M02 >7 dias na própria parte TF/D43; entrega anterior
    ao dia de referência de São Paulo, com os critérios atuais do Prog Feira;
@@ -103,3 +104,46 @@ Pedidos consolidam tamanhos antes do Raio X, com semana, descrição, setores,
 status e peças. Amostras mantêm entrega, programação, peças e tempo no setor.
 Snapshots registram timestamps de PEDIDO e AMOSTRA separadamente. Os PDFs antigos
 continuam intactos; os novos tipos também permitem exclusão individual.
+
+### Previsões D01 / X01 e horários diários
+
+Plano desta atualização: atualizar as fontes de cores e aviamentos ao vivo;
+enriquecer produtos com o mesmo helper do Raio X; compactar os metadados dos cards;
+testar datas/vínculos, fontes e runner; revisar PDF e navegador; instalar e validar
+o timer de produção.
+
+Os cards por estilista incluem previsões e envios de D01 e X01 quando essas
+pendências estiverem ativas. PEDIDO usa os vínculos OF + código do Raio X;
+AMOSTRA usa os paralelos CO/D41/D01 e AV/D47/X01 com saldo pendente. As planilhas
+de previsão não contêm OF; seus detalhes seguem o código completo, sem misturar
+sufixos. "Enviado ao cliente" tem prioridade sobre previsão, como no Raio X;
+recebimento não é prova de envio. Ausência de informação aparece explicitamente.
+
+Fontes de cores e aviamentos são baixadas e validadas em cada geração. Falha não
+publica lote parcial. Timestamps das quatro fontes ficam no snapshot. Cards de
+PDF mantêm dimensões de 214 pontos e até oito por folha. Foram reorganizados os
+textos para reservar quatro linhas de previsão, mantendo semana/entrega, etiqueta,
+peças, status/descrição e setor/tempo. Se houver mais de quatro registros, outro
+card do mesmo tamanho continua as previsões, sem inflar o total de pendências.
+
+Agendamento nativo da VPS, com templates versionados em `deploy/`:
+
+```sh
+cd /home/ubuntu/apps/ONEDACRM
+sudo install -m 644 deploy/oneda-crm-reports.service /etc/systemd/system/oneda-crm-reports.service
+sudo install -m 644 deploy/oneda-crm-reports.timer /etc/systemd/system/oneda-crm-reports.timer
+sudo systemd-analyze verify /etc/systemd/system/oneda-crm-reports.service /etc/systemd/system/oneda-crm-reports.timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now oneda-crm-reports.timer
+sudo systemctl start oneda-crm-reports.service
+systemctl list-timers oneda-crm-reports.timer
+journalctl -u oneda-crm-reports.service -n 10 --no-pager
+```
+
+O timer tem dois OnCalendar com fuso explícito, sem atraso aleatório; Persistent
+recupera uma execução perdida quando a VPS voltar. O serviço admite três tentativas
+totais por hora (inicial e duas repetições, separadas por cinco minutos).
+`scripts/generate-scheduled-reports.cjs` chama o endpoint local existente, autentica
+com `/home/ubuntu/.config/oneda-crm/admin-token` (modo 600) e valida os oito tipos
+gerados com fonte ao vivo. Não envia credencial a destinos externos nem segue
+redirecionamentos. Logs contêm apenas resultado, tipos e quantidades.

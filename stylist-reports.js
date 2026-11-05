@@ -44,9 +44,19 @@ function normalizeOrderReportRecords(records) {
     return [...groups.values()];
 }
 
-function buildStylistReports(orderRecords, sampleProducts, reference, day) {
-    const orders=raioX.build(orderRecords);
-    const activeSamples=sampleProducts.filter(p=>p.sector!=='01Z'&&p.quantity>0);
+function buildStylistReports(orderRecords, sampleProducts, reference, day, sources={}) {
+    const enrich=products=>raioX.enrichWithSheets(products,sources.colorRecords,sources.trimRecords);
+    const orders=enrich(raioX.build(orderRecords));
+    const activeSamples=enrich(sampleProducts.filter(p=>p.sector!=='01Z'&&p.quantity>0).map(p=>({...p,
+        setoresCor:p.parallelPending?.some(row=>row.part==='CO'&&row.sector==='D01')?['D01']:[],
+        setoresAviamento:p.parallelPending?.some(row=>row.part==='AV'&&row.sector==='X01')?['X01']:[]
+    })));
+    const forecasts=p=>[['D01',p.colorSheet],['X01',p.trimSheet]].flatMap(([sector,sheet])=>{
+        if(!sheet)return [];
+        if(!sheet.available || !sheet.items.length)return [{sector,kind:'missing',label:'Previsão',value:sheet.available?'Não informada':'Fonte indisponível',name:''}];
+        return sheet.items.map(item=>({sector,kind:item.delivery.kind,label:item.delivery.label,value:item.delivery.value,
+            name:[item.name,item.description].filter(Boolean).join(' / ')}));
+    });
     const byProduct=(a,b)=>a.codigo.localeCompare(b.codigo,'pt-BR')||a.numero.localeCompare(b.numero);
     return STYLIST_IDS.map(id=>{
         const items=[];
@@ -54,7 +64,7 @@ function buildStylistReports(orderRecords, sampleProducts, reference, day) {
         const add=(key,p,reason,extra={})=>items.push({
             numero:String(p.numero || p.op || ''),codigo:p.codigo,imageCode:p.imageCode || p.codigo,
             sector:p.sector || p.sectors?.join(' / ') || '',sectorLabel:p.sectorLabel || p.descSetor || '',
-            delivery:p.delivery || '',etiqueta:p.etiqueta || '',reason,groupKey:key,...extra
+            delivery:p.delivery || '',etiqueta:p.etiqueta || '',reason,groupKey:key,forecasts:forecasts(p),...extra
         });
         for(const p of stylists.filter(orders,id)) {
             const extra={theme:'PEDIDO',week:p.semanaPedido,description:p.descricao,customer:p.cliente,

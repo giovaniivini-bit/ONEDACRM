@@ -6342,6 +6342,11 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 .automatic-report-row .automatic-report-entry { flex:1; min-width:0; }
 .automatic-report-delete { flex:none; padding:8px 12px; color:#ef4444; background:transparent; border:1px solid #ef4444; border-radius:7px; cursor:pointer; }
 .automatic-report-delete:disabled { opacity:.5; cursor:wait; }
+.automatic-report-forecast-card .prog-feira-card-body { height:222px; box-sizing:border-box; gap:4px; padding:10px; }
+.automatic-report-forecast-card .automatic-report-reason { height:32px; flex:none; padding:2px 5px; font-size:11px; line-height:13px; overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.automatic-report-forecast-card .prog-feira-card-body > p { margin:0; font-size:11px; line-height:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.automatic-report-forecasts { display:grid; grid-auto-rows:18px; gap:0; }
+.automatic-report-forecast-card .automatic-report-forecasts p { margin:0; font-size:11px; line-height:18px; color:var(--text-primary); overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .automatic-report-intro a { display:inline-flex; align-items:center; width:fit-content; padding:9px 14px; border-radius:6px; background:#0284c7; color:#fff; text-decoration:none; font-weight:700; font-size:13px; }
 .automatic-report-cards { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
 .automatic-report-group { margin:24px 0; }

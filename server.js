@@ -88,6 +88,7 @@ const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
 const PROG_FEIRA_CSV_URL = 'https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/export?format=csv&gid=0';
 const COLORS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1j7k8WWvE9m4YZrw7qadANIcx_XtOzAlwYfWnm0AC5sA/export?format=csv&gid=722944309';
+const TRIMS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1aAsiicOY0vu5MgQjeeBCsqcAZwGn3JQmj8drYrVaZtc/export?format=csv&gid=0';
 const GOOGLE_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
 const DRIVE_FOLDER_SORT_PARAMS = [
     '',
@@ -255,23 +256,38 @@ function createColorPayload(records) {
     return {success:true,type:'cores',title:'Cores Pendentes',count:rows.length,byResponsavel,records:rows,timestamp:new Date().toISOString(),isLive:true};
 }
 
+function createTrimPayload(records) {
+    const rows=records.filter(row=>Object.values(row).some(value=>String(value || '').trim()));
+    const byResponsavel=Object.create(null);
+    for(const row of rows) {
+        const responsible=String(row[Object.keys(row)[2]] || row['RESPONSÁVEL'] || row['Responsável'] || '').trim() || 'NÃO INFORMADO';
+        byResponsavel[responsible]=(byResponsavel[responsible] || 0)+1;
+    }
+    return {success:true,type:'aviamentos',title:'Aviamentos Pendentes',count:rows.length,byResponsavel,records:rows,timestamp:new Date().toISOString(),isLive:true};
+}
+
 async function fetchAutomaticReportSources(mainSource = {}, fetchSheet = fetchGoogleSheetCSV) {
-    const [mainRecords,colorCsv] = await Promise.all([
+    const [mainRecords,colorCsv,trimCsv] = await Promise.all([
         mainSource.mainRecords || fetchSheet(GOOGLE_SHEET_CSV_URL).then(parseCSV),
-        fetchSheet(COLORS_CSV_URL)
+        fetchSheet(COLORS_CSV_URL),
+        fetchSheet(TRIMS_CSV_URL)
     ]);
     const colorMatrix = parseCSVRows(colorCsv);
     const key = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase();
     const hasFields = (headers,fields) => fields.every(field => headers.some(h => key(h) === field));
     if (!mainRecords.length || !hasFields(Object.keys(mainRecords[0]),['numero','codigo','setor'])) throw new Error('Fonte de malotes inválida');
     if (!hasFields(colorMatrix[0] || [],['produto','previsao','pantone'])) throw new Error('Fonte de cores inválida');
+    if (!hasFields(parseCSVRows(trimCsv)[0] || [],['produto','previsao','tipoaviamento'])) throw new Error('Fonte de aviamentos inválida');
     const colors = createColorPayload(parseCSV(colorCsv));
-    return {mainRecords,mainTimestamp:mainSource.mainTimestamp || new Date().toISOString(),colorRecords:colors.records,colorTimestamp:colors.timestamp,colors};
+    const trims=createTrimPayload(parseCSV(trimCsv));
+    return {mainRecords,mainTimestamp:mainSource.mainTimestamp || new Date().toISOString(),colorRecords:colors.records,colorTimestamp:colors.timestamp,
+        trimRecords:trims.records,trimTimestamp:trims.timestamp,colors,trims};
 }
 
 async function generateAutomaticReports(progSource, mainSource) {
     const sources = await fetchAutomaticReportSources(mainSource);
     atomicWriteFileSync(path.join(DATA_DIR,'cores_external.json'),JSON.stringify(sources.colors,null,2),'utf8');
+    atomicWriteFileSync(path.join(DATA_DIR,'aviamentos_external.json'),JSON.stringify(sources.trims,null,2),'utf8');
     return automaticReports.generate(progSource.records,progSource.timestamp,sources);
 }
 
@@ -1315,7 +1331,7 @@ async function requestHandler(req, res) {
                 name: 'Aviamentos Pendentes',
                 id: '1aAsiicOY0vu5MgQjeeBCsqcAZwGn3JQmj8drYrVaZtc',
                 gid: '0',
-                url: 'https://docs.google.com/spreadsheets/d/1aAsiicOY0vu5MgQjeeBCsqcAZwGn3JQmj8drYrVaZtc/export?format=csv&gid=0',
+                url: TRIMS_CSV_URL,
                 cacheFile: path.join(DATA_DIR, 'aviamentos_external.json'),
                 targetColIndex: 2 // Coluna C (Responsável)
             },
@@ -1516,8 +1532,8 @@ async function requestHandler(req, res) {
                     return;
                 }
 
-                if (type === 'cores') {
-                    const payload = createColorPayload(records);
+                if (type === 'cores' || type === 'aviamentos') {
+                    const payload = type === 'cores' ? createColorPayload(records) : createTrimPayload(records);
                     atomicWriteFileSync(cfg.cacheFile,JSON.stringify(payload,null,2),'utf8');
                     sendJson(res,200,payload);
                     return;
