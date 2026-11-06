@@ -14,9 +14,10 @@ total monitorado mantém toda a base. Layout preservado, filtro com quebra de li
 Arquivos: app.js, style.css, index.html, package.json, test/leadtime-period.test.js.
 207 testes passaram e revisão independente aprovada. Prévia com dados reais:
 17 meses, 1.867 registros datados/68 sem data; set+out/2026 somam 181 registros.
-Publicado no GitHub/VPS nos commits 40838d6 e e6101dd. Os 207 testes também
+Publicado no GitHub/VPS nos commits 40838d6, e6101dd e 37d260c. Os 207 testes também
 passaram na VPS, saúde OK e hashes dos dados operacionais/PDFs preservados.
-Backup: /home/ubuntu/backups/oneda-crm-leadtime-period-20261106-e6101dd.
+Chrome público validou set/out=181; controles e KPIs com contraste no tema claro.
+Backup final: /home/ubuntu/backups/oneda-crm-leadtime-period-20261106-37d260c.
 
 ## Relatórios automáticos — horários exclusivos e exclusão em lote
 
