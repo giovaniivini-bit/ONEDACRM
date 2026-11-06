@@ -27,6 +27,18 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 - Operações administrativas usam senha validada no servidor e sessão HttpOnly.
 - Antigravity também modifica os aplicativos: inspecionar o estado real antes de editar.
 
+## Organização CRM e método de trabalho (06/11/2026)
+
+Por solicitação do usuário, pasta local `C:/360 skills/Dev-multiagentes/CRM`
+centraliza arquivo das conversas identificadas e snapshots dos documentos.
+Código continua neste checkout; memória canônica continua em docs/. Skill CRM
+instalada em `C:/Users/estilo08/.codex/skills/crm`; AGENTS.md neste repositório
+orienta a usá-la junto com o pacote DEV-multiagentes (codar/revisar para ajustes
+cotidianos; contratos/orquestração quando cabível). Não cria autorização permanente
+para publicar, apagar dados ou enviar mensagens. Conversas são evidência histórica.
+Exportador local permite atualizar somente as conversas explicitamente listadas;
+sem monitoramento contínuo, sem cópia de raciocínio/ferramentas ou anexos binários.
+
 ## Leadtime Produtivo (06/11/2026)
 
 Meses/anos derivados de REALIZADO_FIM, sem período fixo. Seleção múltipla com

@@ -2,6 +2,19 @@
 
 Atualizado em 06/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Pasta CRM, arquivo local e skill CRM
+
+Organização local em 06/11/2026: pasta `C:/360 skills/Dev-multiagentes/CRM`
+com índice, exportador de conversas e snapshots Markdown. Duas conversas do CRM
+identificadas pelos títulos/IDs do Codex e exportadas dos logs locais, somente
+mensagens textuais usuário/assistente; ferramentas, raciocínio e instruções
+internas excluídos, padrões de credenciais ocultados, anexos binários não copiados.
+Registro ativo é snapshot, atualizado somente ao executar o script novamente.
+Skill CRM validada e instalada no Codex, com descoberta automática habilitada;
+roteamento DEV-multiagentes e codar/revisar. AGENTS.md adicionado ao checkout para
+manter o fluxo nos próximos trabalhos. Nenhuma tela, API, dado de produção ou
+infraestrutura alterada nesta organização; arquivo de conversas permanece local.
+
 ## Leadtime Produtivo — seleção dos meses da planilha
 
 Período fixo set/2025–ago/2026 substituído por filtro múltiplo dos meses/anos
