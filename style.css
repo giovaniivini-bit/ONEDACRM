@@ -6376,3 +6376,14 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 /* Keep the leadtime period controls inside the available content width. */
 .main-content:has(.leadtime-period-filter) { min-width:0; }
 .leadtime-period-filter input { accent-color:#10b981; }
+
+.leadtime-period-filter .exec-action-btn {
+    color:var(--text-primary); background:var(--bg-surface); border-color:var(--border-base);
+}
+.leadtime-period-filter .exec-action-btn.active,
+.leadtime-period-filter .exec-action-btn:hover {
+    color:#fff; background:#047857; border-color:#10b981;
+}
+body.light-mode .main-content:has(.leadtime-period-filter) .leadtime-kpi-value {
+    color:var(--text-primary) !important;
+}
