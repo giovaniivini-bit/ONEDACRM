@@ -1,6 +1,20 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 05/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 06/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Leadtime Produtivo — seleção dos meses da planilha
+
+Período fixo set/2025–ago/2026 substituído por filtro múltiplo dos meses/anos
+válidos de REALIZADO_FIM. Todos os meses por padrão, incluindo novas liberações.
+Gráfico, média ponderada por registro, total liberado, peças, mês mais rápido e
+listagem acompanham o período; clique na coluna afunila somente a tabela dentro
+da seleção. Busca da tabela e limpeza do mês funcionando, com cursor preservado.
+Datas ausentes/inválidas ficam fora do período e são informadas no resumo geral;
+total monitorado mantém toda a base. Layout preservado, filtro com quebra de linha.
+Arquivos: app.js, style.css, index.html, package.json, test/leadtime-period.test.js.
+207 testes passaram e revisão independente aprovada. Prévia com dados reais:
+17 meses, 1.867 registros datados/68 sem data; set+out/2026 somam 181 registros.
+Publicação e verificação na VPS em andamento.
 
 ## Relatórios automáticos — horários exclusivos e exclusão em lote
 

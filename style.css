@@ -6372,3 +6372,7 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
     .automatic-report-row>.automatic-report-delete { grid-column:2; justify-self:start; }
     .automatic-report-bulk .automatic-report-delete { max-width:100%; white-space:normal; }
 }
+
+/* Keep the leadtime period controls inside the available content width. */
+.main-content:has(.leadtime-period-filter) { min-width:0; }
+.leadtime-period-filter input { accent-color:#10b981; }

@@ -90,6 +90,7 @@
         malotesSearch: '',
         malotesViewMode: 'critical', // 'both', 'cards', 'table'
         leadtimeFilter: null,
+        leadtimeMonths: [],
         leadtimeSearch: '',
         leadtimeExternalData: null,
         missingImagesSearch: '',
@@ -9873,7 +9874,7 @@
         // Regras do Usuário:
         // - Planilha Base: 22V - 2601 até 2652 (14eFcBm3glH1H04dG7UKoLvIXf0QithHrNXnscGxyvdw)
         // - Quantidade de OFs totais (Coluna A - ORDEM / OF) dividida por mês de liberação
-        // - Data de Liberação: Coluna U - DT_FINAL (determina o mês)
+        // - Data de Liberação: REALIZADO_FIM (determina o mês)
         // - Média de tempo que ficou no setor 13: Coluna AE - DIAS_REALIZADO por mês
         // - Gráfico Grande de Colunas: quantidade de pedidos liberados em cada mês e leadtime médio (dias)
         //   para saber se o time está evoluindo (ficando mais rápido)
@@ -9936,6 +9937,9 @@
                 return { key: '9999-99', label: 'Sem Data', year: 0, month: 0, sortKey: 999999 };
             }
 
+            const date = new Date(Date.UTC(y, m - 1, d));
+            if (!Number.isInteger(d) || date.getUTCFullYear() !== y || date.getUTCMonth() !== m - 1 || date.getUTCDate() !== d) return { key: '9999-99', label: 'Sem Data', year: 0, month: 0, sortKey: 999999 };
+
             const mStr = String(m).padStart(2, '0');
             const key = `${y}-${mStr}`;
             const label = `${monthNamesPt[m - 1]}/${String(y).slice(-2)}`;
@@ -9985,7 +9989,6 @@
         });
 
         const totalOFsCount = normalizedRecords.length;
-        const totalPecas = normalizedRecords.reduce((sum, r) => sum + r.qtde, 0);
 
         // Agrupamento por Mês
         const monthsMap = {};
@@ -10012,34 +10015,14 @@
             monthsMap[k].records.push(r);
         });
 
-        // Período solicitado: Setembro de 2025 (2025-09) até Agosto de 2026 (2026-08)
-        const targetPeriodKeys = [
-            '2025-09', '2025-10', '2025-11', '2025-12',
-            '2026-01', '2026-02', '2026-03', '2026-04',
-            '2026-05', '2026-06', '2026-07', '2026-08'
-        ];
-
-        // Garante todos os 12 meses do ciclo no período
-        targetPeriodKeys.forEach(pk => {
-            if (!monthsMap[pk]) {
-                const parts = pk.split('-');
-                const y = parseInt(parts[0], 10);
-                const m = parseInt(parts[1], 10);
-                monthsMap[pk] = {
-                    key: pk,
-                    label: monthNamesPt[m - 1] + '/' + String(y).slice(-2),
-                    fullLabel: fullMonthNamesPt[m - 1] + ' de ' + y,
-                    sortKey: (y * 100) + m,
-                    totalOFs: 0,
-                    totalPecas: 0,
-                    totalDias: 0,
-                    diasList: [],
-                    records: []
-                };
-            }
-        });
-
-        const sortedMonths = targetPeriodKeys.map(k => monthsMap[k]).filter(Boolean);
+        // Oferece todos os meses efetivamente encontrados em REALIZADO_FIM.
+        const availableMonths = Object.values(monthsMap).sort((a, b) => a.sortKey - b.sortKey);
+        const selectedMonths = state.leadtimeMonths || [];
+        const sortedMonths = availableMonths.filter(m => !selectedMonths.length || selectedMonths.includes(m.key));
+        const periodRecords = normalizedRecords.filter(r => monthsMap[r.monthKey] && (!selectedMonths.length || selectedMonths.includes(r.monthKey)));
+        const periodPecas = periodRecords.reduce((sum, r) => sum + r.qtde, 0);
+        const periodLabel = selectedMonths.length ? sortedMonths.map(m => m.label).join(' • ') || 'Nenhum mês disponível na seleção' : 'Todos os meses da planilha';
+        if (state.leadtimeFilter && !sortedMonths.some(m => m.key === state.leadtimeFilter)) state.leadtimeFilter = null;
 
         // Cálculos estatísticos por mês
         sortedMonths.forEach((m, i) => {
@@ -10088,7 +10071,7 @@
         }
 
         // Geração do Gráfico Grande de Colunas & Linha de Leadtime (Dual Visual SVG - Ampliado em 25%+)
-        const svgW = 1200;
+        const svgW = Math.max(1200, sortedMonths.length * 85 + 170);
         const svgH = 490;
         const pad = { top: 48, right: 85, bottom: 70, left: 85 };
         const drawW = svgW - pad.left - pad.right;
@@ -10114,7 +10097,7 @@
         const linePathD = linePoints.map((pt, i) => `${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`).join(' ');
 
         // Filtros e Pesquisa na Tabela
-        let filteredRecords = normalizedRecords;
+        let filteredRecords = periodRecords;
         if (state.leadtimeSearch && state.leadtimeSearch.trim().length > 0) {
             const q = state.leadtimeSearch.trim().toLowerCase();
             filteredRecords = filteredRecords.filter(r => 
@@ -10136,6 +10119,31 @@
             activeMonthBadge = mMatch ? mMatch.fullLabel : state.leadtimeFilter;
         }
 
+        window.crmToggleLeadtimeMonth = key => {
+            if (key !== null && !availableMonths.some(m => m.key === key)) return;
+            state.leadtimeMonths = key === null ? [] : selectedMonths.includes(key)
+                ? selectedMonths.filter(value => value !== key) : [...selectedMonths, key];
+            state.leadtimeFilter = null;
+            renderLeadtimeView(container);
+        };
+        window.crmFilterLeadtime = key => {
+            if (key !== null && !sortedMonths.some(m => m.key === key)) return;
+            state.leadtimeFilter = key;
+            renderLeadtimeView(container);
+        };
+        window.crmSearchLeadtime = value => {
+            const previousInput = container.querySelector('[data-leadtime-search]');
+            const selectionStart = previousInput?.selectionStart;
+            const selectionEnd = previousInput?.selectionEnd;
+            state.leadtimeSearch = String(value || '');
+            renderLeadtimeView(container);
+            const input = container.querySelector('[data-leadtime-search]');
+            if (input) {
+                input.focus();
+                input.setSelectionRange(selectionStart ?? input.value.length, selectionEnd ?? input.value.length);
+            }
+        };
+
         container.innerHTML = `
             <!-- CABEÇALHO DO MÓDULO LEADTIME PRODUTIVO -->
             <div class="module-view-header" style="margin-bottom: 22px;">
@@ -10147,7 +10155,7 @@
                         <h2 style="font-size: 21px; font-weight: 800; color: #ffffff; margin: 0;">Módulo: LEADTIME PRODUTIVO (MODELAGEM)</h2>
                     </div>
                     <p class="module-view-description" style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
-                        Análise de produtividade e evolução da velocidade da equipe. Quantidade de OFs liberadas por mês (Coluna U - DT_FINAL) e tempo médio decorrido no Setor 13 (Coluna AE - DIAS_REALIZADO).
+                        Análise de produtividade e evolução da velocidade da equipe. Quantidade de OFs liberadas por mês (Coluna AA - REALIZADO_FIM) e tempo médio decorrido no Setor 13 (Coluna AE - DIAS_REALIZADO).
                     </p>
                 </div>
                 
@@ -10170,6 +10178,18 @@
                 </div>
             </div>
 
+            <fieldset class="leadtime-period-filter" style="min-width:0; border:1px solid var(--border-base); border-radius:10px; padding:14px; margin:0 0 18px;">
+                <legend style="font-weight:700; padding:0 6px;">Meses considerados no gráfico</legend>
+                <p style="color:var(--text-muted); margin:0 0 10px;">Selecione um ou mais meses de liberação (REALIZADO_FIM). Gráfico, indicadores e listagem acompanham o período.</p>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    <button type="button" class="exec-action-btn ${!selectedMonths.length ? 'active' : ''}" aria-pressed="${!selectedMonths.length}" onclick="window.crmToggleLeadtimeMonth(null)">Todos os meses</button>
+                    ${availableMonths.map(m => `<label class="exec-action-btn ${selectedMonths.includes(m.key) ? 'active' : ''}" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="checkbox" aria-label="${m.fullLabel}" ${selectedMonths.includes(m.key) ? 'checked' : ''} onchange="window.crmToggleLeadtimeMonth('${m.key}')"> ${m.label} (${m.totalOFs})
+                    </label>`).join('')}
+                </div>
+                <p style="margin:10px 0 0; color:var(--text-muted);" data-leadtime-period>${periodLabel} • ${periodRecords.length} OFs com data de liberação${normalizedRecords.length > periodRecords.length && !selectedMonths.length ? ` • ${normalizedRecords.length - periodRecords.length} registros sem data válida fora do período` : ''}</p>
+            </fieldset>
+
             <!-- CARDS DE KPIS EXECUTIVOS -->
             <div class="leadtime-kpi-grid">
                 <div class="leadtime-kpi-card">
@@ -10189,8 +10209,8 @@
                     </div>
                     <div class="leadtime-kpi-info">
                         <div class="leadtime-kpi-label">Total OFs Liberadas</div>
-                        <div class="leadtime-kpi-value">${totalOFsCount} <span style="font-size: 14px; font-weight: 600; color: #94a3b8;">OFs</span></div>
-                        <div class="leadtime-kpi-sub" style="color: #38bdf8;"><i class="fa-solid fa-cubes"></i> ${totalPecas.toLocaleString('pt-BR')} peças entregues</div>
+                        <div class="leadtime-kpi-value">${overallTotalOFs} <span style="font-size: 14px; font-weight: 600; color: #94a3b8;">OFs</span></div>
+                        <div class="leadtime-kpi-sub" style="color: #38bdf8;"><i class="fa-solid fa-cubes"></i> ${periodPecas.toLocaleString('pt-BR')} peças no período</div>
                     </div>
                 </div>
 
@@ -10378,9 +10398,9 @@
                         <i class="fa-solid fa-magnifying-glass search-icon"></i>
                         <input 
                             type="text" 
-                            class="search-input" 
+                            class="search-input" data-leadtime-search
                             placeholder="Buscar por OF, Código, Descrição, Coleção, Data Final..." 
-                            value="${state.leadtimeSearch || ''}"
+                            value="${escapeHtml(state.leadtimeSearch || '')}"
                             oninput="window.crmSearchLeadtime(this.value)"
                         />
                         ${state.leadtimeSearch ? `
@@ -10391,7 +10411,7 @@
                     <!-- Filtros Rápidos por Mês -->
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <button class="exec-action-btn ${!state.leadtimeFilter ? 'active' : ''}" onclick="window.crmFilterLeadtime(null)" title="Ver todas as OFs">
-                            Todos os Meses (${totalOFsCount})
+                            Todos os meses do período (${periodRecords.length})
                         </button>
 
                         ${activeMonthBadge ? `

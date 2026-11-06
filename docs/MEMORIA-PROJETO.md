@@ -27,6 +27,14 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 - Operações administrativas usam senha validada no servidor e sessão HttpOnly.
 - Antigravity também modifica os aplicativos: inspecionar o estado real antes de editar.
 
+## Leadtime Produtivo (06/11/2026)
+
+Meses/anos derivados de REALIZADO_FIM, sem período fixo. Seleção múltipla com
+Todos por padrão; atualizações da planilha entram automaticamente nesse modo.
+Gráfico, KPIs e tabela usam o mesmo período válido. Clique na coluna restringe
+apenas a tabela; alterar período limpa esse recorte. Registros sem liberação
+válida não contam como liberados e ficam identificados no resumo geral.
+
 ## Relatórios automáticos (05/11/2026)
 
 Gerar somente às 07:00 e 13:30 de São Paulo, nunca ao sincronizar planilhas.
