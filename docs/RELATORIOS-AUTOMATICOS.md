@@ -1,6 +1,7 @@
 # Relatórios automáticos
 
-Gerar e guardar PDFs e snapshots somente às 07:00 e 13:30 de America/Sao_Paulo.
+Gerar e guardar PDFs e snapshots automaticamente às 07:00 e 13:30 de America/Sao_Paulo,
+ou sob demanda pelo botão Gerar relatórios.
 Sincronização geral e do Prog Feira atualiza dados sem gerar PDFs.
 O agendamento roda na VPS, sem dependência de navegador ou computador do usuário.
 Não há envio externo nesta fase.
@@ -39,6 +40,28 @@ Validação local: 171 testes e smoke de navegador/API com fonte real. Os dados 
 04/11/2026 resultaram em 82 produtos em permanência M00/M02 e 19 entregas atrasadas;
 104 produtos sem entrega válida foram explicitamente excluídos da classificação.
 Os PDFs incorporaram as fotos e foram renderizados para conferência visual.
+
+## Geração sob demanda — 07/11/2026
+
+O botão Gerar relatórios solicita login administrativo quando necessário e gera
+os oito tipos com as quatro fontes atualizadas, acrescentando novas versões ao
+histórico. Não exige esperar os horários automáticos. Atualizar lista somente
+consulta o histórico. Durante a geração, o botão informa Gerando relatórios e
+bloqueia novos cliques/exclusões nessa tela; ao terminar, a lista é recarregada.
+Falha ou cancelamento do login libera uma nova tentativa e informa o erro.
+
+POST /api/automatic-reports/generate exige a autenticação administrativa existente
+(sessão HttpOnly e mesma origem). Reutiliza fontes, critérios, PDFs e fila do
+agendamento/exclusão. Requisições manuais simultâneas compartilham um lote; depois
+que ele termina, outro clique pode criar novas versões. Falha de fonte/PDF não
+publica lote parcial nem altera o índice anterior. A geração manual não escreve
+schedule-runs.json nem scheduleKey: o agendamento continua independente e com
+suas travas de horário/deduplicação. Sincronizar planilhas continua sem gerar PDFs.
+
+Validação: 212 testes completos aprovados e revisão independente sem achados.
+Edge com histórico temporário validou login/cancelamento, falha com preservação,
+geração de oito novas versões, PDF, bloqueios, temas, celular e impressão sem
+botões ou erros JavaScript. Nenhum PDF de produção foi excluído nos testes.
 
 ## Atualização de 05/11/2026
 
@@ -143,7 +166,7 @@ journalctl -u oneda-crm-reports.service -n 10 --no-pager
 
 O timer tem dois OnCalendar com fuso explícito, sem atraso aleatório. Persistent
 é false: horário perdido não é recuperado depois. Restart=no impede repetições
-cinco minutos depois. O runner e o servidor admitem início somente nos minutos
+cinco minutos depois. O runner e a rota agendada admitem início somente nos minutos
 07:00 e 13:30 de São Paulo. Uma execução admitida pode terminar depois; sua data
 de geração registra o início, não a conclusão do processamento.
 `scripts/generate-scheduled-reports.cjs` chama POST /api/automatic-reports/scheduled,

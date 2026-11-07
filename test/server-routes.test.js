@@ -381,3 +381,55 @@ test('sincronizar Prog Feira atualiza a fonte sem gerar PDFs nem baixar fontes d
         assert.equal(fs.readFileSync(path.join(reportsDir,'index.json'),'utf8'),reportsBefore);
     } finally {https.get=original;if(saved)fs.writeFileSync(cache,saved);else if(fs.existsSync(cache))fs.unlinkSync(cache);}
 });
+
+
+test('geração manual exige POST administrativo, atualiza fontes e preserva histórico em falha', async () => {
+    const route = '/api/automatic-reports/generate';
+    for (const method of ['GET', 'PUT', 'DELETE']) assert.equal((await request({ method, route })).status, 405);
+    assert.equal((await request({ method: 'POST', route })).status, 401);
+    const origin = `http://127.0.0.1:${port}`;
+    const login = await request({ method: 'POST', route: '/api/admin/login', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'Senha administrativa para rotas!' }) });
+    const cookie = login.headers['set-cookie'][0].split(';')[0];
+    assert.equal((await request({ method: 'POST', route, headers: { Cookie: cookie, Origin: 'https://other.example' } })).status, 401);
+    const https = require('node:https'), { EventEmitter } = require('node:events');
+    const caches = ['prog_feira_external.json', 'cores_external.json', 'aviamentos_external.json'].map(name => path.join(__dirname, '../data', name));
+    const saved = caches.map(file => fs.existsSync(file) ? fs.readFileSync(file) : null);
+    const original = https.get;
+    let fail = false;
+    const urls = [];
+    try {
+        https.get = (url, callback) => {
+            urls.push(String(url));
+            const req = new EventEmitter(); req.setTimeout = () => req; req.destroy = () => {};
+            setImmediate(() => {
+                const res = new EventEmitter(); res.statusCode = 200; res.headers = {}; res.setEncoding = () => {}; callback(res);
+                const csv = String(url).includes('1VdgVN') ? 'Número,Código,Parte,Fluxo,Setor,Qtde Pend\n123,01.12.00.TESTE,FE,D36,01B,1'
+                    : String(url).includes('1j7k8') ? 'PRODUTO,RESPONSÁVEL,PREVISÃO,PANTONE\n01.12.00.TESTE,ANA,07/11/2026,123'
+                    : String(url).includes('1aAsiic') ? 'PRODUTO,PREVISÃO,TIPO AVIAMENTO\n01.12.00.TESTE,07/11/2026,BOTÃO'
+                    : 'NUMERO,CODIGO,SETOR\n123,01.12.00.TESTE,01';
+                const [header, row] = csv.split('\n');
+                res.emit('data', fail ? '<html>Falha de fonte</html>' : header + '\n' + Array(30).fill(row).join('\n')); res.emit('end');
+            });
+            return req;
+        };
+        const headers = { Cookie: cookie, Origin: origin };
+        const [first, concurrent] = await Promise.all([request({ method: 'POST', route, headers }), request({ method: 'POST', route, headers })]);
+        assert.equal(first.status, 200); assert.equal(concurrent.status, 200);
+        const result = JSON.parse(first.body);
+        assert.equal(result.generatedReports.length, 8); assert.equal(result.isLive, true);
+        assert.deepEqual(JSON.parse(concurrent.body).generatedReports, result.generatedReports);
+        assert.equal(urls.length, 4);
+        const id = result.generatedReports[0].id;
+        assert.equal((await request({ route: `/api/automatic-reports?id=${id}&format=pdf` })).body.slice(0, 5), '%PDF-');
+        const before = fs.readFileSync(path.join(reportsDir, 'index.json'), 'utf8');
+        fail = true;
+        const failed = await request({ method: 'POST', route, headers });
+        assert.equal(failed.status, 500);
+        assert.match(JSON.parse(failed.body).error, /histórico anterior foi preservado/);
+        assert.equal(fs.readFileSync(path.join(reportsDir, 'index.json'), 'utf8'), before);
+        assert.equal(fs.existsSync(path.join(reportsDir, 'schedule-runs.json')), false);
+    } finally {
+        https.get = original;
+        caches.forEach((file, i) => { if (saved[i]) fs.writeFileSync(file, saved[i]); else if (fs.existsSync(file)) fs.unlinkSync(file); });
+    }
+});

@@ -6387,3 +6387,10 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 body.light-mode .main-content:has(.leadtime-period-filter) .leadtime-kpi-value {
     color:var(--text-primary) !important;
 }
+
+/* Report actions remain legible in both themes and wrap on narrow screens. */
+.automatic-report-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.automatic-report-actions .exec-action-btn { min-height:36px; color:var(--text-primary); background:var(--bg-surface); border-color:var(--border-base); }
+.automatic-report-actions [data-reports-generate] { color:#fff; background:#0369a1; border-color:#0369a1; }
+.automatic-report-actions .exec-action-btn:hover { color:#fff; background:#075985; border-color:#075985; }
+.automatic-report-actions .exec-action-btn:disabled { opacity:.6; cursor:wait; }

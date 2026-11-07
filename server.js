@@ -285,7 +285,7 @@ async function fetchAutomaticReportSources(mainSource = {}, fetchSheet = fetchGo
         trimRecords:trims.records,trimTimestamp:trims.timestamp,colors,trims};
 }
 
-async function loadScheduledReportSources() {
+async function loadReportSources() {
     const progSource=await fetchProgFeiraReportSource();
     const sources = await fetchAutomaticReportSources();
     atomicWriteFileSync(path.join(DATA_DIR,'prog_feira_external.json'),JSON.stringify(progSource,null,2),'utf8');
@@ -1281,6 +1281,18 @@ async function requestHandler(req, res) {
     }
 
     // API: Obter Dados de Planilhas Externas (Cores e Aviamentos do Drive)
+    if (pathname === '/api/automatic-reports/generate') {
+        if (req.method !== 'POST') { res.writeHead(405, { Allow: 'POST' }); res.end(); return; }
+        if (!requireAdmin(req, res)) return;
+        try {
+            const result = await automaticReports.generateOnDemand(loadReportSources);
+            sendJson(res, 200, { success: true, isLive: true, ...result });
+        } catch (error) {
+            console.error('[RELATÓRIOS] Geração manual:', error.message);
+            sendJson(res, 500, { success: false, error: 'Não foi possível gerar os relatórios. O histórico anterior foi preservado. Tente novamente.' });
+        }
+        return;
+    }
     if(pathname==='/api/automatic-reports/scheduled') {
         if(req.method!=='POST'){res.writeHead(405,{Allow:'POST'});res.end();return;}
         if(!requireAdmin(req,res))return;
@@ -1290,7 +1302,7 @@ async function requestHandler(req, res) {
             sendJson(res,403,{success:false,error:'Geração disponível somente para o agendamento local.'});return;
         }
         try {
-            const result=await automaticReports.generateScheduled(loadScheduledReportSources);
+            const result=await automaticReports.generateScheduled(loadReportSources);
             sendJson(res,200,{success:true,isLive:true,...result});
         } catch(error) {
             console.error('[RELATÓRIOS] Agendamento:',error.message);

@@ -89,6 +89,7 @@ function buildReports(records, now = new Date(), sources = {}) {
 
 function createReportStore({ directory, renderPdf, now = () => new Date() }) {
     let running = Promise.resolve();
+    let manualTask = null;
     const indexPath = path.join(directory, 'index.json');
     const readIndex = () => {
         if (!fs.existsSync(indexPath)) return [];
@@ -164,6 +165,15 @@ function createReportStore({ directory, renderPdf, now = () => new Date() }) {
         },
         generate(records, sourceTimestamp, sources) {
             return enqueue(()=>generateJob(records,sourceTimestamp,sources));
+        },
+        generateOnDemand(loadSources) {
+            // Share simultaneous clicks, but allow a new batch after completion or failure.
+            if (manualTask) return manualTask;
+            manualTask = enqueue(async () => {
+                const { records, sourceTimestamp, sources } = await loadSources();
+                return { generatedReports: await generateJob(records, sourceTimestamp, sources) };
+            }).finally(() => { manualTask = null; });
+            return manualTask;
         },
         async generateScheduled(loadSources) {
             const slot=requireReportSlot(now());

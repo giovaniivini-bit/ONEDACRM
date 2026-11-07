@@ -1,6 +1,24 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 06/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 07/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Relatórios automáticos — botão Gerar relatórios (07/11/2026)
+
+Incluída geração sob demanda dos oito relatórios com fontes atualizadas e login
+administrativo. Botão com estado Gerando relatórios, bloqueio de cliques/exclusões,
+recarregamento do histórico e erro/retentativa. Novas versões preservam as antigas.
+Rota POST /api/automatic-reports/generate reutiliza autenticação e mesma origem,
+fontes, PDFs e fila existente. Pedidos manuais simultâneos compartilham o lote.
+Horários 07:00/13:30 e ledger agendado permanecem independentes; sincronizações
+continuam sem gerar PDFs. Falha de fonte/PDF não publica lote parcial.
+
+Arquivos: automatic-reports.js, server.js, app.js, automatic-reports-view.js,
+style.css, index.html, package.json, test/manual-reports.test.js e teste de rotas.
+212 testes completos passaram; sintaxe JS e diff conferidos, duas passadas de
+revisão independente sem achados. Edge com histórico temporário validou login
+cancelado, falha preservando oito versões, sucesso acrescentando oito, PDF,
+bloqueios, temas claro/escuro, celular e impressão sem botões, sem erros JS.
+Publicação GitHub/VPS autorizada pelo usuário; implantação em andamento.
 
 ## Pasta CRM, arquivo local e skill CRM
 

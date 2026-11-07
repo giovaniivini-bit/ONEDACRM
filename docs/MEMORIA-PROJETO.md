@@ -49,7 +49,10 @@ válida não contam como liberados e ficam identificados no resumo geral.
 
 ## Relatórios automáticos (05/11/2026)
 
-Gerar somente às 07:00 e 13:30 de São Paulo, nunca ao sincronizar planilhas.
+Geração automática às 07:00 e 13:30 de São Paulo, nunca ao sincronizar planilhas.
+Desde 07/11/2026, botão Gerar relatórios permite gerar os oito PDFs sob demanda,
+com login administrativo e fontes ao vivo. Acrescenta versões ao histórico;
+pedidos manuais simultâneos compartilham o lote, sem consumir o ledger agendado.
 Timer sem recuperação de horários perdidos/repetições tardias; gate local e de
 horário no servidor/runner/fila. schedule-runs.json persiste deduplicação por
 data/horário e deve sobreviver a Excluir todos e deploy. PDFs/snapshots/índice em

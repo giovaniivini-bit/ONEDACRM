@@ -100,6 +100,7 @@
         automaticReportsLoaded: false,
         automaticReportsLoading: false,
         automaticReportDeleting: false,
+        automaticReportGenerating: false,
         automaticReportSelection: [],
         automaticReportsError: '',
         alertRules: [],
@@ -1873,6 +1874,7 @@
                     loading:state.automaticReportsLoading, error:state.automaticReportsError,
                     escape:escapeHtml, image:getProductImage, choose:loadAutomaticReport, refresh:loadAutomaticReports,
                     remove:deleteAutomaticReport, deleting:state.automaticReportDeleting,
+                    generate:generateAutomaticReports, generating:state.automaticReportGenerating,
                     selection:state.automaticReportSelection,
                     toggle:id=>{state.automaticReportSelection=state.automaticReportSelection.includes(id)?state.automaticReportSelection.filter(value=>value!==id):[...state.automaticReportSelection,id];renderActiveView();},
                     selectAll:()=>{state.automaticReportSelection=state.automaticReportSelection.length===state.automaticReports.length?[]:state.automaticReports.map(r=>r.id);renderActiveView();},
@@ -4226,10 +4228,28 @@
         })();
         return automaticReportListTask;
     }
+    async function generateAutomaticReports() {
+        if (state.automaticReportGenerating || state.automaticReportDeleting) return;
+        state.automaticReportGenerating = true;
+        state.automaticReportsError = '';
+        if (state.activeSubmodule === 'relatorios-automaticos') renderActiveView();
+        try {
+            const response = await adminFetch('/api/automatic-reports/generate', { method: 'POST' });
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || 'Não foi possível gerar os relatórios.');
+            await loadAutomaticReports(true);
+            showNotification(`${data.generatedReports.length} relatórios gerados e adicionados ao histórico.`, 'success', 'Relatórios automáticos');
+        } catch (error) {
+            state.automaticReportsError = error.message;
+        } finally {
+            state.automaticReportGenerating = false;
+            if (state.activeSubmodule === 'relatorios-automaticos') renderActiveView();
+        }
+    }
     let automaticReportRequest=0;
     function deleteAutomaticReport(id) { return deleteAutomaticReports([id]); }
     async function deleteAutomaticReports(selectedIds,all=false) {
-        if(state.automaticReportDeleting)return;
+        if(state.automaticReportDeleting || state.automaticReportGenerating)return;
         const ids=[...new Set(selectedIds)].filter(id=>state.automaticReports.some(r=>r.id===id));
         if(!ids.length)return;
         const report=state.automaticReports.find(r=>r.id===ids[0]);
