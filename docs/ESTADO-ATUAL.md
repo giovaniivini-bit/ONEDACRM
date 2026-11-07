@@ -18,7 +18,15 @@ style.css, index.html, package.json, test/manual-reports.test.js e teste de rota
 revisão independente sem achados. Edge com histórico temporário validou login
 cancelado, falha preservando oito versões, sucesso acrescentando oito, PDF,
 bloqueios, temas claro/escuro, celular e impressão sem botões, sem erros JS.
-Publicação GitHub/VPS autorizada pelo usuário; implantação em andamento.
+Publicado no GitHub e VPS no commit 644baf6. Os 212 testes passaram também na
+VPS; hashes confirmaram preservação de 1.006 arquivos operacionais no deploy.
+Reiniciado somente oneda-crm-app, saúde OK e timer 07:00/13:30 ativo.
+Geração manual real validou os oito tipos: histórico 8→16 versões, PDFs antigos
+e ledger preservados. Snapshot dos novos relatórios: tingimento59, entregas14,
+malotes10, cores12, Camila124, Ketlyn27, Joyce88 e Thamires21 (dados dinâmicos).
+Edge na URL pública confirmou botão/versão nova, login e cancelamento, 16 versões,
+celular e ausência de erros JS. Nenhum PDF de produção excluído nos testes.
+Backup: /home/ubuntu/backups/oneda-crm-manual-reports-20261107-644baf6.
 
 ## Pasta CRM, arquivo local e skill CRM
 

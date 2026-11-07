@@ -62,6 +62,10 @@ Validação: 212 testes completos aprovados e revisão independente sem achados.
 Edge com histórico temporário validou login/cancelamento, falha com preservação,
 geração de oito novas versões, PDF, bloqueios, temas, celular e impressão sem
 botões ou erros JavaScript. Nenhum PDF de produção foi excluído nos testes.
+Publicado no GitHub/VPS no commit 644baf6, com 212 testes aprovados na VPS e
+1.006 arquivos operacionais preservados por SHA-256 durante a atualização.
+Geração manual real acrescentou oito versões (8→16); PDFs anteriores e ledger
+preservados. Edge público confirmou botão, login/cancelamento e celular sem erros.
 
 ## Atualização de 05/11/2026
 
