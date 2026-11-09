@@ -4,7 +4,7 @@ Atualizado em 08/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
 ## Aproveitamento — data de finalização em segunda planilha (08/11/2026)
 
-Implementação validada; publicação em GitHub/VPS autorizada pelo usuário em 08/11/2026.
+Implementação publicada e validada em GitHub/VPS, autorizada pelo usuário em 08/11/2026.
 Base de código atualizada até 374d851, preservando geração manual, horários
 exclusivos dos relatórios, exclusão em lote e filtro Leadtime de outros agentes.
 Documentação e contratos em APROVEITAMENTO.md.
@@ -27,7 +27,7 @@ curto. Edge verificou compra/preços preservados, intervalos inclusivos, cliente
 código com sufixo, fonte vazia/falha/cache, tabela, temas e celular, sem erros JS.
 PDF com coluna e data individual conferido por extração. Na leitura real, 29
 finalizações vinculadas a 2.097 registros; 2.068 sem data e nenhum conflito.
-Nenhuma escrita feita nas planilhas. Nenhum deploy realizado nesta etapa local.
+Nenhuma escrita feita nas planilhas. Publicado em GitHub e VPS no commit 8c928a7, em 08/11/2026 (America/Sao_Paulo), após autorização explícita do usuário. Os 220 testes passaram também na VPS; hashes confirmaram preservação de 1.697 arquivos operacionais. Backup: /home/ubuntu/backups/oneda-crm-aproveitamento-20261108-8c928a7. Reiniciado somente oneda-crm-app. Saúde OK, fonte nova ao vivo com 29 linhas, versão pública e navegador Edge confirmados: 29 vínculos/2.097 registros, coluna de finalização presente e nenhum erro JavaScript.
 
 ## Relatórios automáticos — botão Gerar relatórios (07/11/2026)
 
