@@ -79,6 +79,12 @@ previsões acima20 têm continuação sem foto. PDFs antigos preservados.
 228 testes aprovados, revisão independente e Edge real sem erros: Camila125→106,
 Ketlyn28→14; produto01.14.00.7269H reúne duas OFs e cinco partes. PDF renderizado
 conferido com ambas OFs no detalhamento. Guia RELATORIOS-AUTOMATICOS.md atualizado.
+Publicado no GitHub/VPS no commit36473fb. 228 testes passaram na VPS, saúde OK,
+1.026 arquivos operacionais preservados por hashes durante deploy. Novo lote de
+oito relatórios gerado: unicidade código/tema validada nos quatro estilistas,
+16 arquivos PDF/snapshot anteriores e ledger preservados. Edge público confirmou
+106 cards de Camila e detalhes de ambas OFs, sem erros JS.
+Backup: /home/ubuntu/backups/oneda-crm-reports-product-theme-20261109-36473fb.
 Arquivos: stylist-reports.js, automatic-report-groups.js, automatic-reports-view.js,
 automatic-reports-pdf.js, style.css, index.html e testes por estilista.
 
