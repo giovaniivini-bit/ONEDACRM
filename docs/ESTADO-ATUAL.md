@@ -1,5 +1,12 @@
 # Estado atual — Oneda CRM
 
+## PDFs por estilista — um tema por folha (09/11/2026)
+
+Substitui o espaço de meia folha: cada tema/subtema começa em folha própria,
+com título no topo e cards imediatamente abaixo. Continuações mantêm alinhamento
+superior e nenhum tema compartilha folha com outro. PDFs antigos preservados;
+o novo layout é aplicado às próximas gerações.
+
 ## PDFs automáticos — espaço entre temas (09/11/2026)
 
 Relatórios por estilista reservam meia área útil de folha entre temas/subtemas,

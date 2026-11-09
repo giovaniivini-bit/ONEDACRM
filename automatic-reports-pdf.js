@@ -31,11 +31,8 @@ function planReportPages(report) {
     };
     groupReportItems(report).forEach((group,index)=>{
         if(index && report.sections && report.items.length) {
-            // Half of the printable sheet separates themes, across page breaks.
-            y-=gap;
-            let space=(bottom-58)/2;
-            while(space>bottom-y) {space-=Math.max(0,bottom-y);nextPage();}
-            y+=space;
+            // Each theme starts at the top of its own sheet.
+            nextPage();
         }
         if (!group.items.length) {
             if(report.sections) {

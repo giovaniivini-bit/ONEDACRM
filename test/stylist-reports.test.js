@@ -67,14 +67,14 @@ test('amostra aplica dia de São Paulo, >15 estrito e ignora fluxo TF, cancelado
     assert.equal(report.items.find(i=>i.codigo===code).numero,'S1');
 });
 
-test('temas reservam meia área útil entre o último card e o próximo título',()=>{
+test('cada tema começa em folha própria com cards alinhados ao topo',()=>{
     const pages=planReportPages({sections:[{key:'a',theme:'PEDIDO',title:'AVIAMENTO'},{key:'b',theme:'PEDIDO',title:'COR'}],items:[{groupKey:'a'},{groupKey:'b'}]});
-    const first=pages[0].cards[0];
     const nextIndex=pages.findIndex(p=>p.headings.some(h=>h.title==='PEDIDO / COR'));
     const next=pages[nextIndex].headings.find(h=>h.title==='PEDIDO / COR');
-    const blank=(595.28-24-first.y-first.height)+(nextIndex-1)*(595.28-24-58)+(next.y-58);
-    assert.ok(nextIndex>0);
-    assert.ok(blank>=(595.28-24-58)/2-0.01);
+    assert.equal(nextIndex,1);
+    assert.equal(next.y,58);
+    assert.equal(pages[nextIndex].cards[0].y,80);
+    assert.ok(pages.every(page=>new Set(page.cards.map(card=>card.item.groupKey)).size<=1));
     assert.equal(pages.flatMap(p=>p.cards).length,2);
 });
 
