@@ -67,6 +67,12 @@ finalizações vinculadas a 2.097 registros; 2.068 sem data e nenhum conflito.
 Nenhuma escrita feita nas planilhas. Publicado em GitHub e VPS no commit 8c928a7, em 08/11/2026 (America/Sao_Paulo), após autorização explícita do usuário. Os 220 testes passaram também na VPS; hashes confirmaram preservação de 1.697 arquivos operacionais. Backup: /home/ubuntu/backups/oneda-crm-aproveitamento-20261108-8c928a7. Reiniciado somente oneda-crm-app. Saúde OK, fonte nova ao vivo com 29 linhas, versão pública e navegador Edge confirmados: 29 vínculos/2.097 registros, coluna de finalização presente e nenhum erro JavaScript.
 Atualizado em 09/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Aproveitamento — ocultar nota técnica na impressão (09/11/2026)
+
+Bloco aproveitamento-date-note (critério de datas, estatísticas de vínculos e link
+à planilha de finalização) oculto somente na impressão, a pedido do usuário.
+Tela mantém o bloco. Período, seleção de clientes e observação do usuário preservados.
+
 ## Aproveitamento — vários clientes e observação (09/11/2026)
 
 Filtro de clientes agora tem checkboxes, Marcar todos e Limpar seleção. Seleção
