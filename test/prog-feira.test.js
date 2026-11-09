@@ -140,6 +140,8 @@ test('setores da Prog Feira permitem seleção múltipla por união e alternânc
     assert.equal(filterBySectors(products, '02B').length, 1, 'preserva estado simples legado');
 });
 test('gráfico conecta os flags múltiplos ao estado visual e à limpeza de setores', () => {
+    const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+    assert.match(html, /prog-feira\.js\?v=20261108-prog-multisector-1/);
     const app = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
     const css = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
 

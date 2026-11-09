@@ -4,6 +4,11 @@ Atualizado em 08/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
 ## Prog Feira — seleção múltipla de setores (08/11/2026)
 
+Correção posterior: o helper prog-feira.js havia mantido a URL de versão antiga,
+permitindo cache incompatível com app.js novo e impedindo abrir a tela em sessões
+existentes. Referência atualizada para 20261108-prog-multisector-1, com regressão
+da versão no HTML. 27 testes focados passaram. Correção destinada ao GitHub/VPS.
+
 O gráfico Produtos por setor agora apresenta um flag em cada coluna e aceita mais
 de um setor simultaneamente. Cliques alternam cada setor de forma independente;
 os selecionados são combinados por OU, sem duplicar referências. O resumo da barra
