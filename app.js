@@ -327,8 +327,8 @@
         
         // SVG dimensions
         const svgW = 1000;
-        const svgH = 400;
-        const pad = { top: 40, right: 60, bottom: 75, left: 60 };
+        const svgH = 420;
+        const pad = { top: 40, right: 60, bottom: 95, left: 60 };
         const drawW = svgW - pad.left - pad.right;
         const drawH = svgH - pad.top - pad.bottom;
         
@@ -359,6 +359,7 @@
                     <text x="${cx}" y="${pad.top + drawH + 20}" fill="#cbd5e1" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui">${c.name}</text>
                     <text x="${cx}" y="${pad.top + drawH + 35}" fill="#64748b" font-size="10" font-weight="normal" text-anchor="middle" font-family="system-ui">${c.prefix ? 'Pref: '+c.prefix : ''}</text>
                     <text x="${cx}" y="${pad.top + drawH + 52}" fill="#0ea5e9" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui">${((c.total / totalCount) * 100).toFixed(1)}%</text>
+                    <text class="aproveitamento-client-conversion" x="${cx}" y="${pad.top + drawH + 70}" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui">Compra: ${(c.total > 0 ? c.comp / c.total * 100 : 0).toFixed(1)}%</text>
                 </g>
             `;
         }).join('');
@@ -555,7 +556,7 @@
                             <span style="color: #fbbf24;"><i class="fa-solid fa-minus"></i> % Acumulado</span>
                         </div>
                     </div>
-                    <svg viewBox="0 0 ${svgW} ${svgH}" style="width: 100%; height: auto; background: rgba(15, 23, 42, 0.4); border-radius: 8px;">
+                    <svg preserveAspectRatio="none" viewBox="0 0 ${svgW} ${svgH}" style="width: 100%; height: auto; background: rgba(15, 23, 42, 0.4); border-radius: 8px;">
                         ${[0, 0.25, 0.5, 0.75, 1].map(r => {
                             const y = pad.top + drawH - (drawH * r);
                             return `

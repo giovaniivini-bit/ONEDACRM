@@ -67,6 +67,16 @@ finalizações vinculadas a 2.097 registros; 2.068 sem data e nenhum conflito.
 Nenhuma escrita feita nas planilhas. Publicado em GitHub e VPS no commit 8c928a7, em 08/11/2026 (America/Sao_Paulo), após autorização explícita do usuário. Os 220 testes passaram também na VPS; hashes confirmaram preservação de 1.697 arquivos operacionais. Backup: /home/ubuntu/backups/oneda-crm-aproveitamento-20261108-8c928a7. Reiniciado somente oneda-crm-app. Saúde OK, fonte nova ao vivo com 29 linhas, versão pública e navegador Edge confirmados: 29 vínculos/2.097 registros, coluna de finalização presente e nenhum erro JavaScript.
 Atualizado em 09/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Aproveitamento — gráfico ampliado e conversão por cliente (09/11/2026)
+
+Cartões menores no PDF; gráfico ampliado em toda a largura, cabeçalho e gráfico
+mantidos na primeira página. Abaixo da participação de produtos, nova linha
+Compra: percentual de amostras compradas/total do próprio cliente. Mesmos filtros
+e cálculo já usados no resumo; disponível na tela e impressão. Margem inferior do
+SVG ampliada para não cortar a nova linha. 223 testes passaram, revisão independente
+aprovada. PDF real renderizado e conferido: primeira página com título, KPIs,
+gráfico inteiro e taxas de todos os clientes. Publicação via backup e hashes.
+
 ## Impressão Aproveitamento — 09/11/2026
 
 Removida quebra obrigatória antes do gráfico. Cabeçalho, filtros, KPIs e gráfico

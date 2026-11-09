@@ -6415,15 +6415,25 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
 .aproveitamento-print-title { display:none; }
 @media print {
     #print-area-aproveitamento { padding:0 !important; }
-    #print-area-aproveitamento .aproveitamento-print-summary { display:block; break-inside:avoid !important; page-break-inside:avoid !important; }
+    #print-area-aproveitamento .aproveitamento-print-summary { display:block; zoom:.8 !important; break-inside:avoid !important; page-break-inside:avoid !important; }
     #print-area-aproveitamento .aproveitamento-print-title { display:block; font-size:20pt; line-height:1.15; text-transform:uppercase; margin:0 0 4mm; color:#f8fafc; }
     #print-area-aproveitamento .header-main-title { margin-bottom:3mm !important; padding-bottom:2mm !important; }
     #print-area-aproveitamento .header-main-title h2 { font-size:14pt !important; }
     #print-area-aproveitamento .aproveitamento-print-summary > .cq-macro-card { padding:2mm !important; margin-bottom:3mm !important; }
     #print-area-aproveitamento .kpi-grid { margin-bottom:3mm !important; gap:2mm !important; }
     #print-area-aproveitamento .kpi-card { padding:2mm !important; }
-    #print-area-aproveitamento .kpi-value { font-size:24pt !important; }
-    #print-area-aproveitamento .aproveitamento-print-summary svg { height:75mm !important; width:100% !important; }
+    #print-area-aproveitamento .aproveitamento-print-summary svg { height:90mm !important; width:100% !important; }
 }
 
 @media print { #print-area-aproveitamento .header-main-title button { display:none !important; } }
+
+@media print {
+ #print-area-aproveitamento .aproveitamento-print-summary > .cq-macro-card { zoom:1 !important; }
+ #print-area-aproveitamento .kpi-grid { zoom:1 !important; }
+ #print-area-aproveitamento .kpi-card { min-height:0 !important; padding:2mm !important; gap:1mm !important; }
+ #print-area-aproveitamento .kpi-header { margin-bottom:1mm !important; }
+ #print-area-aproveitamento .kpi-value { font-size:16pt !important; line-height:1.15 !important; }
+ #print-area-aproveitamento .kpi-value span { font-size:9pt !important; }
+ #print-area-aproveitamento .kpi-label, #print-area-aproveitamento .kpi-footer { font-size:7pt !important; }
+ #print-area-aproveitamento .aproveitamento-print-title { color:var(--text-primary) !important; }
+}
