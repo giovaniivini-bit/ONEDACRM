@@ -6411,3 +6411,19 @@ body.light-mode #print-area-aproveitamento .exec-action-btn { color:var(--text-p
 body.light-mode #print-area-aproveitamento .exec-action-btn.active { color:#3730a3 !important; background:#e0e7ff !important; border-color:#818cf8 !important; }
 body.light-mode #print-area-aproveitamento select,
 body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !important; background:#fff !important; border-color:var(--border-base) !important; }
+.aproveitamento-print-summary { display:contents; }
+.aproveitamento-print-title { display:none; }
+@media print {
+    #print-area-aproveitamento { padding:0 !important; }
+    #print-area-aproveitamento .aproveitamento-print-summary { display:block; break-inside:avoid !important; page-break-inside:avoid !important; }
+    #print-area-aproveitamento .aproveitamento-print-title { display:block; font-size:20pt; line-height:1.15; text-transform:uppercase; margin:0 0 4mm; color:#f8fafc; }
+    #print-area-aproveitamento .header-main-title { margin-bottom:3mm !important; padding-bottom:2mm !important; }
+    #print-area-aproveitamento .header-main-title h2 { font-size:14pt !important; }
+    #print-area-aproveitamento .aproveitamento-print-summary > .cq-macro-card { padding:2mm !important; margin-bottom:3mm !important; }
+    #print-area-aproveitamento .kpi-grid { margin-bottom:3mm !important; gap:2mm !important; }
+    #print-area-aproveitamento .kpi-card { padding:2mm !important; }
+    #print-area-aproveitamento .kpi-value { font-size:24pt !important; }
+    #print-area-aproveitamento .aproveitamento-print-summary svg { height:75mm !important; width:100% !important; }
+}
+
+@media print { #print-area-aproveitamento .header-main-title button { display:none !important; } }

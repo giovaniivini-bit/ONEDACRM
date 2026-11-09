@@ -420,6 +420,8 @@
 
         const html = `
             <div id="print-area-aproveitamento" style="background:#0f172a; padding: 24px;">
+                <section class="aproveitamento-print-summary">
+                <h1 class="aproveitamento-print-title">controle do aproveitamento da venda de amostras - RQ 008 - setor desenvolvimento</h1>
                 <div class="header-main-title" style="margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; display:flex; justify-content: space-between; align-items:center;">
                     <div>
                         <h2 style="font-size: 24px; font-weight: 800; color: #f8fafc; margin: 0; text-transform: uppercase;">APROVEITAMENTO AMOSTRAS ${periodText ? periodText : ''}</h2>
@@ -543,7 +545,7 @@
                     </div>
                 </div>
 
-                <!-- Pareto --><div class="page-break-before"></div>
+                <!-- Pareto -->
                 <div class="cq-macro-card" style="margin-bottom: 24px; padding: 20px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
                         <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin: 0;"><i class="fa-solid fa-chart-column" style="color:#fbbf24; margin-right:8px;"></i> Visualização geral por cliente</h3>
@@ -567,6 +569,7 @@
                     </svg>
                 </div>
 
+                </section>
                 <!-- Exec Table & Macros -->
                 <div style="display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 24px;">
                     <div class="cq-macro-card" style="padding: 20px; max-height: 400px; overflow-y: auto;">
