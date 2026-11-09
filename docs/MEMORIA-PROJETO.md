@@ -263,3 +263,11 @@ mostra nenhum. Gráfico alterna cliente na seleção. Mesmos filtros nas métric
 listagem. Observação opcional até600 caracteres, preservada enquanto a tela está
 aberta, aparece somente no PDF abaixo do gráfico da primeira página em fonte pequena.
 Texto sem HTML; quebra de linha compactada na impressão para caber na folha.
+
+## Relatórios — produto por tema (09/11/2026)
+
+Nos novos PDFs por estilista, consolidar código completo por subtema. Um produto
+pode aparecer em temas diferentes; no mesmo tema, juntar OFs e contar OFs distintas
+e partes identificadas por OF, sem confundir grades/tamanhos com partes. Manter
+ocorrências/previsões/datas originais em detalhes; não mostrar só a primeira OF.
+Quantidade de partes sem fonte é não informada. Preservar snapshots/PDFs antigos.

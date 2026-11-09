@@ -135,3 +135,43 @@ test('mais de quatro previsões continuam em cards iguais, sem perder datas ou a
     assert.equal(expanded.length,3);
     assert.ok(expanded.every(card=>card.width===original.width&&card.height===original.height));
 });
+
+
+test('um produto por tema soma OFs distintas e partes por OF sem contar grades novamente',()=>{
+    const code='01.14.00.1000';
+    const input=[order(code,'01',{'Número':'100',Parte:'A'}),order(code,'01',{'Número':'100',Parte:'A',Tamanho:'M'}),
+        order(code,'01',{'Número':'100',Parte:'B'}),order(code,'D01',{'Número':'100',Parte:'A'}),
+        order(code,'01',{'Número':'101',Parte:'A'}),order(code,'D01',{'Número':'101',Parte:'A'}),
+        order(code+'A','01',{'Número':'102',Parte:'A'})];
+    const [report]=stylistReports(input);
+    const estampa=report.items.filter(item=>item.groupKey==='pedido-estampa');
+    assert.equal(estampa.length,2);
+    const item=estampa.find(item=>item.codigo===code);
+    assert.deepEqual(item.orders,['100','101']);assert.equal(item.orderCount,2);assert.equal(item.partCount,3);assert.equal(item.partsKnown,true);
+    assert.equal(item.occurrences.length,2);assert.equal(item.forecasts.length,1);
+    assert.equal(report.items.filter(item=>item.codigo===code).length,2,'mesmo produto permanece em estampa e cor');
+    assert.equal(report.uniqueProducts,2);
+    const cards=planReportPages({...report,generatedAt:now.toISOString()}).flatMap(page=>page.cards);
+    assert.equal(cards.filter(card=>card.item.codigo===code&&card.item.groupKey==='pedido-cor').length,1);
+});
+
+test('amostras consolidadas conservam movimentos individuais e exibem maior permanência',()=>{
+    const code='01.14.00.1000';
+    const [report]=stylistReports([], [sample(code,{NUMERO:'100',DT_SAIDA:'01/10/2026'}),sample(code,{NUMERO:'101',DT_SAIDA:'01/09/2026'})]);
+    const item=report.items.find(item=>item.groupKey==='amostra-permanencia');
+    assert.equal(item.orderCount,2);assert.equal(item.partCount,2);
+    assert.match(item.movementDate,/01\/10\/2026.*01\/09\/2026/);
+    assert.equal(item.daysInSector,Math.max(...item.occurrences.map(row=>row.daysInSector)));
+    assert.equal(new Set(item.occurrences.map(row=>row.daysInSector)).size,2);
+});
+
+test('partes ausentes são informadas; previsões extensas não repetem imagem principal nem perdem itens',()=>{
+    const {consolidateStylistItems}=require('../stylist-reports');
+    const {getReportCardItems,formatProductSummary}=require('../automatic-report-groups');
+    const forecasts=Array.from({length:25},(_,i)=>({sector:'D01',kind:'forecast',value:String(i),name:'Cor'}));
+    const [item]=consolidateStylistItems([{codigo:'01.14.00.1000',numero:'100',groupKey:'pedido-cor',forecasts},
+        {codigo:'01.14.00.1000',numero:'101',groupKey:'pedido-cor',forecasts}]);
+    assert.equal(item.partsKnown,false);assert.match(formatProductSummary(item),/Partes não informadas/);
+    const cards=getReportCardItems(item);assert.equal(cards.length,2);assert.equal(cards.filter(card=>!card.continuation).length,1);
+    assert.deepEqual(cards.flatMap(card=>card.forecasts),forecasts);
+});

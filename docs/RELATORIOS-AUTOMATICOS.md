@@ -201,3 +201,29 @@ perda do horário na fila, exclusão autenticada em lote, IDs inválidos e falha
 Chrome com histórico temporário conferiu seleção, confirmação/cancelamento, login,
 exclusão em lote/todos, retentativa, atualização, temas e celular. Nenhum PDF de
 produção é removido pela implantação ou pelas verificações.
+
+## Produto único por tema — 09/11/2026
+
+Novos relatórios por estilista consolidam pelo código completo dentro de cada
+seção, mantendo separado PEDIDO/AMOSTRA e cada subtema. Sufixos não são removidos.
+Cada card informa OFs distintas e partes por OF, sem grades/tamanhos repetirem a
+contagem. Partes vêm da coluna Parte da fonte; ausência é explicitada, sem inventar
+uma parte. O mesmo produto pode constar em cor, estampa e aviamento, uma vez em cada.
+
+Ocorrências originais permanecem no snapshot e em detalhes expansíveis na tela.
+Dados de setor/status/entrega são agregados; permanência mostra o maior valor,
+identificado como até, e os movimentos individuais permanecem no detalhamento.
+Previsões iguais são unidas, diferentes preservadas. Até20 previsões cabem no card;
+excedentes usam continuação sem repetir foto. PDF acrescenta detalhamento textual
+paginado somente para produtos agrupados ou com previsões extensas, com os vínculos
+OF/parte e dados originais. A numeração dos cards é identificada separadamente.
+
+Contagem do relatório indica produtos/tema; total de produtos únicos usa código
+completo, não OF+código. PDFs e snapshots anteriores permanecem intactos; usar
+Gerar relatórios para obter as versões consolidadas. Critérios de pendência,
+prefixos de estilista, horários e autenticação não mudam.
+
+228 testes aprovados e revisão independente final aprovada. Edge com fontes reais:
+Camila125→106 entradas, Ketlyn28→14; código01.14.00.7269H reúne OF078401/078941 e
+cinco partes. Conferidos detalhes, previsões, temas claro/escuro e celular sem erros.
+PDF real renderizado, com contagens no card e ambas OFs no detalhamento textual.

@@ -9,6 +9,11 @@
     }
     function getReportCardItems(item) {
         if(!item.forecasts?.length)return [item];
+        if(item.consolidated) {
+            const cards=[];
+            for(let start=0;start<item.forecasts.length;start+=20)cards.push({...item,forecasts:item.forecasts.slice(start,start+20),continuation:start>0,forecastPart:start>0?'continuação':''});
+            return cards;
+        }
         const cards=[];
         for(let start=0;start<item.forecasts.length;start+=4)cards.push({...item,forecasts:item.forecasts.slice(start,start+4),
             forecastPart:item.forecasts.length>4?`${Math.floor(start/4)+1}/${Math.ceil(item.forecasts.length/4)}`:''});
@@ -32,5 +37,10 @@
         }
         return [...groups.values()];
     }
-    return { groupReportItems, formatForecastLine, getReportCardItems };
+    function formatProductSummary(item) {
+        if(!item.consolidated)return item.numero?`OF ${item.numero}`:'';
+        return `${item.orderCount} OF(s) • ${item.partsKnown?item.partCount+' parte(s)':item.partCount?item.partCount+' parte(s) identificada(s)':'Partes não informadas'}`;
+    }
+    function getReportCardHeight(item) { return item.consolidated?214+Math.max(0,(item.forecasts?.length || 0)-4)*9:214; }
+    return { groupReportItems, formatForecastLine, getReportCardItems,formatProductSummary,getReportCardHeight };
 });

@@ -6453,3 +6453,6 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
 }
 
 @media print { #print-area-aproveitamento .aproveitamento-date-note { display:none !important; } }
+
+.automatic-report-consolidated .prog-feira-card-body { height:auto; min-height:222px; }
+.automatic-report-occurrences { padding:8px; font-size:11px; overflow-wrap:anywhere; }

@@ -67,6 +67,21 @@ finalizações vinculadas a 2.097 registros; 2.068 sem data e nenhum conflito.
 Nenhuma escrita feita nas planilhas. Publicado em GitHub e VPS no commit 8c928a7, em 08/11/2026 (America/Sao_Paulo), após autorização explícita do usuário. Os 220 testes passaram também na VPS; hashes confirmaram preservação de 1.697 arquivos operacionais. Backup: /home/ubuntu/backups/oneda-crm-aproveitamento-20261108-8c928a7. Reiniciado somente oneda-crm-app. Saúde OK, fonte nova ao vivo com 29 linhas, versão pública e navegador Edge confirmados: 29 vínculos/2.097 registros, coluna de finalização presente e nenhum erro JavaScript.
 Atualizado em 09/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Relatórios por estilista — produto único por tema (09/11/2026)
+
+Consolidação por código completo e subtema na geração. Card mostra quantidade de
+OFs distintas e partes por OF; grades não multiplicam partes. Mesma referência
+permanece em temas diferentes, sufixos preservados. Ocorrências no snapshot,
+detalhes expansíveis na tela e detalhamento textual paginado no PDF conservam
+vínculos OF/parte, status, datas, quantidades e previsões. Permanência mostra
+maior valor (até), com dados de cada OF consultáveis. Fotos não repetem por OF;
+previsões acima20 têm continuação sem foto. PDFs antigos preservados.
+228 testes aprovados, revisão independente e Edge real sem erros: Camila125→106,
+Ketlyn28→14; produto01.14.00.7269H reúne duas OFs e cinco partes. PDF renderizado
+conferido com ambas OFs no detalhamento. Guia RELATORIOS-AUTOMATICOS.md atualizado.
+Arquivos: stylist-reports.js, automatic-report-groups.js, automatic-reports-view.js,
+automatic-reports-pdf.js, style.css, index.html e testes por estilista.
+
 ## Aproveitamento — ocultar nota técnica na impressão (09/11/2026)
 
 Bloco aproveitamento-date-note (critério de datas, estatísticas de vínculos e link

@@ -29,9 +29,9 @@ function normalizeOrderReportRecords(records) {
         if(/^\d$/.test(setor))setor=`0${setor}`;
         const key=JSON.stringify([op,setor,codigo.toUpperCase()]);
         const quantity=parseInt(field(['Qtde Original','Qtde','Quantidade','Qtd Original','Qtd']).replace(/[^0-9]/g,''),10)||0;
-        if(groups.has(key)) {groups.get(key).qtdeOriginal+=quantity;continue;}
+        if(groups.has(key)) {const group=groups.get(key);group.qtdeOriginal+=quantity;group.partes=[...new Set([...group.partes,field(['Parte','PARTE'])].filter(Boolean))];continue;}
         groups.set(key,{
-            op,codigo,setor,qtdeOriginal:quantity,
+            op,codigo,setor,qtdeOriginal:quantity,partes:[field(['Parte','PARTE'])].filter(Boolean),
             descSetor:field(['Desc Setor','Descrição Setor','Descricao Setor','Descrio Setor']),
             descricao:field(['Produto Descrição','Produto Descricao','Produto Descrio','Desc Produto','Descrição','Descricao']),
             statusEstilo:field(['Produto Status','Status Estilo','Situação Estilo','Situacao Estilo','Status Prod','Status Estampa','Sit Estilo','Desc Estilo']),
@@ -46,7 +46,13 @@ function normalizeOrderReportRecords(records) {
 
 function buildStylistReports(orderRecords, sampleProducts, reference, day, sources={}) {
     const enrich=products=>raioX.enrichWithSheets(products,sources.colorRecords,sources.trimRecords);
-    const orders=enrich(raioX.build(orderRecords));
+    const orderParts=new Map();
+    for(const row of orderRecords) {
+        const key=JSON.stringify([String(row.op).trim(),String(row.codigo).trim().toUpperCase()]);
+        if(!orderParts.has(key))orderParts.set(key,new Set());
+        for(const part of row.partes || [])orderParts.get(key).add(String(part).trim().toUpperCase());
+    }
+    const orders=enrich(raioX.build(orderRecords)).map(p=>({...p,reportParts:[...(orderParts.get(JSON.stringify([String(p.op).trim(),String(p.codigo).trim().toUpperCase()])) || [])]}));
     const activeSamples=enrich(sampleProducts.filter(p=>p.sector!=='01Z'&&p.quantity>0).map(p=>({...p,
         setoresCor:p.parallelPending?.some(row=>row.part==='CO'&&row.sector==='D01')?['D01']:[],
         setoresAviamento:p.parallelPending?.some(row=>row.part==='AV'&&row.sector==='X01')?['X01']:[]
@@ -62,7 +68,7 @@ function buildStylistReports(orderRecords, sampleProducts, reference, day, sourc
         const items=[];
         let invalidDeliveries=0, invalidMovement=0;
         const add=(key,p,reason,extra={})=>items.push({
-            numero:String(p.numero || p.op || ''),codigo:p.codigo,imageCode:p.imageCode || p.codigo,
+            numero:String(p.numero || p.op || ''),parts:p.reportParts || (p.theme==='AMOSTRA'?['FE']:[]),codigo:p.codigo,imageCode:p.imageCode || p.codigo,
             sector:p.sector || p.sectors?.join(' / ') || '',sectorLabel:p.sectorLabel || p.descSetor || '',
             delivery:p.delivery || '',etiqueta:p.etiqueta || '',reason,groupKey:key,forecasts:forecasts(p),...extra
         });
@@ -77,7 +83,7 @@ function buildStylistReports(orderRecords, sampleProducts, reference, day, sourc
         }
         for(const p of stylists.filter(activeSamples,id)) {
             const key=prog.deliveryKey(p,reference);
-            const extra={theme:'AMOSTRA',customerProgram:p.customerProgram,daysInSector:p.daysInSector,movementDate:p.movementDate,quantity:p.quantity};
+            const extra={parts:['FE'],theme:'AMOSTRA',customerProgram:p.customerProgram,daysInSector:p.daysInSector,movementDate:p.movementDate,quantity:p.quantity};
             if(key && key<day)add('amostra-atraso',p,`Entrega ${key.split('-').reverse().join('/')} em atraso`,{...extra,sortDate:key});
             if(!key) {
                 const invalid=Boolean(String(p.delivery || '').trim()&&!/^[-—–]+$/.test(p.delivery));
@@ -89,14 +95,35 @@ function buildStylistReports(orderRecords, sampleProducts, reference, day, sourc
                 else if(p.daysInSector>15)add('amostra-permanencia',p,`${p.sector}: ${p.daysInSector} dias no setor (limite 15)`,extra);
             }
         }
+        const consolidated=consolidateStylistItems(items);
         const order=new Map(SECTIONS.map((s,i)=>[s.key,i]));
-        items.sort((a,b)=>order.get(a.groupKey)-order.get(b.groupKey)||(a.groupKey==='amostra-atraso'?b.sortDate.localeCompare(a.sortDate):0)||byProduct(a,b));
+        consolidated.sort((a,b)=>order.get(a.groupKey)-order.get(b.groupKey)||(a.groupKey==='amostra-atraso'?b.sortDate.localeCompare(a.sortDate):0)||byProduct(a,b));
         return {type:`estilista-${id}`,stylist:id,title:`${stylists.label(id)} - Pendências de pedidos e amostras`,
-            grouping:'stylist',sections:SECTIONS,countLabel:'pendências',
+            grouping:'stylist',sections:SECTIONS,countLabel:'produtos/tema',
             description:'PEDIDO: pendências de estampa, aviamento (X01) e cor (D01) do Raio X. AMOSTRA: entregas vencidas, sem data válida ou mais de 15 dias em 01A/01B/1B2. Um produto pode aparecer em mais de um subtema.',
             warnings:[invalidDeliveries?`${invalidDeliveries} entregas inválidas incluídas em sem data válida.`:'',invalidMovement?`${invalidMovement} amostras sem movimentação válida não foram classificadas por permanência.`:''].filter(Boolean).join(' '),
-            uniqueProducts:new Set(items.map(p=>`${p.numero}|${p.codigo}`)).size,items};
+            uniqueProducts:new Set(consolidated.map(p=>p.codigo.trim().toUpperCase())).size,items:consolidated};
     });
 }
 
-module.exports={STYLIST_IDS,SECTIONS,normalizeOrderReportRecords,buildStylistReports};
+function consolidateStylistItems(items) {
+    const groups=new Map();
+    for(const item of items) {
+        const key=JSON.stringify([item.groupKey,String(item.codigo).trim().toUpperCase()]);
+        if(!groups.has(key))groups.set(key,[]);
+        groups.get(key).push(item);
+    }
+    return [...groups.values()].map(rows=>{
+        const first=rows[0];
+        const orders=[...new Set(rows.map(row=>String(row.numero || '').trim()).filter(Boolean))];
+        const partRefs=[...new Set(rows.flatMap(row=>(row.parts || []).map(part=>JSON.stringify([String(row.numero || '').trim(),String(part).trim().toUpperCase()]))))];
+        const join=field=>[...new Set(rows.map(row=>row[field]).filter(value=>value!==undefined&&value!==null&&value!==''))].join(' | ');
+        const forecasts=[...new Map(rows.flatMap(row=>row.forecasts || []).map(entry=>[JSON.stringify(entry),entry])).values()];
+        return {...first,consolidated:true,orders,orderCount:orders.length,partCount:partRefs.length,partsKnown:rows.every(row=>row.parts?.length),
+            occurrences:rows,forecasts,reason:join('reason'),sector:join('sector'),sectorLabel:join('sectorLabel'),delivery:join('delivery'),
+            movementDate:join('movementDate'),daysInSector:rows.some(row=>row.daysInSector!=null)?Math.max(...rows.filter(row=>row.daysInSector!=null).map(row=>row.daysInSector)):null,
+            etiqueta:join('etiqueta'),description:join('description'),styleStatus:join('styleStatus'),customerProgram:join('customerProgram'),
+            quantity:rows.reduce((total,row)=>total+(Number(row.quantity)||0),0)};
+    });
+}
+module.exports={STYLIST_IDS,SECTIONS,normalizeOrderReportRecords,buildStylistReports,consolidateStylistItems};
