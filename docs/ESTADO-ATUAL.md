@@ -11,10 +11,14 @@ lista os códigos ativos e oferece Mostrar todos; Limpar restaura Todos. Cards,
 KPIs, etiquetas, programações, entregas e contadores acompanham a mesma seleção.
 
 Implementação em prog-feira.js, app.js, style.css e index.html, com regressões em
-test/prog-feira.test.js. 221 testes completos e 27 testes focados passaram. Revisão
+test/prog-feira.test.js. 222 testes completos e 27 testes focados passaram. Revisão
 independente aprovada sem Critical/Important. Navegador local com fonte ao vivo
 validou 01A=60 e 01B=58 selecionados juntos, total 118, grupos corretos, temas
-escuro/claro e console sem erros. Publicação GitHub/VPS será registrada abaixo.
+escuro/claro e console sem erros. Publicado no GitHub e na VPS no commit ee76cc8.
+Os 222 testes passaram também na VPS; hashes dos arquivos operacionais preservados
+e somente oneda-crm-app reiniciado. Backup:
+/home/ubuntu/backups/oneda-crm-prog-multisector-20261108-ee76cc8. O CRM público
+carregou os assets novos e confirmou 01A+01B=118, só os dois grupos e nenhum erro JS.
 
 ## Aproveitamento — data de finalização em segunda planilha (08/11/2026)
 
