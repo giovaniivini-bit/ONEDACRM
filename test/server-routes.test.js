@@ -61,6 +61,58 @@ test('serves health and blocks internal static files and malformed URLs', async 
     assert.equal((await request({ route: '/images/%E0%A4%A' })).status, 400);
 });
 
+test('fonte de finalização usa a nova planilha gid0 e aceita cabeçalho ainda sem produtos',async()=>{
+    const {fetchSampleFinalizationSource}=require('../server');
+    let target;
+    const empty=await fetchSampleFinalizationSource(async url=>{target=url;return 'PRODUTO,DATA FINALIZAÇÂO\n';});
+    assert.ok(target.includes('1bshn2-m-8O2WvkS5uX0Qbnt3YoCbGAM_gLX5pciTmsk'));
+    assert.ok(target.includes('gid=0'));
+    assert.equal(empty.status,'empty');assert.deepEqual(empty.records,[]);
+    assert.equal(empty.isLive,true);
+    const valid=await fetchSampleFinalizationSource(async()=> 'DATA DE FINALIZAÇÃO DA AMOSTRA,PRODUTO,PREÇO\n08/11/2026,01.14.01.0000,999\n');
+    assert.deepEqual(valid.records,[{PRODUTO:'01.14.01.0000',DATA_FINALIZACAO:'2026-11-08',invalidDate:false}]);
+    await assert.rejects(fetchSampleFinalizationSource(async()=>'<html>sem acesso</html>'),/colunas PRODUTO/);
+    assert.equal((await request({method:'POST',route:'/api/external-sheet?type=amostras_finalizadas&refresh=1'})).status,401);
+    for(const file of ['aproveitamento-dates.js','aproveitamento-finalizacao.js'])assert.equal((await request({route:`/${file}`})).status,200);
+});
+
+test('downloader real aceita CSV curto e cabeçalho vazio após redirecionamento sem manter datas antigas',async()=>{
+    const https=require('node:https'),{EventEmitter}=require('node:events');
+    const cache=path.join(__dirname,'../data/amostras_finalizadas_external.json');
+    const saved=fs.existsSync(cache)?fs.readFileSync(cache):null;
+    const original=https.get;
+    let csv='PRODUTO,DATA FINALIZAÇÂO\n01.14.01.0000,08/11/2026\n';
+    try {
+        https.get=(url,callback)=>{
+            const req=new EventEmitter();req.setTimeout=()=>req;req.destroy=()=>{};
+            setImmediate(()=>{
+                const res=new EventEmitter();res.setEncoding=()=>{};
+                const redirect=String(url).includes('docs.google.com');
+                res.statusCode=redirect?307:200;res.headers=redirect?{location:'https://sheets.googleusercontent.com/finalizacao.csv'}:{};
+                callback(res);
+                if(!redirect){res.emit('data',csv);res.emit('end');}
+            });
+            return req;
+        };
+        const read=()=>request({method:'POST',route:'/api/external-sheet?type=amostras_finalizadas&refresh=1',headers:{'X-CRM-Admin-Token':'route-test-secret'}});
+        const populated=await read();assert.equal(populated.status,200);
+        assert.equal(JSON.parse(populated.body).records[0].DATA_FINALIZACAO,'2026-11-08');
+        csv='PRODUTO,DATA FINALIZAÇÂO\n';
+        const empty=await read();assert.equal(empty.status,200);
+        assert.equal(JSON.parse(empty.body).isLive,true);
+        assert.deepEqual(JSON.parse(empty.body).records,[]);
+        csv='<html>Sem acesso</html>';
+        const fallback=await read();assert.equal(fallback.status,200);
+        assert.equal(JSON.parse(fallback.body).isLive,false);
+        assert.deepEqual(JSON.parse(fallback.body).records,[]);
+        fs.unlinkSync(cache);
+        assert.equal((await read()).status,503);
+    } finally {
+        https.get=original;
+        if(saved)fs.writeFileSync(cache,saved);else if(fs.existsSync(cache))fs.unlinkSync(cache);
+    }
+});
+
 test('sync dos relatórios busca explicitamente a fonte Prog Feira em vez da base principal',async()=>{
     const {fetchProgFeiraReportSource}=require('../server');
     let target;

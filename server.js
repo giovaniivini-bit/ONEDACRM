@@ -16,6 +16,7 @@ const progFeira = require('./prog-feira');
 const { createReportStore } = require('./automatic-reports');
 const { createPdfRenderer } = require('./automatic-reports-pdf');
 const costura = require('./costura');
+const aproveitamentoFinalizacao = require('./aproveitamento-finalizacao');
 const { createAdminAuth } = require('./admin-auth');
 const {
     readRequestBody,
@@ -81,6 +82,8 @@ const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app
 
 PUBLIC_FILES.add('automatic-reports-view.js');
 PUBLIC_FILES.add('automatic-report-groups.js');
+PUBLIC_FILES.add('aproveitamento-dates.js');
+PUBLIC_FILES.add('aproveitamento-finalizacao.js');
 if (!ADMIN_PASSWORD_HASH) {
     console.warn('⚠️  CRM_ADMIN_PASSWORD_HASH não configurado: login administrativo por senha está indisponível.');
 }
@@ -90,6 +93,7 @@ const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgk
 const PROG_FEIRA_CSV_URL = 'https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/export?format=csv&gid=0';
 const COLORS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1j7k8WWvE9m4YZrw7qadANIcx_XtOzAlwYfWnm0AC5sA/export?format=csv&gid=722944309';
 const TRIMS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1aAsiicOY0vu5MgQjeeBCsqcAZwGn3JQmj8drYrVaZtc/export?format=csv&gid=0';
+const FINALIZATION_CSV_URL = 'https://docs.google.com/spreadsheets/d/1bshn2-m-8O2WvkS5uX0Qbnt3YoCbGAM_gLX5pciTmsk/export?format=csv&gid=0';
 const GOOGLE_DRIVE_FOLDER_URL = 'https://drive.google.com/drive/folders/1YA-gpBhY3zDeooquzzY5Vl4HK-DirjzA';
 const DRIVE_FOLDER_SORT_PARAMS = [
     '',
@@ -240,6 +244,12 @@ function createProgFeiraPayload(records) {
 
 async function fetchProgFeiraReportSource(fetchSheet = fetchGoogleSheetCSV) {
     return createProgFeiraPayload(parseCSV(await fetchSheet(PROG_FEIRA_CSV_URL)));
+}
+
+async function fetchSampleFinalizationSource(fetchSheet = fetchGoogleSheetCSV) {
+    const records=aproveitamentoFinalizacao.parseMatrix(parseCSVRows(await fetchSheet(FINALIZATION_CSV_URL,5,1)));
+    return {success:true,type:'amostras_finalizadas',title:'Finalização das amostras (01F)',sourceSchemaVersion:1,
+        count:records.length,status:records.length?'available':'empty',records,timestamp:new Date().toISOString(),isLive:true};
 }
 
 function createColorPayload(records) {
@@ -495,7 +505,7 @@ function parseCSV(csvText) {
 }
 
 // Download live CSV from Google Sheets com suporte a múltiplos redirecionamentos (301, 302, 307)
-function fetchGoogleSheetCSV(url = GOOGLE_SHEET_CSV_URL, maxRedirects = 5) {
+function fetchGoogleSheetCSV(url = GOOGLE_SHEET_CSV_URL, maxRedirects = 5, minimumLength = 500) {
     return new Promise((resolve, reject) => {
         if (maxRedirects <= 0) {
             return reject(new Error('Muitos redirecionamentos ao baixar a planilha do Google Sheets.'));
@@ -506,7 +516,7 @@ function fetchGoogleSheetCSV(url = GOOGLE_SHEET_CSV_URL, maxRedirects = 5) {
             if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                 const nextUrl = new URL(res.headers.location, url).toString();
                 console.log(`[SYNC] Redirecionando (${res.statusCode}) para: ${nextUrl.slice(0, 80)}...`);
-                return fetchGoogleSheetCSV(nextUrl, maxRedirects - 1).then(resolve).catch(reject);
+                return fetchGoogleSheetCSV(nextUrl, maxRedirects - 1, minimumLength).then(resolve).catch(reject);
             }
 
             if (res.statusCode !== 200) {
@@ -517,7 +527,7 @@ function fetchGoogleSheetCSV(url = GOOGLE_SHEET_CSV_URL, maxRedirects = 5) {
             res.setEncoding('utf8');
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
-                if (!data || data.trim().length < 500) {
+                if (!data || data.trim().length < minimumLength) {
                     return reject(new Error('Conteúdo CSV vazio ou muito curto retornado pelo Google Sheets.'));
                 }
                 resolve(data);
@@ -1382,6 +1392,11 @@ async function requestHandler(req, res) {
                 targetColIndex: 8 // Coluna I (Situação de Amostra)
             },
             
+            amostras_finalizadas: {
+                name:'Finalização das amostras (01F)',
+                url:FINALIZATION_CSV_URL,
+                cacheFile:path.join(DATA_DIR,'amostras_finalizadas_external.json')
+            },
             aproveitamento: {
                 name: 'Aproveitamento de Amostras (760)',
                 id: '1gUzTqx6VOuRMBiMlAvyqsyRzVtOy5SaI7ORCeaUG36k',
@@ -1440,6 +1455,7 @@ async function requestHandler(req, res) {
             if (fs.existsSync(cfg.cacheFile)) {
                 try {
                     cachedData = JSON.parse(fs.readFileSync(cfg.cacheFile, 'utf8'));
+                    if(type==='amostras_finalizadas' && (cachedData.sourceSchemaVersion!==1 || !Array.isArray(cachedData.records)))cachedData=null;
                     if (type === 'producao_costura' && (![1,2,3].includes(cachedData.sourceSchemaVersion) || (cachedData.sourceSchemaVersion >= 2 && !Array.isArray(cachedData.cuttingWeeks)) || !Array.isArray(cachedData.weeks) || !cachedData.weeks.length || !cachedData.weeks.every(w => Array.isArray(w.people) && Array.isArray(w.dates) && Number.isFinite(w.total)))) cachedData = null;
                     if (type === 'calendar') {
                         const validCachedRows = validateCalendarRecords(cachedData?.records);
@@ -1464,6 +1480,12 @@ async function requestHandler(req, res) {
             }
 
             try {
+                if(type==='amostras_finalizadas') {
+                    const payload=await fetchSampleFinalizationSource();
+                    atomicWriteFileSync(cfg.cacheFile,JSON.stringify(payload,null,2),'utf8');
+                    sendJson(res,200,payload);
+                    return;
+                }
                 // Tenta baixar da nuvem Google Sheets
                 const csvText = await fetchGoogleSheetCSV(cfg.url);
                 if (type === 'producao_costura') {
@@ -1815,6 +1837,7 @@ function startServers() {
 if (require.main === module) startServers();
 
 module.exports = {
+    fetchSampleFinalizationSource,
     fetchAutomaticReportSources,
     createColorPayload,
     fetchProgFeiraReportSource,

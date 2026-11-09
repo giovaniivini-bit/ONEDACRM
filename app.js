@@ -83,6 +83,7 @@
         aproveitamentoPeriod: 'all',
         aproveitamentoDateStart: '',
         aproveitamentoDateEnd: '',
+        aproveitamentoFinalizationData: null,
         // Cards por padrão: evita montar simultaneamente a grade de fotos e a
         // tabela completa (mais de 2 mil nós no CQ), que tornava o scroll pesado.
         cqDisplayMode: 'cards',
@@ -141,7 +142,10 @@
 
     function renderAproveitamentoView(container) {
         const ext = state.aproveitamentoExternalData || { count: 0, records: [] };
-        const rawRecords = ext.records || [];
+        const finalization=window.CRMAproveitamentoFinalizacao;
+        const finalizationSource=state.aproveitamentoFinalizationData;
+        const rawRecords = finalization.join(ext.records || [],finalizationSource);
+        const finalizationStats=finalization.summarize(rawRecords);
 
         const CLIENTES_APROVEITAMENTO = {
             '01': 'C&A',
@@ -154,18 +158,7 @@
         };
 
         function parseAproveitamentoDate(value) {
-            const raw = String(value || '').trim();
-            if (!raw) return null;
-            const brMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-            const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-            const date = brMatch
-                ? new Date(Number(brMatch[3]), Number(brMatch[2]) - 1, Number(brMatch[1]))
-                : isoMatch
-                    ? new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]))
-                    : new Date(raw);
-            if (Number.isNaN(date.getTime())) return null;
-            date.setHours(0, 0, 0, 0);
-            return date;
+            return window.CRMAproveitamentoDates.parse(value);
         }
 
         function getAproveitamentoProductCode(record) {
@@ -180,7 +173,7 @@
             return { prefix, name: CLIENTES_APROVEITAMENTO[prefix] || 'Outros' };
         }
 
-        const validDates = rawRecords.map(r => parseAproveitamentoDate(r.DATA_CAD)).filter(Boolean);
+        const validDates = rawRecords.map(r => parseAproveitamentoDate(r.CRM_FINALIZACAO.date)).filter(Boolean);
         const dataMaxDate = validDates.length
             ? new Date(Math.max(...validDates.map(date => date.getTime())))
             : null;
@@ -206,7 +199,9 @@
         const filteredRecords = rawRecords.filter(record => {
             const recordClient = getAproveitamentoClient(record).name;
             if (activeCli !== 'all' && recordClient !== activeCli) return false;
-            const recordDate = parseAproveitamentoDate(record.DATA_CAD);
+            const recordDate = parseAproveitamentoDate(record.CRM_FINALIZACAO.date);
+            if(activePeriod!=='all'&&!recordDate)return false;
+            if(activePeriod==='custom'&&periodStart&&periodEnd&&periodStart>periodEnd)return false;
             if (periodStart && (!recordDate || recordDate < periodStart)) return false;
             if (periodEnd && (!recordDate || recordDate > periodEnd)) return false;
             return true;
@@ -290,7 +285,7 @@
         let minDate = new Date(8640000000000000);
         let maxDate = new Date(-8640000000000000);
         filteredRecords.forEach(r => {
-            const date = parseAproveitamentoDate(r.DATA_CAD);
+            const date = parseAproveitamentoDate(r.CRM_FINALIZACAO.date);
             if (date) {
                 if (date < minDate) minDate = date;
                 if (date > maxDate) maxDate = date;
@@ -308,6 +303,7 @@
                 periodText = `${startMonth} ${startYear} - ${endMonth} ${endYear}`;
             }
         }
+        if(activePeriod==='all'&&validDates.length<rawRecords.length)periodText='BASE COMPLETA';
         
         // Sorting clients
         const sortedClients = Object.values(cliMap).sort((a,b) => b.total - a.total);
@@ -478,8 +474,16 @@
                             <option value="Outros" ${activeCli === 'Outros' ? 'selected' : ''}>Outros</option>
                         </select>
                     </label>
-                    <div style="font-size:12px; color:#64748b; width:100%;">
-                        ${dataMaxDate ? `Períodos rápidos calculados até ${dataMaxDate.toLocaleDateString('pt-BR')}, a data mais recente da planilha.` : 'Nenhuma data válida encontrada na coluna DATA_CAD.'}
+                    <div class="aproveitamento-date-note" style="font-size:12px; width:100%;">
+                        Período pela <strong>data de finalização da amostra no setor 01F</strong>.
+                        ${dataMaxDate ? `Atalhos calculados até ${dataMaxDate.toLocaleDateString('pt-BR')}, a finalização mais recente dos produtos vinculados.` : 'Aguardando datas válidas na nova planilha.'}
+                        <br>Base completa: ${finalizationStats.matched} de ${rawRecords.length} registros com data de finalização vinculada;
+                        ${finalizationStats.missing} sem data, ${finalizationStats.invalid} com data inválida e ${finalizationStats.conflict} com datas divergentes.${finalizationStats.unavailable?` ${finalizationStats.unavailable} com fonte de finalização indisponível.`:''}
+                        ${activePeriod==='all'?'Todo o período inclui os registros sem data; ao escolher um período, entram apenas os com finalização válida.':'Registros sem finalização válida não entram neste período.'}
+                        ${finalizationSource?.success&&finalizationSource.isLive===false?'<br><strong style="color:#f59e0b">Datas de finalização em cache — não foi possível atualizar a fonte.</strong>':''}
+                        ${!finalizationSource?.success?`<br><strong style="color:#f59e0b">${state.externalSheetsLoaded?'Fonte de finalização indisponível. Os dados comerciais continuam disponíveis.':'Carregando a planilha de finalização...'}</strong>`:''}
+                        ${activePeriod==='custom'&&periodStart&&periodEnd&&periodStart>periodEnd?'<br><strong style="color:#ef4444">A data inicial deve ser anterior ou igual à data final.</strong>':''}
+                        <br><a href="https://docs.google.com/spreadsheets/d/1bshn2-m-8O2WvkS5uX0Qbnt3YoCbGAM_gLX5pciTmsk/edit" target="_blank" rel="noopener">Abrir planilha de finalização</a> — colunas Produto e Data de finalização da amostra (DD/MM/AAAA).
                     </div>
                 </div>
 
@@ -659,6 +663,7 @@
                                     <th style="padding:10px;">CÓDIGO</th>
                                     <th style="padding:10px;">CLIENTE</th>
                                     <th style="padding:10px;">DESCRIÇÃO</th>
+                                    <th style="padding:10px;">FINALIZAÇÃO DA AMOSTRA</th>
                                     <th style="padding:10px;">CATEGORIA</th>
                                     <th style="padding:10px; text-align:center;">STATUS</th>
                                     <th style="padding:10px; text-align:right;">PREÇO VENDA</th>
@@ -672,6 +677,7 @@
                                             <td style="padding:10px; font-family:monospace; color:#38bdf8;">${escapeHtml(getAproveitamentoProductCode(r))}</td>
                                             <td style="padding:10px; font-weight:600; color:#e2e8f0;">${getAproveitamentoClient(r).name}</td>
                                             <td style="padding:10px; color:#cbd5e1;">${escapeHtml(r.DESCRICAO || '-')}</td>
+                                            <td style="padding:10px;" title="${escapeHtml(r.CRM_FINALIZACAO.dates.map(date=>window.CRMAproveitamentoDates.format(date)).join(' / '))}">${escapeHtml(r.CRM_FINALIZACAO.date?window.CRMAproveitamentoDates.format(r.CRM_FINALIZACAO.date):finalization.STATUS_LABELS[r.CRM_FINALIZACAO.status])}</td>
                                             <td style="padding:10px; color:#94a3b8;">${escapeHtml(String(r.DESC_GRUPO || '').split('(')[0].trim() || r.MACRO_CATEGORIA || '-')}</td>
                                             <td style="padding:10px; text-align:center;">
                                                 <span style="padding:4px 8px; border-radius:4px; font-weight:bold; font-size:10px; background:${isC ? 'rgba(16,185,129,0.2)' : 'rgba(244,63,94,0.2)'}; color:${isC ? '#34d399' : '#fb7185'};">
@@ -923,7 +929,7 @@
         const sheetsWereLoaded = state.externalSheetsLoaded;
         const previousSheetSources = JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive]);
         if (!window.location.protocol.startsWith('http')) return;
-        const previousRecords = JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
+        const previousRecords = JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.aproveitamentoFinalizationData, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
         const failures = [];
         try {
             const requestExternal = type => {
@@ -935,7 +941,7 @@
                     return payload;
                 }).catch(error => { failures.push(`${type}: ${error.message}`); return null; });
             };
-            const [coresRes, avRes, cqRes, ltRes, rotRes, apRes, calendarRes, progFeiraRes] = await Promise.all([
+            const [coresRes, avRes, cqRes, ltRes, rotRes, apRes, calendarRes, progFeiraRes, finalizationRes] = await Promise.all([
                 requestExternal('cores'),
                 requestExternal('aviamentos'),
                 requestExternal('cq'),
@@ -943,7 +949,8 @@
                 requestExternal('rotativos'),
                 requestExternal('aproveitamento'),
                 requestExternal('calendar'),
-                requestExternal('prog_feira')
+                requestExternal('prog_feira'),
+                requestExternal('amostras_finalizadas')
             ]);
             state.externalSheetsLoaded = true;
             if (coresRes && coresRes.success) {
@@ -964,6 +971,7 @@
             if (apRes && apRes.success) {
                 state.aproveitamentoExternalData = apRes;
             }
+            state.aproveitamentoFinalizationData = finalizationRes || {...(state.aproveitamentoFinalizationData || {}),isLive:false};
             if (calendarRes && calendarRes.success) {
                 state.calendarExternalData = calendarRes;
             }
@@ -974,7 +982,7 @@
                     if (state.activeSubmodule === 'relatorios-automaticos') loadAutomaticReports();
                 }
             }
-            const changed = previousRecords !== JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
+            const changed = previousRecords !== JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.aproveitamentoFinalizationData, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
             if (state.activeSubmodule === 'producao-costura') await loadCosturaData(force);
             updateSidebarBadges();
             if ((changed || force || !sheetsWereLoaded || previousSheetSources !== JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive])) && ['raio-x', 'cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
@@ -13051,6 +13059,7 @@
     window.crmSetAproveitamentoCustomDate = (boundary, value) => {
         if (boundary === 'start') state.aproveitamentoDateStart = value || '';
         if (boundary === 'end') state.aproveitamentoDateEnd = value || '';
+        state.aproveitamentoPeriod = 'custom';
         renderActiveView();
     };
 

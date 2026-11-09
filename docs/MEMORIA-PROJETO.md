@@ -39,6 +39,21 @@ para publicar, apagar dados ou enviar mensagens. Conversas são evidência hist�
 Exportador local permite atualizar somente as conversas explicitamente listadas;
 sem monitoramento contínuo, sem cópia de raciocínio/ferramentas ou anexos binários.
 
+## Aproveitamento por data de finalização (08/11/2026)
+
+DATA_CAD é cadastro do produto e DT_APROV é aprovação, não conclusão da amostra.
+A base comercial anterior continua sendo a população principal (comprado se PEDIDO=S,
+PRECO_VENDA e clientes pelo código). A data de finalização vem exclusivamente da
+nova planilha 1bshn2-m-8O2WvkS5uX0Qbnt3YoCbGAM_gLX5pciTmsk, gid0, duas colunas
+na mesma aba: PRODUTO e DATA FINALIZAÇÂO (aceitar variantes do cabeçalho).
+Relacionar pelo código completo, sem suprimir sufixos nem usar prefixos/posição.
+Datas dessa nova fonte são DD/MM/AAAA ou ISO; a exportação comercial usa M/D/YYYY.
+Validar o calendário; nunca deixar o Date transformar mês 31 em uma data de 2028.
+Períodos usam apenas finalização válida e inequívoca. Todo período inclui faltantes
+explicitamente; duplicatas iguais não expandem a base; datas conflitantes não são
+resolvidas por palpite. PDF/tabela exibem a data ou seu motivo de ausência.
+Guia: APROVEITAMENTO.md; situação de publicação em ESTADO-ATUAL.md.
+
 ## Leadtime Produtivo (06/11/2026)
 
 Meses/anos derivados de REALIZADO_FIM, sem período fixo. Seleção múltipla com

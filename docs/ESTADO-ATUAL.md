@@ -1,6 +1,33 @@
 # Estado atual — Oneda CRM
 
-Atualizado em 07/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 08/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Aproveitamento — data de finalização em segunda planilha (08/11/2026)
+
+Implementação validada; publicação em GitHub/VPS autorizada pelo usuário em 08/11/2026.
+Base de código atualizada até 374d851, preservando geração manual, horários
+exclusivos dos relatórios, exclusão em lote e filtro Leadtime de outros agentes.
+Documentação e contratos em APROVEITAMENTO.md.
+
+Fonte comercial mantém comprado/não comprado, PRECO_VENDA, cliente e demais campos.
+Nova fonte 1bshn2-m-8O2WvkS5uX0Qbnt3YoCbGAM_gLX5pciTmsk/gid0 fornece apenas produto
+e data de finalização da amostra em 01F. Cruzamento pelo código completo, com sufixos.
+Nenhum uso de DATA_CAD ou DT_APROV como finalização. Atalhos/personalizado, KPIs,
+gráficos, título e tabela usam a nova data. Todo período mantém a base inteira,
+com título BASE COMPLETA quando há produtos sem data. Data consta na impressão.
+Ausência, inválidas, conflitos e cache/indisponibilidade têm avisos explícitos.
+
+Arquivos: aproveitamento-dates.js, aproveitamento-finalizacao.js, app.js, server.js,
+index.html, style.css, .gitignore, testes Aproveitamento/rotas e smoke específico.
+CSV curto/cabeçalho sem dados é válido na nova fonte, inclusive após redirecionamento;
+demais fontes preservam seu limite anterior. Nova cache operacional ignorada no Git.
+
+220 testes passaram; revisão independente aprovou após corrigir o download de CSV
+curto. Edge verificou compra/preços preservados, intervalos inclusivos, cliente,
+código com sufixo, fonte vazia/falha/cache, tabela, temas e celular, sem erros JS.
+PDF com coluna e data individual conferido por extração. Na leitura real, 29
+finalizações vinculadas a 2.097 registros; 2.068 sem data e nenhum conflito.
+Nenhuma escrita feita nas planilhas. Nenhum deploy realizado nesta etapa local.
 
 ## Relatórios automáticos — botão Gerar relatórios (07/11/2026)
 
