@@ -2,6 +2,20 @@
 
 Atualizado em 08/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Prog Feira — seleção múltipla de setores (08/11/2026)
+
+O gráfico Produtos por setor agora apresenta um flag em cada coluna e aceita mais
+de um setor simultaneamente. Cliques alternam cada setor de forma independente;
+os selecionados são combinados por OU, sem duplicar referências. O resumo da barra
+lista os códigos ativos e oferece Mostrar todos; Limpar restaura Todos. Cards,
+KPIs, etiquetas, programações, entregas e contadores acompanham a mesma seleção.
+
+Implementação em prog-feira.js, app.js, style.css e index.html, com regressões em
+test/prog-feira.test.js. 221 testes completos e 27 testes focados passaram. Revisão
+independente aprovada sem Critical/Important. Navegador local com fonte ao vivo
+validou 01A=60 e 01B=58 selecionados juntos, total 118, grupos corretos, temas
+escuro/claro e console sem erros. Publicação GitHub/VPS será registrada abaixo.
+
 ## Aproveitamento — data de finalização em segunda planilha (08/11/2026)
 
 Implementação publicada e validada em GitHub/VPS, autorizada pelo usuário em 08/11/2026.

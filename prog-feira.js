@@ -374,6 +374,23 @@
             percent: total ? (counts.get(sector.code) || 0) * 100 / total : 0 }));
     }
 
+    function normalizeSectorSelection(selected = []) {
+        const values = Array.isArray(selected) ? selected : [selected];
+        return [...new Set(values.map(normalizeSector).filter(value => value && value !== 'ALL'))];
+    }
+
+    function toggleSectorSelection(selected, sector) {
+        const current = normalizeSectorSelection(selected);
+        const value = normalizeSector(sector);
+        if (!value || value === 'ALL') return [];
+        return current.includes(value) ? current.filter(item => item !== value) : [...current, value];
+    }
+
+    function filterBySectors(products, selected = []) {
+        const values = new Set(normalizeSectorSelection(selected));
+        return (products || []).filter(product => !values.size || values.has(normalizeSector(product.sector)));
+    }
+
     function groupBySector(products) {
         const groups = new Map();
         (products || []).forEach(product => {
@@ -388,5 +405,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { deliveryKey,deliveryLabel,getDeliveryOptions,filterByDeliveries,getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { deliveryKey,deliveryLabel,getDeliveryOptions,filterByDeliveries,getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeSectorSelection, toggleSectorSelection, filterBySectors, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

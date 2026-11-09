@@ -1,5 +1,14 @@
 # Prog Feira — partes e fluxos
 
+## Seleção múltipla de setores
+
+As colunas de Produtos por setor funcionam como flags independentes. Cada clique
+marca ou desmarca o setor, e vários setores selecionados são combinados por união
+(OU), sem duplicar referências. Sem flags ativos, a tela mostra Todos. O resumo na
+barra identifica os códigos escolhidos e oferece Mostrar todos; Limpar restaura a
+seleção geral junto dos demais filtros. Cards, KPIs, etiquetas, programações,
+entregas, contadores e relatório respeitam a mesma seleção.
+
 ## Data de entrega
 
 O selo ENTREGA permanece visível no canto superior da imagem também no modo

@@ -123,6 +123,34 @@ test('distribuição por setor calcula contagens, percentuais e setores extras s
     assert.equal(getSectorDistribution(filterByPrograms(products,['B44'])).find(r=>r.code==='02B').percent,100);
     assert.ok(getSectorDistribution([]).every(r=>r.count===0 && r.percent===0));
 });
+test('setores da Prog Feira permitem seleção múltipla por união e alternância', () => {
+    const { filterBySectors, toggleSectorSelection } = require('../prog-feira');
+    const products = [
+        { key: '1', sector: '01A' },
+        { key: '2', sector: '01B' },
+        { key: '3', sector: '02B' }
+    ];
+
+    assert.deepEqual(toggleSectorSelection([], '01A'), ['01A']);
+    assert.deepEqual(toggleSectorSelection(['01A'], '01B'), ['01A', '01B']);
+    assert.deepEqual(toggleSectorSelection(['01A', '01B'], '01A'), ['01B']);
+    assert.deepEqual(toggleSectorSelection(['01B'], 'all'), []);
+    assert.deepEqual(filterBySectors(products, ['01A', '01B']).map(item => item.key), ['1', '2']);
+    assert.equal(filterBySectors(products, []).length, 3);
+    assert.equal(filterBySectors(products, '02B').length, 1, 'preserva estado simples legado');
+});
+test('gráfico conecta os flags múltiplos ao estado visual e à limpeza de setores', () => {
+    const app = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+    const css = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
+
+    assert.match(app, /selectedSectors\.includes\(step\.code\)/);
+    assert.match(app, /aria-pressed="\$\{selected\}"/);
+    assert.match(app, /prog-feira-sector-flag/);
+    assert.match(app, /toggleSectorSelection\(state\.progFeiraSectors, sector\)/);
+    assert.match(app, /state\.progFeiraSectors = \[\]/);
+    assert.match(app, /Mostrar todos/);
+    assert.match(css, /\.prog-feira-flow-step\.active \.prog-feira-sector-flag/);
+});
 const { normalizeSourceRecords, getSectorDistribution } = require('../prog-feira');
 const erp = (part,flow,sector,extra={}) => ({ 'Número':'100', 'Código':'01.00.0001A', Parte:part, Fluxo:flow, Setor:sector, 'Desc Setor':sector, 'Qtde Pend':'4', Cor:'50', Tamanho:'6', 'Descrição2':' B44 ', Ficha:'30/10', 'Data Saída':'20/10/2026', ...extra });
 test('nova base usa somente FE/D36 pendente e reúne fluxos paralelos pela OF e código exato',()=>{

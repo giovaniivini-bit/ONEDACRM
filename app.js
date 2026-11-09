@@ -63,7 +63,7 @@
         corteSelectedWeek: '',
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
-        progFeiraSector: 'all',
+        progFeiraSectors: [],
         progFeiraStylist: 'all',
         progFeiraDeliveries: [],
         progFeiraTing: 'all',
@@ -10552,16 +10552,17 @@
             return [item.codigo, item.numero, item.sector, item.sectorLabel, item.program, item.customerProgram, item.prints, item.notes, ...api.labelValues(item), ...(item.parallelPending || []).map(p => [p.label,p.sector,p.description].join(' '))]
                 .some(value => String(value || '').toLowerCase().includes(search));
         });
-        const labelCandidates = labelBaseProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
+        const selectedSectors = api.normalizeSectorSelection(state.progFeiraSectors);
+        const labelCandidates = api.filterBySectors(labelBaseProducts, selectedSectors);
         const labelOptions = api.getLabelOptions(labelCandidates, selectedLabels);
         const labelFilteredProducts = api.filterByLabels(labelBaseProducts, selectedLabels, !labelUnavailable);
-        const programCandidates = labelFilteredProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
+        const programCandidates = api.filterBySectors(labelFilteredProducts, selectedSectors);
         const programOptions = api.getProgramOptions(programCandidates, selectedPrograms);
         const deliveryBaseProducts = api.filterByPrograms(labelFilteredProducts, selectedPrograms, !programUnavailable);
-        const deliveryCandidates = deliveryBaseProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
+        const deliveryCandidates = api.filterBySectors(deliveryBaseProducts, selectedSectors);
         const deliveryOptions = api.getDeliveryOptions(deliveryCandidates,selectedDeliveries);
         const distributionProducts = api.filterByDeliveries(deliveryBaseProducts,selectedDeliveries);
-        const products = distributionProducts.filter(item => state.progFeiraSector === 'all' || item.sector === state.progFeiraSector);
+        const products = api.filterBySectors(distributionProducts, selectedSectors);
         const toolbarCount = document.getElementById('toolbarActiveCount');
         if (toolbarCount) toolbarCount.textContent = products.length;
         const distribution = api.getSectorDistribution(distributionProducts);
@@ -10570,7 +10571,6 @@
         const desCount = products.filter(item => item.isDes).length;
         const readyCount = products.filter(item => item.sector === '01F').length;
         const cancelledCount = products.filter(item => item.sector === '01Z').length;
-        const currentSectors = api.groupBySector(allProducts);
         const syncText = source.timestamp
             ? new Date(source.timestamp).toLocaleString('pt-BR')
             : 'ainda não sincronizado';
@@ -10651,13 +10651,14 @@
 
                 <section class="prog-feira-distribution" aria-label="Distribuição dos produtos por setor">
                     <header><h3>Produtos por setor</h3><span>${distributionProducts.length} referências • quantidade e participação por setor</span></header>
-                    <p>Considera programação, busca, cor, ting. caseiro e custo. Clique em um setor para filtrar as fichas.</p>
+                    <p>Considera programação, busca, cor, ting. caseiro e custo. Clique nos flags para combinar um ou mais setores.</p>
                     <div class="prog-feira-chart-scroll">
                     <div class="prog-feira-chart-axis" aria-hidden="true"><span>${chartMax}</span><span>${chartMax / 2}</span><span>0</span></div>
                     <div class="prog-feira-flow" style="--sector-columns:${distribution.length}" aria-label="Fluxo de desenvolvimento de amostras">
                         ${distribution.map(step => {
                             const percent = step.percent.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-                            return `<button type="button" class="prog-feira-flow-step ${state.progFeiraSector === step.code ? 'active' : ''}" data-sector="${escapeHtml(step.code)}" onclick="window.crmFilterProgFeiraSector(this.dataset.sector)" aria-pressed="${state.progFeiraSector === step.code}" aria-label="${escapeHtml(step.code + ' ' + step.label)}: ${step.count} referências, ${percent}%" title="${escapeHtml(step.label)}"><div class="prog-feira-sector-plot" aria-hidden="true"><div class="prog-feira-sector-column" style="height:${step.count * 100 / chartMax}%"><em>${step.count}</em></div></div><strong>${escapeHtml(step.code)}</strong><small class="prog-feira-sector-percent">${percent}%</small><span>${escapeHtml(step.label)}</span></button>`;
+                            const selected = selectedSectors.includes(step.code);
+                            return `<button type="button" class="prog-feira-flow-step ${selected ? 'active' : ''}" data-sector="${escapeHtml(step.code)}" onclick="window.crmFilterProgFeiraSector(this.dataset.sector)" aria-pressed="${selected}" aria-label="${escapeHtml(step.code + ' ' + step.label)}: ${step.count} referências, ${percent}%. ${selected ? 'Selecionado' : 'Não selecionado'}" title="${escapeHtml(step.label)}"><div class="prog-feira-sector-plot" aria-hidden="true"><div class="prog-feira-sector-column" style="height:${step.count * 100 / chartMax}%"><em>${step.count}</em></div></div><strong>${escapeHtml(step.code)}</strong><small class="prog-feira-sector-percent">${percent}%</small><span>${escapeHtml(step.label)}</span><span class="prog-feira-sector-flag" aria-hidden="true"><i class="fa-solid fa-check"></i></span></button>`;
                         }).join('')}
                     </div>
                     </div>
@@ -10665,10 +10666,10 @@
 
                 <div class="prog-feira-toolbar">
                     <label class="prog-feira-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" value="${escapeHtml(searchText)}" placeholder="Buscar produto, OP, programação, estampa ou observação..." oninput="window.crmSearchProgFeira(this.value)"></label>
-                    <select onchange="window.crmFilterProgFeiraSector(this.value)" aria-label="Filtrar setor"><option value="all">Todos os setores</option>${currentSectors.map(group => `<option value="${escapeHtml(group.sector)}" ${state.progFeiraSector === group.sector ? 'selected' : ''}>${escapeHtml(group.sector)} — ${escapeHtml(group.label)} (${group.items.length})</option>`).join('')}</select>
+                    <div class="prog-feira-sector-selection" role="status"><strong>Setores:</strong><span>${selectedSectors.length ? selectedSectors.map(escapeHtml).join(', ') : 'Todos'}</span>${selectedSectors.length ? '<button type="button" onclick="window.crmFilterProgFeiraSector(\'all\')">Mostrar todos</button>' : ''}</div>
                     <label class="prog-feira-parallel-filter"><span>Estilista responsável</span><select data-prog-stylist aria-label="Estilista responsável" onchange="window.crmFilterProgFeiraStylist(this.value)">${[['all','Todos'],...window.CRMProductStylist.OPTIONS].map(([value,label])=>`<option value="${value}" ${state.progFeiraStylist===value?'selected':''}>${label}</option>`).join('')}</select></label>
                     ${['color','ting','cost'].map(renderParallelFilter).join('')}
-                    ${(selectedDeliveries.length || state.progFeiraStylist !== 'all' || state.progFeiraSector !== 'all' || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
+                    ${(selectedDeliveries.length || state.progFeiraStylist !== 'all' || selectedSectors.length || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
                 </div>
 
                 <fieldset class="prog-feira-label-filter prog-feira-program-filter">
@@ -12821,7 +12822,7 @@
         renderActiveView();
     };
     window.crmFilterProgFeiraSector = sector => {
-        state.progFeiraSector = sector && sector !== state.progFeiraSector ? sector : 'all';
+        state.progFeiraSectors = window.CRMProgFeira.toggleSectorSelection(state.progFeiraSectors, sector);
         renderActiveView();
     };
 
@@ -12878,7 +12879,7 @@
         if (headerSearch) headerSearch.value = '';
         const clearSearch = document.getElementById('clearSearchBtn');
         if (clearSearch) clearSearch.style.display = 'none';
-        state.progFeiraSector = 'all';
+        state.progFeiraSectors = [];
         state.progFeiraStylist = 'all';
         state.progFeiraDeliveries = [];
         state.progFeiraTing = 'all';

@@ -6086,19 +6086,26 @@ body.light-mode .mpo-body a { color:#0369a1; }
 .prog-feira-chart-scroll { position: relative; overflow-x: auto; padding-left: 30px; margin-top: 20px; }
 .prog-feira-chart-axis { position: absolute; top: 24px; left: 0; height: 216px; display: flex; flex-direction: column; justify-content: space-between; color: var(--text-secondary); font-size: 10px; }
 .prog-feira-distribution .prog-feira-flow { display: grid; grid-template-columns: repeat(var(--sector-columns),minmax(64px,1fr)); min-width: 920px; overflow: visible; padding: 24px 0 0; border: 0; border-radius: 0; gap: 8px; background: repeating-linear-gradient(to top,transparent 0,transparent 107px,var(--border-color) 107px,var(--border-color) 108px) 0 24px / 100% 216px no-repeat; }
-.prog-feira-distribution .prog-feira-flow-step { display: grid; grid-template-columns: 1fr; grid-template-rows: 216px 18px 18px 42px; gap: 6px; padding: 0 4px 8px; min-width: 0; border: 0; border-radius: 6px; background: transparent; text-align: center; align-items: start; transform: none; }
+.prog-feira-distribution .prog-feira-flow-step { display: grid; grid-template-columns: 1fr; grid-template-rows: 216px 18px 18px 42px 20px; gap: 6px; padding: 0 4px 8px; min-width: 0; border: 0; border-radius: 6px; background: transparent; text-align: center; align-items: start; transform: none; }
 .prog-feira-distribution .prog-feira-flow-step:hover,.prog-feira-distribution .prog-feira-flow-step.active { background: rgba(14,165,233,.10); box-shadow: inset 0 0 0 1px #0ea5e9; transform: none; }
 .prog-feira-sector-plot { height: 216px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid var(--border-color); }
 .prog-feira-sector-column { width: 78%; position: relative; background: linear-gradient(to top,#0369a1,#0ea5e9); border-radius: 5px 5px 0 0; }
 .prog-feira-distribution .prog-feira-flow-step em { position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%); padding: 1px 5px; border: 1px solid #0ea5e9; border-radius: 4px; background: var(--bg-card); color: var(--text-primary); font-size: 12px; font-style: normal; line-height: 16px; }
 .prog-feira-distribution .prog-feira-flow-step strong { grid-column: 1; font-size: 12px; }
 .prog-feira-sector-percent { color: #38bdf8; font-weight: 700; font-size: 11px; }
-.prog-feira-distribution .prog-feira-flow-step > span { grid-column: 1; min-height: 0; font-size: 8px; line-height: 1.3; overflow-wrap: anywhere; }
+.prog-feira-distribution .prog-feira-flow-step > span:not(.prog-feira-sector-flag) { grid-column: 1; min-height: 0; font-size: 8px; line-height: 1.3; overflow-wrap: anywhere; }
+.prog-feira-sector-flag { grid-column:1; place-self:center; width:18px; height:18px; display:grid; place-items:center; border:2px solid #64748b; border-radius:4px; color:transparent; background:var(--bg-card); font-size:10px; transition:.18s ease; }
+.prog-feira-flow-step.active .prog-feira-sector-flag { border-color:#0ea5e9; color:#fff; background:#0284c7; box-shadow:0 0 0 3px rgba(14,165,233,.16); }
+.prog-feira-sector-selection { min-height:34px; display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--border-color); border-radius:8px; background:var(--bg-elevated); color:var(--text-secondary); font-size:11px; }
+.prog-feira-sector-selection strong { color:var(--text-primary); }
+.prog-feira-sector-selection button { border:0; padding:2px 5px; background:transparent; color:#38bdf8; font:inherit; font-weight:800; cursor:pointer; }
 .prog-feira-flow-step:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 3px; }
 body.light-mode .prog-feira-distribution .prog-feira-flow-step { background: transparent !important; color: #334155; }
 body.light-mode .prog-feira-distribution .prog-feira-flow-step.active,body.light-mode .prog-feira-distribution .prog-feira-flow-step:hover { background: #e0f2fe !important; }
 body.light-mode .prog-feira-distribution .prog-feira-flow-step em { color: #0f172a; background: #fff; }
 body.light-mode .prog-feira-sector-percent { color: #0369a1; }
+body.light-mode .prog-feira-sector-flag { background:#fff; border-color:#64748b; }
+body.light-mode .prog-feira-flow-step.active .prog-feira-sector-flag { background:#0284c7; border-color:#0284c7; color:#fff; }
 @media print { body.print-prog-feira .prog-feira-distribution { display: none !important; } }
 .s01-style-status { width:100%; display:block; white-space:normal; text-align:center; font-size:11px; padding:5px 8px; }
 .s01-style-status.pendentes { color:#fb923c; background:rgba(249,115,22,.16); border:1px solid #f97316; animation:s01StyleOrangePulse 1.2s ease-in-out infinite; }

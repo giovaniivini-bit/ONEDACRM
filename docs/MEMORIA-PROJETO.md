@@ -54,6 +54,13 @@ explicitamente; duplicatas iguais não expandem a base; datas conflitantes não 
 resolvidas por palpite. PDF/tabela exibem a data ou seu motivo de ausência.
 Guia: APROVEITAMENTO.md; situação de publicação em ESTADO-ATUAL.md.
 
+## Prog Feira — seleção múltipla de setores (08/11/2026)
+
+Produtos por setor usa flags independentes no próprio gráfico. É possível marcar
+mais de um setor; a composição é por união (OU), sem duplicar referências. Nenhuma
+seleção significa Todos. Cards, KPIs e filtros facetados acompanham os setores
+ativos; Mostrar todos e Limpar restauram a base geral.
+
 ## Leadtime Produtivo (06/11/2026)
 
 Meses/anos derivados de REALIZADO_FIM, sem período fixo. Seleção múltipla com
