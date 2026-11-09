@@ -67,6 +67,17 @@ test('amostra aplica dia de São Paulo, >15 estrito e ignora fluxo TF, cancelado
     assert.equal(report.items.find(i=>i.codigo===code).numero,'S1');
 });
 
+test('temas reservam meia área útil entre o último card e o próximo título',()=>{
+    const pages=planReportPages({sections:[{key:'a',theme:'PEDIDO',title:'AVIAMENTO'},{key:'b',theme:'PEDIDO',title:'COR'}],items:[{groupKey:'a'},{groupKey:'b'}]});
+    const first=pages[0].cards[0];
+    const nextIndex=pages.findIndex(p=>p.headings.some(h=>h.title==='PEDIDO / COR'));
+    const next=pages[nextIndex].headings.find(h=>h.title==='PEDIDO / COR');
+    const blank=(595.28-24-first.y-first.height)+(nextIndex-1)*(595.28-24-58)+(next.y-58);
+    assert.ok(nextIndex>0);
+    assert.ok(blank>=(595.28-24-58)/2-0.01);
+    assert.equal(pages.flatMap(p=>p.cards).length,2);
+});
+
 test('títulos tema/subtema e seções vazias ficam no PDF sem perder cards em continuações',()=>{
     const [report]=stylistReports(Array.from({length:11},(_,i)=>order(`01.14.00.${i}`,'01')));
     const pages=planReportPages(report);

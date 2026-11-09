@@ -1,5 +1,12 @@
 # Estado atual — Oneda CRM
 
+## PDFs automáticos — espaço entre temas (09/11/2026)
+
+Relatórios por estilista reservam meia área útil de folha entre temas/subtemas,
+inclusive atravessando quebras, mantendo títulos junto dos cards. Relatório sem
+pendências permanece compacto. 25 testes de relatórios/paginação passaram.
+A alteração aplica-se a PDFs novos; versões históricas permanecem preservadas.
+
 Atualizado em 08/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
 ## Prog Feira — seleção múltipla de setores (08/11/2026)

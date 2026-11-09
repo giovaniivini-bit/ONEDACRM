@@ -30,6 +30,13 @@ function planReportPages(report) {
         if(title) {page.headings.push({title,y});y+=22;}
     };
     groupReportItems(report).forEach((group,index)=>{
+        if(index && report.sections && report.items.length) {
+            // Half of the printable sheet separates themes, across page breaks.
+            y-=gap;
+            let space=(bottom-58)/2;
+            while(space>bottom-y) {space-=Math.max(0,bottom-y);nextPage();}
+            y+=space;
+        }
         if (!group.items.length) {
             if(report.sections) {
                 if(y+50>bottom)nextPage();
@@ -46,7 +53,7 @@ function planReportPages(report) {
             let space=(bottom-58)/2;
             while(space>bottom-y) {space-=Math.max(0,bottom-y);nextPage();}
             y+=space;
-        } else if(index) y+=18;
+        } else if(index && !report.sections) y+=18;
         if(y+(group.title?22:0)+cardHeight>bottom) nextPage();
         heading(group.title);
         const cards=group.items.flatMap(getReportCardItems);
