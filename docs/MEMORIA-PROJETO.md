@@ -255,3 +255,11 @@ ações do corte ficam fora. Meta é quantidade de referências para entregar na
 Calcular percentuais pelos totais exatos; médias principais arredondadas para inteiro
 (69/5→14,58/5→12). Novas semanas entram à esquerda: detectar nomes/datas, não letras
 fixas. Datas repetidas ficam sinalizadas, sem duplicar médias. Guia: PRODUCAO-COSTURA.md.
+
+## Aproveitamento — multisseleção e observação (09/11/2026)
+
+Clientes permitem seleção múltipla por união; Todos inclui a base e Limpar seleção
+mostra nenhum. Gráfico alterna cliente na seleção. Mesmos filtros nas métricas e
+listagem. Observação opcional até600 caracteres, preservada enquanto a tela está
+aberta, aparece somente no PDF abaixo do gráfico da primeira página em fonte pequena.
+Texto sem HTML; quebra de linha compactada na impressão para caber na folha.

@@ -67,6 +67,22 @@ finalizações vinculadas a 2.097 registros; 2.068 sem data e nenhum conflito.
 Nenhuma escrita feita nas planilhas. Publicado em GitHub e VPS no commit 8c928a7, em 08/11/2026 (America/Sao_Paulo), após autorização explícita do usuário. Os 220 testes passaram também na VPS; hashes confirmaram preservação de 1.697 arquivos operacionais. Backup: /home/ubuntu/backups/oneda-crm-aproveitamento-20261108-8c928a7. Reiniciado somente oneda-crm-app. Saúde OK, fonte nova ao vivo com 29 linhas, versão pública e navegador Edge confirmados: 29 vínculos/2.097 registros, coluna de finalização presente e nenhum erro JavaScript.
 Atualizado em 09/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
+## Aproveitamento — vários clientes e observação (09/11/2026)
+
+Filtro de clientes agora tem checkboxes, Marcar todos e Limpar seleção. Seleção
+múltipla usa união: Renner+C&A ou todos menos Hering. Limpar significa nenhum;
+Marcar todos restaura a base e inclui clientes em atualizações. Cliques no gráfico
+alternam o cliente na seleção. KPIs, gráfico, resumo e lista usam o mesmo recorte.
+
+Campo de observação opcional até 600 caracteres, mantido no estado da tela ao
+mudar filtros. Texto literal/escapado, sem HTML; digitá-lo não redesenha a tela.
+Na primeira folha aparece abaixo do gráfico com fonte9pt; quebras são compactadas
+para não gerar folhas por linhas vazias. Campo vazio não cria bloco impresso.
+225 testes passaram; revisão independente final aprovada. Edge verificou união,
+exclusão de Hering, vazio, todos e nota preservada/segura. PDFs com600 caracteres
+e300 quebras de linha foram extraídos e renderizados: título, gráfico e observação
+na primeira página. Arquivos: app.js, style.css, index.html e teste Aproveitamento.
+
 ## Aproveitamento — gráfico ampliado e conversão por cliente (09/11/2026)
 
 Cartões menores no PDF; gráfico ampliado em toda a largura, cabeçalho e gráfico

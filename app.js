@@ -80,6 +80,8 @@
         cqViewAllMode: false,
         aproveitamentoSearch: '',
         aproveitamentoClient: 'all',
+        aproveitamentoClients: null,
+        aproveitamentoObservation: '',
         aproveitamentoPeriod: 'all',
         aproveitamentoDateStart: '',
         aproveitamentoDateEnd: '',
@@ -140,13 +142,6 @@
     // INICIALIZAÇÃO
     // =========================================================================
 
-    function renderAproveitamentoView(container) {
-        const ext = state.aproveitamentoExternalData || { count: 0, records: [] };
-        const finalization=window.CRMAproveitamentoFinalizacao;
-        const finalizationSource=state.aproveitamentoFinalizationData;
-        const rawRecords = finalization.join(ext.records || [],finalizationSource);
-        const finalizationStats=finalization.summarize(rawRecords);
-
         const CLIENTES_APROVEITAMENTO = {
             '01': 'C&A',
             '02': 'Renner',
@@ -156,6 +151,15 @@
             '15': 'Carrefour',
             '21': 'Santa Marca'
         };
+
+    function renderAproveitamentoView(container) {
+        const ext = state.aproveitamentoExternalData || { count: 0, records: [] };
+        const finalization=window.CRMAproveitamentoFinalizacao;
+        const finalizationSource=state.aproveitamentoFinalizationData;
+        const rawRecords = finalization.join(ext.records || [],finalizationSource);
+        const finalizationStats=finalization.summarize(rawRecords);
+
+
 
         function parseAproveitamentoDate(value) {
             return window.CRMAproveitamentoDates.parse(value);
@@ -178,7 +182,9 @@
             ? new Date(Math.max(...validDates.map(date => date.getTime())))
             : null;
         const activePeriod = state.aproveitamentoPeriod || 'all';
-        const activeCli = state.aproveitamentoClient || 'all';
+        const clientOptions = [...new Set([...Object.values(CLIENTES_APROVEITAMENTO), 'Showroom Oneda', 'Outros'])];
+        const selectedClients = state.aproveitamentoClients;
+        const activeCli = selectedClients === null ? 'all' : (selectedClients.length ? selectedClients.join(', ') : 'Nenhum cliente');
         let periodStart = null;
         let periodEnd = dataMaxDate ? new Date(dataMaxDate) : null;
 
@@ -198,7 +204,7 @@
 
         const filteredRecords = rawRecords.filter(record => {
             const recordClient = getAproveitamentoClient(record).name;
-            if (activeCli !== 'all' && recordClient !== activeCli) return false;
+            if (selectedClients !== null && !selectedClients.includes(recordClient)) return false;
             const recordDate = parseAproveitamentoDate(record.CRM_FINALIZACAO.date);
             if(activePeriod!=='all'&&!recordDate)return false;
             if(activePeriod==='custom'&&periodStart&&periodEnd&&periodStart>periodEnd)return false;
@@ -351,7 +357,7 @@
             else paretoPathD += ` L ${cx} ${py}`;
             
             return `
-                <g style="cursor:pointer;" onclick="window.crmSetAproveitamentoClient('${c.name}')">
+                <g style="cursor:pointer;" onclick="window.crmToggleAproveitamentoClient('${c.name}')">
                     <rect x="${cx - colW/2}" y="${pad.top + drawH - hComp}" width="${colW}" height="${hComp}" fill="#10b981" />
                     <rect x="${cx - colW/2}" y="${pad.top + drawH - hComp - hNao}" width="${colW}" height="${hNao}" fill="#f43f5e" />
                     
@@ -431,7 +437,7 @@
                     <div style="display:flex; gap:12px;">
                         ${activeCli !== 'all' ? `
                         <button onclick="window.crmSetAproveitamentoClient('all')" class="badge badge-purple" style="border:none; cursor:pointer;">
-                            <i class="fa-solid fa-times"></i> Limpar Filtro: ${activeCli}
+                            <i class="fa-solid fa-times"></i> Limpar Filtro: ${escapeHtml(activeCli)}
                         </button>
                         ` : ''}
                         <button onclick="window.print()" class="btn btn-primary" style="font-size:13px; font-weight:bold;">
@@ -468,15 +474,14 @@
                             </label>
                         </div>
                     ` : ''}
-                    <label style="display:flex; flex-direction:column; gap:6px; min-width:220px; margin-left:auto;">
-                        <span style="font-size:11px; color:#94a3b8; font-weight:800; text-transform:uppercase;">Cliente</span>
-                        <select onchange="window.crmSetAproveitamentoClient(this.value)" style="padding:8px 10px; border-radius:6px; border:1px solid rgba(255,255,255,.12); background:#0b1220; color:#e2e8f0;">
-                            <option value="all" ${activeCli === 'all' ? 'selected' : ''}>Todos os clientes</option>
-                            ${Object.values(CLIENTES_APROVEITAMENTO).map(name => `<option value="${name}" ${activeCli === name ? 'selected' : ''}>${name}</option>`).join('')}
-                            <option value="Showroom Oneda" ${activeCli === 'Showroom Oneda' ? 'selected' : ''}>Showroom Oneda</option>
-                            <option value="Outros" ${activeCli === 'Outros' ? 'selected' : ''}>Outros</option>
-                        </select>
-                    </label>
+                    <div class="aproveitamento-client-filter">
+                        <strong>Clientes: ${escapeHtml(activeCli === 'all' ? 'Todos' : activeCli)}</strong>
+                        <details class="aproveitamento-client-options"><summary>Selecionar clientes</summary>
+                            <button type="button" onclick="window.crmSetAproveitamentoClient('all')">Marcar todos</button>
+                            <button type="button" onclick="window.crmClearAproveitamentoClients()">Limpar seleção</button>
+                            ${clientOptions.map(name => `<label><input type="checkbox" ${selectedClients === null || selectedClients.includes(name) ? 'checked' : ''} onchange="window.crmToggleAproveitamentoClient(this.value)" value="${escapeHtml(name)}"> ${escapeHtml(name)}</label>`).join('')}
+                        </details>
+                    </div>
                     <div class="aproveitamento-date-note" style="font-size:12px; width:100%;">
                         Período pela <strong>data de finalização da amostra no setor 01F</strong>.
                         ${dataMaxDate ? `Atalhos calculados até ${dataMaxDate.toLocaleDateString('pt-BR')}, a finalização mais recente dos produtos vinculados.` : 'Aguardando datas válidas na nova planilha.'}
@@ -570,6 +575,10 @@
                     </svg>
                 </div>
 
+                <label class="aproveitamento-observation-editor">Observação para impressão (até 600 caracteres)
+                    <textarea maxlength="600" rows="3" oninput="window.crmSetAproveitamentoObservation(this.value)" placeholder="Digite uma informação relevante para este relatório">${escapeHtml(state.aproveitamentoObservation || '')}</textarea>
+                </label>
+                <div class="aproveitamento-observation-print" ${state.aproveitamentoObservation?.trim() ? '' : 'hidden'}><strong>Observação:</strong> <span data-aproveitamento-observation>${escapeHtml(state.aproveitamentoObservation || '')}</span></div>
                 </section>
                 <!-- Exec Table & Macros -->
                 <div style="display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 24px;">
@@ -13058,7 +13067,28 @@
 
     window.crmSetAproveitamentoClient = (client) => {
         state.aproveitamentoClient = client || 'all';
+        state.aproveitamentoClients = !client || client === 'all' ? null : [client];
         renderActiveView();
+    };
+
+    window.crmClearAproveitamentoClients = () => {
+        state.aproveitamentoClients = [];
+        renderActiveView();
+    };
+    window.crmToggleAproveitamentoClient = client => {
+        const all = [...new Set([...Object.values(CLIENTES_APROVEITAMENTO), 'Showroom Oneda', 'Outros'])];
+        const current = state.aproveitamentoClients === null ? all : state.aproveitamentoClients;
+        state.aproveitamentoClients = current.includes(client) ? current.filter(name => name !== client) : [...current, client];
+        renderActiveView();
+        document.querySelector('.aproveitamento-client-options')?.setAttribute('open', '');
+    };
+    window.crmSetAproveitamentoObservation = value => {
+        state.aproveitamentoObservation = value.slice(0, 600);
+        const output = document.querySelector('[data-aproveitamento-observation]');
+        if (output) {
+            output.textContent = state.aproveitamentoObservation;
+            output.parentElement.hidden = !state.aproveitamentoObservation.trim();
+        }
     };
 
     window.crmSetAproveitamentoCustomDate = (boundary, value) => {
