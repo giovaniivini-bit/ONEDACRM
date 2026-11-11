@@ -6456,3 +6456,12 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
 
 .automatic-report-consolidated .prog-feira-card-body { height:auto; min-height:222px; }
 .automatic-report-occurrences { padding:8px; font-size:11px; overflow-wrap:anywhere; }
+
+/* Raio X: only images, 16 cards per sheet, matching compact Prog Feira. */
+@media print {
+ body.print-raio-x .rx-print-page { height:177mm !important; min-height:0 !important; break-inside:avoid !important; page-break-inside:avoid !important; margin:0 !important; padding:0 !important; }
+ body.print-raio-x .rx-print-grid { display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; grid-template-rows:repeat(4,42mm) !important; gap:3mm !important; margin:0 !important; padding:0 !important; }
+ body.print-raio-x #raioXPrintReport .rx-card { height:42mm !important; min-height:0 !important; overflow:hidden !important; }
+ body.print-raio-x #raioXPrintReport .s13-photo-wrapper { height:100% !important; min-height:0 !important; max-height:none !important; flex:1 !important; }
+ body.print-raio-x #raioXPrintReport .s13-photo-img { object-fit:contain !important; }
+}
