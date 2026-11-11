@@ -1,5 +1,19 @@
 # Estado atual — Oneda CRM
 
+## Rotativos — segunda galeria: pendentes no setor43 (11/11/2026)
+
+Abaixo da galeria da planilha, nova área com fotos e dias pendentes no setor43.
+Quatro imagens porlinha,semcards, mesmo renderer/fallback/lightbox da primeira.
+Fonte CRM com setor43exato, independente da busca/filtro da planilha; respeita o
+recorte CRM existente. Código completo porproduto, sufixos separados. Várias OFs
+usam a maior permanência, nunca soma. Fonte ausente/inválida é não informada,
+zero válido continua0. processRawRecords preserva diasParadoFonte nullable e
+maior valor válido das grades; cálculo legado diasParado dos demais módulos intacto.
+233 testes passaram, revisão final aprovada. Edge com fonte real: galeria planilha8,
+setor43 com3 produtos (6/5/5dias), todas fotos carregadas, quatrocolunas, área abaixo
+da primeira galeria, busca planilha independente, lightbox com dias, temas e celular
+sem overflow/erros JS. Arquivos: app.js,index.html,test/rotativos-gallery.test.js.
+
 ## Rotativos — fotos da planilha e previsão da mesa (11/11/2026)
 
 Galeria logo abaixo da planilha Google Drive, quatro imagens por linha, sem cards:

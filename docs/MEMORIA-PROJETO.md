@@ -281,3 +281,11 @@ previsão da mesa. Usar código completo, inclusive sufixos, e índice de imagen
 VPS já compartilhado. Galeria acompanha busca/situação da tabela; um código com
 vários registros preserva previsões distintas. Não usar dados fictícios em fonte
 vazia. Fotos ampliáveis e atualização pelo índice existente, sem nova sincronização.
+
+## Rotativos — galeria dos pendentes no setor43 (11/11/2026)
+
+Segunda galeria abaixo das fotos da planilha: produtos CRM com setor43exato,
+quatro imagens porlinha,semcards,foto e dias pendentes. Independente dos filtros
+da planilha. Se houver várias OFs do produto, mostrar maior permanência, não somar.
+Dias ausentes/inválidos não viram zero; campo nullable diasParadoFonte preserva
+esse dado desde a importação. Compartilhar renderer/lightbox/índice da primeira.

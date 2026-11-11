@@ -1132,6 +1132,8 @@
             // distintos na mesma OF/setor precisam permanecer separados para imagens e alertas.
             const normalizedProductKey = String(codigo || 'SEM_CODIGO').trim().toUpperCase();
             const productKey = `${op}__${setor || 'SEM_SETOR'}__${normalizedProductKey}`;
+            const diasParadoRaw = getField(r, ['Dias Parado', 'Dias Parado Setor', 'Dias No Setor', 'Dias Parado no Setor', 'Dias'], '');
+            const rotativosPendingDays=parseRotativosPendingDays(diasParadoRaw);
 
             if (!groups.has(productKey)) {
                 // 2. STATUS DE MODELAGEM (Coluna: Descrição do Local) - Informação mais completa (se estiver em branco sinalizar!)
@@ -1171,7 +1173,6 @@
                 const progAmostras = getField(r, ['Descrição2', 'Descricao2', 'Descrio2', 'Descricao 2', 'Descrição 2', 'Prog Amostras', 'Prog Amostra', 'Amostra'], '—');
 
                 // 8. QUANTIDADE DIAS PENDENTE NO SETOR (Coluna: Dias Parado) - Destaque > 2 dias
-                const diasParadoRaw = getField(r, ['Dias Parado', 'Dias Parado Setor', 'Dias No Setor', 'Dias Parado no Setor', 'Dias'], '0');
                 const diasParado = parseInt(diasParadoRaw.replace(/[^0-9]/g, ''), 10) || 0;
 
                 // Metadados adicionais
@@ -1262,6 +1263,7 @@
                     statusProd,             // Alias para compatibilidade
                     progAmostras,           // Coluna Descrição2
                     diasParado,             // Coluna Dias Parado
+                    diasParadoFonte:rotativosPendingDays,
                     oc,
                     pedPeriodo,
                     pedDescPeriodo,
@@ -1275,6 +1277,7 @@
 
             const prod = groups.get(productKey);
             prod.qtdeOriginal += qtdeOriginal;
+            if(rotativosPendingDays!==null)prod.diasParadoFonte=Math.max(prod.diasParadoFonte ?? 0,rotativosPendingDays);
             if (codigo && (!prod.codigo || prod.codigo === '—' || prod.codigo === '')) {
                 prod.codigo = codigo;
             }
@@ -8668,6 +8671,41 @@
         return [...products.values()];
     }
 
+    function parseRotativosPendingDays(value) {
+        const text=String(value ?? '').trim();
+        if(!/^\d+(?:[.,]\d+)?$/.test(text))return null;
+        const days=Number(text.replace(',','.'));
+        return Number.isFinite(days)?days:null;
+    }
+
+    function getRotativosSectorGalleryItems(records) {
+        const products=new Map();
+        for(const row of records || []) {
+            if(String(row?.setor || '').trim().replace(/^0+/, '')!=='43')continue;
+            const codigo=String(row.codigo || '').trim().toUpperCase();
+            if(!codigo)continue;
+            const raw=Object.hasOwn(row,'diasParadoFonte')?row.diasParadoFonte:row.diasParado;
+            const days=parseRotativosPendingDays(raw);
+            if(!products.has(codigo))products.set(codigo,{codigo,days});
+            else if(days!==null)products.get(codigo).days=Math.max(products.get(codigo).days ?? 0,days);
+        }
+        return [...products.values()];
+    }
+
+    function renderRotativosImageGallery(items,title,kind,caption) {
+        return `<section class="rotativos-sheet-images" data-rotativos-gallery="${kind}" aria-label="${escapeHtml(title)}">
+            <h3>${escapeHtml(title)}</h3><div class="rotativos-sheet-image-grid">
+                ${items.length?items.map((item,index)=>{
+                    const img=getProductImage(item.codigo);
+                    return `<figure class="rotativos-sheet-image">
+                        <button type="button" class="rotativos-sheet-image-open" data-rotativo-image="${index}" data-rotativo-gallery="${kind}" aria-label="Ampliar imagem de ${escapeHtml(item.codigo)}" ${img.hasImage?'':'disabled'}>
+                            ${img.hasImage?`<img src="${escapeHtml(img.thumbUrl)}" data-rotativo-fallback="${escapeHtml(img.proxyUrl || '')}" alt="${escapeHtml(item.codigo)}" loading="lazy">`:'<span>Imagem indisponível</span>'}
+                        </button><figcaption>${escapeHtml(caption(item))}</figcaption>
+                    </figure>`;
+                }).join(''):'<p class="rotativos-sheet-images-empty">Nenhum produto para os filtros selecionados.</p>'}
+            </div></section>`;
+    }
+
     function renderRotativosView(container) {
         // Regra do Usuário:
         // - produtos pendentes no setor 43 (coluna AY) ou com indicação de processo rotativo
@@ -8772,6 +8810,10 @@
             displayCrmItems = searchFilteredItems.filter(r => !state.productionCodes.has(r.codigo));
             activeCrmFilterLabel = 'Rotativos Regulares (Sem Conflito com Produção)';
         }
+
+        const rotativosSectorGalleryItems=getRotativosSectorGalleryItems(displayCrmItems);
+        const rotativosGalleryGroups={sheet:rotativosGalleryItems,sector:rotativosSectorGalleryItems};
+        const sectorCaption=item=>item.days===null?'Dias pendentes no setor 43: não informados':`${item.days} ${item.days===1?'dia pendente':'dias pendentes'} no setor 43`;
 
         container.innerHTML = `
             <!-- CABEÇALHO DO MÓDULO -->
@@ -9095,20 +9137,8 @@
                         </table>
                     </div>
                 </div>
-                <section class="rotativos-sheet-images" aria-label="Imagens dos produtos da planilha">
-                    <h3>Imagens dos produtos da planilha</h3>
-                    <div class="rotativos-sheet-image-grid">
-                        ${rotativosGalleryItems.length?rotativosGalleryItems.map((item,index)=>{
-                            const img=getProductImage(item.codigo);
-                            return `<figure class="rotativos-sheet-image">
-                                <button type="button" class="rotativos-sheet-image-open" data-rotativo-image="${index}" aria-label="Ampliar imagem de ${escapeHtml(item.codigo)}" ${img.hasImage?'':'disabled'}>
-                                    ${img.hasImage?`<img src="${escapeHtml(img.thumbUrl)}" data-rotativo-fallback="${escapeHtml(img.proxyUrl || '')}" alt="${escapeHtml(item.codigo)}" loading="lazy">`:'<span>Imagem indisponível</span>'}
-                                </button>
-                                <figcaption>Previsão da mesa: ${escapeHtml(item.forecasts.join(' / '))}</figcaption>
-                            </figure>`;
-                        }).join(''):'<p class="rotativos-sheet-images-empty">Nenhum produto para os filtros da planilha.</p>'}
-                    </div>
-                </section>
+                ${renderRotativosImageGallery(rotativosGalleryItems,'Imagens dos produtos da planilha','sheet',item=>`Previsão da mesa: ${item.forecasts.join(' / ')}`)}
+                ${renderRotativosImageGallery(rotativosSectorGalleryItems,'Produtos pendentes no setor 43','sector',sectorCaption)}
             ` : `
                 <!-- CONTEÚDO DA ABA 2: PRODUTOS NO SETOR 43 DO CRM -->
                 <div class="table-card" style="margin-bottom: 24px; padding: 14px 18px;">
@@ -9298,9 +9328,10 @@
             `}
         `;
         container.querySelectorAll('[data-rotativo-image]').forEach(button=>button.addEventListener('click',()=>{
-            const item=rotativosGalleryItems[Number(button.dataset.rotativoImage)];
+            const item=rotativosGalleryGroups[button.dataset.rotativoGallery]?.[Number(button.dataset.rotativoImage)];
+            if(!item)return;
             const img=getProductImage(item.codigo);
-            window.crmOpenImageLightbox(img.largeUrl,item.codigo,`Previsão da mesa: ${item.forecasts.join(' / ')}`,img.largeFallbackUrl || '');
+            window.crmOpenImageLightbox(img.largeUrl,item.codigo,button.dataset.rotativoGallery==='sector'?sectorCaption(item):`Previsão da mesa: ${item.forecasts.join(' / ')}`,img.largeFallbackUrl || '');
         }));
         container.querySelectorAll('[data-rotativo-fallback]').forEach(img=>img.addEventListener('error',()=>{
             if(!img.dataset.tried&&img.dataset.rotativoFallback&&img.src!==img.dataset.rotativoFallback) {
