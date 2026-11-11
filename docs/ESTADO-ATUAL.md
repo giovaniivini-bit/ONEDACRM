@@ -13,6 +13,10 @@ já participa da atualização periódica do índice. Sem mudanças no envio de 
 confirmou nove arquivos exatos na pasta de imagens da VPS. Edge carregou nove
 fotos reais, quatro colunas; filtro pendentes5, busca por sufixo1, vazio, ampliação,
 temas claro/escuro e celular sem overflow na galeria nem erros JavaScript.
+Publicado no GitHub/VPS no commitd91aef7.230 testes passaram também na VPS,
+saúde OK e1.085 arquivos operacionais preservados por hash. Edge público confirmou
+nove fotos carregadas, quatro colunas e nove previsões, sem erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-rotativos-gallery-20261111-d91aef7.
 Arquivos: app.js, style.css, index.html, package.json, test/rotativos-gallery.test.js.
 
 ## Raio X — impressão com foto e dados do card (11/11/2026)
