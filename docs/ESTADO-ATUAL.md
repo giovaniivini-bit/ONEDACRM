@@ -12,7 +12,11 @@ maior valor válido das grades; cálculo legado diasParado dos demais módulos i
 233 testes passaram, revisão final aprovada. Edge com fonte real: galeria planilha8,
 setor43 com3 produtos (6/5/5dias), todas fotos carregadas, quatrocolunas, área abaixo
 da primeira galeria, busca planilha independente, lightbox com dias, temas e celular
-sem overflow/erros JS. Arquivos: app.js,index.html,test/rotativos-gallery.test.js.
+sem overflow/erros JS. Publicado no GitHub/VPS no commit91a1411;233 testes
+passaram na VPS, saúde OK e1.040 arquivos operacionais preservados por hash.
+Edge público confirmou3 fotos carregadas e dias6/5/5, sem errosJavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-rotativos-sector43-gallery-20261111-91a1411.
+Arquivos: app.js,index.html,test/rotativos-gallery.test.js.
 
 ## Rotativos — fotos da planilha e previsão da mesa (11/11/2026)
 
