@@ -6457,11 +6457,35 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
 .automatic-report-consolidated .prog-feira-card-body { height:auto; min-height:222px; }
 .automatic-report-occurrences { padding:8px; font-size:11px; overflow-wrap:anywhere; }
 
-/* Raio X: only images, 16 cards per sheet, matching compact Prog Feira. */
+/* Raio X: full product cards, up to eight per sheet, without dashboard panels. */
 @media print {
- body.print-raio-x .rx-print-page { height:177mm !important; min-height:0 !important; break-inside:avoid !important; page-break-inside:avoid !important; margin:0 !important; padding:0 !important; }
- body.print-raio-x .rx-print-grid { display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; grid-template-rows:repeat(4,42mm) !important; gap:3mm !important; margin:0 !important; padding:0 !important; }
- body.print-raio-x #raioXPrintReport .rx-card { height:42mm !important; min-height:0 !important; overflow:hidden !important; }
- body.print-raio-x #raioXPrintReport .s13-photo-wrapper { height:100% !important; min-height:0 !important; max-height:none !important; flex:1 !important; }
+ body.print-raio-x .rx-print-page { height:auto !important; min-height:0 !important; break-inside:auto !important; margin:0 !important; padding:0 !important; }
+ body.print-raio-x .rx-print-grid { display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; grid-template-rows:auto !important; gap:3mm !important; align-items:start !important; margin:0 !important; padding:0 !important; }
+ body.print-raio-x #raioXPrintReport .rx-card { height:auto !important; min-height:0 !important; overflow:visible !important; }
+ body.print-raio-x #raioXPrintReport .s13-photo-wrapper { height:28mm !important; min-height:28mm !important; max-height:28mm !important; flex:0 0 28mm !important; }
  body.print-raio-x #raioXPrintReport .s13-photo-img { object-fit:contain !important; }
+ body.print-raio-x #raioXPrintReport .s13-card-body { padding:1mm !important; font-size:8px !important; line-height:1.2 !important; }
+ body.print-raio-x #raioXPrintReport .s13-card-description { font-size:8px !important; white-space:normal !important; overflow:visible !important; text-overflow:clip !important; display:block !important; -webkit-line-clamp:unset !important; }
+ body.print-raio-x #raioXPrintReport .rx-sector-counts { display:flex !important; flex-wrap:wrap !important; gap:1mm !important; }
+ body.print-raio-x #raioXPrintReport .rx-sector-counts .badge, body.print-raio-x #raioXPrintReport .rx-status > span { font-size:8px !important; padding:.5mm !important; line-height:1.2 !important; white-space:normal !important; }
+ body.print-raio-x #raioXPrintReport .rx-status { display:flex !important; flex-wrap:wrap !important; gap:1mm !important; margin:1mm 0 !important; }
+ body.print-raio-x #raioXPrintReport .s13-card-meta-grid { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:1mm !important; margin:1mm 0 !important; }
+ body.print-raio-x #raioXPrintReport .s13-meta-item, body.print-raio-x #raioXPrintReport .s13-meta-item > span { white-space:normal !important; overflow:visible !important; text-overflow:clip !important; font-size:8px !important; overflow-wrap:anywhere !important; }
+ body.print-raio-x #raioXPrintReport .rx-sheet-details { font-size:8px !important; margin:1mm 0 !important; padding:1mm !important; }
+}
+
+@media print {
+ body.print-raio-x #raioXPrintReport .s13-card-meta-grid { padding:.6mm !important; background:#f8fafc !important; border:1px solid #e2e8f0 !important; border-radius:1mm !important; }
+ body.print-raio-x #raioXPrintReport .rx-status small { font-size:7px !important; line-height:1.1 !important; }
+ body.print-raio-x #raioXPrintReport .rx-status .badge, body.print-raio-x #raioXPrintReport .rx-status .s01-style-status { font-size:8px !important; padding:.3mm !important; line-height:1.1 !important; }
+ body.print-raio-x #raioXPrintReport .badge-cyan { color:#075985 !important; background:#e0f2fe !important; }
+ body.print-raio-x #raioXPrintReport .s01-sector-chip.danger { color:#991b1b !important; background:#fef2f2 !important; }
+ body.print-raio-x #raioXPrintReport .s01-sector-chip.success { color:#166534 !important; background:#f0fdf4 !important; }
+}
+
+@media print {
+ body.print-raio-x #raioXPrintReport .s13-photo-wrapper { height:24mm !important; min-height:24mm !important; max-height:24mm !important; flex:0 0 24mm !important; }
+ body.print-raio-x #raioXPrintReport .s13-meta-item { gap:0 !important; line-height:1 !important; }
+ body.print-raio-x #raioXPrintReport .s13-meta-item > span, body.print-raio-x #raioXPrintReport .s13-card-code-row { line-height:1 !important; }
+ body.print-raio-x #raioXPrintReport .s01-sector-chip { font-size:8px !important; padding:.3mm !important; line-height:1 !important; }
 }

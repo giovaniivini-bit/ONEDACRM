@@ -4158,15 +4158,15 @@
         const report = document.createElement('div');
         report.id = 'raioXPrintReport';
         const cards = [...view.querySelectorAll('#raioXGallery .rx-card')];
-        // Same 4 x 4 pagination as Prog Feira's image-only print layout.
-        for (let offset = 0; offset < Math.max(1, cards.length); offset += 16) {
+        // Full Prog Feira layout: up to eight cards, preserving product information.
+        for (let offset = 0; offset < Math.max(1, cards.length); offset += 8) {
             const page = document.createElement('section');
             page.className = 'rx-print-page';
             const grid = document.createElement('div');
             grid.className = 'rx-print-grid';
-            cards.slice(offset, offset + 16).forEach(card => {
+            cards.slice(offset, offset + 8).forEach(card => {
                 const copy = card.cloneNode(true);
-                copy.querySelectorAll('.s13-card-body, .s13-photo-overlay, .s13-btn-action').forEach(el => el.remove());
+                copy.querySelectorAll('.s13-photo-overlay, .s13-btn-action').forEach(el => el.remove());
                 copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
                 copy.querySelectorAll('img').forEach(img => {
                     img.loading = 'eager';

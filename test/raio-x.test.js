@@ -66,17 +66,17 @@ test('preserva status divergentes entre setores e não considera status desconhe
     assert.equal(rx.filter(products, { ...defaults, style: 'pendentes' }, helpers).length, 1);
     assert.equal(rx.filter(products, { ...defaults, style: 'liberados' }, helpers).length, 1);
 });
-test('Raio X imprime apenas imagens em páginas 4x4 mantendo margem segura', () => {
+test('Raio X imprime foto e dados em grupos de oito mantendo margem segura', () => {
     const fs=require('node:fs'),path=require('node:path');
     const css=fs.readFileSync(path.join(__dirname,'../style.css'),'utf8');
     const app=fs.readFileSync(path.join(__dirname,'../app.js'),'utf8');
     const print=app.slice(app.indexOf('    function prepareRaioXPrint()'),app.indexOf("    window.addEventListener('beforeprint', prepareRaioXPrint)"));
     assert.match(css, /@page raio-x-report\s*\{[^}]*margin:12mm !important/);
-    assert.match(print,/cards\.slice\(offset, offset \+ 16\)/);
-    assert.match(print,/offset \+= 16/);
+    assert.match(print,/cards\.slice\(offset, offset \+ 8\)/);
+    assert.match(print,/offset \+= 8/);
     assert.doesNotMatch(print,/rx-print-summary|rx-kpis|rx-print-details/);
-    assert.match(css,/grid-template-rows:repeat\(4,42mm\)/);
-    assert.match(print,/s13-card-body/);
+    assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+    assert.doesNotMatch(print,/s13-card-body,/);
 });
 
 test('Raio X inclui pendência dupla em cor e aviamento sem alterar filtro exclusivo do Setor01', () => {
