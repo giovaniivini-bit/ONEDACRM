@@ -83,3 +83,10 @@ abaixo de envio/previsão, omitindo campos vazios. Cor e Pantone dividem a linha
 título quando houver espaço; em telas estreitas quebram sem sobrepor. Observação
 preserva novas linhas, é escapada e integra a impressão. Demais regras de D01/X01,
 correspondência completa e preferência de ENV. CLIENTE permanecem iguais.
+
+## Impressão compacta vigente — 11/11/2026
+
+Somente imagens em cards,16porfolha(4×4),A4paisagem/margem12mm, fotos inteiras.
+Substitui a impressão detalhada anterior. Setores, filtros, KPIs e demais textos
+não aparecem no PDF; todos os produtos filtrados continuam, com última folha
+parcial quando necessário. Tela não muda. Fallback e limpeza após impressão mantidos.

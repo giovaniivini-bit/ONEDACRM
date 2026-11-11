@@ -202,11 +202,12 @@ curso. Os guias detalham a operação. Skill `skills/oneda-crm/SKILL.md` recuper
 arquivos em novas conversas. Publicar documentos no GitHub quando incluído no escopo;
 arquivos locais e chat, sozinhos, não constituem backup remoto.
 
-## Impressão Raio X (26/10/2026)
+## Impressão Raio X (11/11/2026)
 
-Usar A4 paisagem com margem mínima de 1cm (CSS aplica12mm!important para vencer
-regra global de margem zero). Até6cartões por grupo,3colunas; campos separados e
-altura automática. Não voltar aos badges comprimidos de6px ou esconder excedentes.
+Padrão vigente: somente imagens em cards,16porfolha(4×4),A4paisagem com margem12mm,
+como Prog Feira compacto. Fotos inteiras sem corte. Sem filtros, KPIs ou textos de
+detalhes na impressão. Preservar todos os cards filtrados e a tela original.
+Substitui o formato de seis cards detalhados de26/10/2026.
 
 ## Nova base Prog Feira — 27/10/2026
 

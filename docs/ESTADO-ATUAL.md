@@ -1,5 +1,21 @@
 # Estado atual — Oneda CRM
 
+## Raio X — impressão somente imagens, 16 por folha (11/11/2026)
+
+Layout compacto semelhante ao Prog Feira: 4×4 cards por A4 paisagem, com margem
+12mm e fotos inteiras (contain). Sem painel de setores, filtros, KPIs, resumo,
+textos de status ou detalhes. Respeita todos os cards atualmente filtrados na tela;
+última folha pode ser parcial. Tela, filtros, imagens e dados permanecem iguais.
+Substitui o formato anterior de seis cards com detalhes. Fallback e limpeza após
+impressão preservados. Arquivos: app.js, style.css, index.html, test/raio-x.test.js.
+228 testes passaram; revisão independente sem Critical/Important. Edge com cards
+reais:33→3folhas(16/16/1),17→2(16/1),6→1. PDF extraído e renderizado confirmou
+paginação sem filtros/KPIs; outra amostra carregou17 fotos reais,16na primeira folha,
+inteiras e sem cortes. Tela preservada e sem erros JavaScript.
+Publicado no GitHub/VPS no commitba05578; testes passaram na VPS, saúde OK e
+1.067 arquivos operacionais preservados por hash. Backup:
+/home/ubuntu/backups/oneda-crm-raio-x-images-20261111-ba05578.
+
 ## PDFs por estilista — um tema por folha (09/11/2026)
 
 Substitui o espaço de meia folha: cada tema/subtema começa em folha própria,
@@ -65,7 +81,7 @@ código com sufixo, fonte vazia/falha/cache, tabela, temas e celular, sem erros 
 PDF com coluna e data individual conferido por extração. Na leitura real, 29
 finalizações vinculadas a 2.097 registros; 2.068 sem data e nenhum conflito.
 Nenhuma escrita feita nas planilhas. Publicado em GitHub e VPS no commit 8c928a7, em 08/11/2026 (America/Sao_Paulo), após autorização explícita do usuário. Os 220 testes passaram também na VPS; hashes confirmaram preservação de 1.697 arquivos operacionais. Backup: /home/ubuntu/backups/oneda-crm-aproveitamento-20261108-8c928a7. Reiniciado somente oneda-crm-app. Saúde OK, fonte nova ao vivo com 29 linhas, versão pública e navegador Edge confirmados: 29 vínculos/2.097 registros, coluna de finalização presente e nenhum erro JavaScript.
-Atualizado em 09/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 11/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
 ## Relatórios por estilista — produto único por tema (09/11/2026)
 
