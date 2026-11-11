@@ -273,3 +273,11 @@ pode aparecer em temas diferentes; no mesmo tema, juntar OFs e contar OFs distin
 e partes identificadas por OF, sem confundir grades/tamanhos com partes. Manter
 ocorrências/previsões/datas originais em detalhes; não mostrar só a primeira OF.
 Quantidade de partes sem fonte é não informada. Preservar snapshots/PDFs antigos.
+
+## Rotativos — imagens da planilha (11/11/2026)
+
+Logo abaixo da planilha, quatro imagens por linha, sem cards, apenas foto e
+previsão da mesa. Usar código completo, inclusive sufixos, e índice de imagens da
+VPS já compartilhado. Galeria acompanha busca/situação da tabela; um código com
+vários registros preserva previsões distintas. Não usar dados fictícios em fonte
+vazia. Fotos ampliáveis e atualização pelo índice existente, sem nova sincronização.

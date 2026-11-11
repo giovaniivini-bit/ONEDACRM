@@ -6489,3 +6489,14 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
  body.print-raio-x #raioXPrintReport .s13-meta-item > span, body.print-raio-x #raioXPrintReport .s13-card-code-row { line-height:1 !important; }
  body.print-raio-x #raioXPrintReport .s01-sector-chip { font-size:8px !important; padding:.3mm !important; line-height:1 !important; }
 }
+
+.rotativos-sheet-images { margin-top:24px; }
+.rotativos-sheet-images h3 { font-size:16px; color:var(--text-primary); margin:0 0 16px; }
+.rotativos-sheet-image-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:20px 16px; }
+.rotativos-sheet-image { margin:0; min-width:0; }
+.rotativos-sheet-image-open { display:flex; align-items:center; justify-content:center; width:100%; aspect-ratio:297/210; padding:0; background:transparent; border:0; border-radius:0; box-shadow:none; color:var(--text-muted); cursor:zoom-in; }
+.rotativos-sheet-image-open:disabled { cursor:default; }
+.rotativos-sheet-image-open img { display:block; width:100%; height:100%; object-fit:contain; }
+.rotativos-sheet-image figcaption { margin-top:8px; font-size:12px; line-height:1.4; color:var(--text-primary); overflow-wrap:anywhere; }
+.rotativos-sheet-images-empty { grid-column:1/-1; color:var(--text-muted); }
+@media print { .rotativos-sheet-image { break-inside:avoid; } .rotativos-sheet-image-open { display:flex !important; } }

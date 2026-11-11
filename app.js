@@ -2062,7 +2062,7 @@
         const s43Repetidos = s43Items.filter(r => state.productionCodes.has(r.codigo)).length;
         const s43Regulares = s43Items.length - s43Repetidos;
 
-        const rotExt = state.rotativosExternalData || { count: 12, faltaReceberCount: 5, recebidosCount: 7, records: [] };
+        const rotExt = state.rotativosExternalData || { count: 0, faltaReceberCount: 0, recebidosCount: 0, records: [] };
         const rotDriveTotal = rotExt.count || 0;
         const rotFaltaReceber = rotExt.faltaReceberCount || 0;
         const rotRecebidos = rotExt.recebidosCount || (rotDriveTotal - rotFaltaReceber);
@@ -8656,6 +8656,18 @@
     // =========================================================================
     // 6. MÓDULO ESTILO PEDIDO - ROTATIVOS (SETOR 43)
     // =========================================================================
+    function getRotativosGalleryItems(records) {
+        const products=new Map();
+        for(const row of records || []) {
+            const codigo=String(row.produto || '').trim().toUpperCase();
+            if(!codigo)continue;
+            if(!products.has(codigo))products.set(codigo,{codigo,forecasts:[]});
+            const prediction=String(row.prevMesa || '').trim() || 'Não informada';
+            if(!products.get(codigo).forecasts.includes(prediction))products.get(codigo).forecasts.push(prediction);
+        }
+        return [...products.values()];
+    }
+
     function renderRotativosView(container) {
         // Regra do Usuário:
         // - produtos pendentes no setor 43 (coluna AY) ou com indicação de processo rotativo
@@ -8686,10 +8698,10 @@
         const regularesPct = totalItems > 0 ? ((regularesCount / totalItems) * 100).toFixed(1) : '0';
 
         // 1. Dados da Planilha Externa de Rotativos (Google Drive - Mesas Pendentes)
-        const rotExt = state.rotativosExternalData || { count: 12, faltaReceberCount: 5, recebidosCount: 7, records: [], isLive: false };
-        const rotDriveTotal = rotExt.count || (rotExt.records ? rotExt.records.length : 12);
-        const rotFaltaReceber = rotExt.faltaReceberCount !== undefined ? rotExt.faltaReceberCount : 5;
-        const rotRecebidos = rotExt.recebidosCount !== undefined ? rotExt.recebidosCount : 7;
+        const rotExt = state.rotativosExternalData || { count: 0, faltaReceberCount: 0, recebidosCount: 0, records: [], isLive: false };
+        const rotDriveTotal = rotExt.count || (rotExt.records ? rotExt.records.length : 0);
+        const rotFaltaReceber = rotExt.faltaReceberCount !== undefined ? rotExt.faltaReceberCount : 0;
+        const rotRecebidos = rotExt.recebidosCount !== undefined ? rotExt.recebidosCount : 0;
         const rotDriveFaltaPct = rotDriveTotal > 0 ? ((rotFaltaReceber / rotDriveTotal) * 100).toFixed(1) : '0';
         const rotDriveRecebidosPct = rotDriveTotal > 0 ? ((rotRecebidos / rotDriveTotal) * 100).toFixed(1) : '0';
 
@@ -8708,20 +8720,7 @@
         const driveRecebidosOffset = -driveFaltaDash;
 
         // 2. Filtragem de dados da Planilha Google Drive
-        let driveDisplayRecords = rotExt.records && rotExt.records.length > 0 ? rotExt.records : [
-            { produto: 'ON.11.0123', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61318', mesaEnviada: '02/09/2026', prevMesa: '14/09/2026', dias: '11', recebido: '09/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '01.14.00.7490', arquivoAprov: '02/09/2026', fid: '68644', prevEntCilindro: '04/09/2026', solicitacao: '61533', mesaEnviada: '10/09/2026', prevMesa: '14/09/2026', dias: '7', recebido: '16/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: 'ON.13.0121', arquivoAprov: 'C. LANCASTER', fid: '52791', prevEntCilindro: 'C. LANCASTER', solicitacao: '61526', mesaEnviada: '10/09/2026', prevMesa: '18/09/2026', dias: '10', recebido: '18/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '13.14.00.0624E', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61639', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '23/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '13.14.00.0624F', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61641', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '22/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '13.14.00.0624G', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61643', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '22/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '13.13.00.0622F', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61648', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' },
-            { produto: '13.13.00.0622G', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61649', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' },
-            { produto: '13.13.00.0623F', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61658', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '22/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: 'ON.13.0127', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61905', mesaEnviada: '22/09/2026', prevMesa: '01/10/2026', dias: '1', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' },
-            { produto: 'ON.16.0146', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61992', mesaEnviada: '23/09/2026', prevMesa: '02//10/2026', dias: '-2', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' },
-            { produto: '13.14.00.0624E', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '62040', mesaEnviada: '', prevMesa: '', dias: '33062', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' }
-        ];
+        let driveDisplayRecords = Array.isArray(rotExt.records) ? rotExt.records : [];
 
         if (state.rotativosDriveFilter === 'faltaReceber') {
             driveDisplayRecords = driveDisplayRecords.filter(r => !r.isRecebido);
@@ -8741,6 +8740,8 @@
                 (r.obs || '').toLowerCase().includes(q)
             );
         }
+
+        const rotativosGalleryItems=getRotativosGalleryItems(driveDisplayRecords);
 
         // 3. Filtragem de dados do CRM (Setor 43)
         let searchFilteredItems = rotItems;
@@ -9094,6 +9095,20 @@
                         </table>
                     </div>
                 </div>
+                <section class="rotativos-sheet-images" aria-label="Imagens dos produtos da planilha">
+                    <h3>Imagens dos produtos da planilha</h3>
+                    <div class="rotativos-sheet-image-grid">
+                        ${rotativosGalleryItems.length?rotativosGalleryItems.map((item,index)=>{
+                            const img=getProductImage(item.codigo);
+                            return `<figure class="rotativos-sheet-image">
+                                <button type="button" class="rotativos-sheet-image-open" data-rotativo-image="${index}" aria-label="Ampliar imagem de ${escapeHtml(item.codigo)}" ${img.hasImage?'':'disabled'}>
+                                    ${img.hasImage?`<img src="${escapeHtml(img.thumbUrl)}" data-rotativo-fallback="${escapeHtml(img.proxyUrl || '')}" alt="${escapeHtml(item.codigo)}" loading="lazy">`:'<span>Imagem indisponível</span>'}
+                                </button>
+                                <figcaption>Previsão da mesa: ${escapeHtml(item.forecasts.join(' / '))}</figcaption>
+                            </figure>`;
+                        }).join(''):'<p class="rotativos-sheet-images-empty">Nenhum produto para os filtros da planilha.</p>'}
+                    </div>
+                </section>
             ` : `
                 <!-- CONTEÚDO DA ABA 2: PRODUTOS NO SETOR 43 DO CRM -->
                 <div class="table-card" style="margin-bottom: 24px; padding: 14px 18px;">
@@ -9282,6 +9297,20 @@
                 `}
             `}
         `;
+        container.querySelectorAll('[data-rotativo-image]').forEach(button=>button.addEventListener('click',()=>{
+            const item=rotativosGalleryItems[Number(button.dataset.rotativoImage)];
+            const img=getProductImage(item.codigo);
+            window.crmOpenImageLightbox(img.largeUrl,item.codigo,`Previsão da mesa: ${item.forecasts.join(' / ')}`,img.largeFallbackUrl || '');
+        }));
+        container.querySelectorAll('[data-rotativo-fallback]').forEach(img=>img.addEventListener('error',()=>{
+            if(!img.dataset.tried&&img.dataset.rotativoFallback&&img.src!==img.dataset.rotativoFallback) {
+                img.dataset.tried='1';img.src=img.dataset.rotativoFallback;
+            } else {
+                const button=img.parentElement;
+                button.disabled=true;
+                button.textContent='Imagem indisponível';
+            }
+        }));
     }
 
     // =========================================================================

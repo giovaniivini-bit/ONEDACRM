@@ -1,5 +1,20 @@
 # Estado atual — Oneda CRM
 
+## Rotativos — fotos da planilha e previsão da mesa (11/11/2026)
+
+Galeria logo abaixo da planilha Google Drive, quatro imagens por linha, sem cards:
+somente imagem contida e previsão da mesa (prevMesa). Clique amplia. Produtos vêm
+dos mesmos registros filtrados pela busca e situação; códigos completos/sufixos
+preservados. Repetições do código agrupam previsões distintas. Sem produto/fonte
+válida, não cria imagens fictícias; removido fallback antigo de exemplos da tabela.
+Reutiliza getProductImage/índice da VPS, fallback e lightbox existentes; Rotativos
+já participa da atualização periódica do índice. Sem mudanças no envio de imagens.
+230 testes aprovados e revisão independente sem Critical/Important. Inspeção SSH
+confirmou nove arquivos exatos na pasta de imagens da VPS. Edge carregou nove
+fotos reais, quatro colunas; filtro pendentes5, busca por sufixo1, vazio, ampliação,
+temas claro/escuro e celular sem overflow na galeria nem erros JavaScript.
+Arquivos: app.js, style.css, index.html, package.json, test/rotativos-gallery.test.js.
+
 ## Raio X — impressão com foto e dados do card (11/11/2026)
 
 Padrão vigente: foto e informações completas de cada card, sem painel global de
