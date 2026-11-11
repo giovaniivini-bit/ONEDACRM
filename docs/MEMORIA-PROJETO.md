@@ -204,10 +204,11 @@ arquivos locais e chat, sozinhos, não constituem backup remoto.
 
 ## Impressão Raio X (11/11/2026)
 
-Padrão vigente: somente imagens em cards,16porfolha(4×4),A4paisagem com margem12mm,
-como Prog Feira compacto. Fotos inteiras sem corte. Sem filtros, KPIs ou textos de
-detalhes na impressão. Preservar todos os cards filtrados e a tela original.
-Substitui o formato de seis cards detalhados de26/10/2026.
+Padrão vigente: foto E informações completas de cada card. Ocultar apenas painel
+global de filtros, setores e KPIs. Grupos de até8cards,quatrocolunas,A4paisagem,
+margem12mm, altura automática sem truncar dados. Conteúdo denso pode exigir mais
+folhas. Não voltar a somente imagens nem esconder dados para forçar16porfolha.
+Preservar filtros atuais, fallback das fotos e tela original.
 
 ## Nova base Prog Feira — 27/10/2026
 

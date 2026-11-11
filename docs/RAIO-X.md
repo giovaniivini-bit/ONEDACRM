@@ -84,9 +84,16 @@ título quando houver espaço; em telas estreitas quebram sem sobrepor. Observa�
 preserva novas linhas, é escapada e integra a impressão. Demais regras de D01/X01,
 correspondência completa e preferência de ENV. CLIENTE permanecem iguais.
 
-## Impressão compacta vigente — 11/11/2026
+## Impressão somente imagens — versão substituída em 11/11/2026
 
 Somente imagens em cards,16porfolha(4×4),A4paisagem/margem12mm, fotos inteiras.
 Substitui a impressão detalhada anterior. Setores, filtros, KPIs e demais textos
 não aparecem no PDF; todos os produtos filtrados continuam, com última folha
 parcial quando necessário. Tela não muda. Fallback e limpeza após impressão mantidos.
+
+## Impressão vigente: foto e dados — 11/11/2026
+
+Manter todas as informações dos cards junto à foto. Ocultar somente painel de
+filtros/setores/KPIs e botões interativos. Até8cards porgrupo,quatrocolunas,
+altura automática; conteúdo denso pode usar folhas adicionais para não cortar
+texto. Margem12mm,A4paisagem,foto contida. Preserva tela e todos os cards filtrados.

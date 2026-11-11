@@ -1,5 +1,19 @@
 # Estado atual — Oneda CRM
 
+## Raio X — impressão com foto e dados do card (11/11/2026)
+
+Padrão vigente: foto e informações completas de cada card, sem painel global de
+setores/filtros/KPIs. Substitui a impressão somente imagens publicada antes.
+Paginação em grupos de até8 cards (quatro colunas), altura automática para não
+cortar descrição, status, metadados ou complementos de cor/aviamento. Conteúdo
+denso pode ocupar mais folhas. Botões interativos removidos; fotos contidas.
+228 testes aprovados e revisão sem Critical/Important. PDF com10 cards reais
+preservou corpos completos, status, OF e malote, sem filtros/KPIs; densidade gerou
+três folhas. Espaços internos compactados e contraste dos badges corrigido.
+Publicado no GitHub/VPS no commite0a6c36;228 testes passaram na VPS, saúde OK e
+1.069 arquivos operacionais preservados por hash. Backup:
+/home/ubuntu/backups/oneda-crm-raio-x-details-20261111-e0a6c36.
+
 ## Raio X — impressão somente imagens, 16 por folha (11/11/2026)
 
 Layout compacto semelhante ao Prog Feira: 4×4 cards por A4 paisagem, com margem
