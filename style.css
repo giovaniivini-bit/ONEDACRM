@@ -6288,7 +6288,7 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 #raioXGallery .s13-btn-action { flex:0 0 34px; height:34px; min-height:34px; max-height:34px; }
 
 /* Prog Feira: alternância de consulta visual, preservando os filtros. */
-.prog-feira-images-only .prog-feira-card > :not(.prog-feira-media):not(.prog-feira-card-body):not(.prog-feira-sector-ribbons),
+.prog-feira-images-only .prog-feira-card > :not(.prog-feira-media):not(.prog-feira-card-body):not(.prog-feira-sector-ribbons):not(.prog-feira-compact-id),
 .prog-feira-images-only .prog-feira-card-body > :not(.prog-feira-time-grid) { display:none !important; }
 .prog-feira-images-only [data-prog-images-only] { border-color:#38bdf8; background:rgba(14,165,233,.12); }
 
@@ -6510,4 +6510,16 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
 @media print {
  body.print-prog-feira .prog-feira-images-only .prog-feira-card:has(.prog-feira-sector-ribbons) .prog-feira-media { height:22mm !important; }
  body.print-prog-feira .prog-feira-images-only .prog-feira-sector-ribbon { height:5mm; min-height:5mm; box-sizing:border-box; padding:.5mm; font-size:6px; line-height:1.1; }
+}
+
+.prog-feira-compact-id { display:none; }
+.prog-feira-images-only .prog-feira-compact-id { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 8px; color:var(--text-primary); font-size:14px; font-weight:800; line-height:1.3; }
+.prog-feira-compact-id > * { min-width:0; overflow-wrap:anywhere; }
+.prog-feira-compact-id > span { text-align:right; }
+.prog-feira-images-only .prog-feira-time-grid [data-prog-duration="ting"] strong { font-size:18px; }
+@media print {
+ body.print-prog-feira .prog-feira-images-only .prog-feira-compact-id { height:5mm; box-sizing:border-box; padding:.5mm 1mm; font-size:9px; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-card .prog-feira-media { height:23mm !important; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-card:has(.prog-feira-sector-ribbons) .prog-feira-media { height:17mm !important; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-time-grid [data-prog-duration="ting"] strong { font-size:10px !important; }
 }

@@ -191,6 +191,7 @@
             const missing = [];
             let ting = '';
             let tingDays = null;
+            let tingEntryDate = '';
             let costSector = '';
             for (const spec of PARALLEL_FLOWS) {
                 const parallel = rows.filter(row => field(row, 'PARTE') === spec.part && field(row, 'FLUXO') === spec.flow);
@@ -202,6 +203,8 @@
                     ting = pendingStates[0] || states[0] || '';
                     const days = parallel.filter(row => ting && normalizeSector(field(row, 'OP')) === ting).map(row => calculateDaysInSector(field(row, 'DT_SAIDA'), now)).filter(value => value != null);
                     tingDays = days.length ? Math.max(...days) : null;
+                    const dates = parallel.filter(row => ting && normalizeSector(field(row, 'OP')) === ting).map(row => parseMovementDate(field(row, 'DT_SAIDA'), now)).filter(Boolean).sort((a,b)=>a-b);
+                    tingEntryDate = dates.length ? dates[0].toLocaleDateString('pt-BR') : '';
                 }
                 if (spec.part === 'D6') costSector = states.join(' / ');
                 pendingStates.forEach(state => {
@@ -210,11 +213,11 @@
                 });
             }
             canonical.push({ ...primary, PARTE: '', FLUXO: '', QTDE_PEND: String([...dimensions.values()].reduce((a,b) => a+b, 0)), SETOR_TING: ting, SETOR_FLUXO_EM: costSector });
-            complements.set(key, { pending, missing, ting, tingDays, parallelSectors, labels: [...new Set(main.map(row => normalizeLabel(field(row, 'ETIQUETA'))).filter(Boolean))], mainSectors: [...new Set(main.map(row => normalizeSector(field(row, 'OP'))))] });
+            complements.set(key, { pending, missing, ting, tingDays, tingEntryDate, parallelSectors, labels: [...new Set(main.map(row => normalizeLabel(field(row, 'ETIQUETA'))).filter(Boolean))], mainSectors: [...new Set(main.map(row => normalizeSector(field(row, 'OP'))))] });
         }
         return buildProducts(canonical, now).map(product => {
             const parallel = complements.get(product.key);
-            return { ...product, parallelPending: parallel.pending, labels: parallel.labels, parallelSectors: parallel.parallelSectors, missingParallel: parallel.missing, mainSectors: parallel.mainSectors, ting: parallel.ting, tingDays: parallel.tingDays,
+            return { ...product, parallelPending: parallel.pending, labels: parallel.labels, parallelSectors: parallel.parallelSectors, missingParallel: parallel.missing, mainSectors: parallel.mainSectors, ting: parallel.ting, tingDays: parallel.tingDays, tingEntryDate: parallel.tingEntryDate,
                 tingInfo: TINGIMENTO[parallel.ting] || { label: 'Não informado', color: '#64748b' },
                 isDes: parallel.pending.some(item => item.part === 'D6' && item.sector === 'DES'), sourceFormat: 'parallel' };
         });

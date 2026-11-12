@@ -1,5 +1,16 @@
 # Estado atual — Oneda CRM
 
+## Prog Feira — identificação e data no modo compacto (12/11/2026)
+
+Linha abaixo da foto: código à esquerda e OF à direita, fonte14px. Quadro direito
+mostra entrada no setor tingimento em vez de dias D43; usa TF/D43 DT_SAIDA do setor
+selecionado e menor data válida (consistente com maior permanência). Sem data mantém
+aviso, sem usar data D36. Modo completo conserva dias. PDF16 cards mantém tarjas,
+reserva linha5mm; datas legíveis e tarjas inteiras verificadas em PDF renderizado.
+241 testes passaram; revisão independente aprovada; Edge temas/celular/impressão
+sem errosJS. Publicação pendente.
+
+
 ## Prog Feira — tarjas no modo apenas imagens e dias (12/11/2026)
 
 Tarjas DES/M02/M00 também visíveis no modo compacto, abaixo dos dias.

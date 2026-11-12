@@ -144,3 +144,8 @@ e movimento reduzido mantêm tarjas estáticas; modo compacto não as exibe.
 
 Atualização12/11/2026: modo Apenas imagens e dias também exibe tarjas no rodapé;
 PDF compacto mantém16 fichas/folha reservando espaço para evitar corte das tarjas.
+
+Modo Apenas imagens e dias (12/11/2026): código e OF abaixo da imagem; quadro
+direito usa data entrada TF/D43 DT_SAIDA do setor tingimento. Menor data válida
+corresponde à maior permanência anterior; ausente mantém aviso, não usa D36.
+Modo completo permanece com dias. PDF compacto mantém16 cards e tarjas.

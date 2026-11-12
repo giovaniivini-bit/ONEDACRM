@@ -183,7 +183,7 @@ test('dias de TF acompanham o setor real M00 a M03 e não usam a data do D36',()
     const now=new Date(2026,9,27);
     for(const setor of ['M00','M01','M02','M03']){
         const [p]=buildProducts([erp('FE','D36','01A',{'Data Saída':'26/10/2026'}),erp('TF','D43',setor,{'Data Saída':'20/10/2026'})],now);
-        assert.equal(p.daysInSector,1);assert.equal(p.tingDays,7);assert.equal(p.ting,setor);
+        assert.equal(p.daysInSector,1);assert.equal(p.tingDays,7);assert.equal(p.ting,setor);assert.equal(p.tingEntryDate,'20/10/2026');
     }
     const [missing]=buildProducts([erp('FE','D36','01A'),erp('TF','D43','M00',{'Data Saída':''})],now);assert.equal(missing.tingDays,null);
     const [absent]=buildProducts([erp('FE','D36','01A')],now);assert.equal(absent.tingDays,null);
