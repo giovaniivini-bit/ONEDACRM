@@ -1,5 +1,18 @@
 # Estado atual — Oneda CRM
 
+## Prog Feira — fotos maiores na impressão (12/11/2026)
+
+Impressão completa usa foto na largura do card em proporção A4 paisagem, sem corte.
+Páginas/cards adaptam altura para preservar todos os dados; modo compacto mantido.
+Botão aguarda imagens eager/decode e fallback (limite20s), cancela se a view mudar
+ou fotos falharem e evita clique duplicado. Ausências reais mantêm placeholder.
+241 testes passam, incluindo espera/fallback/timeout/rerender; revisão independente
+aprovada. Edge com fontes locais e APIs reais:187 fotos prontas, largura253px
+igual ao card e altura178px; PDF gerado e inspecionado.9 códigos sem mapeamento
+confirmados sem arquivo exato na VPS; não usa imagem de outro sufixo.
+Publicação pendente de verificação.
+
+
 ## Prog Feira — filtros com/sem previsão de aviamentos (12/11/2026)
 
 Duas opções lado a lado antes das imagens: Ver produtos com previsão de aviamentos

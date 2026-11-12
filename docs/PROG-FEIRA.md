@@ -123,3 +123,11 @@ alternativas, ao lado de Apenas imagens e dias. Com verifica qualquer linha do
 suspende o filtro. Clicar de novo na opção ativa ou Limpar retorna todos. Busca,
 etiquetas, programação, entrega, setores e estilista continuam combináveis. Resumo
 impresso identifica o recorte. Não altera dados ou previsões na planilha.
+
+## Prog Feira — fotos na impressão (12/11/2026)
+
+Impressão completa mantém fotos na largura do card, sem corte (297/210), e altura
+adaptável para preservar informações. Modo compacto mantém sua composição.
+Exportar aguarda todas as fotos mapeadas, tenta fallback e cancela em timeout/erro
+ou troca da view. Código sem arquivo exato permanece explicitamente sem imagem;
+nunca substituir pela imagem de outro sufixo.

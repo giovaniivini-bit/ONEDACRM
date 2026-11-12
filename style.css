@@ -6505,9 +6505,9 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
 .prog-feira-trim-item { color:var(--text-primary); font-size:10px; line-height:1.4; overflow-wrap:anywhere; }
 .prog-feira-trim-item > strong { color:#d97706; }
 @media print {
- body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page:has(.prog-feira-trim-lines) { min-height:0 !important; max-height:none !important; overflow:visible !important; break-inside:auto !important; page-break-inside:auto !important; }
- body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page:has(.prog-feira-trim-lines) .prog-feira-grid { grid-template-rows:none !important; grid-auto-rows:minmax(86mm,auto) !important; }
- body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page:has(.prog-feira-trim-lines) .prog-feira-card { height:auto !important; min-height:86mm !important; overflow:visible !important; }
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page { min-height:0 !important; max-height:none !important; overflow:visible !important; break-inside:auto !important; page-break-inside:auto !important; }
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page .prog-feira-grid { grid-template-rows:none !important; grid-auto-rows:minmax(86mm,auto) !important; }
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page .prog-feira-card { height:auto !important; min-height:86mm !important; overflow:visible !important; }
  body.print-prog-feira .prog-feira-trim-lines { margin-top:1mm; padding-left:1mm; gap:1mm; }
  body.print-prog-feira .prog-feira-trim-item { font-size:8px; line-height:1.25; }
 }
@@ -6516,3 +6516,9 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
 .prog-feira-gallery-actions .exec-action-btn { white-space:normal; color:var(--text-primary); background:var(--bg-surface); border-color:var(--border-base); }
 .prog-feira-gallery-actions .exec-action-btn[aria-pressed="true"] { color:#fff; background:#0369a1; border-color:#38bdf8; }
 .prog-feira-gallery-actions .exec-action-btn:disabled { opacity:.5; cursor:wait; }
+
+/* Fotos completas na largura do card, sem recortar a ficha do produto. */
+@media print {
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-card .prog-feira-media { display:block !important; width:100% !important; height:auto !important; aspect-ratio:297/210; flex:none !important; }
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-image { position:absolute !important; inset:0; display:block; width:100% !important; height:100% !important; max-width:100%; max-height:100%; object-fit:contain !important; }
+}

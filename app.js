@@ -13443,6 +13443,7 @@
     };
 
     window.crmGeneratePDFReport = () => {
+        if (window.crmGeneratePDFReport.pending) return;
         if(state.activeSubmodule==='relatorios-automaticos') {
             if(state.automaticReport) window.open(`/api/automatic-reports?id=${encodeURIComponent(state.automaticReport.id)}&format=pdf`,'_blank','noopener');
             else showNotification('Selecione um relatório do histórico para abrir o PDF.','info','Relatórios automáticos');
@@ -13542,6 +13543,7 @@
         if (state.activeSubmodule === 'raio-x') prepareRaioXPrint();
 
         const cleanupPrintMode = () => {
+            window.crmGeneratePDFReport.pending = false;
             document.body.classList.remove(...printModeClasses);
             if (viewWasAdjustedForPrint) {
                 state.setor13ViewMode = originalSetor13ViewMode;
@@ -13555,7 +13557,41 @@
         window.addEventListener('afterprint', cleanupPrintMode, { once: true });
 
         showNotification('Formatando relatório executivo para salvar em PDF ou imprimir...', 'info', 'Gerando Relatório');
+        const printSubmodule = state.activeSubmodule;
+        window.crmGeneratePDFReport.pending = printSubmodule === 'prog-feira';
+        const printView = printSubmodule === 'prog-feira' ? document.querySelector('.prog-feira-view') : null;
         setTimeout(async () => {
+            if (printSubmodule === 'prog-feira') {
+                const images = [...document.querySelectorAll('.prog-feira-media img')];
+                images.forEach(img => { img.loading = 'eager'; });
+                let timeout;
+                await Promise.race([
+                    Promise.allSettled(images.map(async img => {
+                        try { await img.decode(); }
+                        catch (_) {
+                            if (img.dataset.fallbackSrc && img.dataset.fallback !== '1') {
+                                img.dataset.fallback = '1';
+                                img.src = img.dataset.fallbackSrc;
+                            }
+                            try { await img.decode(); } catch (_) { /* Existing unavailable-image state remains visible. */ }
+                        }
+                    })),
+                    new Promise(resolve => { timeout = setTimeout(resolve, 20000); })
+                ]);
+                clearTimeout(timeout);
+                if (state.activeSubmodule !== printSubmodule || document.querySelector('.prog-feira-view') !== printView) {
+                    cleanupPrintMode();
+                    window.removeEventListener('afterprint', cleanupPrintMode);
+                    return;
+                }
+                const pending = images.filter(img => !img.complete || !img.naturalWidth);
+                if (pending.length) {
+                    cleanupPrintMode();
+                    window.removeEventListener('afterprint', cleanupPrintMode);
+                    showNotification('Algumas imagens ainda não carregaram. Aguarde e tente imprimir novamente.', 'warning', 'Imagens do relatório');
+                    return;
+                }
+            }
             if (state.activeSubmodule === 'raio-x') {
                 const images = [...document.querySelectorAll('#raioXPrintReport img')];
                 await Promise.race([

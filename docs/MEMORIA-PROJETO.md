@@ -307,3 +307,11 @@ uma previsão preenchida em linha ainda pendente de aprovação; Sem é o contr�
 incluindo produto sem linha de aviamento. Clicar novamente ou Limpar restaura todos.
 Aplicar antes dos demais recortes para manter contagens/gráfico/cartões alinhados;
 registrar no cabeçalho impresso. Fonte desconhecida não significa sem previsão.
+
+## Prog Feira — fotos na impressão (12/11/2026)
+
+Impressão completa mantém fotos na largura do card, sem corte (297/210), e altura
+adaptável para preservar informações. Modo compacto mantém sua composição.
+Exportar aguarda todas as fotos mapeadas, tenta fallback e cancela em timeout/erro
+ou troca da view. Código sem arquivo exato permanece explicitamente sem imagem;
+nunca substituir pela imagem de outro sufixo.

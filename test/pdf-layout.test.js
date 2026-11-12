@@ -95,3 +95,43 @@ test('PDFs executivos ocultam listas e iniciam galerias na página 2', () => {
     assert.match(app, /filter-toolbar pdf-screen-controls/);
     assert.match(app, /'malotes': 'Malotes - Setores 88 e 83'/);
 });
+for (const scenario of ['loaded', 'rerender', 'timeout', 'fallback']) {
+    test(`Prog Feira print waits for images: ${scenario}`, async () => {
+        const vm = require('node:vm');
+        const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+        const start = app.indexOf('window.crmGeneratePDFReport = () => {');
+        const end = app.indexOf('\n    };', start) + '\n    };'.length;
+        let view = {}, printed = 0, removed = 0, finish;
+        const timers = [];
+        const ready = new Promise(resolve => { finish = resolve; });
+        let attempts = 0;
+        const image = { dataset: {fallbackSrc: '/fallback.jpg'}, complete: false, naturalWidth: 0, decode: async () => {
+            attempts++;
+            if (scenario === 'fallback' && attempts === 1) throw new Error('original failed');
+            await ready; image.complete = true; image.naturalWidth = 300;
+        }};
+        const context = {
+            state: {activeSubmodule:'prog-feira'},
+            document: {body:{classList:{add(){},remove(){}}},getElementById:()=>null,querySelector:()=>view,querySelectorAll:()=>[image]},
+            window: {addEventListener(){},removeEventListener(){removed++;},print(){printed++;}},
+            showNotification(){},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){}
+        };
+        vm.runInNewContext(app.slice(start,end),context);
+        context.window.crmGeneratePDFReport();
+        context.window.crmGeneratePDFReport();
+        assert.equal(timers.length,1,'duplicate click suppressed');
+        const printing = timers[0].fn();
+        assert.equal(image.loading,'eager');
+        assert.equal(printed,0);
+        if(scenario === 'rerender') view = {};
+        if(scenario === 'timeout') timers.find(t=>t.ms===20000).fn();
+        else finish();
+        await printing;
+        assert.equal(printed,scenario==='loaded'||scenario==='fallback'?1:0);
+        if(scenario==='fallback') assert.equal(image.src,'/fallback.jpg');
+        if(scenario==='timeout'||scenario==='rerender') {
+            assert.equal(removed,1);
+            assert.equal(context.window.crmGeneratePDFReport.pending,false);
+        }
+    });
+}
