@@ -8,7 +8,10 @@ selecionado e menor data válida (consistente com maior permanência). Sem data 
 aviso, sem usar data D36. Modo completo conserva dias. PDF16 cards mantém tarjas,
 reserva linha5mm; datas legíveis e tarjas inteiras verificadas em PDF renderizado.
 241 testes passaram; revisão independente aprovada; Edge temas/celular/impressão
-sem errosJS. Publicação pendente.
+sem errosJS. Publicado GitHub/VPS commit6aeb797;241 testes passaram na VPS,
+saúde OK e1.080 arquivos operacionais preservados por hash. Edge público validou
+identificação/data, temas/celular/impressão sem cortes de tarjas. Backup:
+/home/ubuntu/backups/oneda-crm-prog-feira-compact-date-20261112-6aeb797.
 
 
 ## Prog Feira — tarjas no modo apenas imagens e dias (12/11/2026)
