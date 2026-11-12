@@ -7,7 +7,10 @@ M00 laranja piscante. DES combina lado a lado com o tingimento; destaque superio
 DES movido ao rodapé. D43 usa estilo tradicional estático. Impressão e movimento
 reduzido desativam animação; modo compacto preservado. Revisão independente aprovada.
 Edge real:188 cards,102 DES,17 M02,23 M00; sem histórico/animaçãoD43, temas claro/
-escuro, celular e tarjas na impressão verificados sem errosJS. Publicação pendente.
+escuro, celular e tarjas na impressão verificados sem errosJS. Publicado GitHub/VPS commitb06f38e;241 testes passaram local/VPS, saúde OK,
+1.080 arquivos operacionais preservados por hash. Edge público repetiu validação
+de tarjas/histórico/D43/temas/celular/impressão sem erros. Backup:
+/home/ubuntu/backups/oneda-crm-prog-feira-ribbons-20261112-b06f38e.
 
 
 ## Prog Feira — remover X01 dos cards (12/11/2026)
