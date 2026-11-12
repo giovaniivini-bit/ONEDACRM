@@ -16,6 +16,10 @@ retornar nenhum em Com e todos em Sem. Modo de imagens preservado.
 237 testes passaram e revisão independente aprovada. Edge real:196 produtos,
 29com/167sem, grupos complementares sem sobreposição; toggle, alternância exclusiva,
 Limpar, combinação com busca, temas/celular sem overflow/erros. PDF identifica recorte.
+Publicado no GitHub/VPS no commitf9ebe43;237 testes passaram na VPS, saúde OK
+e1.080 arquivos operacionais preservados por hash. Edge público repetiu196total,
+29com/167sem, exclusividade, retorno a Todos e contraste dos controles sem errosJS.
+Backup: /home/ubuntu/backups/oneda-crm-prog-feira-trim-filters-20261112-f9ebe43.
 Arquivos: prog-feira.js,app.js,style.css,index.html,test/prog-feira.test.js.
 
 ## Prog Feira — aviamentos da planilha no card (12/11/2026)
