@@ -41,6 +41,6 @@
         if(!item.consolidated)return item.numero?`OF ${item.numero}`:'';
         return `${item.orderCount} OF(s) • ${item.partsKnown?item.partCount+' parte(s)':item.partCount?item.partCount+' parte(s) identificada(s)':'Partes não informadas'}`;
     }
-    function getReportCardHeight(item) { return item.consolidated?214+Math.max(0,(item.forecasts?.length || 0)-4)*9:214; }
+    function getReportCardHeight(item) { return item.consolidated?248+Math.max(0,(item.forecasts?.length || 0)-4)*9:248; }
     return { groupReportItems, formatForecastLine, getReportCardItems,formatProductSummary,getReportCardHeight };
 });

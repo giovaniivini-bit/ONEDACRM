@@ -37,7 +37,7 @@ test('atraso usa entrega FE, exclui hoje/futuro/inválidas/cancelados sem confun
     assert.ok(report.warnings);
 });
 
-test('PDF real tem introdução, suporta relatório vazio e pagina em oito cards',async t=>{
+test('PDF real tem introdução, suporta relatório vazio e pagina cards com fotos maiores',async t=>{
     const dir=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-report-pdf-'));
     t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
     const report=buildReports([main('A'),tf('A','M00','01/10/2026')],now)[0];
@@ -46,7 +46,7 @@ test('PDF real tem introdução, suporta relatório vazio e pagina em oito cards
     await renderer({...report,generatedAt:now.toISOString(),items:Array.from({length:9},(_,i)=>({...report.items[0],codigo:`A${i}`}))},file);
     const pdf=fs.readFileSync(file).toString('latin1');
     assert.ok(pdf.startsWith('%PDF-'));
-    assert.equal((pdf.match(/\/Type \/Page\b/g)||[]).length,2);
+    assert.equal((pdf.match(/\/Type \/Page\b/g)||[]).length,3);
     await renderer({...report,generatedAt:now.toISOString(),items:[]},file);
     assert.equal((fs.readFileSync(file).toString('latin1').match(/\/Type \/Page\b/g)||[]).length,1);
 });
@@ -150,20 +150,17 @@ test('novos tipos persistem e são acessíveis por ID; falha de qualquer fonte p
     assert.equal(store.list().length,8);
 });
 
-test('malotes reservam metade superior para 88 e inferior para 83, continuando quatro por setor',()=>{
+test('malotes preservam fotos proporcionais e separam setores sem cortar cards',()=>{
     const item=(sector,i)=>({sector,codigo:`${sector}-${i}`});
     const report={type:'malotes',items:[...Array.from({length:9},(_,i)=>item('88',i)),...Array.from({length:5},(_,i)=>item('83',i))]};
-    const groups=groupReportItems(report);
-    assert.deepEqual(groups.map(g=>g.key),['88','83']);
     const pages=planReportPages(report);
-    assert.equal(pages.length,3);
-    assert.deepEqual(pages.map(p=>p.cards.length),[8,5,1]);
+    assert.equal(pages.flatMap(p=>p.cards).length,14);
     for(const page of pages) {
-        const split=595.28/2;
-        assert.equal(page.headings[1].y,split+8);
-        assert.ok(page.cards.filter(c=>c.item.sector==='88').every(c=>c.y+c.height<=split));
-        assert.ok(page.cards.filter(c=>c.item.sector==='83').every(c=>c.y>=split+22));
-        assert.ok(page.cards.every(c=>c.y+c.height<=595.28-24));
+        assert.equal(new Set(page.cards.map(c=>c.item.sector)).size,1);
+        for(const c of page.cards) {
+            assert.ok(c.y+c.height<=595.28-24);
+            assert.ok(c.height >= (c.width-6)*210/297+100);
+        }
     }
     assert.equal(planReportPages({type:'malotes',items:[]})[0].emptyTexts.length,2);
 });

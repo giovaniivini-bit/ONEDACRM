@@ -6523,3 +6523,31 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
  body.print-prog-feira .prog-feira-images-only .prog-feira-card:has(.prog-feira-sector-ribbons) .prog-feira-media { height:17mm !important; }
  body.print-prog-feira .prog-feira-images-only .prog-feira-time-grid [data-prog-duration="ting"] strong { font-size:10px !important; }
 }
+
+/* Impressão: fichas de produto proporcionais à largura, sem miniaturas achatadas. */
+@media print {
+ body.print-prog-feira .prog-feira-view .prog-feira-print-page { min-height:0 !important; max-height:none !important; overflow:visible !important; break-inside:auto !important; page-break-inside:auto !important; }
+ body.print-prog-feira .prog-feira-view .prog-feira-grid { grid-template-rows:none !important; grid-auto-rows:auto !important; align-items:start !important; }
+ body.print-prog-feira .prog-feira-view .prog-feira-card { height:auto !important; min-height:0 !important; overflow:visible !important; }
+ body.print-prog-feira .prog-feira-view .prog-feira-card .prog-feira-media,
+ body.print-prog-feira .prog-feira-images-only .prog-feira-card:has(.prog-feira-sector-ribbons) .prog-feira-media,
+ body.print-gallery-report .s13-photo-wrapper,
+ body.print-gallery-report :is(#setor13TableSection,#setor01GallerySection) .s13-photo-wrapper,
+ body.print-raio-x #raioXPrintReport .s13-photo-wrapper,
+ body.print-cq .cq-hierarchy-container .cq-product-media {
+  display:block !important; position:relative !important; width:100% !important; height:auto !important;
+  min-height:0 !important; max-height:none !important; flex:none !important; aspect-ratio:297/210 !important;
+ }
+ body.print-prog-feira .prog-feira-view .prog-feira-image,
+ body.print-gallery-report .s13-photo-wrapper .s13-photo-img,
+ body.print-gallery-report :is(#setor13TableSection,#setor01GallerySection) .s13-photo-img,
+ body.print-raio-x #raioXPrintReport .s13-photo-img,
+ body.print-cq .cq-hierarchy-container .cq-product-image {
+  position:absolute !important; inset:0 !important; display:block !important; width:100% !important; height:100% !important;
+  min-height:0 !important; max-height:none !important; padding:0 !important; object-fit:contain !important;
+ }
+ body.print-gallery-report .s13-photo-card,
+ body.print-cq .cq-hierarchy-container .s13-photo-card { height:auto !important; min-height:0 !important; max-height:none !important; }
+ body.print-alertas .alert-item-image { height:auto !important; aspect-ratio:297/210; align-self:start; }
+ .mpo-card img { width:100% !important; height:auto !important; object-fit:contain !important; }
+}

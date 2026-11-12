@@ -3,25 +3,8 @@ const PDFDocument = require('pdfkit');
 const { groupReportItems,formatForecastLine,getReportCardItems,formatProductSummary,getReportCardHeight } = require('./automatic-report-groups');
 
 function planReportPages(report) {
-    const width=841.89, height=595.28, bottom=height-24, gap=8, cardHeight=214;
+    const width=841.89, height=595.28, bottom=height-24, gap=8, cardHeight=getReportCardHeight({});
     const cardWidth=(width-48-gap*3)/4;
-    if (report.type === 'malotes') {
-        const groups=groupReportItems(report);
-        const count=Math.max(1,...groups.map(group=>Math.ceil(group.items.length/4)));
-        return Array.from({length:count},(_,number)=>{
-            const top=number===0?77:58, split=height/2;
-            const halfCardHeight=Math.min(cardHeight,split-top-22-8);
-            const page={cards:[],headings:[],emptyTexts:[]};
-            groups.forEach((group,index)=>{
-                const y=index===0?top:split+8;
-                page.headings.push({title:`${group.title} (${group.items.length} produtos)${number?' - continuação':''}`,y});
-                const items=group.items.slice(number*4,number*4+4);
-                if(!items.length)page.emptyTexts.push({text:'Sem malotes deste setor nesta folha.',y:y+30});
-                items.forEach((item,column)=>page.cards.push({item,x:24+column*(cardWidth+gap),y:y+22,width:cardWidth,height:halfCardHeight}));
-            });
-            return page;
-        });
-    }
     const pages=[];
     let page, y;
     const nextPage=()=>{page={cards:[],headings:[]};pages.push(page);y=pages.length===1?93:58;};
@@ -30,12 +13,12 @@ function planReportPages(report) {
         if(title) {page.headings.push({title,y});y+=22;}
     };
     groupReportItems(report).forEach((group,index)=>{
-        if(index && report.sections && report.items.length) {
+        if(index && (report.sections || report.type==='malotes') && report.items.length) {
             // Each theme starts at the top of its own sheet.
             nextPage();
         }
         if (!group.items.length) {
-            if(report.sections) {
+            if(report.sections || report.type==='malotes') {
                 if(y+50>bottom)nextPage();
                 heading(group.title);
                 (page.emptyTexts ||= []).push({text:'Nenhuma pendência neste subtema.',y});
@@ -112,10 +95,10 @@ function createPdfRenderer(resolveImage) {
                 const hasForecasts=Boolean(report.stylist&&item.forecasts?.length);
                 const reasonHeight=report.type==='cores'?40:22;
                 const extraHeight=report.stylist?28:0;
-                const imgH=item.consolidated?110:ch-54-reasonHeight-extraHeight;
+                const imgH=(cw-6)*210/297+4;
                 doc.roundedRect(x,y,cw,ch,5).fillAndStroke('#ffffff','#cbd5e1');
                 if(images[i]) {
-                    try { doc.image(images[i],x+3,y+3,{fit:[cw-6,imgH-(hasForecasts?4:0)],align:'center',valign:'center'}); }
+                    try { doc.image(images[i],x+3,y+3,{fit:[cw-6,imgH-4],align:'center',valign:'center'}); }
                     catch (_) { line('Imagem indisponível',x+5,y+imgH/2,cw-10,9,'#64748b'); }
                 } else line(item.continuation?'Detalhes — continuação':'Imagem indisponível',x+5,y+imgH/2,cw-10,9,'#64748b');
                 const b=y+imgH+(hasForecasts?1:5);

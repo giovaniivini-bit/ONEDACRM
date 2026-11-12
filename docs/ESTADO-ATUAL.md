@@ -1,5 +1,21 @@
 # Estado atual — Oneda CRM
 
+## Impressão — imagens proporcionais à largura dos cards (12/11/2026)
+
+Prog Feira completo/compacto, galerias Setor13/01/processo/estampa/malotes, CQ e
+RaioX usam moldura297/210 na largura do card, contain sem corte/padding. Retirados
+limites fixos de altura e linhas compactas42mm; cards/páginas crescem pelo conteúdo.
+Compacto mantém4 colunas, mas não promete16 fichas por folha física. Código/OF/data/
+tarjas preservados. Alertas usam proporção na miniatura lateral; MPO foto natural
+na largura; Rotativos já proporcional. Sem alterar tamanho das fotos na tela.
+PDF automático: foto proporcional à largura, cards248pt + extras, paginação ajustada;
+malotes separa setores por página, abandonando metades incompatíveis com foto maior.
+PDFs antigos preservados; regra vale para novas gerações.241 testes passam e revisão
+independente aprovada. Edge confirmou proporção em8 galerias com dados reais, sem
+errosJS; PDF compacto e PDF automático com foto real renderizados/inspecionados.
+Publicação pendente.
+
+
 ## Prog Feira — identificação e data no modo compacto (12/11/2026)
 
 Linha abaixo da foto: código à esquerda e OF à direita, fonte14px. Quadro direito
