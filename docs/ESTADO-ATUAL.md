@@ -6,7 +6,9 @@ Oculta somente pendência genérica X01 nos cards, em tela e impressão.
 Informações AVIAMENTO da planilha, filtros e dados operacionais preservados.
 241 testes passaram; Edge real:188 cards sem indicadores X01/D01, linhas de
 aviamentos preservadas (até6 por produto), temas/celular/PDF sem errosJS.
-Publicação em andamento.
+Publicado GitHub/VPS commita6842d2;241 testes também passaram na VPS, saúde OK
+e1.080 arquivos operacionais preservados por hash. Backup:
+/home/ubuntu/backups/oneda-crm-prog-feira-hide-x01-20261112-a6842d2.
 
 
 ## Prog Feira — fotos maiores na impressão (12/11/2026)
