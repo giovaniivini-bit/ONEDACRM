@@ -6288,7 +6288,7 @@ body.light-mode .rx-sheet-details { background:#f8fafc; border-color:#cbd5e1; }
 #raioXGallery .s13-btn-action { flex:0 0 34px; height:34px; min-height:34px; max-height:34px; }
 
 /* Prog Feira: alternância de consulta visual, preservando os filtros. */
-.prog-feira-images-only .prog-feira-card > :not(.prog-feira-media):not(.prog-feira-card-body),
+.prog-feira-images-only .prog-feira-card > :not(.prog-feira-media):not(.prog-feira-card-body):not(.prog-feira-sector-ribbons),
 .prog-feira-images-only .prog-feira-card-body > :not(.prog-feira-time-grid) { display:none !important; }
 .prog-feira-images-only [data-prog-images-only] { border-color:#38bdf8; background:rgba(14,165,233,.12); }
 
@@ -6505,3 +6505,9 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
 @keyframes progRibbonBlink { 0%,100% { background:#ea580c; } 50% { background:#9a3412; } }
 @media (prefers-reduced-motion:reduce),print { .prog-feira-sector-ribbon { animation:none !important; } }
 @media print { body.print-prog-feira .prog-feira-sector-ribbon { min-height:5mm; padding:1mm; font-size:7px; } }
+
+/* Reserva espaço para as tarjas sem alterar as 16 fichas da impressão compacta. */
+@media print {
+ body.print-prog-feira .prog-feira-images-only .prog-feira-card:has(.prog-feira-sector-ribbons) .prog-feira-media { height:22mm !important; }
+ body.print-prog-feira .prog-feira-images-only .prog-feira-sector-ribbon { height:5mm; min-height:5mm; box-sizing:border-box; padding:.5mm; font-size:6px; line-height:1.1; }
+}

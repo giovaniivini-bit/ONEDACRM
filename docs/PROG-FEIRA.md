@@ -141,3 +141,6 @@ Histórico do fluxo removido dos cards; tarjas no rodapé substituem o destaque
 superior DES: DES azul, M02 vermelha, M00 laranja piscante. DES e tingimento
 coexistem lado a lado. D43 volta ao estilo tradicional sem animação. Impressão
 e movimento reduzido mantêm tarjas estáticas; modo compacto não as exibe.
+
+Atualização12/11/2026: modo Apenas imagens e dias também exibe tarjas no rodapé;
+PDF compacto mantém16 fichas/folha reservando espaço para evitar corte das tarjas.

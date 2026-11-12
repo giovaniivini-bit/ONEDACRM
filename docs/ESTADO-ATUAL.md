@@ -1,5 +1,14 @@
 # Estado atual — Oneda CRM
 
+## Prog Feira — tarjas no modo apenas imagens e dias (12/11/2026)
+
+Tarjas DES/M02/M00 também visíveis no modo compacto, abaixo dos dias.
+Impressão mantém16 fichas/folha e reserva5mm para tarjas, reduzindo a foto
+somente nos cards com tarjas. Edge:188 cards,142 tarjas; temas/celular/impressão
+verificados, todas as tarjas dentro dos limites dos cards, sem errosJS.
+Publicação em andamento.
+
+
 ## Prog Feira — tarjas de setores e remoção do histórico (12/11/2026)
 
 Histórico do fluxo removido dos cards. Tarjas no rodapé: DES azul, M02 vermelha,
