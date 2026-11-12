@@ -13,7 +13,10 @@ malotes separa setores por página, abandonando metades incompatíveis com foto 
 PDFs antigos preservados; regra vale para novas gerações.241 testes passam e revisão
 independente aprovada. Edge confirmou proporção em8 galerias com dados reais, sem
 errosJS; PDF compacto e PDF automático com foto real renderizados/inspecionados.
-Publicação pendente.
+Publicado GitHub/VPS commitb9bba81;241 testes passaram na VPS, saúde OK
+e1.081 arquivos operacionais preservados por hash. Edge público repetiu as8
+galerias, todas proporcionais sem errosJS. Backup:
+/home/ubuntu/backups/oneda-crm-print-proportional-20261112-b9bba81.
 
 
 ## Prog Feira — identificação e data no modo compacto (12/11/2026)
