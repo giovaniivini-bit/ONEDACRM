@@ -10,7 +10,10 @@ ou fotos falharem e evita clique duplicado. Ausências reais mantêm placeholder
 aprovada. Edge com fontes locais e APIs reais:187 fotos prontas, largura253px
 igual ao card e altura178px; PDF gerado e inspecionado.9 códigos sem mapeamento
 confirmados sem arquivo exato na VPS; não usa imagem de outro sufixo.
-Publicação pendente de verificação.
+Publicado GitHub/VPS commit3759679;241 testes passaram na VPS, saúde OK e1.080
+arquivos operacionais preservados por hash. Edge público confirmou187 fotos prontas
+e largura254px igual ao card (altura179px). Backup:
+/home/ubuntu/backups/oneda-crm-prog-feira-print-images-20261112-3759679.
 
 
 ## Prog Feira — filtros com/sem previsão de aviamentos (12/11/2026)
