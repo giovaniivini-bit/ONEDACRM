@@ -15,6 +15,10 @@ modo Apenas imagens e dias continua sem detalhes/16porfolha. Assets atualizados.
 235 testes passaram, revisão independente aprovada. Edge com196cards reais,
 produto05.16.00.0171 com6aviamentos, temas/celular sem erros; PDF do grupo manteve
 30linhas e todos os quatro campos em duas folhas, conferido por extração/render.
+Publicado no GitHub/VPS no commit5afe44d;235 testes passaram na VPS, saúde OK,
+1.059 arquivos operacionais preservados por hash. Edge público confirmou29cards
+com aviamentos, até6linhas porproduto, pendênciaD01 removida do card e sem errosJS.
+Backup: /home/ubuntu/backups/oneda-crm-prog-feira-trims-20261112-5afe44d.
 Arquivos: prog-feira.js,app.js,style.css,index.html,test/prog-feira.test.js.
 
 ## Rotativos — segunda galeria: pendentes no setor43 (11/11/2026)
