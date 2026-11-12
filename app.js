@@ -63,6 +63,7 @@
         corteSelectedWeek: '',
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
+        progFeiraTrimForecast: 'all',
         progFeiraSectors: [],
         progFeiraStylist: 'all',
         progFeiraDeliveries: [],
@@ -10584,6 +10585,9 @@
         };
 
         const allProducts = api.buildProducts(source.records || []);
+        const trimForecastAvailable=Array.isArray(state.aviamentosExternalData?.records);
+        const forecastProducts=api.filterByTrimForecast(allProducts,trimForecastAvailable?trimPendingIndex:null,state.progFeiraTrimForecast);
+        const trimForecastSummary=state.progFeiraTrimForecast==='with'?'Aviamentos: com previsão':state.progFeiraTrimForecast==='without'?'Aviamentos: sem previsão':'';
         const search = String(state.filters.search || '').trim().toLowerCase();
         const headerSearchText = document.getElementById('headerSearchInput')?.value;
         const searchText = typeof headerSearchText === 'string' && headerSearchText.toLowerCase().trim() === search ? headerSearchText : (state.filters.search || '');
@@ -10596,8 +10600,8 @@
         const programUnavailable = source.programColumnAvailable === false;
         const parallelFilters = { color:state.progFeiraColor, ting:state.progFeiraTing, cost:state.progFeiraCost };
         const parallelSummary = Object.entries(parallelFilters).filter(([,value]) => value !== 'all').map(([kind,value]) => `${api.PARALLEL_FILTERS[kind].label}: ${value === 'unknown' ? 'Sem informação' : value}`).join(' • ');
-        const renderParallelFilter = kind => `<label class="prog-feira-parallel-filter"><span>${escapeHtml(api.PARALLEL_FILTERS[kind].label)}</span><select data-prog-parallel-filter="${kind}" aria-label="${escapeHtml(api.PARALLEL_FILTERS[kind].label)}" onchange="window.crmFilterProgFeiraParallel('${kind}',this.value)"><option value="all">Todos</option>${api.getParallelFilterOptions(allProducts,kind,parallelFilters[kind]).map(option => `<option value="${escapeHtml(option.value)}" ${parallelFilters[kind] === option.value ? 'selected' : ''}>${escapeHtml(option.value)} — ${escapeHtml(option.label)} (${option.count})</option>`).join('')}<option value="unknown" ${parallelFilters[kind] === 'unknown' ? 'selected' : ''}>Sem informação</option></select></label>`;
-        const labelBaseProducts = window.CRMProductStylist.filter(api.filterByParallelSectors(allProducts, parallelFilters), state.progFeiraStylist).filter(item => {
+        const renderParallelFilter = kind => `<label class="prog-feira-parallel-filter"><span>${escapeHtml(api.PARALLEL_FILTERS[kind].label)}</span><select data-prog-parallel-filter="${kind}" aria-label="${escapeHtml(api.PARALLEL_FILTERS[kind].label)}" onchange="window.crmFilterProgFeiraParallel('${kind}',this.value)"><option value="all">Todos</option>${api.getParallelFilterOptions(forecastProducts,kind,parallelFilters[kind]).map(option => `<option value="${escapeHtml(option.value)}" ${parallelFilters[kind] === option.value ? 'selected' : ''}>${escapeHtml(option.value)} — ${escapeHtml(option.label)} (${option.count})</option>`).join('')}<option value="unknown" ${parallelFilters[kind] === 'unknown' ? 'selected' : ''}>Sem informação</option></select></label>`;
+        const labelBaseProducts = window.CRMProductStylist.filter(api.filterByParallelSectors(forecastProducts, parallelFilters), state.progFeiraStylist).filter(item => {
             if (!search) return true;
             return [item.codigo, item.numero, item.sector, item.sectorLabel, item.program, item.customerProgram, item.prints, item.notes, ...api.labelValues(item), ...(item.parallelPending || []).map(p => [p.label,p.sector,p.description].join(' '))]
                 .some(value => String(value || '').toLowerCase().includes(search));
@@ -10673,7 +10677,7 @@
             }
             return pages.map((items, pageIndex) => `
                 <section class="prog-feira-sector prog-feira-print-page" data-sector="${escapeHtml(group.sector)}">
-                    <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}${pageIndex ? ' • continuação' : ''}</span><small class="prog-feira-print-filter-summary">Programação: ${selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO')).join(' + ') : 'Todas'}${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}</small></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
+                    <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}${pageIndex ? ' • continuação' : ''}</span><small class="prog-feira-print-filter-summary">Programação: ${selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO')).join(' + ') : 'Todas'}${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}${trimForecastSummary?' • '+escapeHtml(trimForecastSummary):''}${trimForecastSummary&&!trimForecastAvailable?' (filtro suspenso: fonte indisponível)':''}</small></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
                     <div class="prog-feira-grid">${items.map(renderProductCard).join('')}</div>
                 </section>
             `).join('');
@@ -10720,7 +10724,7 @@
                     <div class="prog-feira-sector-selection" role="status"><strong>Setores:</strong><span>${selectedSectors.length ? selectedSectors.map(escapeHtml).join(', ') : 'Todos'}</span>${selectedSectors.length ? '<button type="button" onclick="window.crmFilterProgFeiraSector(\'all\')">Mostrar todos</button>' : ''}</div>
                     <label class="prog-feira-parallel-filter"><span>Estilista responsável</span><select data-prog-stylist aria-label="Estilista responsável" onchange="window.crmFilterProgFeiraStylist(this.value)">${[['all','Todos'],...window.CRMProductStylist.OPTIONS].map(([value,label])=>`<option value="${value}" ${state.progFeiraStylist===value?'selected':''}>${label}</option>`).join('')}</select></label>
                     ${['color','ting','cost'].map(renderParallelFilter).join('')}
-                    ${(selectedDeliveries.length || state.progFeiraStylist !== 'all' || selectedSectors.length || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
+                    ${(state.progFeiraTrimForecast!=='all' || selectedDeliveries.length || state.progFeiraStylist !== 'all' || selectedSectors.length || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
                 </div>
 
                 <fieldset class="prog-feira-label-filter prog-feira-program-filter">
@@ -10745,7 +10749,7 @@
                     <div class="prog-feira-label-group-grid">${api.getLabelGroups(products).map(group => `<article class="prog-feira-label-group" data-label-group="${escapeHtml(group.prefix)}" title="${escapeHtml(group.labels.join(', ') || 'Produtos sem etiqueta')}"><span>${escapeHtml(group.prefix || 'Sem etiqueta')}</span><strong>${formatNumber(group.count)}</strong><small>${group.count === 1 ? 'produto' : 'produtos'} · <b>${(products.length ? group.count * 100 / products.length : 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</b> do total</small></article>`).join('') || '<p>Nenhum produto nos filtros atuais.</p>'}</div>
                     <small>Contagem por prefixo de duas posições. Percentuais sobre o total filtrado. Cada produto conta uma vez por grupo; grupos podem se sobrepor.</small>
                 </section>`}
-                <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}</p>
+                <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}${trimForecastSummary?' • '+escapeHtml(trimForecastSummary):''}${trimForecastSummary&&!trimForecastAvailable?' (filtro suspenso: fonte de aviamentos indisponível)':''}</p>
 
                 <div class="prog-feira-legend">
                     <strong>Cor da borda:</strong>${Object.entries(api.TINGIMENTO).map(([code, info]) => `<span><i style="background:${info.color}"></i>${code} — ${escapeHtml(info.label)}</span>`).join('')}
@@ -10753,6 +10757,8 @@
                 </div>
 
                 <div class="prog-feira-gallery-actions">
+                    <button type="button" class="exec-action-btn" data-prog-trim-forecast="with" aria-pressed="${state.progFeiraTrimForecast==='with'}" ${trimForecastAvailable?'':'disabled'} onclick="window.crmFilterProgFeiraTrimForecast('with')">Ver produtos com previsão de aviamentos</button>
+                    <button type="button" class="exec-action-btn" data-prog-trim-forecast="without" aria-pressed="${state.progFeiraTrimForecast==='without'}" ${trimForecastAvailable?'':'disabled'} onclick="window.crmFilterProgFeiraTrimForecast('without')">Produtos sem previsão de aviamentos</button>
                     <button type="button" class="exec-action-btn" data-prog-images-only aria-pressed="${state.progFeiraImagesOnly}" onclick="window.crmToggleProgFeiraImagesOnly()"><i class="fa-solid fa-images"></i> Apenas imagens e dias</button>
                 </div>
 
@@ -12868,6 +12874,12 @@
         }, 180);
     };
 
+    window.crmFilterProgFeiraTrimForecast = selection => {
+        if(!Array.isArray(state.aviamentosExternalData?.records))return;
+        state.progFeiraTrimForecast=state.progFeiraTrimForecast===selection || !['with','without'].includes(selection)?'all':selection;
+        renderActiveView();
+    };
+
     window.crmToggleProgFeiraImagesOnly = () => {
         state.progFeiraImagesOnly = !state.progFeiraImagesOnly;
         renderActiveView();
@@ -12938,6 +12950,7 @@
         state.progFeiraCost = 'all';
         state.progFeiraPrograms = [];
         state.progFeiraLabels = [];
+        state.progFeiraTrimForecast = 'all';
         applyFiltersAndRender();
     };
 

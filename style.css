@@ -6511,3 +6511,8 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
  body.print-prog-feira .prog-feira-trim-lines { margin-top:1mm; padding-left:1mm; gap:1mm; }
  body.print-prog-feira .prog-feira-trim-item { font-size:8px; line-height:1.25; }
 }
+
+.prog-feira-gallery-actions { flex-wrap:wrap; gap:8px; }
+.prog-feira-gallery-actions .exec-action-btn { white-space:normal; color:var(--text-primary); background:var(--bg-surface); border-color:var(--border-base); }
+.prog-feira-gallery-actions .exec-action-btn[aria-pressed="true"] { color:#fff; background:#0369a1; border-color:#38bdf8; }
+.prog-feira-gallery-actions .exec-action-btn:disabled { opacity:.5; cursor:wait; }

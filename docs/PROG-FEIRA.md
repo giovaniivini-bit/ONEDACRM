@@ -114,3 +114,12 @@ DATA APROVADO vazio/traço define pendência como na tabela; recebido não encer
 aprovação. Preservar todas as linhas sem truncar e sem inventar campos ausentes.
 Pendente COR D01 deixa de aparecer no card, mantendo filtros e cálculos de cor.
 Impressão completa se adapta ao conteúdo; modo Apenas imagens e dias inalterado.
+
+## Filtros de previsão de aviamentos — 12/11/2026
+
+Ver produtos com previsão de aviamentos e Produtos sem previsão de aviamentos são
+alternativas, ao lado de Apenas imagens e dias. Com verifica qualquer linha do
+índice pendente com previsão preenchida; Sem é seu complemento. Fonte desconhecida
+suspende o filtro. Clicar de novo na opção ativa ou Limpar retorna todos. Busca,
+etiquetas, programação, entrega, setores e estilista continuam combináveis. Resumo
+impresso identifica o recorte. Não altera dados ou previsões na planilha.

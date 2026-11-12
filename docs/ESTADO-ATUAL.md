@@ -1,5 +1,23 @@
 # Estado atual — Oneda CRM
 
+## Prog Feira — filtros com/sem previsão de aviamentos (12/11/2026)
+
+Duas opções lado a lado antes das imagens: Ver produtos com previsão de aviamentos
+e Produtos sem previsão de aviamentos. Modo exclusivo all/with/without; clicar na
+opção ativa ou Limpar restaura Todos. Usam o mesmo índice de pendências do card,
+código completo e qualquer linha com PREVISÃO preenchida. Vazio, traço, erro de
+planilha e marcadores Não informada/Sem previsão não qualificam; textos de previsão
+preenchidos continuam válidos, sem exigir nova interpretação de data.
+Sem previsão inclui tanto produto sem aviamento na planilha quanto todas as linhas
+pendentes sem previsão. Combina com filtros existentes, afeta cards/KPIs/gráfico/
+facetas/etiquetas e identifica o recorte no resumo da tela e cabeçalho do PDF.
+Fonte desconhecida suspende o recorte e desabilita botões; fonte vazia válida pode
+retornar nenhum em Com e todos em Sem. Modo de imagens preservado.
+237 testes passaram e revisão independente aprovada. Edge real:196 produtos,
+29com/167sem, grupos complementares sem sobreposição; toggle, alternância exclusiva,
+Limpar, combinação com busca, temas/celular sem overflow/erros. PDF identifica recorte.
+Arquivos: prog-feira.js,app.js,style.css,index.html,test/prog-feira.test.js.
+
 ## Prog Feira — aviamentos da planilha no card (12/11/2026)
 
 Cards cruzam código completo com a planilha Aviamentos Pendentes, sem exigir X01

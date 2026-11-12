@@ -310,3 +310,22 @@ test('aviamentos aceitam cabeçalhos sem acento e não inventam valores ausentes
  const index=buildTrimPendingIndex([{produto:'01.A',fornecedor:'<img>',descricao:'Texto',solicitado:'',previsao:'',data_aprovado:'-'},{PRODUTO:' '}]);
  assert.equal(index.size,1);assert.deepEqual(index.get('01.A'),[{supplier:'<img>',description:'Texto',requested:'',forecast:''}]);
 });
+
+
+test('filtros com/sem previsão são complementares por código completo e consideram qualquer linha pendente',()=>{
+ const {buildTrimPendingIndex,filterByTrimForecast}=require('../prog-feira');
+ const products=['01.A','01.AX','02.B','03.C','04.D'].map(codigo=>({codigo}));
+ const index=buildTrimPendingIndex([{PRODUTO:'01.A',PREVISÃO:''},{PRODUTO:'01.A',PREVISÃO:'18/11/2026'},
+ {PRODUTO:'01.AX',PREVISÃO:'—'},{PRODUTO:'02.B',PREVISÃO:'20/11/2026','DATA APROVADO':'10/11/2026'},
+ {PRODUTO:'03.C',PREVISÃO:'',SOLICITADO:'20/11/2026'},{PRODUTO:'04.D',PREVISÃO:'#REF!'}]);
+ const withForecast=filterByTrimForecast(products,index,'with'),without=filterByTrimForecast(products,index,'without');
+ assert.deepEqual(withForecast.map(p=>p.codigo),['01.A']);
+ assert.deepEqual(without.map(p=>p.codigo),['01.AX','02.B','03.C','04.D']);
+ assert.equal(withForecast.length+without.length,products.length);assert.equal(filterByTrimForecast(products,index,'all'),products);
+ assert.equal(filterByTrimForecast(products,null,'without'),products,'fonte desconhecida suspende o recorte');
+});
+test('previsões textuais preenchidas são preservadas; marcadores de ausência não qualificam',()=>{
+ const {buildTrimPendingIndex,filterByTrimForecast}=require('../prog-feira');
+ const index=buildTrimPendingIndex([{PRODUTO:'A',PREVISÃO:'segunda-feira'},{PRODUTO:'B',PREVISÃO:'Não informada'},{PRODUTO:'C',PREVISÃO:'SEM PREVISÃO'}]);
+ assert.deepEqual(filterByTrimForecast(['A','B','C'].map(codigo=>({codigo})),index,'with').map(p=>p.codigo),['A']);
+});

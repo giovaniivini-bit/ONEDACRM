@@ -130,6 +130,20 @@
         return index;
     }
 
+    function filterByTrimForecast(products,index,selection='all') {
+        if(!['with','without'].includes(selection) || !(index instanceof Map))return products;
+        const filled=value=>{
+            const text=String(value ?? '').trim();
+            const normalized=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+            return Boolean(text&&!/^[-—–]+$/.test(text)&&!text.startsWith('#')&&!/^(?:NAO INFORMAD[OA]|SEM PREVISAO)$/.test(normalized));
+        };
+        return products.filter(product=>{
+            const rows=index.get(String(product.codigo || '').trim().toUpperCase()) || [];
+            const hasForecast=rows.some(row=>filled(row.forecast));
+            return selection==='with'?hasForecast:!hasForecast;
+        });
+    }
+
     function normalizeSourceRecords(records) {
         return (Array.isArray(records) ? records : []).map(record => {
             // Only the raw ERP export has Parte/Fluxo without the canonical TIPO.
@@ -421,5 +435,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { buildTrimPendingIndex,deliveryKey,deliveryLabel,getDeliveryOptions,filterByDeliveries,getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeSectorSelection, toggleSectorSelection, filterBySectors, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { filterByTrimForecast,buildTrimPendingIndex,deliveryKey,deliveryLabel,getDeliveryOptions,filterByDeliveries,getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeSectorSelection, toggleSectorSelection, filterBySectors, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

@@ -299,3 +299,11 @@ Recebido/envio ao cliente não são aprovação. Remover apenas Pendente COR D01
 sem mudar filtros/domínio. PDF completo pode crescer para não cortar múltiplos
 aviamentos; modo Apenas imagens e dias permanece compacto. Fonte compartilhada já
 participa das sincronizações existentes, sem modificar dados das planilhas.
+
+## Prog Feira — com e sem previsão de aviamentos (12/11/2026)
+
+Filtros complementares exclusivos pelo mesmo índice do card: Com exige pelo menos
+uma previsão preenchida em linha ainda pendente de aprovação; Sem é o contrário,
+incluindo produto sem linha de aviamento. Clicar novamente ou Limpar restaura todos.
+Aplicar antes dos demais recortes para manter contagens/gráfico/cartões alinhados;
+registrar no cabeçalho impresso. Fonte desconhecida não significa sem previsão.
