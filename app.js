@@ -10639,18 +10639,8 @@
             return `<img class="prog-feira-image js-prog-feira-image" src="${escapeHtml(info.thumbUrl)}" alt="Produto ${title}" loading="lazy" decoding="async" data-fallback-src="${escapeHtml(info.proxyUrl || '')}" data-large-url="${escapeHtml(info.largeUrl || info.thumbUrl)}" data-image-title="${title}" data-image-subtitle="${subtitle}" data-large-fallback="${escapeHtml(info.largeFallbackUrl || '')}">`;
         };
 
-        const renderHistory = item => {
-            if (!item.history.length) return '<span class="prog-feira-history-empty">Histórico ainda não informado</span>';
-            return item.history.map(step => `
-                <span class="prog-feira-history-step ${step.pending ? 'current' : 'done'}" title="${escapeHtml(step.label || step.sector)}">
-                    <strong>${escapeHtml(step.sector)}</strong><small>${escapeHtml(step.date || '—')}</small>
-                </span>
-            `).join('');
-        };
-
         const renderProductCard = item => `
             <article class="prog-feira-card ${item.sourceFormat === 'parallel' ? 'prog-feira-parallel' : ''}" style="--ting-color:${item.tingInfo.color}">
-                ${item.isDes ? '<div class="prog-feira-des-ribbon"><i class="fa-solid fa-calculator"></i> DES • CUSTO PENDENTE</div>' : ''}
                 <div class="prog-feira-card-top"><span>${escapeHtml(item.codigo)}</span><span>OP ${escapeHtml(item.numero || '—')}</span></div>
                 <div class="prog-feira-media">${renderImage(item)}<div class="prog-feira-delivery"><small>ENTREGA</small><strong>${escapeHtml(item.delivery || '—')}</strong></div></div>
                 <div class="prog-feira-card-body">
@@ -10664,8 +10654,12 @@
                     <dl><div><dt>Movimentação</dt><dd>${escapeHtml(item.movementDate || '—')}</dd></div><div><dt>Estampas</dt><dd>${escapeHtml(item.prints || '—')}</dd></div><div><dt>Observação</dt><dd>${escapeHtml(item.notes || '—')}</dd></div><div><dt>Quantidade pendente</dt><dd>${formatNumber(item.quantity)}</dd></div></dl>
                     ${visibleParallelPending(item).length ? `<div class="prog-feira-parallel-pending" aria-label="Pendências dos fluxos complementares">${visibleParallelPending(item).sort((a,b) => ['CO','D6','TF','AV'].indexOf(a.part) - ['CO','D6','TF','AV'].indexOf(b.part)).map(p => `<div class="prog-feira-parallel-item"><span>Pendente ${escapeHtml(({CO:'COR',D6:'CUSTO',TF:'TINT. CASEIRA',AV:'AVIAMENTO'})[p.part])}:</span><strong>${escapeHtml(p.sector)}</strong></div>`).join('')}</div>` : ''}
                     ${renderTrimPending(item)}
-                    <details class="prog-feira-history"><summary><i class="fa-solid fa-timeline"></i> Histórico do fluxo</summary><div>${renderHistory(item)}</div></details>
+
                 </div>
+                ${item.isDes || ['M02','M00'].includes(item.ting) ? `<div class="prog-feira-sector-ribbons" aria-label="Destaques de setores pendentes">
+                    ${item.isDes ? '<div class="prog-feira-sector-ribbon" data-ribbon-sector="DES">DES • CUSTO PENDENTE</div>' : ''}
+                    ${['M02','M00'].includes(item.ting) ? `<div class="prog-feira-sector-ribbon" data-ribbon-sector="${item.ting}">${item.ting} • ${escapeHtml(item.tingInfo.label)}</div>` : ''}
+                </div>` : ''}
             </article>
         `;
 

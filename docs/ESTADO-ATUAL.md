@@ -1,5 +1,15 @@
 # Estado atual — Oneda CRM
 
+## Prog Feira — tarjas de setores e remoção do histórico (12/11/2026)
+
+Histórico do fluxo removido dos cards. Tarjas no rodapé: DES azul, M02 vermelha,
+M00 laranja piscante. DES combina lado a lado com o tingimento; destaque superior
+DES movido ao rodapé. D43 usa estilo tradicional estático. Impressão e movimento
+reduzido desativam animação; modo compacto preservado. Revisão independente aprovada.
+Edge real:188 cards,102 DES,17 M02,23 M00; sem histórico/animaçãoD43, temas claro/
+escuro, celular e tarjas na impressão verificados sem errosJS. Publicação pendente.
+
+
 ## Prog Feira — remover X01 dos cards (12/11/2026)
 
 Oculta somente pendência genérica X01 nos cards, em tela e impressão.

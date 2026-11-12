@@ -5887,7 +5887,6 @@ body.light-mode .data-table tr:hover {
 .prog-feira-sector>header em { color:var(--text-muted); font-size:10px; font-style:normal; font-weight:700; }
 .prog-feira-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; padding:12px; align-items:start; }
 .prog-feira-card { position:relative; min-width:0; overflow:hidden; border:2px solid var(--ting-color,#64748b); border-radius:11px; background:var(--bg-card); box-shadow:0 5px 16px rgba(2,6,23,.15); }
-.prog-feira-des-ribbon { height:26px; display:flex; align-items:center; justify-content:center; gap:6px; background:#2563eb; color:#fff; font-size:10px; font-weight:900; letter-spacing:.035em; }
 .prog-feira-card-top { height:31px; padding:0 9px; display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--text-primary); border-bottom:1px solid var(--border-color); font:800 11px 'Outfit',sans-serif; }
 .prog-feira-card-top span:last-child { color:var(--text-muted); font-size:9px; }
 .prog-feira-media { position:relative; height:220px; display:flex; align-items:center; justify-content:center; overflow:hidden; background:var(--bg-elevated); border-bottom:1px solid var(--border-color); }
@@ -5912,14 +5911,6 @@ body.light-mode .data-table tr:hover {
 .prog-feira-card dl div { min-width:0; }
 .prog-feira-card dt { color:var(--text-muted); font-size:7px; font-weight:800; text-transform:uppercase; }
 .prog-feira-card dd { margin:2px 0 0; color:var(--text-primary); font-size:9px; font-weight:700; overflow-wrap:anywhere; }
-.prog-feira-history { margin-top:9px; border-top:1px solid var(--border-color); padding-top:8px; }
-.prog-feira-history summary { color:#38bdf8; font-size:9px; font-weight:800; cursor:pointer; }
-.prog-feira-history>div { display:flex; gap:5px; overflow-x:auto; padding-top:8px; }
-.prog-feira-history-step { min-width:48px; padding:4px; text-align:center; border:1px solid var(--border-color); border-radius:5px; color:var(--text-muted); background:var(--bg-elevated); }
-.prog-feira-history-step.done { border-color:rgba(16,185,129,.4); }
-.prog-feira-history-step.current { color:#fff; border-color:#38bdf8; background:#0369a1; }
-.prog-feira-history-step strong,.prog-feira-history-step small { display:block; font-size:7px; }
-.prog-feira-history-empty { color:var(--text-muted); font-size:8px; }
 @media (max-width:1400px) { .prog-feira-kpis{grid-template-columns:repeat(3,minmax(0,1fr));} .prog-feira-header{flex-wrap:wrap;} .prog-feira-header-actions{width:100%;justify-content:flex-start;} }
 @media (max-width:1050px) { .prog-feira-kpis{grid-template-columns:repeat(2,1fr);} .prog-feira-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
 @media (max-width:1024px) { .prog-feira-view,.sidebar.collapsed ~ .main-content .prog-feira-view{width:calc(100vw - 48px);} }
@@ -5959,7 +5950,6 @@ body.light-mode .data-table tr:hover {
         align-items:stretch !important;
     }
     body.print-prog-feira .prog-feira-card { height:86mm !important; border-radius:1.5mm !important; box-shadow:none !important; break-inside:avoid !important; }
-    body.print-prog-feira .prog-feira-des-ribbon { height:5mm !important; font-size:7px !important; }
     body.print-prog-feira .prog-feira-card-top { height:5mm !important; padding:0 2mm !important; font-size:8px !important; }
     body.print-prog-feira .prog-feira-media { height:43mm !important; }
     body.print-prog-feira .prog-feira-delivery { top:1.5mm !important; right:1.5mm !important; min-width:12mm !important; padding:1mm !important; }
@@ -5973,7 +5963,6 @@ body.light-mode .data-table tr:hover {
     body.print-prog-feira .prog-feira-card dl { gap:1mm 2mm !important; margin-top:1mm !important; }
     body.print-prog-feira .prog-feira-card dt { font-size:5px !important; }
     body.print-prog-feira .prog-feira-card dd { margin-top:0 !important; font-size:6px !important; line-height:1.15 !important; }
-    body.print-prog-feira .prog-feira-history { display:none !important; }
 }
 :root .mpo-view { padding: 20px; }
 .mpo-view select,.mpo-view button,.mpo-view input { padding: 9px 12px; border: 1px solid #64748b; border-radius: 8px; background: #172033; color: #f1f5f9; margin: 5px; }
@@ -6233,7 +6222,6 @@ body.light-mode .prog-feira-parallel-item strong { color:#991b1b; background:#fe
 .prog-feira-customer-program { margin:0; padding:8px; border-radius:6px; background:rgba(14,165,233,.07); }
 .prog-feira-card dl { margin:0; gap:10px; }
 .prog-feira-parallel-pending { margin:0; }
-.prog-feira-history { margin-top:0; }
 @media print {
  body.print-prog-feira .prog-feira-card-body { display:block !important; }
  body.print-prog-feira .prog-feira-time-grid { gap:1mm !important; margin:1mm 0 !important; }
@@ -6249,21 +6237,6 @@ body.light-mode .prog-feira-parallel-item strong { color:#991b1b; background:#fe
 
 .prog-feira-customer-program { display:flex; flex-wrap:wrap; gap:5px 10px; align-items:baseline; }
 .prog-feira-customer-program > span { min-width:0; overflow-wrap:anywhere; }
-
-/* D43: cores da permanência conforme o setor de tingimento. */
-.prog-feira-time[data-ting-sector="M00"] { --d43-tone:#ef4444; --d43-ink:#fca5a5; --d43-light:#b91c1c; }
-.prog-feira-time[data-ting-sector="M01"] { --d43-tone:#3b82f6; --d43-ink:#93c5fd; --d43-light:#1d4ed8; }
-.prog-feira-time[data-ting-sector="M02"] { --d43-tone:#f97316; --d43-ink:#fdba74; --d43-light:#9a3412; }
-.prog-feira-time[data-ting-sector="M03"] { --d43-tone:#10b981; --d43-ink:#6ee7b7; --d43-light:#166534; }
-.prog-feira-time-grid .prog-feira-time[data-prog-duration="ting"]:is([data-ting-sector="M00"],[data-ting-sector="M01"],[data-ting-sector="M02"],[data-ting-sector="M03"]) {
- color:var(--d43-ink); border-color:var(--d43-tone); background:color-mix(in srgb,var(--d43-tone) 13%,transparent);
-}
-body.light-mode .prog-feira-time-grid .prog-feira-time[data-prog-duration="ting"][data-ting-sector] { --d43-ink:var(--d43-light); }
-.prog-feira-time[data-prog-duration="ting"]:is([data-ting-sector="M00"],[data-ting-sector="M02"]) strong { animation:progD43DaysBlink 1.2s ease-in-out infinite; }
-@keyframes progD43DaysBlink { 0%,100% { opacity:1; } 50% { opacity:.3; } }
-@media (prefers-reduced-motion:reduce),print {
- .prog-feira-time[data-prog-duration="ting"] strong { animation:none !important; opacity:1 !important; }
-}
 
 .prog-feira-label-groups { margin:10px 0 16px; padding:12px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:10px; }
 .prog-feira-label-groups > header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; margin-bottom:10px; font-size:12px; }
@@ -6522,3 +6495,13 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
  body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-card .prog-feira-media { display:block !important; width:100% !important; height:auto !important; aspect-ratio:297/210; flex:none !important; }
  body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-image { position:absolute !important; inset:0; display:block; width:100% !important; height:100% !important; max-width:100%; max-height:100%; object-fit:contain !important; }
 }
+
+/* Destaques no rodapé dos cards, substituindo histórico e animação do D43. */
+.prog-feira-sector-ribbons { display:flex; width:100%; margin-top:auto; }
+.prog-feira-sector-ribbon { flex:1; min-width:0; padding:7px 4px; min-height:26px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:10px; font-weight:800; text-align:center; overflow-wrap:anywhere; }
+.prog-feira-sector-ribbon[data-ribbon-sector="DES"] { background:#2563eb; }
+.prog-feira-sector-ribbon[data-ribbon-sector="M02"] { background:#dc2626; }
+.prog-feira-sector-ribbon[data-ribbon-sector="M00"] { background:#ea580c; animation:progRibbonBlink 1.2s ease-in-out infinite; }
+@keyframes progRibbonBlink { 0%,100% { background:#ea580c; } 50% { background:#9a3412; } }
+@media (prefers-reduced-motion:reduce),print { .prog-feira-sector-ribbon { animation:none !important; } }
+@media print { body.print-prog-feira .prog-feira-sector-ribbon { min-height:5mm; padding:1mm; font-size:7px; } }

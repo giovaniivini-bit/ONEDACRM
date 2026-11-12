@@ -134,3 +134,10 @@ nunca substituir pela imagem de outro sufixo.
 
 Cards omitem também a pendência genérica X01 (12/11/2026), preservando o bloco
 AVIAMENTO da planilha e todos os filtros e dados de domínio.
+
+## Prog Feira — tarjas no rodapé (12/11/2026)
+
+Histórico do fluxo removido dos cards; tarjas no rodapé substituem o destaque
+superior DES: DES azul, M02 vermelha, M00 laranja piscante. DES e tingimento
+coexistem lado a lado. D43 volta ao estilo tradicional sem animação. Impressão
+e movimento reduzido mantêm tarjas estáticas; modo compacto não as exibe.

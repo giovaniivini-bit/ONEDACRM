@@ -318,3 +318,10 @@ nunca substituir pela imagem de outro sufixo.
 
 Prog Feira (12/11/2026): cards omitem indicador genérico X01, preservando
 AVIAMENTO da planilha, filtros e dados de domínio. Vale para tela e impressão.
+
+## Prog Feira — tarjas no rodapé (12/11/2026)
+
+Histórico do fluxo removido dos cards; tarjas no rodapé substituem o destaque
+superior DES: DES azul, M02 vermelha, M00 laranja piscante. DES e tingimento
+coexistem lado a lado. D43 volta ao estilo tradicional sem animação. Impressão
+e movimento reduzido mantêm tarjas estáticas; modo compacto não as exibe.
