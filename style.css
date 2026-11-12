@@ -6500,3 +6500,14 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
 .rotativos-sheet-image figcaption { margin-top:8px; font-size:12px; line-height:1.4; color:var(--text-primary); overflow-wrap:anywhere; }
 .rotativos-sheet-images-empty { grid-column:1/-1; color:var(--text-muted); }
 @media print { .rotativos-sheet-image { break-inside:avoid; } .rotativos-sheet-image-open { display:flex !important; } }
+
+.prog-feira-trim-lines { margin-top:8px; border-left:2px solid #d97706; padding-left:7px; display:grid; gap:6px; }
+.prog-feira-trim-item { color:var(--text-primary); font-size:10px; line-height:1.4; overflow-wrap:anywhere; }
+.prog-feira-trim-item > strong { color:#d97706; }
+@media print {
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page:has(.prog-feira-trim-lines) { min-height:0 !important; max-height:none !important; overflow:visible !important; break-inside:auto !important; page-break-inside:auto !important; }
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page:has(.prog-feira-trim-lines) .prog-feira-grid { grid-template-rows:none !important; grid-auto-rows:minmax(86mm,auto) !important; }
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page:has(.prog-feira-trim-lines) .prog-feira-card { height:auto !important; min-height:86mm !important; overflow:visible !important; }
+ body.print-prog-feira .prog-feira-trim-lines { margin-top:1mm; padding-left:1mm; gap:1mm; }
+ body.print-prog-feira .prog-feira-trim-item { font-size:8px; line-height:1.25; }
+}

@@ -10576,6 +10576,13 @@
             return;
         }
 
+        const trimPendingIndex=api.buildTrimPendingIndex(state.aviamentosExternalData?.records);
+        const visibleParallelPending=item=>(item.parallelPending || []).filter(p=>p.sector!=='D01');
+        const renderTrimPending=item=>{
+            const rows=trimPendingIndex.get(String(item.codigo || '').trim().toUpperCase()) || [];
+            return rows.length?`<div class="prog-feira-trim-lines" aria-label="Aviamentos pendentes na planilha">${rows.map(row=>`<div class="prog-feira-trim-item" title="Fornecedor / Descrição / Solicitado / Previsão"><strong>AVIAMENTO:</strong> ${[row.supplier,row.description,row.requested,row.forecast].map(value=>escapeHtml(value || '—')).join(' / ')}</div>`).join('')}</div>`:'';
+        };
+
         const allProducts = api.buildProducts(source.records || []);
         const search = String(state.filters.search || '').trim().toLowerCase();
         const headerSearchText = document.getElementById('headerSearchInput')?.value;
@@ -10651,7 +10658,8 @@
                     ${item.program ? `<div class="prog-feira-program"><i class="fa-solid fa-layer-group"></i>${escapeHtml(item.program)}</div>` : ''}
                     <div class="prog-feira-customer-program"><span>Programação: ${programUnavailable ? 'indisponível' : escapeHtml(item.customerProgram || 'VAZIO / Sem programação')}</span><span>Etiqueta: <strong class="prog-feira-label-value">${labelUnavailable ? 'Indisponível' : escapeHtml(api.labelValues(item).join(' / ') || 'Sem etiqueta')}</strong></span></div>
                     <dl><div><dt>Movimentação</dt><dd>${escapeHtml(item.movementDate || '—')}</dd></div><div><dt>Estampas</dt><dd>${escapeHtml(item.prints || '—')}</dd></div><div><dt>Observação</dt><dd>${escapeHtml(item.notes || '—')}</dd></div><div><dt>Quantidade pendente</dt><dd>${formatNumber(item.quantity)}</dd></div></dl>
-                    ${item.parallelPending?.length ? `<div class="prog-feira-parallel-pending" aria-label="Pendências dos fluxos complementares">${[...item.parallelPending].sort((a,b) => ['CO','D6','TF','AV'].indexOf(a.part) - ['CO','D6','TF','AV'].indexOf(b.part)).map(p => `<div class="prog-feira-parallel-item"><span>Pendente ${escapeHtml(({CO:'COR',D6:'CUSTO',TF:'TINT. CASEIRA',AV:'AVIAMENTO'})[p.part])}:</span><strong>${escapeHtml(p.sector)}</strong></div>`).join('')}</div>` : ''}
+                    ${visibleParallelPending(item).length ? `<div class="prog-feira-parallel-pending" aria-label="Pendências dos fluxos complementares">${visibleParallelPending(item).sort((a,b) => ['CO','D6','TF','AV'].indexOf(a.part) - ['CO','D6','TF','AV'].indexOf(b.part)).map(p => `<div class="prog-feira-parallel-item"><span>Pendente ${escapeHtml(({CO:'COR',D6:'CUSTO',TF:'TINT. CASEIRA',AV:'AVIAMENTO'})[p.part])}:</span><strong>${escapeHtml(p.sector)}</strong></div>`).join('')}</div>` : ''}
+                    ${renderTrimPending(item)}
                     <details class="prog-feira-history"><summary><i class="fa-solid fa-timeline"></i> Histórico do fluxo</summary><div>${renderHistory(item)}</div></details>
                 </div>
             </article>

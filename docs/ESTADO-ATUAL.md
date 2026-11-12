@@ -1,5 +1,22 @@
 # Estado atual — Oneda CRM
 
+## Prog Feira — aviamentos da planilha no card (12/11/2026)
+
+Cards cruzam código completo com a planilha Aviamentos Pendentes, sem exigir X01
+no ERP. Cada linha ainda sem DATA APROVADO (vazia/traço, critério da tela existente)
+aparece como AVIAMENTO: fornecedor / descrição / SOLICITADO / previsão. A imagem
+do pedido marcou SOLICITADO; esse é o campo usado como data, sem trocar por recebido
+ou envio ao cliente. Todas as linhas e textos preservados, inclusive previsões
+futuras e aviamentos já recebidos ainda aguardando aprovação. Ausência usa —.
+Removida somente a informação Pendente COR D01 dos cards; filtros e domínio D01
+preservados, assim como demais fluxos. Código com sufixo não cruza com base.
+PDF completo permite altura e páginas extras quando há aviamentos para não cortar;
+modo Apenas imagens e dias continua sem detalhes/16porfolha. Assets atualizados.
+235 testes passaram, revisão independente aprovada. Edge com196cards reais,
+produto05.16.00.0171 com6aviamentos, temas/celular sem erros; PDF do grupo manteve
+30linhas e todos os quatro campos em duas folhas, conferido por extração/render.
+Arquivos: prog-feira.js,app.js,style.css,index.html,test/prog-feira.test.js.
+
 ## Rotativos — segunda galeria: pendentes no setor43 (11/11/2026)
 
 Abaixo da galeria da planilha, nova área com fotos e dias pendentes no setor43.
@@ -132,7 +149,7 @@ código com sufixo, fonte vazia/falha/cache, tabela, temas e celular, sem erros 
 PDF com coluna e data individual conferido por extração. Na leitura real, 29
 finalizações vinculadas a 2.097 registros; 2.068 sem data e nenhum conflito.
 Nenhuma escrita feita nas planilhas. Publicado em GitHub e VPS no commit 8c928a7, em 08/11/2026 (America/Sao_Paulo), após autorização explícita do usuário. Os 220 testes passaram também na VPS; hashes confirmaram preservação de 1.697 arquivos operacionais. Backup: /home/ubuntu/backups/oneda-crm-aproveitamento-20261108-8c928a7. Reiniciado somente oneda-crm-app. Saúde OK, fonte nova ao vivo com 29 linhas, versão pública e navegador Edge confirmados: 29 vínculos/2.097 registros, coluna de finalização presente e nenhum erro JavaScript.
-Atualizado em 11/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+Atualizado em 12/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
 
 ## Relatórios por estilista — produto único por tema (09/11/2026)
 

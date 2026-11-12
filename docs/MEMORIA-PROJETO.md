@@ -289,3 +289,13 @@ quatro imagens porlinha,semcards,foto e dias pendentes. Independente dos filtros
 da planilha. Se houver várias OFs do produto, mostrar maior permanência, não somar.
 Dias ausentes/inválidos não viram zero; campo nullable diasParadoFonte preserva
 esse dado desde a importação. Compartilhar renderer/lightbox/índice da primeira.
+
+## Prog Feira — aviamentos pendentes no card (12/11/2026)
+
+Cruzar o código completo, sem exigir X01 no ERP, com linhas da planilha cujo DATA
+APROVADO esteja vazio/traço. Exibir AVIAMENTO: fornecedor/descrição/SOLICITADO/previsão,
+uma linha para cada pendência. SOLICITADO é a coluna marcada pelo usuário como data.
+Recebido/envio ao cliente não são aprovação. Remover apenas Pendente COR D01 do card,
+sem mudar filtros/domínio. PDF completo pode crescer para não cortar múltiplos
+aviamentos; modo Apenas imagens e dias permanece compacto. Fonte compartilhada já
+participa das sincronizações existentes, sem modificar dados das planilhas.

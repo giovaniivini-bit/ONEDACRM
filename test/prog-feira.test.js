@@ -292,3 +292,21 @@ test('filtro de entrega usa a mesma FICHA do card FE D36 e não a de fluxos para
     assert.equal(filterByDeliveries(products,['2026-11-03'],now).length,0);
     assert.equal(filterByDeliveries(products,['2026-11-27'],now).length,1);
 });
+
+
+test('aviamentos por código completo, sem exigir X01, preservam linhas e campos da planilha',()=>{
+ const {buildTrimPendingIndex}=require('../prog-feira');
+ const records=[{PRODUTO:' 01.16.00.7322A ',FORNECEDOR:'HI','DESCRIÇÃO':'ETIQUETA',SOLICITADO:'21/10/2026','PREVISÃO':'30/10/2026','DATA APROVADO':'','RECEBIDO':'10/11/2026'},
+ {PRODUTO:'01.16.00.7322A',FORNECEDOR:'AL','DESCRIÇÃO':'CADARÇO',SOLICITADO:'texto preservado','PREVISÃO':'11/11/2026','DATA APROVADO':'—'},
+ {PRODUTO:'01.16.00.7322',FORNECEDOR:'OUTRO','DATA APROVADO':''},
+ {PRODUTO:'01.16.00.7322B',FORNECEDOR:'APROVADO','DATA APROVADO':'10/11/2026'}];
+ const index=buildTrimPendingIndex(records);
+ assert.deepEqual(index.get('01.16.00.7322A'),[{supplier:'HI',description:'ETIQUETA',requested:'21/10/2026',forecast:'30/10/2026'},{supplier:'AL',description:'CADARÇO',requested:'texto preservado',forecast:'11/11/2026'}]);
+ assert.equal(index.get('01.16.00.7322').length,1);assert.equal(index.has('01.16.00.7322B'),false);
+ assert.equal(buildTrimPendingIndex(null).size,0);
+});
+test('aviamentos aceitam cabeçalhos sem acento e não inventam valores ausentes',()=>{
+ const {buildTrimPendingIndex}=require('../prog-feira');
+ const index=buildTrimPendingIndex([{produto:'01.A',fornecedor:'<img>',descricao:'Texto',solicitado:'',previsao:'',data_aprovado:'-'},{PRODUTO:' '}]);
+ assert.equal(index.size,1);assert.deepEqual(index.get('01.A'),[{supplier:'<img>',description:'Texto',requested:'',forecast:''}]);
+});

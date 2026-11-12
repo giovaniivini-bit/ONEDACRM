@@ -114,6 +114,22 @@
         return key == null ? '' : text(record[key]);
     }
 
+    function buildTrimPendingIndex(records) {
+        const index=new Map();
+        for(const row of Array.isArray(records)?records:[]) {
+            const code=sourceField(row,'PRODUTO').trim().toUpperCase();
+            if(!code)continue;
+            // Same pending approval criterion used by Aviamentos Pendentes.
+            const approved=sourceField(row,'DATA APROVADO');
+            if(approved&&!/^[-—–]+$/.test(approved))continue;
+            const item={supplier:sourceField(row,'FORNECEDOR'),description:sourceField(row,'DESCRIÇÃO'),
+                requested:sourceField(row,'SOLICITADO'),forecast:sourceField(row,'PREVISÃO')};
+            if(!index.has(code))index.set(code,[]);
+            index.get(code).push(item);
+        }
+        return index;
+    }
+
     function normalizeSourceRecords(records) {
         return (Array.isArray(records) ? records : []).map(record => {
             // Only the raw ERP export has Parte/Fluxo without the canonical TIPO.
@@ -405,5 +421,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { deliveryKey,deliveryLabel,getDeliveryOptions,filterByDeliveries,getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeSectorSelection, toggleSectorSelection, filterBySectors, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { buildTrimPendingIndex,deliveryKey,deliveryLabel,getDeliveryOptions,filterByDeliveries,getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeSectorSelection, toggleSectorSelection, filterBySectors, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

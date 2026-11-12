@@ -105,3 +105,12 @@ Contador aplica todos os filtros da tela e conta produtos, sem somar quantidade 
 peças. Mesmo produto com CFA e CFAN conta uma vez em CF; com CF e CG pode entrar em
 ambos. Grupos ordenados alfabeticamente, Sem etiqueta quando necessário. Apenas
 consulta, sem criar seleção adicional; bloco oculto na impressão.
+
+## Aviamentos da planilha — 12/11/2026
+
+Bloco AVIAMENTO por linha pendente de aprovação da planilha: fornecedor, descrição,
+SOLICITADO e PREVISÃO. Vínculo por código completo, com sufixos; não requer X01 noERP.
+DATA APROVADO vazio/traço define pendência como na tabela; recebido não encerra
+aprovação. Preservar todas as linhas sem truncar e sem inventar campos ausentes.
+Pendente COR D01 deixa de aparecer no card, mantendo filtros e cálculos de cor.
+Impressão completa se adapta ao conteúdo; modo Apenas imagens e dias inalterado.
