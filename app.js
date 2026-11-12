@@ -10578,7 +10578,7 @@
         }
 
         const trimPendingIndex=api.buildTrimPendingIndex(state.aviamentosExternalData?.records);
-        const visibleParallelPending=item=>(item.parallelPending || []).filter(p=>p.sector!=='D01');
+        const visibleParallelPending=item=>(item.parallelPending || []).filter(p=>!['D01','X01'].includes(p.sector));
         const renderTrimPending=item=>{
             const rows=trimPendingIndex.get(String(item.codigo || '').trim().toUpperCase()) || [];
             return rows.length?`<div class="prog-feira-trim-lines" aria-label="Aviamentos pendentes na planilha">${rows.map(row=>`<div class="prog-feira-trim-item" title="Fornecedor / Descrição / Solicitado / Previsão"><strong>AVIAMENTO:</strong> ${[row.supplier,row.description,row.requested,row.forecast].map(value=>escapeHtml(value || '—')).join(' / ')}</div>`).join('')}</div>`:'';

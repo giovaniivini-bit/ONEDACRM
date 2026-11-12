@@ -315,3 +315,6 @@ adaptável para preservar informações. Modo compacto mantém sua composição.
 Exportar aguarda todas as fotos mapeadas, tenta fallback e cancela em timeout/erro
 ou troca da view. Código sem arquivo exato permanece explicitamente sem imagem;
 nunca substituir pela imagem de outro sufixo.
+
+Prog Feira (12/11/2026): cards omitem indicador genérico X01, preservando
+AVIAMENTO da planilha, filtros e dados de domínio. Vale para tela e impressão.

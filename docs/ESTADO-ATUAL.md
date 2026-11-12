@@ -1,5 +1,14 @@
 # Estado atual — Oneda CRM
 
+## Prog Feira — remover X01 dos cards (12/11/2026)
+
+Oculta somente pendência genérica X01 nos cards, em tela e impressão.
+Informações AVIAMENTO da planilha, filtros e dados operacionais preservados.
+241 testes passaram; Edge real:188 cards sem indicadores X01/D01, linhas de
+aviamentos preservadas (até6 por produto), temas/celular/PDF sem errosJS.
+Publicação em andamento.
+
+
 ## Prog Feira — fotos maiores na impressão (12/11/2026)
 
 Impressão completa usa foto na largura do card em proporção A4 paisagem, sem corte.

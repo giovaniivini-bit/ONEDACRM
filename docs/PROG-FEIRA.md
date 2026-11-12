@@ -131,3 +131,6 @@ adaptável para preservar informações. Modo compacto mantém sua composição.
 Exportar aguarda todas as fotos mapeadas, tenta fallback e cancela em timeout/erro
 ou troca da view. Código sem arquivo exato permanece explicitamente sem imagem;
 nunca substituir pela imagem de outro sufixo.
+
+Cards omitem também a pendência genérica X01 (12/11/2026), preservando o bloco
+AVIAMENTO da planilha e todos os filtros e dados de domínio.
