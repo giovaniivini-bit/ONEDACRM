@@ -78,7 +78,7 @@ const adminAuth = createAdminAuth({
     trustedProxyAddresses: CRM_TRUSTED_PROXY_IPS
 });
 const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE_TTL_MS) || 5 * 60_000);
-const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'raio-x.js', 'product-stylist.js', 'prog-feira.js', 'image-coverage.js', 'mpo-filters.js', 'mpo-view.js', 'costura.js', 'costura-view.js', 'corte-view.js', 'costura.css']);
+const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'raio-x.js', 'follow-product.js', 'follow-product.css', 'product-stylist.js', 'prog-feira.js', 'image-coverage.js', 'mpo-filters.js', 'mpo-view.js', 'costura.js', 'costura-view.js', 'corte-view.js', 'costura.css']);
 
 PUBLIC_FILES.add('automatic-reports-view.js');
 PUBLIC_FILES.add('automatic-report-groups.js');
