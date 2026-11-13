@@ -7,7 +7,10 @@ somente da classe temporária body. Fallback direto imprime galeria em4 colunas;
 quando existe relatório, só ele aparece. Tela permanece completa. Cards mantêm
 foto proporcional e informações do produto, sem botões/overlays.241 testes passam.
 Edge validou impressão direta/botão sem resumo/KPIs,4 cards preservados, tela
-restaurada; PDF renderizado e inspecionado. Publicação pendente.
+restaurada; PDF renderizado e inspecionado. Publicado GitHub/VPS commit7d81bfd,
+241 testes passaram na VPS, saúde OK,1.084 arquivos operacionais preservados por
+hash. Edge público confirmou ambos caminhos sem painéis e com cards. Backup:
+/home/ubuntu/backups/oneda-crm-rx-clean-print-20261113-7d81bfd.
 
 
 ## Impressão — imagens proporcionais à largura dos cards (12/11/2026)
