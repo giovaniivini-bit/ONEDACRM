@@ -10,7 +10,11 @@ externa sem zeros só cruza com uma única OF main inequívoca do mesmo código.
 Exibe fontes indisponíveis separadas de sem registro; observações não truncadas.
 Fotos ampliáveis, temas/celular,40 cards iniciais e Mostrar mais. Consulta somente
 leitura.250 testes passaram; revisão independente aprovada. Edge real:buscas produto,
-59A,B48,Comp2 preço bordado, temas/celular/vazio sem errosJS. Publicação pendente.
+59A,B48,Comp2 preço bordado, temas/celular/vazio sem errosJS.
+Publicado GitHub/VPS commits06bd56d+b4bc3ce (allowlist assets).250 testes passaram
+na VPS, saúde OK e1.100 arquivos operacionais preservados por hash. Edge público
+repetiu buscas/Comp2/temas/celular/vazio sem erros. Backup final:
+/home/ubuntu/backups/oneda-crm-follow-assets-20261113-b4bc3ce.
 Guia:FOLLOW-PRODUTO.md.
 
 
