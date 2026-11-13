@@ -341,3 +341,7 @@ sem alturas fixas que reduzam fotos. Prog compacto mantém4 colunas e paginaçã
 adaptável, sem compromisso de16 fichas por folha. Identificação/data/tarjas ficam
 preservadas. Galerias gerais, CQ e RaioX seguem padrão. PDFs automáticos novos
 usam cards maiores e malotes por setor/página; PDFs existentes não regenerados.
+
+Raio X (13/11/2026): impressão deve excluir painéis, seleção de setores e KPIs
+independentemente da classe temporária body; usar galeria como fallback quando
+a cópia de impressão não existir, sem duplicar quando existir. Tela não afetada.

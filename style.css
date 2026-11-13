@@ -6551,3 +6551,15 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
  body.print-alertas .alert-item-image { height:auto !important; aspect-ratio:297/210; align-self:start; }
  .mpo-card img { width:100% !important; height:auto !important; object-fit:contain !important; }
 }
+
+/* Raio X: painel de filtros/contadores nunca integra a impressão, inclusive Ctrl+P. */
+@media print {
+ #raioXView > :not(#raioXGallery):not(#raioXPrintReport) { display:none !important; }
+ #raioXView #raioXPrintReport { display:block !important; }
+ #raioXView:has(#raioXPrintReport) > #raioXGallery { display:none !important; }
+ #raioXView:not(:has(#raioXPrintReport)) > #raioXGallery { display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:3mm !important; }
+ #raioXView .rx-card { height:auto !important; min-height:0 !important; break-inside:avoid !important; page-break-inside:avoid !important; }
+ #raioXView .rx-card .s13-photo-wrapper { display:block !important; position:relative !important; width:100% !important; height:auto !important; min-height:0 !important; max-height:none !important; flex:none !important; aspect-ratio:297/210 !important; }
+ #raioXView .rx-card .s13-photo-img { position:absolute !important; inset:0; width:100% !important; height:100% !important; padding:0 !important; object-fit:contain !important; }
+ #raioXView .s13-photo-overlay, #raioXView .s13-btn-action { display:none !important; }
+}

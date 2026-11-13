@@ -1,5 +1,15 @@
 # Estado atual — Oneda CRM
 
+## Raio X — impressão sem painéis numéricos (13/11/2026)
+
+CSS de impressão esconde filhos de raioXView exceto galeria/relatório, sem depender
+somente da classe temporária body. Fallback direto imprime galeria em4 colunas;
+quando existe relatório, só ele aparece. Tela permanece completa. Cards mantêm
+foto proporcional e informações do produto, sem botões/overlays.241 testes passam.
+Edge validou impressão direta/botão sem resumo/KPIs,4 cards preservados, tela
+restaurada; PDF renderizado e inspecionado. Publicação pendente.
+
+
 ## Impressão — imagens proporcionais à largura dos cards (12/11/2026)
 
 Prog Feira completo/compacto, galerias Setor13/01/processo/estampa/malotes, CQ e
