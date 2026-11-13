@@ -7,7 +7,10 @@ produto-OF/observações-rotativos/cor-aviamentos/setores/status separados. Mobi
 empilha. Cinco selects: etiqueta, programação, semana, status produto e modelagem;
 comparação exata por campo, AND com buscas, Todos/Não informado/Limpar filtros.
 251 testes passam, revisão independente aprovada; Edge validou filtro59A+B48,
-limpeza, buscaComp2, temas/celular/vazio sem errosJS. Publicação pendente.
+limpeza, buscaComp2, temas/celular/vazio sem errosJS. Publicado GitHub/VPS
+commite8efe04;251 testes passaram na VPS, saúde OK,1.100 arquivos operacionais
+preservados por hash; Edge público confirmou filtros/layout/temas/celular. Backup:
+/home/ubuntu/backups/oneda-crm-follow-layout-filters-20261113-e8efe04.
 
 
 ## Follow de produto (13/11/2026)
