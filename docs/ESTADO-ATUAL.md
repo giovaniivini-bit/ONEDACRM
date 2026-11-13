@@ -1,5 +1,19 @@
 # Estado atual — Oneda CRM
 
+## Follow de produto (13/11/2026)
+
+Nova tela Estilo Pedido com cards horizontais por código completo+OF. Busca local
+e topo por código/OF, etiqueta, semana e programação. Reúne Comp1/Comp2 de todas
+as linhas rawRows, status produto/modelagem, setores e fluxosD35/D41/D43, Prog Feira
+e itens das planilhas cor/aviamentos/rotativos. Mesmos sufixos obrigatórios; OF
+externa sem zeros só cruza com uma única OF main inequívoca do mesmo código.
+Exibe fontes indisponíveis separadas de sem registro; observações não truncadas.
+Fotos ampliáveis, temas/celular,40 cards iniciais e Mostrar mais. Consulta somente
+leitura.250 testes passaram; revisão independente aprovada. Edge real:buscas produto,
+59A,B48,Comp2 preço bordado, temas/celular/vazio sem errosJS. Publicação pendente.
+Guia:FOLLOW-PRODUTO.md.
+
+
 ## Raio X — impressão sem painéis numéricos (13/11/2026)
 
 CSS de impressão esconde filhos de raioXView exceto galeria/relatório, sem depender

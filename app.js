@@ -129,6 +129,7 @@
         'processo',
         'setor01',
         'raio-x',
+        'follow-produto',
         'estampa',
         'andamento-cq',
         'rotativos',
@@ -999,7 +1000,7 @@
             const changed = previousRecords !== JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.aproveitamentoFinalizationData, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
             if (state.activeSubmodule === 'producao-costura') await loadCosturaData(force);
             updateSidebarBadges();
-            if ((changed || force || !sheetsWereLoaded || previousSheetSources !== JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive])) && ['raio-x', 'cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
+            if ((changed || force || !sheetsWereLoaded || previousSheetSources !== JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive])) && ['follow-produto', 'raio-x', 'cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
             }
             if (force && failures.length) throw new Error(`Atualização parcial: ${failures.join('; ')}`);
@@ -1236,6 +1237,7 @@
 
                 groups.set(productKey, {
                     raw: r,
+                    rawRows: [],
                     key: productKey,
                     op,
                     codigo,
@@ -1277,6 +1279,7 @@
             }
 
             const prod = groups.get(productKey);
+            prod.rawRows.push(r);
             prod.qtdeOriginal += qtdeOriginal;
             if(rotativosPendingDays!==null)prod.diasParadoFonte=Math.max(prod.diasParadoFonte ?? 0,rotativosPendingDays);
             if (codigo && (!prod.codigo || prod.codigo === '—' || prod.codigo === '')) {
@@ -1842,6 +1845,7 @@
         else if (state.activeSubmodule === 'setor01') label = 'Pend. Setor 01';
         else if (state.activeSubmodule === 'relatorios-automaticos') label = 'Relatórios automáticos';
         else if (state.activeSubmodule === 'raio-x') label = 'Raio X';
+        else if (state.activeSubmodule === 'follow-produto') label = 'Follow de produto';
         else if (state.activeSubmodule === 'estampa') label = 'Sit. Estampa';
         else if (state.activeSubmodule === 'cores-pendentes') label = 'Cores Pendentes (Setor D01)';
         else if (state.activeSubmodule === 'aviamentos-pendentes') label = 'Aviamentos Pendentes (Setor X01)';
@@ -1907,6 +1911,9 @@
                     removeAll:()=>deleteAutomaticReports(state.automaticReports.map(r=>r.id),true)
                 });
                 if (!state.automaticReportsLoaded && !state.automaticReportsLoading) loadAutomaticReports();
+                break;
+            case 'follow-produto':
+                renderFollowProductView(container);
                 break;
             case 'raio-x':
                 renderRaioXView(container);
@@ -4018,6 +4025,32 @@
     // =========================================================================
     // 3.5 MÓDULO ESTILO PEDIDO - PENDÊNCIAS SETOR 01 (POR CLIENTE & DIAS)
     // =========================================================================
+    function renderFollowProductView(container) {
+        const api = window.CRMFollowProduct;
+        const all = api.build({main:state.allData, progFeira:state.progFeiraExternalData?.records,
+            colors:state.coresExternalData?.records,trims:state.aviamentosExternalData?.records,
+            rotativos:state.rotativosExternalData?.records});
+        const selected = api.filter(api.filter(all,state.filters.search || ''),state.followSearch || '');
+        const limit=state.followLimit || 40;
+        container.innerHTML = `<section class="follow-product-view"><header class="module-view-header"><div><h2>Follow de produto</h2><p>Consulte produto, OF, etiqueta, semana do pedido ou programação de amostra.</p></div></header>
+            <label class="follow-search-label" for="followProductSearch">Buscar produtos</label>
+            <input id="followProductSearch" class="follow-search" type="search" placeholder="Código, OF, etiqueta, semana ou B46, B47…" value="${escapeHtml(state.followSearch || '')}">
+            <p class="follow-result-count">${selected.length} produto(s) / OF(s) • exibindo ${Math.min(limit,selected.length)}</p>
+            ${api.render(selected.slice(0,limit),{getImage:getProductImage,escapeHtml})}
+            ${selected.length>limit?'<button type="button" class="exec-action-btn" data-follow-more>Mostrar mais produtos</button>':''}</section>`;
+        const input=container.querySelector('#followProductSearch');
+        input.addEventListener('input',()=>{
+            const position=input.selectionStart;
+            state.followSearch=input.value;state.followLimit=40;renderFollowProductView(container);
+            const next=container.querySelector('#followProductSearch');next.focus();try {next.setSelectionRange(position,position);} catch (_) {}
+        });
+        container.querySelector('[data-follow-more]')?.addEventListener('click',()=>{state.followLimit=limit+40;renderFollowProductView(container);});
+        container.querySelectorAll('.follow-product-card img').forEach(img=>{
+            img.addEventListener('click',()=>window.crmOpenImageLightbox(img.dataset.large || img.src,img.alt,'Follow de produto',img.dataset.largeFallback || ''));
+            img.addEventListener('error',()=>{if(img.dataset.fallback && !img.dataset.tried){img.dataset.tried='1';img.src=img.dataset.fallback;}else {img.hidden=true;}});
+        });
+    }
+
     function renderRaioXView(container) {
         const api = window.CRMRaioX;
         const helpers = window.CRMSetor01RelatedSectors;

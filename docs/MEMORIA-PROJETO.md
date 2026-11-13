@@ -345,3 +345,11 @@ usam cards maiores e malotes por setor/página; PDFs existentes não regenerados
 Raio X (13/11/2026): impressão deve excluir painéis, seleção de setores e KPIs
 independentemente da classe temporária body; usar galeria como fallback quando
 a cópia de impressão não existir, sem duplicar quando existir. Tela não afetada.
+
+## Follow de produto (13/11/2026)
+
+Consulta integrada por código completo+OF, sem misturar sufixos; fonte main guarda
+rawRows para Comp1/Comp2 de todas linhas consolidadas. OF externa com zeros
+diferentes só concilia quando main inequívoca. Setor Prog usa OP, SETOR é descrição;
+status modelagem prioriza Descrição do Local, não código Local Produto. Fontes
+indisponíveis não são prova de ausência de pendência. Não escreve em planilhas.
