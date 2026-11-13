@@ -1,5 +1,15 @@
 # Estado atual — Oneda CRM
 
+## Follow — layout ERP e filtros fixos (13/11/2026)
+
+Cards com7 colunas e divisórias, foto240px proporcional, texto14px; semana/imagem/
+produto-OF/observações-rotativos/cor-aviamentos/setores/status separados. Mobile
+empilha. Cinco selects: etiqueta, programação, semana, status produto e modelagem;
+comparação exata por campo, AND com buscas, Todos/Não informado/Limpar filtros.
+251 testes passam, revisão independente aprovada; Edge validou filtro59A+B48,
+limpeza, buscaComp2, temas/celular/vazio sem errosJS. Publicação pendente.
+
+
 ## Follow de produto (13/11/2026)
 
 Nova tela Estilo Pedido com cards horizontais por código completo+OF. Busca local

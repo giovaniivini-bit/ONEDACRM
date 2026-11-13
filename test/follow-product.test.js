@@ -76,3 +76,15 @@ test('setor Prog usa OP e descrição separada; modelagem usa descrição do loc
  assert.deepEqual(p.modelingStatuses,['AGUARDANDO CLIENTE']);
  assert.equal(p.flows.find(f=>f.code==='D35').sectors[0].setor,'DES');
 });
+
+test('filtros fixos combinam por AND e comparam valores completos',()=>{
+ const products=[{labels:['59A'],programs:['B46'],weeks:['2706'],productStatuses:['APROVADO'],modelingStatuses:['AGUARDANDO']},{labels:['59AB'],programs:['B47'],weeks:['2706'],productStatuses:[],modelingStatuses:[]}];
+ assert.equal(follow.filterFixed(products,{labels:'59A',programs:'B46'}).length,1);
+ assert.equal(follow.filterFixed(products,{labels:'59A',programs:'B47'}).length,0);
+ assert.equal(follow.filterFixed(products,{productStatuses:'__follow_missing__'}).length,1);
+ assert.deepEqual(follow.filterOptions(products).weeks,['2706']);
+ assert.equal(follow.filterFixed(products,{}).length,2);
+ assert.equal(follow.filterFixed(products,{labels:'59A',programs:'B46',weeks:'2706',productStatuses:'APROVADO',modelingStatuses:'AGUARDANDO'}).length,1);
+ assert.equal(follow.filterFixed(products,{weeks:'270'}).length,0);
+ assert.equal(follow.filterFixed(products,{modelingStatuses:'RESOLVIDO'}).length,0);
+});

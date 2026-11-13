@@ -353,3 +353,7 @@ rawRows para Comp1/Comp2 de todas linhas consolidadas. OF externa com zeros
 diferentes só concilia quando main inequívoca. Setor Prog usa OP, SETOR é descrição;
 status modelagem prioriza Descrição do Local, não código Local Produto. Fontes
 indisponíveis não são prova de ausência de pendência. Não escreve em planilhas.
+
+Follow (13/11/2026): layout ERP com7colunas, foto maior, divisórias e status à direita.
+Cinco filtros fixos usam valores exatos eAND entre campos+buscas; Não informado
+para campo ausente. Limpar remove buscas local/topo e todos os seletores.

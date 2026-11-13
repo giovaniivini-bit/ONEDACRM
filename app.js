@@ -4030,14 +4030,20 @@
         const all = api.build({main:state.allData, progFeira:state.progFeiraExternalData?.records,
             colors:state.coresExternalData?.records,trims:state.aviamentosExternalData?.records,
             rotativos:state.rotativosExternalData?.records});
-        const selected = api.filter(api.filter(all,state.filters.search || ''),state.followSearch || '');
+        const selections=state.followFixedFilters || {};
+        const options=api.filterOptions(all);
+        const selected = api.filterFixed(api.filter(api.filter(all,state.filters.search || ''),state.followSearch || ''),selections);
+        const filters=Object.entries(api.FILTER_FIELDS).map(([key,label])=>`<label class="follow-filter" for="follow-${key}"><span>${escapeHtml(label)}</span><select id="follow-${key}" data-follow-filter="${key}"><option value="">Todos</option><option value="__follow_missing__" ${selections[key]==='__follow_missing__'?'selected':''}>Não informado</option>${[...new Set([...(options[key] || []),...(selections[key] && selections[key]!=='__follow_missing__'?[selections[key]]:[])])].map(value=>`<option value="${escapeHtml(value)}" ${selections[key]===value?'selected':''}>${escapeHtml(value)}</option>`).join('')}</select></label>`).join('');
         const limit=state.followLimit || 40;
         container.innerHTML = `<section class="follow-product-view"><header class="module-view-header"><div><h2>Follow de produto</h2><p>Consulte produto, OF, etiqueta, semana do pedido ou programação de amostra.</p></div></header>
-            <label class="follow-search-label" for="followProductSearch">Buscar produtos</label>
+            <div class="follow-fixed-filters">${filters}<button type="button" class="exec-action-btn" data-follow-clear>Limpar filtros</button></div>
+            <label class="follow-search-label" for="followProductSearch">Buscar produto ou OF</label>
             <input id="followProductSearch" class="follow-search" type="search" placeholder="Código, OF, etiqueta, semana ou B46, B47…" value="${escapeHtml(state.followSearch || '')}">
             <p class="follow-result-count">${selected.length} produto(s) / OF(s) • exibindo ${Math.min(limit,selected.length)}</p>
             ${api.render(selected.slice(0,limit),{getImage:getProductImage,escapeHtml})}
             ${selected.length>limit?'<button type="button" class="exec-action-btn" data-follow-more>Mostrar mais produtos</button>':''}</section>`;
+        container.querySelectorAll('[data-follow-filter]').forEach(select=>select.addEventListener('change',()=>{state.followFixedFilters={...selections,[select.dataset.followFilter]:select.value};state.followLimit=40;renderFollowProductView(container);}));
+        container.querySelector('[data-follow-clear]').addEventListener('click',()=>{state.followFixedFilters={};state.followSearch='';state.followLimit=40;state.filters.search='';const top=document.getElementById('headerSearchInput');if(top)top.value='';const clearTop=document.getElementById('clearSearchBtn');if(clearTop)clearTop.style.display='none';renderFollowProductView(container);});
         const input=container.querySelector('#followProductSearch');
         input.addEventListener('input',()=>{
             const position=input.selectionStart;

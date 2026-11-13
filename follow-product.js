@@ -114,6 +114,18 @@
             ...(product.labels || []), ...(product.programs || []), ...(product.observation1 || []), ...(product.observation2 || [])
         ].join(' ')).includes(q));
     }
+    const FILTER_FIELDS = {labels:'Etiqueta',programs:'Prog. amostra',weeks:'Semana do pedido',productStatuses:'Status produto',modelingStatuses:'Status modelagem'};
+    function filterFixed(products, selections = {}) {
+        return (products || []).filter(product => Object.keys(FILTER_FIELDS).every(key => {
+            const chosen=selections[key];
+            if (!chosen) return true;
+            const values=product[key] || [];
+            return chosen==='__follow_missing__' ? !values.length : values.some(value=>norm(value)===norm(chosen));
+        }));
+    }
+    function filterOptions(products) {
+        return Object.fromEntries(Object.keys(FILTER_FIELDS).map(key=>[key,unique((products || []).flatMap(p=>p[key] || [])).sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}))]));
+    }
     const escape = value => text(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     function safeUrl(value) {
         const url = text(value);
@@ -123,6 +135,7 @@
         const e = value => escapeHtml(text(value));
         const show = values => values?.length ? values.map(e).join('<br>') : '<span class="follow-missing">Não informado</span>';
         const line = (label, values) => `<div class="follow-field"><dt>${e(label)}</dt><dd>${show(values)}</dd></div>`;
+        const cell = (label, className, content) => `<section class="follow-product-cell ${className}"><h4 class="follow-column-title">${e(label)}</h4>${content}</section>`;
         const sectorText = item => [item.setor, item.descricao, item.parte ? `Parte ${item.parte}` : ''].filter(Boolean).join(' · ');
         const sheet = (label, value) => `<section class="follow-sheet"><h4>${e(label)}</h4>${!value?.available
             ? '<p class="follow-missing">Fonte indisponível</p>' : !value.items.length
@@ -134,8 +147,12 @@
             const fallback = safeUrl(image.proxyUrl || image.fallbackUrl);
             const large = safeUrl(image.largeUrl) || src;
             const photo = src ? `<img class="follow-product-image" src="${e(src)}" alt="${e(product.codigo)}" loading="lazy" decoding="async" data-fallback="${e(fallback)}" data-large="${e(large)}" data-large-fallback="${e(safeUrl(image.largeFallbackUrl) || fallback)}">` : '<span class="follow-missing">Imagem não disponível</span>';
-            return `<article class="follow-product-card" data-follow-key="${e(product.key)}"><div class="follow-week"><span>Semana do pedido</span><strong>${show(product.weeks)}</strong></div><div class="follow-product-media">${photo}</div><div class="follow-product-identity"><h3>${e(product.codigo)}</h3><p class="follow-of">OF ${e(product.op)}</p><p>${show(product.descriptions)}</p><dl>${line('Etiqueta', product.labels)}${line('Programação', product.programs)}${line('Origem', product.sources)}</dl></div><div class="follow-product-details"><dl>${line('Observação 1 · Comp1', product.observation1)}${line('Observação 2 · Comp2', product.observation2)}${line('Status produto', product.productStatuses)}${line('Status modelagem', product.modelingStatuses)}${line('Setores principais', (product.mainSectors || []).map(sectorText))}${(product.flows || []).map(flow => line(`${flow.label} · ${flow.code}`, flow.sectors.map(sectorText))).join('')}</dl></div><div class="follow-product-sheets">${sheet('Cor', product.colorSheet)}${sheet('Aviamentos', product.trimSheet)}${sheet('Rotativos', product.rotativosSheet)}</div></article>`;
+            const identity = `<h3>${e(product.codigo)}</h3><p class="follow-of">OF ${e(product.op)}</p><p>${show(product.descriptions)}</p><dl>${line('Etiqueta', product.labels)}${line('Programação', product.programs)}${line('Origem', product.sources)}</dl>`;
+            const observations = `<dl>${line('Observação 1 · Comp1', product.observation1)}${line('Observação 2 · Comp2', product.observation2)}</dl>${sheet('Rotativos', product.rotativosSheet)}`;
+            const sectors = `<dl>${line('Setores principais', (product.mainSectors || []).map(sectorText))}${(product.flows || []).map(flow => line(`${flow.label} · ${flow.code}`, flow.sectors.map(sectorText))).join('')}</dl>`;
+            const status = `<dl>${line('Status produto', product.productStatuses)}${line('Status modelagem', product.modelingStatuses)}</dl>`;
+            return `<article class="follow-product-card" data-follow-key="${e(product.key)}">${cell('Semana', 'follow-week', `<strong>${show(product.weeks)}</strong>`)}${cell('Imagem', 'follow-product-photo', `<div class="follow-product-media">${photo}</div>`)}${cell('Produto / OF', 'follow-product-identity', identity)}${cell('Observações', 'follow-product-details', observations)}${cell('Cor / Aviamentos', 'follow-product-sheets', `${sheet('Cor', product.colorSheet)}${sheet('Aviamentos', product.trimSheet)}`)}${cell('Setores / Fluxos', 'follow-product-sectors', sectors)}${cell('Status', 'follow-product-status', status)}</article>`;
         }).join('')}</div>`;
     }
-    return { build, filter, render };
+    return { build, filter, render, filterFixed, filterOptions, FILTER_FIELDS };
 }));
