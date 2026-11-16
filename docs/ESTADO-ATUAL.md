@@ -6,7 +6,10 @@ Edição de produto, busca local/topo e multisseletores não re-renderiza result
 Pesquisar captura snapshot profundo dos critérios; paginação/sync usam snapshot.
 Limpar global/individual limpa rascunho e exige Pesquisar para aplicar. Pesquisa
 instantânea das demais telas preservada.253 testes passam, review independente
-aprovada; validaçãoEdge identidade dos cards em andamento. Publicação pendente.
+aprovada; Edge local/público confirmou cards idênticos durante edição e limpeza,
+Pesquisar aplica, Mostrar mais usa snapshot. Publicado GitHub/VPS commit9967848;
+253 testes passaram na VPS, saúde OK,1.182 arquivos operacionais preservados. Backup:
+/home/ubuntu/backups/oneda-crm-follow-submit-20261116-9967848.
 
 
 ## Follow — busca de opções e campo Produto (16/11/2026)
