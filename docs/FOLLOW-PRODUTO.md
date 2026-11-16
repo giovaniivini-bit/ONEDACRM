@@ -20,3 +20,7 @@ observações e rotativos, cor/aviamentos, setores e status. Mobile empilha áre
 Follow (16/11/2026): todos5filtros aceitam múltiplos valores por checkbox, semCtrl.
 OR dentro de um filtro eAND entre campos+busca. Lista vazia=Todos; Não informado
 pode coexistir com valores. Limpeza individual ou global.
+
+Follow (16/11/2026): busca de opções nos5multifiltros (sem acento/caixa), sem
+perder seleções ocultas; campo Produto é código-only por trecho, ao lado dos
+demais campos. Limpar global limpa também consultas e Produto.

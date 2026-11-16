@@ -114,6 +114,10 @@
             ...(product.labels || []), ...(product.programs || []), ...(product.observation1 || []), ...(product.observation2 || [])
         ].join(' ')).includes(q));
     }
+    function filterProductCode(products, query='') {
+        const code=norm(query);
+        return (products || []).filter(product=>!code || norm(product.codigo).includes(code));
+    }
     const FILTER_FIELDS = {labels:'Etiqueta',programs:'Prog. amostra',weeks:'Semana do pedido',productStatuses:'Status produto',modelingStatuses:'Status modelagem'};
     function filterFixed(products, selections = {}) {
         return (products || []).filter(product => Object.keys(FILTER_FIELDS).every(key => {
@@ -155,5 +159,5 @@
             return `<article class="follow-product-card" data-follow-key="${e(product.key)}">${cell('Semana', 'follow-week', `<strong>${show(product.weeks)}</strong>`)}${cell('Imagem', 'follow-product-photo', `<div class="follow-product-media">${photo}</div>`)}${cell('Produto / OF', 'follow-product-identity', identity)}${cell('Observações', 'follow-product-details', observations)}${cell('Cor / Aviamentos', 'follow-product-sheets', `${sheet('Cor', product.colorSheet)}${sheet('Aviamentos', product.trimSheet)}`)}${cell('Setores / Fluxos', 'follow-product-sectors', sectors)}${cell('Status', 'follow-product-status', status)}</article>`;
         }).join('')}</div>`;
     }
-    return { build, filter, render, filterFixed, filterOptions, FILTER_FIELDS };
+    return { build, filter, render, filterFixed, filterOptions, FILTER_FIELDS, filterProductCode };
 }));

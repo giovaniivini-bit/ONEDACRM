@@ -4032,21 +4032,42 @@
             rotativos:state.rotativosExternalData?.records});
         const selections=state.followFixedFilters || {};
         const options=api.filterOptions(all);
-        const selected = api.filterFixed(api.filter(api.filter(all,state.filters.search || ''),state.followSearch || ''),selections);
+        const selected = api.filterProductCode(api.filterFixed(api.filter(api.filter(all,state.filters.search || ''),state.followSearch || ''),selections),state.followProductCode || '');
         const filters=Object.entries(api.FILTER_FIELDS).map(([key,label])=>{
             const checked=(Array.isArray(selections[key])?selections[key]:[selections[key]]).filter(Boolean);
             const values=[...new Set(['__follow_missing__',...(options[key] || []),...checked])];
-            return `<div class="follow-filter"><span id="follow-label-${key}">${escapeHtml(label)}</span><details class="follow-multi" data-follow-menu="${key}" ${state.followOpenFilter===key?'open':''}><summary aria-labelledby="follow-label-${key} follow-summary-${key}"><span id="follow-summary-${key}">${checked.length?escapeHtml(checked.map(value=>value==='__follow_missing__'?'Não informado':value).join(', ')):'Todos'}</span></summary><div class="follow-multi-options"><button type="button" data-follow-all="${key}">Todos / limpar seleção</button>${values.map((value,index)=>`<label><input type="checkbox" id="follow-${key}-${index}" data-follow-filter="${key}" value="${escapeHtml(value)}" ${checked.includes(value)?'checked':''}><span>${escapeHtml(value==='__follow_missing__'?'Não informado':value)}</span></label>`).join('')}</div></details></div>`;
+            return `<div class="follow-filter"><span id="follow-label-${key}">${escapeHtml(label)}</span><details class="follow-multi" data-follow-menu="${key}" ${state.followOpenFilter===key?'open':''}><summary aria-labelledby="follow-label-${key} follow-summary-${key}"><span id="follow-summary-${key}">${checked.length?escapeHtml(checked.map(value=>value==='__follow_missing__'?'Não informado':value).join(', ')):'Todos'}</span></summary><div class="follow-multi-options"><input type="search" class="follow-option-search" data-follow-option-search="${key}" aria-label="Buscar opções de ${escapeHtml(label)}" placeholder="Digite para buscar…" value="${escapeHtml(state.followOptionQueries?.[key] || '')}"><p class="follow-options-empty" data-follow-options-empty="${key}" role="status" hidden>Nenhuma opção encontrada.</p><button type="button" data-follow-all="${key}">Todos / limpar seleção</button>${values.map((value,index)=>`<label><input type="checkbox" id="follow-${key}-${index}" data-follow-filter="${key}" value="${escapeHtml(value)}" ${checked.includes(value)?'checked':''}><span>${escapeHtml(value==='__follow_missing__'?'Não informado':value)}</span></label>`).join('')}</div></details></div>`;
         }).join('');
         const limit=state.followLimit || 40;
         container.innerHTML = `<section class="follow-product-view"><header class="module-view-header"><div><h2>Follow de produto</h2><p>Consulte produto, OF, etiqueta, semana do pedido ou programação de amostra.</p></div></header>
-            <div class="follow-fixed-filters">${filters}<button type="button" class="exec-action-btn" data-follow-clear>Limpar filtros</button></div>
+            <div class="follow-fixed-filters"><label class="follow-filter" for="followProductCode"><span>Produto</span><input type="search" id="followProductCode" class="follow-code-search" placeholder="Código do produto" value="${escapeHtml(state.followProductCode || '')}"></label>${filters}<button type="button" class="exec-action-btn" data-follow-clear>Limpar filtros</button></div>
             <label class="follow-search-label" for="followProductSearch">Buscar produto ou OF</label>
             <input id="followProductSearch" class="follow-search" type="search" placeholder="Código, OF, etiqueta, semana ou B46, B47…" value="${escapeHtml(state.followSearch || '')}">
             <p class="follow-result-count">${selected.length} produto(s) / OF(s) • exibindo ${Math.min(limit,selected.length)}</p>
             ${api.render(selected.slice(0,limit),{getImage:getProductImage,escapeHtml})}
             ${selected.length>limit?'<button type="button" class="exec-action-btn" data-follow-more>Mostrar mais produtos</button>':''}</section>`;
+        const codeInput=container.querySelector('#followProductCode');
+        codeInput.addEventListener('input',()=>{
+            const position=codeInput.selectionStart;state.followProductCode=codeInput.value;state.followLimit=40;
+            renderFollowProductView(container);const next=container.querySelector('#followProductCode');next.focus();try{next.setSelectionRange(position,position);}catch(_){}
+        });
         container.querySelectorAll('[data-follow-menu]').forEach(menu=>menu.addEventListener('toggle',()=>{if(menu.isConnected)state.followOpenFilter=menu.open?menu.dataset.followMenu:null;}));
+        container.querySelectorAll('[data-follow-option-search]').forEach(search=>{
+            const update=()=>{
+                const key=search.dataset.followOptionSearch;
+                state.followOptionQueries={...state.followOptionQueries,[key]:search.value};
+                const normalize=value=>String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+                const query=normalize(search.value);
+                let visible=0;
+                container.querySelectorAll(`[data-follow-filter="${key}"]`).forEach(input=>{
+                    const label=input.closest('label');
+                    label.hidden=!normalize(label.textContent).includes(query);
+                    if(!label.hidden)visible++;
+                });
+                container.querySelector(`[data-follow-options-empty="${key}"]`).hidden=visible>0;
+            };
+            search.addEventListener('input',update);update();
+        });
         container.querySelectorAll('[data-follow-filter]').forEach(input=>input.addEventListener('change',()=>{
             const key=input.dataset.followFilter;
             const values=[...container.querySelectorAll(`[data-follow-filter="${key}"]:checked`)].map(item=>item.value);
@@ -4054,7 +4075,7 @@
             const id=input.id;renderFollowProductView(container);document.getElementById(id)?.focus();
         }));
         container.querySelectorAll('[data-follow-all]').forEach(button=>button.addEventListener('click',()=>{state.followFixedFilters={...selections,[button.dataset.followAll]:[]};state.followOpenFilter=button.dataset.followAll;state.followLimit=40;const key=button.dataset.followAll;renderFollowProductView(container);container.querySelector(`[data-follow-all="${key}"]`)?.focus();}));
-        container.querySelector('[data-follow-clear]').addEventListener('click',()=>{state.followFixedFilters={};state.followOpenFilter=null;state.followSearch='';state.followLimit=40;state.filters.search='';const top=document.getElementById('headerSearchInput');if(top)top.value='';const clearTop=document.getElementById('clearSearchBtn');if(clearTop)clearTop.style.display='none';renderFollowProductView(container);});
+        container.querySelector('[data-follow-clear]').addEventListener('click',()=>{state.followFixedFilters={};state.followProductCode='';state.followOptionQueries={};state.followOpenFilter=null;state.followSearch='';state.followLimit=40;state.filters.search='';const top=document.getElementById('headerSearchInput');if(top)top.value='';const clearTop=document.getElementById('clearSearchBtn');if(clearTop)clearTop.style.display='none';renderFollowProductView(container);});
         const input=container.querySelector('#followProductSearch');
         input.addEventListener('input',()=>{
             const position=input.selectionStart;

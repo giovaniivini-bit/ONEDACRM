@@ -1,5 +1,14 @@
 # Estado atual — Oneda CRM
 
+## Follow — busca de opções e campo Produto (16/11/2026)
+
+Busca dentro dos5multifiltros por trecho sem distinguir caixa/acentos. Mantém
+seleções ocultas e consulta após re-render; informa lista vazia. Limpar global
+remove consultas. Campo Produto ao lado consulta só codigo, por trecho, combina
+com demais buscas/filtros;6campos na linha desktop e responsivo.253 testes passam
+e revisão independente aprovada. Publicação pendente.
+
+
 ## Follow — filtros multisseleção (16/11/2026)
 
 Cinco filtros com caixas de seleção: OR dentro campo, AND entre campos+buscas.

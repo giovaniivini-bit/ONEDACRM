@@ -96,3 +96,10 @@ test('multisseleção usa OR por campo e AND entre campos, incluindo ausentes',(
  assert.equal(follow.filterFixed(ps,{labels:['A','__follow_missing__']}).length,2);
  assert.equal(follow.filterFixed(ps,{labels:[]}).length,4);
 });
+
+test('campo Produto busca apenas código, sem confundir OF ou descrição',()=>{
+ const ps=[{codigo:'01.16.32.0286A',op:'123',descriptions:['ABC']},{codigo:'OUTRO',op:'01.16.32.0286A',descriptions:['01.16.32.0286A']}];
+ assert.equal(follow.filterProductCode(ps,'01.16.32.0286a').length,1);
+ assert.equal(follow.filterProductCode(ps,'0286').length,1);
+ assert.equal(follow.filterProductCode(ps,'').length,2);
+});
