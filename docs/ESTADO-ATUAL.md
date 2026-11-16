@@ -6,7 +6,10 @@ Busca dentro dos5multifiltros por trecho sem distinguir caixa/acentos. Mantém
 seleções ocultas e consulta após re-render; informa lista vazia. Limpar global
 remove consultas. Campo Produto ao lado consulta só codigo, por trecho, combina
 com demais buscas/filtros;6campos na linha desktop e responsivo.253 testes passam
-e revisão independente aprovada. Publicação pendente.
+e revisão independente aprovada. Publicado GitHub/VPS commit0790084;253 testes
+passaram na VPS, saúde OK,1.181 arquivos operacionais preservados por hash. Edge
+público validouCG,Produto,6campos alinhados,multisseleção,limpeza e celular. Backup:
+/home/ubuntu/backups/oneda-crm-follow-option-search-20261116-0790084.
 
 
 ## Follow — filtros multisseleção (16/11/2026)
