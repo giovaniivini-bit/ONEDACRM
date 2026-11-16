@@ -8,7 +8,9 @@ Permite2linhas de4cards248pt já na primeira folha (limite570<571,28). Cards/fot
 inalterados e temas separados. Cards extensos continuam com altura necessária.
 254 testes passaram; revisão independente aprovada; PDF com8fotos reais numa
 folha renderizado e inspecionado. Vale para novas gerações; PDFs antigos preservados.
-Publicação pendente.
+Publicado GitHub/VPS commitb12d376;254 testes passaram na VPS, saúde OK e1.070
+arquivos operacionais preservados por hash. Backup:
+/home/ubuntu/backups/oneda-crm-automatic-eight-20261116-b12d376.
 
 
 ## Follow — pesquisa somente por botão (16/11/2026)
