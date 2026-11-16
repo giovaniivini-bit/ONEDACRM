@@ -72,8 +72,8 @@ test('cada tema começa em folha própria com cards alinhados ao topo',()=>{
     const nextIndex=pages.findIndex(p=>p.headings.some(h=>h.title==='PEDIDO / COR'));
     const next=pages[nextIndex].headings.find(h=>h.title==='PEDIDO / COR');
     assert.equal(nextIndex,1);
-    assert.equal(next.y,58);
-    assert.equal(pages[nextIndex].cards[0].y,80);
+    assert.equal(next.y,34);
+    assert.equal(pages[nextIndex].cards[0].y,48);
     assert.ok(pages.every(page=>new Set(page.cards.map(card=>card.item.groupKey)).size<=1));
     assert.equal(pages.flatMap(p=>p.cards).length,2);
 });

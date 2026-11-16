@@ -7,10 +7,10 @@ function planReportPages(report) {
     const cardWidth=(width-48-gap*3)/4;
     const pages=[];
     let page, y;
-    const nextPage=()=>{page={cards:[],headings:[]};pages.push(page);y=pages.length===1?93:58;};
+    const nextPage=()=>{page={cards:[],headings:[]};pages.push(page);y=pages.length===1?52:34;};
     nextPage();
     const heading=(title)=>{
-        if(title) {page.headings.push({title,y});y+=22;}
+        if(title) {page.headings.push({title,y});y+=14;}
     };
     groupReportItems(report).forEach((group,index)=>{
         if(index && (report.sections || report.type==='malotes') && report.items.length) {
@@ -30,11 +30,11 @@ function planReportPages(report) {
             // Preserve a half sheet of whitespace between dates, including
             // whitespace crossing the page boundary (without blank pages).
             y-=gap;
-            let space=(bottom-58)/2;
+            let space=(bottom-34)/2;
             while(space>bottom-y) {space-=Math.max(0,bottom-y);nextPage();}
             y+=space;
         } else if(index && !report.sections) y+=18;
-        if(y+(group.title?22:0)+cardHeight>bottom) nextPage();
+        if(y+(group.title?14:0)+cardHeight>bottom) nextPage();
         heading(group.title);
         const cards=group.items.flatMap(getReportCardItems);
         for(let start=0;start<cards.length;start+=4) {
@@ -78,17 +78,17 @@ function createPdfRenderer(resolveImage) {
             doc.addPage();
             const w=doc.page.width;
             const first=pageNumber===0;
-            doc.font('Helvetica-Bold').fontSize(14).fillColor('#122234').text(report.title,24,18,{width:w-48,height:20});
-            line(`Referência: ${report.referenceDay.split('-').reverse().join('/')} | Gerado: ${new Date(report.generatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})} | ${report.items.length} ${report.countLabel || (report.type==='cores'?'pendências':'produtos')}${report.stylist?` | ${report.uniqueProducts} ${report.items.some(item=>item.consolidated)?'produtos únicos':'produtos/OFs'}`:''} | ${report.items.some(item=>item.consolidated)?'Cards - ':''}Folha ${pageNumber+1} de ${pages.length}`,24,38,w-48,8);
-            const top=first?93:58;
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#122234').text(report.title,24,10,{width:w-48,height:12,ellipsis:true});
+            line(`Referência: ${report.referenceDay.split('-').reverse().join('/')} | Gerado: ${new Date(report.generatedAt).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})} | ${report.items.length} ${report.countLabel || (report.type==='cores'?'pendências':'produtos')}${report.stylist?` | ${report.uniqueProducts} ${report.items.some(item=>item.consolidated)?'produtos únicos':'produtos/OFs'}`:''} | ${report.items.some(item=>item.consolidated)?'Cards - ':''}Folha ${pageNumber+1} de ${pages.length}`,24,23,w-48,6.5,'#263445',9);
+            const top=first?52:34;
             if(first) {
-                line(report.description,24,51,w-48,8,'#263445',20);
-                if(report.warnings) line(report.warnings,24,73,w-48,7,'#a14d00',16);
+                line(report.description,24,33,w-48,6.5,'#263445',9);
+                if(report.warnings) line(report.warnings,24,43,w-48,6,'#a14d00',9);
             }
             if(!report.items.length && report.type!=='malotes'&&!report.sections) { line('Nenhum produto atende aos critérios nesta sincronização.',24,top,w-48,12); continue; }
             for(const section of layout.headings) {
-                doc.roundedRect(24,section.y,w-48,18,3).fill('#e0f2fe');
-                doc.font('Helvetica-Bold').fontSize(10).fillColor('#075985').text(section.title,30,section.y+3,{width:w-60,height:14});
+                doc.roundedRect(24,section.y,w-48,12,3).fill('#e0f2fe');
+                doc.font('Helvetica-Bold').fontSize(8).fillColor('#075985').text(section.title,30,section.y+2,{width:w-60,height:10,ellipsis:true});
             }
             for(const empty of layout.emptyTexts || []) line(empty.text,30,empty.y,w-60,10,'#64748b');
             layout.cards.forEach(({item,x,y,width:cw,height:ch},i) => {

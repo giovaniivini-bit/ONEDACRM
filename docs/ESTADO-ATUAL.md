@@ -1,5 +1,16 @@
 # Estado atual — Oneda CRM
 
+## Relatórios automáticos — até8cards por folha (16/11/2026)
+
+Cabeçalho PDF compacto: título10pt, metadados/descrição6,5pt, aviso6pt e faixa
+tema8pt. Cards começam52pt primeira página,34pt seguintes +14pt faixa tema.
+Permite2linhas de4cards248pt já na primeira folha (limite570<571,28). Cards/fotos
+inalterados e temas separados. Cards extensos continuam com altura necessária.
+254 testes passaram; revisão independente aprovada; PDF com8fotos reais numa
+folha renderizado e inspecionado. Vale para novas gerações; PDFs antigos preservados.
+Publicação pendente.
+
+
 ## Follow — pesquisa somente por botão (16/11/2026)
 
 Edição de produto, busca local/topo e multisseletores não re-renderiza resultados.

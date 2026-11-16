@@ -46,7 +46,7 @@ test('PDF real tem introdução, suporta relatório vazio e pagina cards com fot
     await renderer({...report,generatedAt:now.toISOString(),items:Array.from({length:9},(_,i)=>({...report.items[0],codigo:`A${i}`}))},file);
     const pdf=fs.readFileSync(file).toString('latin1');
     assert.ok(pdf.startsWith('%PDF-'));
-    assert.equal((pdf.match(/\/Type \/Page\b/g)||[]).length,3);
+    assert.equal((pdf.match(/\/Type \/Page\b/g)||[]).length,2);
     await renderer({...report,generatedAt:now.toISOString(),items:[]},file);
     assert.equal((fs.readFileSync(file).toString('latin1').match(/\/Type \/Page\b/g)||[]).length,1);
 });
@@ -123,12 +123,12 @@ test('paginação mantém título junto dos cards, oito por folha e meia área �
     assert.ok(pages.every(p=>p.cards.length>0&&p.cards.length<=8));
     assert.equal(pages.flatMap(p=>p.cards).length,21);
     for(const page of pages) {
-        for(const h of page.headings) assert.ok(page.cards.some(c=>c.y===h.y+22));
+        for(const h of page.headings) assert.ok(page.cards.some(c=>c.y===h.y+14));
         assert.ok(page.cards.every(c=>c.y+c.height<=595.28-24));
     }
     const firsts=new Map(),lasts=new Map();
     pages.forEach((p,n)=>p.cards.forEach(c=>{
-        const top=n*(595.28-24-58)+(c.y-58);
+        const top=n*(595.28-24-34)+(c.y-34);
         if(!firsts.has(c.item.groupKey))firsts.set(c.item.groupKey,top);
         lasts.set(c.item.groupKey,top+c.height);
     }));
@@ -260,4 +260,11 @@ test('falha de fonte preserva histórico; fila que perde o horário não gera de
     const admitted=store.generateScheduled(load),late=store.generateScheduled(()=>assert.fail('Não buscar fonte após o horário'));
     assert.equal((await admitted).generatedReports.length,8);await assert.rejects(late,/somente às/);
     assert.equal(store.list().length,8);fail=false;
+});
+
+test('cabeçalho compacto permite oito cards do mesmo tema já na primeira folha',()=>{
+ const items=Array.from({length:17},(_,i)=>({codigo:String(i),groupKey:'tema'}));
+ const pages=planReportPages({type:'estilista-camila',stylist:'camila',sections:[{key:'tema',theme:'PEDIDO',title:'COR'}],items});
+ assert.deepEqual(pages.map(p=>p.cards.length),[8,8,1]);
+ assert.ok(pages.every(p=>p.cards.every(c=>c.y+c.height<=595.28-24)));
 });

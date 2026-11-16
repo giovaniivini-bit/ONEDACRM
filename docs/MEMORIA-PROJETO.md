@@ -369,3 +369,7 @@ demais campos. Limpar global limpa também consultas e Produto.
 Follow (16/11/2026): critérios preenchidos são rascunho; só Pesquisar aplica
 snapshot profundo. Edição/limpeza não recria cards; paginação e sincronização
 reutilizam critérios aplicados. Busca instantânea nas outras telas permanece.
+
+PDF automático (16/11/2026): cabeçalho compacto para até8cards mesmo tema por
+folha, inclusive primeira. Mantém fotos proporcionais e informações; cards com
+previsões extras crescem sem cortes. Não regenera arquivos históricos.
