@@ -6,7 +6,10 @@ Cinco filtros com caixas de seleção: OR dentro campo, AND entre campos+buscas.
 Vazio significa Todos; Não informado pode combinar com valores. Limpeza por campo
 e global; menu mantém aberto e foco na marcação.252 testes passam, review
 independente aprovada. Edge:2 etiquetas+2 programações,5campos,limpeza,celular
-e sem errosJS. Publicação pendente.
+e sem errosJS. Publicado GitHub/VPS commit4e8a35e;252 testes passaram na VPS,
+saúde OK,1.165 arquivos operacionais preservados por hash. Edge público confirmou
+multisseleção/limpeza/celular sem erros. Backup:
+/home/ubuntu/backups/oneda-crm-follow-multi-20261116-4e8a35e.
 
 
 ## Follow — layout ERP e filtros fixos (13/11/2026)
