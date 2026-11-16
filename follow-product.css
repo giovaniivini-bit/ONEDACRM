@@ -87,3 +87,7 @@
 .follow-options-empty { color:var(--text-secondary); margin:8px; font-size:13px; }
 
 .follow-code-search { display:block; width:100%; min-width:0; min-height:42px; padding:9px 10px; border:1px solid var(--border-base); border-radius:6px; background:var(--bg-app,var(--bg-card)); color:var(--text-primary); font:inherit; }
+
+.follow-filter-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.follow-filter-actions button { min-height:42px; }
+.follow-filter-actions [data-follow-submit] { background:#0284c7; color:#fff; border-color:#0284c7; }

@@ -24,3 +24,7 @@ pode coexistir com valores. Limpeza individual ou global.
 Follow (16/11/2026): busca de opções nos5multifiltros (sem acento/caixa), sem
 perder seleções ocultas; campo Produto é código-only por trecho, ao lado dos
 demais campos. Limpar global limpa também consultas e Produto.
+
+Follow (16/11/2026): critérios preenchidos são rascunho; só Pesquisar aplica
+snapshot profundo. Edição/limpeza não recria cards; paginação e sincronização
+reutilizam critérios aplicados. Busca instantânea nas outras telas permanece.

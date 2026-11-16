@@ -1,5 +1,14 @@
 # Estado atual — Oneda CRM
 
+## Follow — pesquisa somente por botão (16/11/2026)
+
+Edição de produto, busca local/topo e multisseletores não re-renderiza resultados.
+Pesquisar captura snapshot profundo dos critérios; paginação/sync usam snapshot.
+Limpar global/individual limpa rascunho e exige Pesquisar para aplicar. Pesquisa
+instantânea das demais telas preservada.253 testes passam, review independente
+aprovada; validaçãoEdge identidade dos cards em andamento. Publicação pendente.
+
+
 ## Follow — busca de opções e campo Produto (16/11/2026)
 
 Busca dentro dos5multifiltros por trecho sem distinguir caixa/acentos. Mantém
