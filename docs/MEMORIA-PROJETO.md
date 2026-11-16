@@ -357,3 +357,7 @@ indisponíveis não são prova de ausência de pendência. Não escreve em plani
 Follow (13/11/2026): layout ERP com7colunas, foto maior, divisórias e status à direita.
 Cinco filtros fixos usam valores exatos eAND entre campos+buscas; Não informado
 para campo ausente. Limpar remove buscas local/topo e todos os seletores.
+
+Follow (16/11/2026): todos5filtros aceitam múltiplos valores por checkbox, semCtrl.
+OR dentro de um filtro eAND entre campos+busca. Lista vazia=Todos; Não informado
+pode coexistir com valores. Limpeza individual ou global.

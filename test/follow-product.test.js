@@ -88,3 +88,11 @@ test('filtros fixos combinam por AND e comparam valores completos',()=>{
  assert.equal(follow.filterFixed(products,{weeks:'270'}).length,0);
  assert.equal(follow.filterFixed(products,{modelingStatuses:'RESOLVIDO'}).length,0);
 });
+
+test('multisseleção usa OR por campo e AND entre campos, incluindo ausentes',()=>{
+ const ps=[{labels:['A'],programs:['B46']},{labels:['B'],programs:['B47']},{labels:[],programs:['B46']},{labels:['AB'],programs:['B46']}];
+ assert.equal(follow.filterFixed(ps,{labels:['A','B']}).length,2);
+ assert.equal(follow.filterFixed(ps,{labels:['A','B'],programs:['B46']}).length,1);
+ assert.equal(follow.filterFixed(ps,{labels:['A','__follow_missing__']}).length,2);
+ assert.equal(follow.filterFixed(ps,{labels:[]}).length,4);
+});

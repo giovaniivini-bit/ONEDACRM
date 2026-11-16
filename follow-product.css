@@ -72,3 +72,12 @@
     .follow-sheet-item .follow-field { margin-bottom:2mm; }
     .follow-product-status .follow-field + .follow-field { padding-top:2mm; border-color:#aaa; }
 }
+
+.follow-multi { position:relative; min-width:0; }
+.follow-multi summary { display:flex; align-items:center; min-height:42px; padding:9px 10px; border:1px solid var(--border-base); border-radius:6px; background:var(--bg-app,var(--bg-card)); color:var(--text-primary); cursor:pointer; }
+.follow-multi summary span { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.follow-multi summary::after { content:'▾'; margin-left:auto; padding-left:8px; }
+.follow-multi-options { position:absolute; top:100%; left:0; z-index:30; min-width:100%; max-width:min(420px,80vw); width:max-content; max-height:320px; overflow:auto; padding:8px; background:var(--bg-card); border:1px solid var(--border-base); border-radius:6px; box-shadow:0 8px 20px #0005; }
+.follow-multi-options label { display:flex; align-items:center; gap:10px; padding:9px; cursor:pointer; color:var(--text-primary); font-size:14px; }
+.follow-multi-options input { width:17px; height:17px; flex:none; accent-color:#0284c7; }
+.follow-multi-options button { width:100%; padding:9px; margin-bottom:4px; background:var(--bg-card-hover); color:var(--text-primary); border:1px solid var(--border-base); border-radius:4px; cursor:pointer; }

@@ -1,5 +1,14 @@
 # Estado atual — Oneda CRM
 
+## Follow — filtros multisseleção (16/11/2026)
+
+Cinco filtros com caixas de seleção: OR dentro campo, AND entre campos+buscas.
+Vazio significa Todos; Não informado pode combinar com valores. Limpeza por campo
+e global; menu mantém aberto e foco na marcação.252 testes passam, review
+independente aprovada. Edge:2 etiquetas+2 programações,5campos,limpeza,celular
+e sem errosJS. Publicação pendente.
+
+
 ## Follow — layout ERP e filtros fixos (13/11/2026)
 
 Cards com7 colunas e divisórias, foto240px proporcional, texto14px; semana/imagem/

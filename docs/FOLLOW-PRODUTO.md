@@ -16,3 +16,7 @@ combinam por AND com a busca textual. Todos remove recorte do campo, Não inform
 seleciona ausência e Limpar filtros remove todos os recortes e as buscas.
 Cards horizontais em sete áreas com divisórias: semana, imagem, produto/OF,
 observações e rotativos, cor/aviamentos, setores e status. Mobile empilha áreas.
+
+Follow (16/11/2026): todos5filtros aceitam múltiplos valores por checkbox, semCtrl.
+OR dentro de um filtro eAND entre campos+busca. Lista vazia=Todos; Não informado
+pode coexistir com valores. Limpeza individual ou global.

@@ -117,10 +117,11 @@
     const FILTER_FIELDS = {labels:'Etiqueta',programs:'Prog. amostra',weeks:'Semana do pedido',productStatuses:'Status produto',modelingStatuses:'Status modelagem'};
     function filterFixed(products, selections = {}) {
         return (products || []).filter(product => Object.keys(FILTER_FIELDS).every(key => {
-            const chosen=selections[key];
-            if (!chosen) return true;
+            const raw=selections[key];
+            const chosen=(Array.isArray(raw)?raw:[raw]).filter(Boolean);
+            if (!chosen.length) return true;
             const values=product[key] || [];
-            return chosen==='__follow_missing__' ? !values.length : values.some(value=>norm(value)===norm(chosen));
+            return chosen.some(option=>option==='__follow_missing__' ? !values.length : values.some(value=>norm(value)===norm(option)));
         }));
     }
     function filterOptions(products) {
