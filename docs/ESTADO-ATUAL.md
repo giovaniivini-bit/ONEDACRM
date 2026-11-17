@@ -8,7 +8,10 @@ por código completo+OF, aliases numéricos só inequívocos. Múltiplos pares s
 e OFs preservados em consolidados; data inválida informa ausência. Reusa pipeline
 de complementos/wrapping/continuação, fonte existente.262testes passam, revisão
 independente aprovada. Edge conferiu textoD36/Comp1/Comp2/destaques/temas; PDF real
-com8cards+D36 numa folha. Novas gerações; histórico preservado. Publicação pendente.
+com8cards+D36 numa folha. Novas gerações; histórico preservado. Publicado GitHub/
+VPS commit877b546;262testes passaram na VPS, saúdeOK e1.092arquivos operacionais
+preservados por hash. Edge com arquivos públicos confirmouD36 e complementos. Backup:
+/home/ubuntu/backups/oneda-crm-auto-d36-20261117-877b546.
 
 
 ## Relatórios automáticos — Comp1/Comp2 e PP SAMPLE (17/11/2026)
