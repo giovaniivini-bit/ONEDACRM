@@ -7,7 +7,12 @@ e ajusta zoom somente se necessário para194mm úteis, incluindo todos aviamento
 CSS A4paisagem, margens5x7mm, linhas flexíveis e menor espaçamento; fotos mantêm
 proporção. beforeprint e mudança de mídia ajustam; afterprint remove escalas/classes.
 EdgePDF: grupo8cards31linhas aviamentos cabe1folha completa e1compacta; PDFs
-renderizados/inspecionados sem cortes.254testes passam. Publicação pendente.
+renderizados/inspecionados sem cortes.254testes passam, revisão independente aprovada.
+Publicado GitHub/VPS commitdee5ca8;254testes passaram na VPS. Verificação de hash
+identificou apenas atualização concorrente de data/drive_images.json; cache JSON
+válido preservado, demais1.107arquivos sem mudanças. Reinício concluído e saúdeOK.
+Edge público confirmou8cards31aviamentos em1folha, completo e compacto. Backup:
+/home/ubuntu/backups/oneda-crm-prog-eight-20261117-dee5ca8.
 
 
 ## Relatórios automáticos — até8cards por folha (16/11/2026)
