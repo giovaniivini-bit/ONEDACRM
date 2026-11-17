@@ -55,7 +55,7 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     const css = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-    assert.match(app, /const cardsPerPage = state\.progFeiraImagesOnly \? 16 : 8/);
+    assert.match(app, /const cardsPerPage = 8/);
     assert.match(app, /prog-feira-sector prog-feira-print-page/);
     assert.match(app, /'prog-feira': 'print-prog-feira'/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);

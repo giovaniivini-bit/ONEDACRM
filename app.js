@@ -4272,6 +4272,32 @@
         document.body.classList.add('print-raio-x');
     }
 
+    function prepareProgFeiraPrint() {
+        if(state.activeSubmodule !== 'prog-feira') return;
+        document.body.classList.add('print-prog-feira','print-gallery-report');
+        const pages=[...document.querySelectorAll('.prog-feira-print-page')];
+        pages.forEach(page=>{
+            page.style.removeProperty('--prog-print-scale');
+            page.style.removeProperty('--prog-print-width');
+        });
+        // Measure the actual print layout, including all trim rows, before fitting the sheet.
+        const availableHeight=194*96/25.4;
+        pages.forEach(page=>{
+            const bounds=page.getBoundingClientRect();
+            const height=Math.max(bounds.height,page.scrollHeight);
+            page.style.setProperty('--prog-print-width',`${bounds.width}px`);
+            page.style.setProperty('--prog-print-scale',String(Math.min(1,availableHeight/Math.max(1,height))));
+        });
+    }
+    window.addEventListener('beforeprint',prepareProgFeiraPrint);
+    window.matchMedia('print').addEventListener('change',event=>{if(event.matches)prepareProgFeiraPrint();});
+    window.addEventListener('afterprint',()=>{
+        document.querySelectorAll('.prog-feira-print-page').forEach(page=>{
+            page.style.removeProperty('--prog-print-scale');page.style.removeProperty('--prog-print-width');
+        });
+        document.body.classList.remove('print-prog-feira','print-gallery-report');
+    });
+
     window.addEventListener('beforeprint', prepareRaioXPrint);
     window.addEventListener('afterprint', () => {
         document.body.classList.remove('print-raio-x');
@@ -10748,7 +10774,7 @@
 
         const renderSectorPages = group => {
             const pages = [];
-            const cardsPerPage = state.progFeiraImagesOnly ? 16 : 8;
+            const cardsPerPage = 8;
             for (let index = 0; index < group.items.length; index += cardsPerPage) {
                 pages.push(group.items.slice(index, index + cardsPerPage));
             }

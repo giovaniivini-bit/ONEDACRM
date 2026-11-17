@@ -373,3 +373,8 @@ reutilizam critérios aplicados. Busca instantânea nas outras telas permanece.
 PDF automático (16/11/2026): cabeçalho compacto para até8cards mesmo tema por
 folha, inclusive primeira. Mantém fotos proporcionais e informações; cards com
 previsões extras crescem sem cortes. Não regenera arquivos históricos.
+
+Prog Feira (17/11/2026): até8cards por folha do mesmo setor em ambos modos.
+Escala por página baseada no conteúdo impresso, preservando fotos e todas linhas;
+permite reduzir conjunto para caber. Não juntar setores diferentes. Limpeza após
+impressão restaura tela.

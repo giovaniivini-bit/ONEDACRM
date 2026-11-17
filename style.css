@@ -6563,3 +6563,24 @@ body.light-mode #print-area-aproveitamento input { color:var(--text-primary) !im
  #raioXView .rx-card .s13-photo-img { position:absolute !important; inset:0; width:100% !important; height:100% !important; padding:0 !important; object-fit:contain !important; }
  #raioXView .s13-photo-overlay, #raioXView .s13-btn-action { display:none !important; }
 }
+
+/* Prog Feira: cada grupo de até oito produtos do mesmo setor cabe numa folha. */
+@media print {
+ @page prog-feira-eight { size:A4 landscape; margin:5mm 7mm; }
+ body.print-prog-feira { page:prog-feira-eight; }
+ body.print-prog-feira .main-content { width:100% !important; max-width:100% !important; padding:0 !important; }
+ body.print-prog-feira .prog-feira-view .prog-feira-print-page {
+  width:var(--prog-print-width,100%) !important; zoom:var(--prog-print-scale,1) !important;
+  margin:0 auto !important; min-height:0 !important; max-height:none !important;
+  break-inside:avoid !important; page-break-inside:avoid !important;
+ }
+ body.print-prog-feira .prog-feira-view .prog-feira-grid { grid-template-rows:auto auto !important; grid-auto-rows:auto !important; gap:1.5mm !important; padding:1mm !important; }
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page .prog-feira-card { min-height:0 !important; }
+ body.print-prog-feira .prog-feira-view .prog-feira-sector>header { height:auto !important; min-height:6mm; padding:1mm !important; }
+ body.print-prog-feira .prog-feira-view .prog-feira-card-body { padding:1mm !important; }
+}
+
+@media print {
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page { break-inside:avoid !important; page-break-inside:avoid !important; }
+ body.print-prog-feira .prog-feira-view:not(.prog-feira-images-only) .prog-feira-print-page .prog-feira-grid { grid-auto-rows:auto !important; }
+}

@@ -1,5 +1,15 @@
 # Estado atual — Oneda CRM
 
+## Prog Feira — oito cards por folha/setor (17/11/2026)
+
+Ambos modos agrupam até8produtos por setor. Impressão mede conteúdo real por grupo
+e ajusta zoom somente se necessário para194mm úteis, incluindo todos aviamentos.
+CSS A4paisagem, margens5x7mm, linhas flexíveis e menor espaçamento; fotos mantêm
+proporção. beforeprint e mudança de mídia ajustam; afterprint remove escalas/classes.
+EdgePDF: grupo8cards31linhas aviamentos cabe1folha completa e1compacta; PDFs
+renderizados/inspecionados sem cortes.254testes passam. Publicação pendente.
+
+
 ## Relatórios automáticos — até8cards por folha (16/11/2026)
 
 Cabeçalho PDF compacto: título10pt, metadados/descrição6,5pt, aviso6pt e faixa

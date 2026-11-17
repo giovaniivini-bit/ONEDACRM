@@ -157,3 +157,8 @@ sem alturas fixas que reduzam fotos. Prog compacto mantém4 colunas e paginaçã
 adaptável, sem compromisso de16 fichas por folha. Identificação/data/tarjas ficam
 preservadas. Galerias gerais, CQ e RaioX seguem padrão. PDFs automáticos novos
 usam cards maiores e malotes por setor/página; PDFs existentes não regenerados.
+
+Prog Feira (17/11/2026): até8cards por folha do mesmo setor em ambos modos.
+Escala por página baseada no conteúdo impresso, preservando fotos e todas linhas;
+permite reduzir conjunto para caber. Não juntar setores diferentes. Limpeza após
+impressão restaura tela.
