@@ -10,7 +10,10 @@ e cardscontinuação para texto extenso; oito cards curtos permanecem por folha.
 260testes passam e revisão independente aprovada. Edge conferiu destaque13/11,
 texto completo,escaping,temas. PDF real8fotos numa folha inspecionado; complemento
 extenso preservado até marcador final em2páginas. Novas gerações somente, histórico
-não alterado. Publicação pendente.
+não alterado. Publicado GitHub/VPS commit58f3968;260testes passaram na VPS,
+saúdeOK e1.076arquivos operacionais preservados por hash. Edge com arquivos públicos
+confirmou Comp1/2,destaques,escaping e temas. Backup:
+/home/ubuntu/backups/oneda-crm-auto-complements-20261117-58f3968.
 
 
 ## Prog Feira — oito cards por folha/setor (17/11/2026)
