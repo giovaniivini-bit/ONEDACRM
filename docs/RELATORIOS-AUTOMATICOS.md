@@ -227,3 +227,15 @@ prefixos de estilista, horários e autenticação não mudam.
 Camila125→106 entradas, Ketlyn28→14; código01.14.00.7269H reúne OF078401/078941 e
 cinco partes. Conferidos detalhes, previsões, temas claro/escuro e celular sem erros.
 PDF real renderizado, com contagens no card e ambas OFs no detalhamento textual.
+
+## Complementos e pendência D36 (17/11/2026)
+
+Cards novos incluem Comp1/Comp2 da fonte principal usada no Follow; PP SAMPLE e
+data próxima na frase em vermelho. Complementos distintos preservam vínculo OF.
+A linha D36 informa setor e data de movimentação DT_SAIDA do fluxo FE/D36,
+no formato 01F - 17/12. Não confundir com data de entrega/previsão. Considerar
+somente linhas ativas com quantidade pendente positiva; sem data válida informa
+Data não informada. Mais de um setor/data ou OF permanece identificado.
+Vínculo por código completo e OF; alias numérico apenas quando inequívoco.
+Informação aparece na tela e PDF com mesma tipografia, sem truncar conteúdo.
+Histórico não é regravado: gerar novos relatórios para obter as informações.

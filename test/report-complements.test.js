@@ -40,15 +40,18 @@ test('tela escapa complementos e mantém apenas spans controlados para os destaq
  const root={CRMAutomaticReportGroups:groups};vm.runInNewContext(fs.readFileSync(require.resolve('../automatic-reports-view'),'utf8'),{window:root});
  const container={innerHTML:'',querySelector:()=>({addEventListener(){}}),querySelectorAll:()=>[]};
  const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- root.CRMAutomaticReportsView.render(container,{reports:[],selected:{id:'test',title:'Test',type:'cores',referenceDay:'2026-11-17',generatedAt:now,sourceTimestamp:now,items:[{codigo:code,complements:[{label:'Comp1',value:'<script>x</script> PP SAMPLE 13/11',numero:'1'}]}]},escape:esc,image:()=>({hasImage:false})});
+ root.CRMAutomaticReportsView.render(container,{reports:[],selected:{id:'test',title:'Test',type:'cores',referenceDay:'2026-11-17',generatedAt:now,sourceTimestamp:now,items:[{codigo:code,d36:[{numero:'1',sector:'01F',date:'17/12'}],complements:[{label:'Comp1',value:'<script>x</script> PP SAMPLE 13/11',numero:'1'}]}]},escape:esc,image:()=>({hasImage:false})});
  assert.ok(container.innerHTML.includes('&lt;script&gt;x&lt;/script&gt;'));
  assert.ok(!container.innerHTML.includes('<script>'));
  assert.ok(container.innerHTML.includes('automatic-report-pp-highlight">13/11</span>'));
  assert.ok(container.innerHTML.includes('automatic-report-card-with-complements'));
+ assert.ok(container.innerHTML.includes('D36: 01F - 17/12'));
 });
 test('PDF mantém oito cards curtos e continua complementos extensos integralmente nos limites',async t=>{
  const base={codigo:code,complements:[{label:'Comp1',value:'PP SAMPLE 13/11',numero:'1'}]};
  assert.equal(planReportPages({items:Array.from({length:8},()=>base)})[0].cards.length,8);
+ const d36Card=planReportPages({items:[{...base,d36:[{numero:'1',sector:'01F',date:'17/12'}]}]})[0].cards[0];
+ assert.ok(d36Card.item.complementRuns.flat().map(run=>run.text).join('').includes('D36: 01F - 17/12'));
  const value='PP SAMPLE REENVIADA 13/11/2026 '+('Texto completo sem corte '.repeat(1000))+'FINAL-INTEGRAL';
  const report={title:'Complementos',referenceDay:'2026-11-17',generatedAt:now.toISOString(),items:[{...base,complements:[{label:'Comp1',value,numero:'1'}]}]};
  const pages=planReportPages(report),cards=pages.flatMap(page=>page.cards);
@@ -69,4 +72,49 @@ test('OF com zeros só usa alias numérico único para o mesmo código; exato pr
  assert.deepEqual(lookup('2',code),[]);
  assert.equal(lookup('02',code)[0].value,'Segunda');
  assert.deepEqual(lookup('3',code),[]);
+});
+
+
+test('D36 preserves active sector/date pairs by full code and unique OF alias',()=>{
+ const {buildD36Index}=require('../stylist-reports');
+ const lookup=buildD36Index([
+  sample('001',{OP:'01F',DT_SAIDA:'17/12/2026'}),sample('001',{OP:'01F',DT_SAIDA:'17/12/2026',TAMANHO:'G'}),
+  sample('001',{OP:'02C',DT_SAIDA:'2026-11-10'}),sample('001',{OP:'01B',DT_SAIDA:'31/02/2026'}),
+  sample('002',{OP:'01F'}),sample('02',{OP:'01E'}),sample('001',{CODIGO:code+'A',OP:'02B'}),
+  sample('001',{PARTE:'TF',FLUXO:'D43',OP:'M00'}),sample('001',{OP:'01Z'}),
+  sample('001',{OP:'01A',QTDE_PEND:'0'}),sample('001',{OP:'99'}),
+  {'Número':'4','Código':code,Parte:'FE',Fluxo:'D36',Setor:'01F','Qtde Pend':'1','Data Saída':'17/12/2026'}
+ ],now);
+ assert.deepEqual(lookup('1',code),[
+  {numero:'001',sector:'01F',date:'17/12'},
+  {numero:'001',sector:'02C',date:'10/11'},
+  {numero:'001',sector:'01B',date:null}
+ ]);
+ assert.deepEqual(lookup('2',code),[]);
+ assert.equal(lookup('02',code)[0].sector,'01E');
+ assert.equal(lookup('1',code+'A')[0].sector,'02B');
+ assert.equal(lookup('4',code)[0].date,'17/12');
+ assert.deepEqual(lookup('1',code+'B'),[]);
+});
+
+test('reports share D36 data across orders and samples without confusing delivery dates or OFs',()=>{
+ const records=[sample('001',{OP:'01F',DT_SAIDA:'17/12/2026'}),sample('001',{OP:'02C',DT_SAIDA:'16/11/2026'}),
+  sample('2',{OP:'01B',DT_SAIDA:'31/02/2026'}),sample('3',{CODIGO:code+'A',OP:'01E',DT_SAIDA:'14/11/2026'})];
+ const mainRecords=[row('1'),row('2'),row('3',{'Código':code+'A'})];
+ const reports=buildReports(records,now,{mainRecords,colorRecords:[],trimRecords:[]});
+ const stylist=reports.find(report=>report.stylist==='camila');
+ const order=stylist.items.find(item=>item.codigo===code&&item.groupKey==='pedido-estampa');
+ const late=stylist.items.find(item=>item.codigo===code&&item.groupKey==='amostra-atraso');
+ assert.equal(order.d36.length,3);assert.equal(late.d36.length,3);
+ assert.deepEqual(order.d36.map(entry=>entry.sector),['01F','02C','01B']);
+ assert.equal(order.occurrences.find(item=>item.numero==='1').d36[0].date,'17/12');
+ const lines=groups.getComplementLines(order);
+ assert.ok(lines.includes('D36 (OF 001): 01F - 17/12'));
+ assert.ok(lines.includes('D36 (OF 2): 01B - Data não informada'));
+ assert.ok(!lines.some(line=>line.includes('03/11')));
+ const general=reports.find(report=>report.type==='entregas').items.find(item=>item.numero==='001');
+ assert.equal(general.d36[0].sector,'01F');
+ assert.equal(groups.getComplementLines(general).filter(line=>line.startsWith('D36')).length,2);
+ assert.deepEqual(stylist.items.find(item=>item.codigo===code+'A'&&item.groupKey==='pedido-estampa').d36,[{numero:'3',sector:'01E',date:'14/11'}]);
+ assert.deepEqual(groups.getComplementLines({codigo:code}),[]);
 });

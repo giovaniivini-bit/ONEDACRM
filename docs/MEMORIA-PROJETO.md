@@ -384,3 +384,7 @@ porOF+código, aliases de zeros apenas inequívocos. Preservar textos/OFs distin
 na consolidação. PP SAMPLE e data próxima em vermelho, sem grifar outras datas.
 Complementos PDF não truncam; estendem/continuam cards, mantendo8quando couber.
 Snapshots antigos não enriquecidos retroativamente.
+
+Relatórios automáticos(17/11/2026): linhaD36 usa FE/D36 ativa com saldo>0 e
+DT_SAIDA formatadaDD/MM; nunca dataentrega. Mantém todos pares atuais setor/data
+por OF+código completo, sem cruzar sufixos, aliaszeros só inequívoco.

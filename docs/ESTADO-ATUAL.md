@@ -1,5 +1,16 @@
 # Estado atual — Oneda CRM
 
+## Relatórios automáticos — setor/data D36 (17/11/2026)
+
+Linha D36 nos cards de tela/PDF, exemplo01F-17/12. Fonte FE/D36 ativa, quantidade
+pendente positiva, setor válido exceto01Z; dataDT_SAIDA, sem usar entrega. Vínculo
+por código completo+OF, aliases numéricos só inequívocos. Múltiplos pares setor/data
+e OFs preservados em consolidados; data inválida informa ausência. Reusa pipeline
+de complementos/wrapping/continuação, fonte existente.262testes passam, revisão
+independente aprovada. Edge conferiu textoD36/Comp1/Comp2/destaques/temas; PDF real
+com8cards+D36 numa folha. Novas gerações; histórico preservado. Publicação pendente.
+
+
 ## Relatórios automáticos — Comp1/Comp2 e PP SAMPLE (17/11/2026)
 
 Complementos de todas linhas main por OF+código completo, alias numérico só quando

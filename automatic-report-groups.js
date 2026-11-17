@@ -24,7 +24,8 @@
         return segments;
     }
     function getComplementLines(item) {
-        const entries=item.complements || [], multi=new Set(entries.map(entry=>entry.numero).filter(Boolean)).size>1;
+        const entries=[...(item.complements || []),...(item.d36 || []).map(entry=>({label:'D36',value:`${entry.sector} - ${entry.date || 'Data não informada'}`,numero:entry.numero}))];
+        const multi=new Set([...(item.orders || []),...entries.map(entry=>entry.numero)].filter(Boolean)).size>1;
         const values=new Map();
         for(const entry of entries) {
             const key=JSON.stringify([entry.label,entry.value]);

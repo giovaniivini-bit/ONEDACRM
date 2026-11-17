@@ -6,7 +6,7 @@ const prog = require('./prog-feira');
 
 const orderKey=(op,code)=>JSON.stringify([String(op || '').trim().toUpperCase(),String(code || '').trim().toUpperCase()]);
 function buildComplementIndex(records) {
-    const byOrder=new Map(),byCode=new Map();
+    const byOrder=new Map();
     for(const row of records || []) {
         const code=String(row.codigo || '').trim().toUpperCase();
         if(!code)continue;
@@ -17,6 +17,12 @@ function buildComplementIndex(records) {
             if(!byOrder.get(key).some(old=>old.field===field&&old.value===value))byOrder.get(key).push(entry);
         }
     }
+    return buildOrderLookup(byOrder);
+}
+
+// Preserve exact OF matches; leading-zero aliases are safe only when unique.
+function buildOrderLookup(byOrder) {
+    const byCode=new Map();
     for(const [key,entries] of byOrder) {
         const code=JSON.parse(key)[1];if(!byCode.has(code))byCode.set(code,[]);
         byCode.get(code).push(...entries);
@@ -34,6 +40,24 @@ function buildComplementIndex(records) {
         const candidates=/^\d+$/.test(number)?aliases.get(orderKey(number.replace(/^0+(?=\d)/,''),code)):null;
         return candidates?.size===1?byOrder.get([...candidates][0]):[];
     };
+}
+
+function buildD36Index(records, reference=new Date()) {
+    const byOrder=new Map();
+    const activeSectors=new Set(prog.FLOW.filter(item=>item.code!=='01Z').map(item=>item.code));
+    for(const row of prog.normalizeSourceRecords(records)) {
+        const field=name=>prog.sourceField(row,name);
+        const sector=prog.normalizeSector(field('OP'));
+        if(field('PARTE').toUpperCase()!=='FE'||field('FLUXO').toUpperCase()!=='D36'||!activeSectors.has(sector)||!(Number(field('QTDE_PEND').replace(',','.'))>0))continue;
+        const numero=field('NUMERO'),code=field('CODIGO');
+        if(!numero||!code)continue;
+        const movement=prog.parseMovementDate(field('DT_SAIDA'),reference);
+        const date=movement?`${String(movement.getDate()).padStart(2,'0')}/${String(movement.getMonth()+1).padStart(2,'0')}`:null;
+        const key=orderKey(numero,code),entry={numero,sector,date};
+        if(!byOrder.has(key))byOrder.set(key,[]);
+        if(!byOrder.get(key).some(old=>old.sector===sector&&old.date===date))byOrder.get(key).push(entry);
+    }
+    return buildOrderLookup(byOrder);
 }
 
 const STYLIST_IDS = ['camila','ketlyn','joyce','thamires'];
@@ -79,6 +103,7 @@ function normalizeOrderReportRecords(records) {
 
 function buildStylistReports(orderRecords, sampleProducts, reference, day, sources={}) {
     const complements=buildComplementIndex(orderRecords);
+    const d36=buildD36Index(sources.d36Records,reference);
     const enrich=products=>raioX.enrichWithSheets(products,sources.colorRecords,sources.trimRecords);
     const orderParts=new Map();
     for(const row of orderRecords) {
@@ -104,7 +129,7 @@ function buildStylistReports(orderRecords, sampleProducts, reference, day, sourc
         const add=(key,p,reason,extra={})=>items.push({
             numero:String(p.numero || p.op || ''),parts:p.reportParts || (p.theme==='AMOSTRA'?['FE']:[]),codigo:p.codigo,imageCode:p.imageCode || p.codigo,
             sector:p.sector || p.sectors?.join(' / ') || '',sectorLabel:p.sectorLabel || p.descSetor || '',
-            complements:complements(p.numero || p.op,p.codigo),delivery:p.delivery || '',etiqueta:p.etiqueta || '',reason,groupKey:key,forecasts:forecasts(p),...extra
+            d36:d36(p.numero || p.op,p.codigo),complements:complements(p.numero || p.op,p.codigo),delivery:p.delivery || '',etiqueta:p.etiqueta || '',reason,groupKey:key,forecasts:forecasts(p),...extra
         });
         for(const p of stylists.filter(orders,id)) {
             const extra={theme:'PEDIDO',week:p.semanaPedido,description:p.descricao,customer:p.cliente,
@@ -154,10 +179,10 @@ function consolidateStylistItems(items) {
         const join=field=>[...new Set(rows.map(row=>row[field]).filter(value=>value!==undefined&&value!==null&&value!==''))].join(' | ');
         const forecasts=[...new Map(rows.flatMap(row=>row.forecasts || []).map(entry=>[JSON.stringify(entry),entry])).values()];
         return {...first,consolidated:true,orders,orderCount:orders.length,partCount:partRefs.length,partsKnown:rows.every(row=>row.parts?.length),
-            occurrences:rows,complements:[...new Map(rows.flatMap(row=>row.complements || []).map(entry=>[JSON.stringify(entry),entry])).values()],forecasts,reason:join('reason'),sector:join('sector'),sectorLabel:join('sectorLabel'),delivery:join('delivery'),
+            occurrences:rows,d36:[...new Map(rows.flatMap(row=>row.d36 || []).map(entry=>[JSON.stringify(entry),entry])).values()],complements:[...new Map(rows.flatMap(row=>row.complements || []).map(entry=>[JSON.stringify(entry),entry])).values()],forecasts,reason:join('reason'),sector:join('sector'),sectorLabel:join('sectorLabel'),delivery:join('delivery'),
             movementDate:join('movementDate'),daysInSector:rows.some(row=>row.daysInSector!=null)?Math.max(...rows.filter(row=>row.daysInSector!=null).map(row=>row.daysInSector)):null,
             etiqueta:join('etiqueta'),description:join('description'),styleStatus:join('styleStatus'),customerProgram:join('customerProgram'),
             quantity:rows.reduce((total,row)=>total+(Number(row.quantity)||0),0)};
     });
 }
-module.exports={buildComplementIndex,STYLIST_IDS,SECTIONS,normalizeOrderReportRecords,buildStylistReports,consolidateStylistItems};
+module.exports={buildD36Index,buildComplementIndex,STYLIST_IDS,SECTIONS,normalizeOrderReportRecords,buildStylistReports,consolidateStylistItems};
