@@ -378,3 +378,9 @@ Prog Feira (17/11/2026): até8cards por folha do mesmo setor em ambos modos.
 Escala por página baseada no conteúdo impresso, preservando fotos e todas linhas;
 permite reduzir conjunto para caber. Não juntar setores diferentes. Limpeza após
 impressão restaura tela.
+
+Relatórios automáticos(17/11/2026):Comp1/Comp2 pela main usadaFollow, todas linhas
+porOF+código, aliases de zeros apenas inequívocos. Preservar textos/OFs distintos
+na consolidação. PP SAMPLE e data próxima em vermelho, sem grifar outras datas.
+Complementos PDF não truncam; estendem/continuam cards, mantendo8quando couber.
+Snapshots antigos não enriquecidos retroativamente.

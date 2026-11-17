@@ -1,10 +1,48 @@
 const fs = require('node:fs');
 const PDFDocument = require('pdfkit');
-const { groupReportItems,formatForecastLine,getReportCardItems,formatProductSummary,getReportCardHeight } = require('./automatic-report-groups');
+const { groupReportItems,formatForecastLine,getReportCardItems,formatProductSummary,getReportCardHeight,getComplementLines,getHighlightSegments } = require('./automatic-report-groups');
 
-function planReportPages(report) {
+function wrapComplementLines(item, doc, width) {
+    doc.font('Helvetica').fontSize(7);
+    const result=[];
+    for(const paragraph of getComplementLines(item)) {
+        let line=[],text='';
+        const flush=()=>{if(line.length)result.push(line);line=[];text='';};
+        for(const segment of getHighlightSegments(paragraph))for(const character of segment.text) {
+            if(character==='\n') {flush();continue;}
+            if(text&&doc.widthOfString(text+character)>width)flush();
+            const last=line[line.length-1];
+            if(last?.highlight===segment.highlight)last.text+=character;
+            else line.push({text:character,highlight:segment.highlight});
+            text+=character;
+        }
+        flush();
+    }
+    return result;
+}
+function prepareComplementCards(item,report,doc,width) {
+    if(!getComplementLines(item).length)return [item];
+    const imageHeight=(width-6)*210/297+4;
+    const hasForecasts=Boolean(report.stylist&&item.forecasts?.length);
+    const start=hasForecasts?imageHeight+1+66+item.forecasts.length*9+4:
+        imageHeight+5+44+(report.stylist?28:0)+(report.type==='cores'?40:22)+4;
+    const lines=wrapComplementLines(item,doc,width-10),cards=[];
+    let offset=0;
+    while(offset<lines.length) {
+        const continuation=offset>0,top=continuation?imageHeight+22:start;
+        const count=Math.max(1,Math.floor((480-top-8)/9));
+        const runs=lines.slice(offset,offset+count);
+        cards.push({...item,continuation:item.continuation||continuation,complementContinuation:continuation,
+            complementRuns:runs,complementStart:top,measuredHeight:Math.max(getReportCardHeight(item),top+runs.length*9+8)});
+        offset+=runs.length;
+    }
+    return cards;
+}
+function planReportPages(report, options={}) {
     const width=841.89, height=595.28, bottom=height-24, gap=8, cardHeight=getReportCardHeight({});
     const cardWidth=(width-48-gap*3)/4;
+    const measureDoc=options.measureDoc || new PDFDocument({autoFirstPage:false});
+    const heightOf=item=>item.measuredHeight || getReportCardHeight(item);
     const pages=[];
     let page, y;
     const nextPage=()=>{page={cards:[],headings:[]};pages.push(page);y=pages.length===1?52:34;};
@@ -36,9 +74,9 @@ function planReportPages(report) {
         } else if(index && !report.sections) y+=18;
         if(y+(group.title?14:0)+cardHeight>bottom) nextPage();
         heading(group.title);
-        const cards=group.items.flatMap(getReportCardItems);
+        const cards=group.items.flatMap(getReportCardItems).flatMap(item=>prepareComplementCards(item,report,measureDoc,cardWidth));
         for(let start=0;start<cards.length;start+=4) {
-            const row=cards.slice(start,start+4), rowHeight=Math.max(...row.map(getReportCardHeight));
+            const row=cards.slice(start,start+4), rowHeight=Math.max(...row.map(heightOf));
             if(y+rowHeight>bottom) {nextPage();heading(group.title ? `${group.title} (continuação)` : '');}
             row.forEach((item,column)=>page.cards.push({item,x:24+column*(cardWidth+gap),y,width:cardWidth,height:rowHeight}));
             y+=rowHeight+gap;
@@ -64,7 +102,7 @@ function createPdfRenderer(resolveImage) {
             doc.font('Helvetica').fontSize(size).fillColor(color).text(String(text || ''),x,y,{width,height,ellipsis:true,lineGap:0});
         };
         try {
-        const pages=planReportPages(report);
+        const pages=planReportPages(report,{measureDoc:doc});
         for (const [pageNumber,layout] of pages.entries()) {
             if(streamError) throw streamError;
             const pageItems=layout.cards.map(card=>card.item);
@@ -103,6 +141,17 @@ function createPdfRenderer(resolveImage) {
                 } else line(item.continuation?'Detalhes — continuação':'Imagem indisponível',x+5,y+imgH/2,cw-10,9,'#64748b');
                 const b=y+imgH+(hasForecasts?1:5);
                 doc.font('Helvetica-Bold').fontSize(9).fillColor('#075985').text(item.codigo,x+5,b,{width:cw-10,height:12,ellipsis:true});
+                const drawComplements=()=>{
+                    for(const [index,runs] of (item.complementRuns || []).entries()) {
+                        doc.font('Helvetica').fontSize(7);
+                        let left=x+5;
+                        for(const run of runs) {
+                            doc.fillColor(run.highlight?'#b91c1c':'#334155').text(run.text,left,y+item.complementStart+index*9,{lineBreak:false});
+                            left+=doc.widthOfString(run.text);
+                        }
+                    }
+                };
+                if(item.complementContinuation) {drawComplements();return;}
                 if(hasForecasts) {
                     const sectors=item.theme==='PEDIDO'?item.sectorLabel.replace(/:\s*(\d+)\s*dias?/g,' $1d').replace(/\s*\|\s*/g,' / '):`${item.sector} - ${item.sectorLabel}`;
                     line(`${formatProductSummary(item)} | ${sectors}${item.forecastPart?` | Prev. ${item.forecastPart}`:''}`,x+5,b+12,cw-10,7,'#334155',9);
@@ -112,6 +161,7 @@ function createPdfRenderer(resolveImage) {
                     doc.roundedRect(x+4,b+48,cw-8,18,3).fill('#fff1e6');
                     line(item.reason,x+7,b+49,cw-14,7,'#9a3412',17);
                     item.forecasts.forEach((entry,n)=>line(formatForecastLine(entry),x+5,b+66+n*9,cw-10,7,'#075985',9));
+                    drawComplements();
                     return;
                 }
                 line(`${formatProductSummary(item)?`${formatProductSummary(item)} | `:''}${item.sector} - ${item.sectorLabel}`,x+5,b+13,cw-10,7,'#334155',18);
@@ -122,6 +172,7 @@ function createPdfRenderer(resolveImage) {
                 }
                 doc.roundedRect(x+4,b+44+extraHeight,cw-8,reasonHeight,3).fill('#fff1e6');
                 line(item.reason,x+7,b+47+extraHeight,cw-14,7,'#9a3412',reasonHeight-4);
+                drawComplements();
             });
         }
         if(report.items.some(item=>item.consolidated&&(item.occurrences.length>1||item.forecasts.length>4))) {
@@ -159,4 +210,4 @@ function createPdfRenderer(resolveImage) {
         }
     };
 }
-module.exports={createPdfRenderer,planReportPages};
+module.exports={createPdfRenderer,planReportPages,wrapComplementLines};

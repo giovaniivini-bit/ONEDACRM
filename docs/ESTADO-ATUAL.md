@@ -1,5 +1,18 @@
 # Estado atual — Oneda CRM
 
+## Relatórios automáticos — Comp1/Comp2 e PP SAMPLE (17/11/2026)
+
+Complementos de todas linhas main por OF+código completo, alias numérico só quando
+OF única inequívoca. Consolidação preserva textos e OFs; todos tipos de relatórios
+recebem dados. Tela inclui blocosComp1/2, mesma fonte do card; PP SAMPLE e data
+próxima na frase em vermelho, restante intacto e escapado. PDF Helvetica7, wrapping
+e cardscontinuação para texto extenso; oito cards curtos permanecem por folha.
+260testes passam e revisão independente aprovada. Edge conferiu destaque13/11,
+texto completo,escaping,temas. PDF real8fotos numa folha inspecionado; complemento
+extenso preservado até marcador final em2páginas. Novas gerações somente, histórico
+não alterado. Publicação pendente.
+
+
 ## Prog Feira — oito cards por folha/setor (17/11/2026)
 
 Ambos modos agrupam até8produtos por setor. Impressão mede conteúdo real por grupo

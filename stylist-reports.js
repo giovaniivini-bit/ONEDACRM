@@ -4,6 +4,38 @@ const {getRecordField} = require('./alerts-engine');
 const {isEstampaStatusPendente} = require('./setor01-related-sectors');
 const prog = require('./prog-feira');
 
+const orderKey=(op,code)=>JSON.stringify([String(op || '').trim().toUpperCase(),String(code || '').trim().toUpperCase()]);
+function buildComplementIndex(records) {
+    const byOrder=new Map(),byCode=new Map();
+    for(const row of records || []) {
+        const code=String(row.codigo || '').trim().toUpperCase();
+        if(!code)continue;
+        const key=orderKey(row.op,code);
+        if(!byOrder.has(key))byOrder.set(key,[]);
+        for(const field of ['comp1','comp2'])for(const value of row[field] || []) {
+            const entry={field,label:field==='comp1'?'Comp1':'Comp2',value,numero:String(row.op || '')};
+            if(!byOrder.get(key).some(old=>old.field===field&&old.value===value))byOrder.get(key).push(entry);
+        }
+    }
+    for(const [key,entries] of byOrder) {
+        const code=JSON.parse(key)[1];if(!byCode.has(code))byCode.set(code,[]);
+        byCode.get(code).push(...entries);
+    }
+    const aliases=new Map();
+    for(const key of byOrder.keys()) {
+        const [op,code]=JSON.parse(key);if(!/^\d+$/.test(op))continue;
+        const alias=orderKey(op.replace(/^0+(?=\d)/,''),code);
+        if(!aliases.has(alias))aliases.set(alias,new Set());aliases.get(alias).add(key);
+    }
+    return (op,code)=>{
+        const exact=orderKey(op,code);if(byOrder.has(exact))return byOrder.get(exact);
+        const number=String(op || '').trim();
+        if(!number)return byCode.get(String(code || '').trim().toUpperCase()) || [];
+        const candidates=/^\d+$/.test(number)?aliases.get(orderKey(number.replace(/^0+(?=\d)/,''),code)):null;
+        return candidates?.size===1?byOrder.get([...candidates][0]):[];
+    };
+}
+
 const STYLIST_IDS = ['camila','ketlyn','joyce','thamires'];
 const SECTIONS = [
     {key:'pedido-estampa',theme:'PEDIDO',title:'PRODUTOS COM PENDÊNCIA DE ESTAMPA'},
@@ -28,10 +60,11 @@ function normalizeOrderReportRecords(records) {
         let setor=field(['SETOR','Setor Pendente','Setor Atual']).toUpperCase();
         if(/^\d$/.test(setor))setor=`0${setor}`;
         const key=JSON.stringify([op,setor,codigo.toUpperCase()]);
+        const comp=number=>[...new Set((Array.isArray(row.rawRows)?row.rawRows:Array.isArray(row.sourceRows)?row.sourceRows:[row.raw || row]).map(raw=>getRecordField(raw,[`Comp${number}`])).map(value=>String(value || '').trim()).filter(value=>value&&!/^[-—–]+$/.test(value)))];
         const quantity=parseInt(field(['Qtde Original','Qtde','Quantidade','Qtd Original','Qtd']).replace(/[^0-9]/g,''),10)||0;
-        if(groups.has(key)) {const group=groups.get(key);group.qtdeOriginal+=quantity;group.partes=[...new Set([...group.partes,field(['Parte','PARTE'])].filter(Boolean))];continue;}
+        if(groups.has(key)) {const group=groups.get(key);group.qtdeOriginal+=quantity;for(const n of [1,2])group[`comp${n}`]=[...new Set([...group[`comp${n}`],...comp(n)])];group.partes=[...new Set([...group.partes,field(['Parte','PARTE'])].filter(Boolean))];continue;}
         groups.set(key,{
-            op,codigo,setor,qtdeOriginal:quantity,partes:[field(['Parte','PARTE'])].filter(Boolean),
+            op,codigo,setor,comp1:comp(1),comp2:comp(2),qtdeOriginal:quantity,partes:[field(['Parte','PARTE'])].filter(Boolean),
             descSetor:field(['Desc Setor','Descrição Setor','Descricao Setor','Descrio Setor']),
             descricao:field(['Produto Descrição','Produto Descricao','Produto Descrio','Desc Produto','Descrição','Descricao']),
             statusEstilo:field(['Produto Status','Status Estilo','Situação Estilo','Situacao Estilo','Status Prod','Status Estampa','Sit Estilo','Desc Estilo']),
@@ -45,6 +78,7 @@ function normalizeOrderReportRecords(records) {
 }
 
 function buildStylistReports(orderRecords, sampleProducts, reference, day, sources={}) {
+    const complements=buildComplementIndex(orderRecords);
     const enrich=products=>raioX.enrichWithSheets(products,sources.colorRecords,sources.trimRecords);
     const orderParts=new Map();
     for(const row of orderRecords) {
@@ -70,7 +104,7 @@ function buildStylistReports(orderRecords, sampleProducts, reference, day, sourc
         const add=(key,p,reason,extra={})=>items.push({
             numero:String(p.numero || p.op || ''),parts:p.reportParts || (p.theme==='AMOSTRA'?['FE']:[]),codigo:p.codigo,imageCode:p.imageCode || p.codigo,
             sector:p.sector || p.sectors?.join(' / ') || '',sectorLabel:p.sectorLabel || p.descSetor || '',
-            delivery:p.delivery || '',etiqueta:p.etiqueta || '',reason,groupKey:key,forecasts:forecasts(p),...extra
+            complements:complements(p.numero || p.op,p.codigo),delivery:p.delivery || '',etiqueta:p.etiqueta || '',reason,groupKey:key,forecasts:forecasts(p),...extra
         });
         for(const p of stylists.filter(orders,id)) {
             const extra={theme:'PEDIDO',week:p.semanaPedido,description:p.descricao,customer:p.cliente,
@@ -120,10 +154,10 @@ function consolidateStylistItems(items) {
         const join=field=>[...new Set(rows.map(row=>row[field]).filter(value=>value!==undefined&&value!==null&&value!==''))].join(' | ');
         const forecasts=[...new Map(rows.flatMap(row=>row.forecasts || []).map(entry=>[JSON.stringify(entry),entry])).values()];
         return {...first,consolidated:true,orders,orderCount:orders.length,partCount:partRefs.length,partsKnown:rows.every(row=>row.parts?.length),
-            occurrences:rows,forecasts,reason:join('reason'),sector:join('sector'),sectorLabel:join('sectorLabel'),delivery:join('delivery'),
+            occurrences:rows,complements:[...new Map(rows.flatMap(row=>row.complements || []).map(entry=>[JSON.stringify(entry),entry])).values()],forecasts,reason:join('reason'),sector:join('sector'),sectorLabel:join('sectorLabel'),delivery:join('delivery'),
             movementDate:join('movementDate'),daysInSector:rows.some(row=>row.daysInSector!=null)?Math.max(...rows.filter(row=>row.daysInSector!=null).map(row=>row.daysInSector)):null,
             etiqueta:join('etiqueta'),description:join('description'),styleStatus:join('styleStatus'),customerProgram:join('customerProgram'),
             quantity:rows.reduce((total,row)=>total+(Number(row.quantity)||0),0)};
     });
 }
-module.exports={STYLIST_IDS,SECTIONS,normalizeOrderReportRecords,buildStylistReports,consolidateStylistItems};
+module.exports={buildComplementIndex,STYLIST_IDS,SECTIONS,normalizeOrderReportRecords,buildStylistReports,consolidateStylistItems};
