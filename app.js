@@ -952,7 +952,7 @@
                 const request = force ? adminFetch(url, { method: 'POST' }) : fetch(url);
                 return request.then(async response => {
                     const payload = await response.json().catch(() => null);
-                    if (!response.ok || !payload?.success || (force && payload.isLive === false)) throw new Error(payload?.error || `Falha ao atualizar ${type}`);
+                    if (!response.ok || !payload?.success || (force && payload.isLive === false)) throw new Error(payload?.error || payload?.warning || `Falha ao atualizar ${type}`);
                     return payload;
                 }).catch(error => { failures.push(`${type}: ${error.message}`); return null; });
             };

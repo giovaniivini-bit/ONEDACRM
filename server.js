@@ -168,8 +168,7 @@ function validateCalendarRecords(records) {
         }
     });
     const currentYear = new Date().getFullYear();
-    const cycleYears = new Set();
-    const weekNumbers = [];
+    const weeksByCycle = new Map();
     const seenWeeks = new Set();
     const contentRows = records.filter(row => Object.values(row).some(value => String(value || '').trim()));
     const validRows = contentRows.filter(row => {
@@ -185,8 +184,8 @@ function validateCalendarRecords(records) {
         if (!deadline) return false;
 
         seenWeeks.add(week);
-        cycleYears.add(cycleYear);
-        weekNumbers.push(weekNumber);
+        if(!weeksByCycle.has(cycleYear))weeksByCycle.set(cycleYear,[]);
+        weeksByCycle.get(cycleYear).push(weekNumber);
         return true;
     });
     const validRowSet = new Set(validRows);
@@ -200,10 +199,10 @@ function validateCalendarRecords(records) {
     });
     const limitOnlyRowSet = new Set(limitOnlyRows);
     const hasUnexpectedRows = contentRows.some(row => !validRowSet.has(row) && !limitOnlyRowSet.has(row));
-    const coversAnnualCycle = weekNumbers.length > 0 && Math.min(...weekNumbers) <= 2 && Math.max(...weekNumbers) >= 40;
+    const coversAnnualCycle = [...weeksByCycle.values()].some(weeks => weeks.length >= 40 && Math.min(...weeks) <= 2 && Math.max(...weeks) >= 40);
     const sectorLimits = alertsEngine.buildSectorLimitIndex(records);
     const hasRequiredLimits = alertsEngine.CALENDAR_LIMIT_SECTORS.every(sector => Number.isFinite(sectorLimits[sector]));
-    if (validRows.length < 40 || cycleYears.size !== 1 || !coversAnnualCycle || !hasRequiredLimits
+    if (validRows.length < 40 || !coversAnnualCycle || !hasRequiredLimits
         || hasUnexpectedRows || limitOnlyRows.length > 1) {
         throw new Error('Calendário Industrial inválido: semanas, datas ou limites estão ausentes.');
     }

@@ -388,3 +388,8 @@ Snapshots antigos não enriquecidos retroativamente.
 Relatórios automáticos(17/11/2026): linhaD36 usa FE/D36 ativa com saldo>0 e
 DT_SAIDA formatadaDD/MM; nunca dataentrega. Mantém todos pares atuais setor/data
 por OF+código completo, sem cruzar sufixos, aliaszeros só inequívoco.
+
+Calendário Industrial(19/11/2026): ciclos podem coexistir durante publicação gradual
+do ano seguinte. Exigir ao menosum ciclo anual completo individualmente; não exigir
+ano único e não unir semanasparciais de anosdiferentes. Preservar validaçõesdatas/
+limites e cacheválido. Falhasparciais não significam que todas fontes falharam.

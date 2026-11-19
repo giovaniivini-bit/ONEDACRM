@@ -271,6 +271,13 @@ test('validates the industrial calendar before it can replace the cache', () => 
         ...Object.fromEntries(Object.entries(limitRow).slice(4))
     } : row);
     assert.equal(validateCalendarRecords(embeddedLimitRows).length, 40);
+    // The next industrial cycle is published gradually while the current remains complete.
+    const nextCycle = validRows.slice(3,9).map(row=>({...row,SEMANA:'27'+row.SEMANA.slice(2)}));
+    assert.equal(validateCalendarRecords([...embeddedLimitRows,...nextCycle]).length,46);
+    assert.throws(()=>validateCalendarRecords([...embeddedLimitRows,{...nextCycle[0],'Data limite para setor 13':'31/fev.'}]),/inválido/);
+    assert.throws(()=>validateCalendarRecords([...embeddedLimitRows,nextCycle[0],{...nextCycle[0]}]),/inválido/);
+    assert.throws(()=>validateCalendarRecords([...embeddedLimitRows.slice(0,25),...validRows.slice(25).map(row=>({...row,SEMANA:'27'+row.SEMANA.slice(2)}))]),/inválido/);
+
     assert.throws(() => validateCalendarRecords([...validRows.slice(0, 3), limitRow]), /incompleto/);
     assert.throws(() => validateCalendarRecords([...validRows.map(row => ({ ...row, 'Data limite para setor 13': '' })), limitRow]), /inválido/);
     assert.throws(() => validateCalendarRecords([...validRows.map((row, index) => ({

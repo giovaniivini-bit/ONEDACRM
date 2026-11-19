@@ -1,5 +1,16 @@
 # Estado atual — Oneda CRM
 
+## Sincronização calendário — coexistência ciclos (19/11/2026)
+
+Causa verificada na VPS: calendar rejeitado por exigir ciclo único; planilhaagora
+contém52semanas26+6semanas27. Outras fontes atualizavam, mas UI reportava parcial.
+Validador aceita cicloscoexistentes quando pelo menosum ciclo possui>=40semanas
+abrangendo começo/fim, sem juntar parciais para simular ciclo completo. Mantém
+rejeição de datas/linhasinválidas, duplicatas e limites ausentes/conflitantes.
+UI usa warning de cache para mostrar motivo real em sync forçado.262testes passam,
+calendário real58rows validado. Publicação pendente.
+
+
 ## Relatórios automáticos — setor/data D36 (17/11/2026)
 
 Linha D36 nos cards de tela/PDF, exemplo01F-17/12. Fonte FE/D36 ativa, quantidade
