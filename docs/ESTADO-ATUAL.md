@@ -8,7 +8,11 @@ Validador aceita cicloscoexistentes quando pelo menosum ciclo possui>=40semanas
 abrangendo começo/fim, sem juntar parciais para simular ciclo completo. Mantém
 rejeição de datas/linhasinválidas, duplicatas e limites ausentes/conflitantes.
 UI usa warning de cache para mostrar motivo real em sync forçado.262testes passam,
-calendário real58rows validado. Publicação pendente.
+calendário real58rows validado e revisão independente aprovada. Publicado GitHub/
+VPS commitc3e8a8b;262testes passaram, saúdeOK,1.140arquivos operacionais preservados
+por hash antes sync. API pública carregou58semanas ao vivo com6do27 às10:35UTC;
+cores/aviamentos/CQ/leadtime/rotativos/Prog retornaram success/isLive true. Backup:
+/home/ubuntu/backups/oneda-crm-calendar-sync-20261119-c3e8a8b.
 
 
 ## Relatórios automáticos — setor/data D36 (17/11/2026)
