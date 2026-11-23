@@ -114,6 +114,36 @@
         return key == null ? '' : text(record[key]);
     }
 
+    function buildTrimPendingIndex(records) {
+        const index=new Map();
+        for(const row of Array.isArray(records)?records:[]) {
+            const code=sourceField(row,'PRODUTO').trim().toUpperCase();
+            if(!code)continue;
+            // Same pending approval criterion used by Aviamentos Pendentes.
+            const approved=sourceField(row,'DATA APROVADO');
+            if(approved&&!/^[-—–]+$/.test(approved))continue;
+            const item={supplier:sourceField(row,'FORNECEDOR'),description:sourceField(row,'DESCRIÇÃO'),
+                requested:sourceField(row,'SOLICITADO'),forecast:sourceField(row,'PREVISÃO')};
+            if(!index.has(code))index.set(code,[]);
+            index.get(code).push(item);
+        }
+        return index;
+    }
+
+    function filterByTrimForecast(products,index,selection='all') {
+        if(!['with','without'].includes(selection) || !(index instanceof Map))return products;
+        const filled=value=>{
+            const text=String(value ?? '').trim();
+            const normalized=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+            return Boolean(text&&!/^[-—–]+$/.test(text)&&!text.startsWith('#')&&!/^(?:NAO INFORMAD[OA]|SEM PREVISAO)$/.test(normalized));
+        };
+        return products.filter(product=>{
+            const rows=index.get(String(product.codigo || '').trim().toUpperCase()) || [];
+            const hasForecast=rows.some(row=>filled(row.forecast));
+            return selection==='with'?hasForecast:!hasForecast;
+        });
+    }
+
     function normalizeSourceRecords(records) {
         return (Array.isArray(records) ? records : []).map(record => {
             // Only the raw ERP export has Parte/Fluxo without the canonical TIPO.
@@ -161,6 +191,7 @@
             const missing = [];
             let ting = '';
             let tingDays = null;
+            let tingEntryDate = '';
             let costSector = '';
             for (const spec of PARALLEL_FLOWS) {
                 const parallel = rows.filter(row => field(row, 'PARTE') === spec.part && field(row, 'FLUXO') === spec.flow);
@@ -172,6 +203,8 @@
                     ting = pendingStates[0] || states[0] || '';
                     const days = parallel.filter(row => ting && normalizeSector(field(row, 'OP')) === ting).map(row => calculateDaysInSector(field(row, 'DT_SAIDA'), now)).filter(value => value != null);
                     tingDays = days.length ? Math.max(...days) : null;
+                    const dates = parallel.filter(row => ting && normalizeSector(field(row, 'OP')) === ting).map(row => parseMovementDate(field(row, 'DT_SAIDA'), now)).filter(Boolean).sort((a,b)=>a-b);
+                    tingEntryDate = dates.length ? dates[0].toLocaleDateString('pt-BR') : '';
                 }
                 if (spec.part === 'D6') costSector = states.join(' / ');
                 pendingStates.forEach(state => {
@@ -180,11 +213,11 @@
                 });
             }
             canonical.push({ ...primary, PARTE: '', FLUXO: '', QTDE_PEND: String([...dimensions.values()].reduce((a,b) => a+b, 0)), SETOR_TING: ting, SETOR_FLUXO_EM: costSector });
-            complements.set(key, { pending, missing, ting, tingDays, parallelSectors, labels: [...new Set(main.map(row => normalizeLabel(field(row, 'ETIQUETA'))).filter(Boolean))], mainSectors: [...new Set(main.map(row => normalizeSector(field(row, 'OP'))))] });
+            complements.set(key, { pending, missing, ting, tingDays, tingEntryDate, parallelSectors, labels: [...new Set(main.map(row => normalizeLabel(field(row, 'ETIQUETA'))).filter(Boolean))], mainSectors: [...new Set(main.map(row => normalizeSector(field(row, 'OP'))))] });
         }
         return buildProducts(canonical, now).map(product => {
             const parallel = complements.get(product.key);
-            return { ...product, parallelPending: parallel.pending, labels: parallel.labels, parallelSectors: parallel.parallelSectors, missingParallel: parallel.missing, mainSectors: parallel.mainSectors, ting: parallel.ting, tingDays: parallel.tingDays,
+            return { ...product, parallelPending: parallel.pending, labels: parallel.labels, parallelSectors: parallel.parallelSectors, missingParallel: parallel.missing, mainSectors: parallel.mainSectors, ting: parallel.ting, tingDays: parallel.tingDays, tingEntryDate: parallel.tingEntryDate,
                 tingInfo: TINGIMENTO[parallel.ting] || { label: 'Não informado', color: '#64748b' },
                 isDes: parallel.pending.some(item => item.part === 'D6' && item.sector === 'DES'), sourceFormat: 'parallel' };
         });
@@ -405,5 +438,5 @@
         })).sort((a, b) => a.order - b.order);
     }
 
-    return { deliveryKey,deliveryLabel,getDeliveryOptions,filterByDeliveries,getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeSectorSelection, toggleSectorSelection, filterBySectors, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
+    return { filterByTrimForecast,buildTrimPendingIndex,deliveryKey,deliveryLabel,getDeliveryOptions,filterByDeliveries,getLabelGroups, normalizeLabel, labelValues, getLabelOptions, filterByLabels, PARALLEL_FILTERS, filterByParallelSectors, getParallelFilterOptions, normalizeSourceRecords, sourceField, getSectorDistribution, normalizeSectorSelection, toggleSectorSelection, filterBySectors, normalizeProgram, getProgramOptions, filterByPrograms, FLOW, TINGIMENTO, normalizeSector, parseDelivery, parseMovementDate, calculateDaysInSector, buildProducts, groupBySector };
 });

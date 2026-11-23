@@ -206,11 +206,13 @@ curso. Os guias detalham a operação. Skill `skills/oneda-crm/SKILL.md` recuper
 arquivos em novas conversas. Publicar documentos no GitHub quando incluído no escopo;
 arquivos locais e chat, sozinhos, não constituem backup remoto.
 
-## Impressão Raio X (26/10/2026)
+## Impressão Raio X (11/11/2026)
 
-Usar A4 paisagem com margem mínima de 1cm (CSS aplica12mm!important para vencer
-regra global de margem zero). Até6cartões por grupo,3colunas; campos separados e
-altura automática. Não voltar aos badges comprimidos de6px ou esconder excedentes.
+Padrão vigente: foto E informações completas de cada card. Ocultar apenas painel
+global de filtros, setores e KPIs. Grupos de até8cards,quatrocolunas,A4paisagem,
+margem12mm, altura automática sem truncar dados. Conteúdo denso pode exigir mais
+folhas. Não voltar a somente imagens nem esconder dados para forçar16porfolha.
+Preservar filtros atuais, fallback das fotos e tela original.
 
 ## Nova base Prog Feira — 27/10/2026
 
@@ -259,3 +261,139 @@ ações do corte ficam fora. Meta é quantidade de referências para entregar na
 Calcular percentuais pelos totais exatos; médias principais arredondadas para inteiro
 (69/5→14,58/5→12). Novas semanas entram à esquerda: detectar nomes/datas, não letras
 fixas. Datas repetidas ficam sinalizadas, sem duplicar médias. Guia: PRODUCAO-COSTURA.md.
+
+## Aproveitamento — multisseleção e observação (09/11/2026)
+
+Clientes permitem seleção múltipla por união; Todos inclui a base e Limpar seleção
+mostra nenhum. Gráfico alterna cliente na seleção. Mesmos filtros nas métricas e
+listagem. Observação opcional até600 caracteres, preservada enquanto a tela está
+aberta, aparece somente no PDF abaixo do gráfico da primeira página em fonte pequena.
+Texto sem HTML; quebra de linha compactada na impressão para caber na folha.
+
+## Relatórios — produto por tema (09/11/2026)
+
+Nos novos PDFs por estilista, consolidar código completo por subtema. Um produto
+pode aparecer em temas diferentes; no mesmo tema, juntar OFs e contar OFs distintas
+e partes identificadas por OF, sem confundir grades/tamanhos com partes. Manter
+ocorrências/previsões/datas originais em detalhes; não mostrar só a primeira OF.
+Quantidade de partes sem fonte é não informada. Preservar snapshots/PDFs antigos.
+
+## Rotativos — imagens da planilha (11/11/2026)
+
+Logo abaixo da planilha, quatro imagens por linha, sem cards, apenas foto e
+previsão da mesa. Usar código completo, inclusive sufixos, e índice de imagens da
+VPS já compartilhado. Galeria acompanha busca/situação da tabela; um código com
+vários registros preserva previsões distintas. Não usar dados fictícios em fonte
+vazia. Fotos ampliáveis e atualização pelo índice existente, sem nova sincronização.
+
+## Rotativos — galeria dos pendentes no setor43 (11/11/2026)
+
+Segunda galeria abaixo das fotos da planilha: produtos CRM com setor43exato,
+quatro imagens porlinha,semcards,foto e dias pendentes. Independente dos filtros
+da planilha. Se houver várias OFs do produto, mostrar maior permanência, não somar.
+Dias ausentes/inválidos não viram zero; campo nullable diasParadoFonte preserva
+esse dado desde a importação. Compartilhar renderer/lightbox/índice da primeira.
+
+## Prog Feira — aviamentos pendentes no card (12/11/2026)
+
+Cruzar o código completo, sem exigir X01 no ERP, com linhas da planilha cujo DATA
+APROVADO esteja vazio/traço. Exibir AVIAMENTO: fornecedor/descrição/SOLICITADO/previsão,
+uma linha para cada pendência. SOLICITADO é a coluna marcada pelo usuário como data.
+Recebido/envio ao cliente não são aprovação. Remover apenas Pendente COR D01 do card,
+sem mudar filtros/domínio. PDF completo pode crescer para não cortar múltiplos
+aviamentos; modo Apenas imagens e dias permanece compacto. Fonte compartilhada já
+participa das sincronizações existentes, sem modificar dados das planilhas.
+
+## Prog Feira — com e sem previsão de aviamentos (12/11/2026)
+
+Filtros complementares exclusivos pelo mesmo índice do card: Com exige pelo menos
+uma previsão preenchida em linha ainda pendente de aprovação; Sem é o contrário,
+incluindo produto sem linha de aviamento. Clicar novamente ou Limpar restaura todos.
+Aplicar antes dos demais recortes para manter contagens/gráfico/cartões alinhados;
+registrar no cabeçalho impresso. Fonte desconhecida não significa sem previsão.
+
+## Prog Feira — fotos na impressão (12/11/2026)
+
+Impressão completa mantém fotos na largura do card, sem corte (297/210), e altura
+adaptável para preservar informações. Modo compacto mantém sua composição.
+Exportar aguarda todas as fotos mapeadas, tenta fallback e cancela em timeout/erro
+ou troca da view. Código sem arquivo exato permanece explicitamente sem imagem;
+nunca substituir pela imagem de outro sufixo.
+
+Prog Feira (12/11/2026): cards omitem indicador genérico X01, preservando
+AVIAMENTO da planilha, filtros e dados de domínio. Vale para tela e impressão.
+
+## Prog Feira — tarjas no rodapé (12/11/2026)
+
+Histórico do fluxo removido dos cards; tarjas no rodapé substituem o destaque
+superior DES: DES azul, M02 vermelha, M00 laranja piscante. DES e tingimento
+coexistem lado a lado. D43 volta ao estilo tradicional sem animação. Impressão
+e movimento reduzido mantêm tarjas estáticas; modo compacto não as exibe.
+
+Atualização12/11/2026: modo Apenas imagens e dias também exibe tarjas no rodapé;
+PDF compacto mantém16 fichas/folha reservando espaço para evitar corte das tarjas.
+
+Modo Apenas imagens e dias (12/11/2026): código e OF abaixo da imagem; quadro
+direito usa data entrada TF/D43 DT_SAIDA do setor tingimento. Menor data válida
+corresponde à maior permanência anterior; ausente mantém aviso, não usa D36.
+Modo completo permanece com dias. PDF compacto mantém16 cards e tarjas.
+
+## Fotos proporcionais na impressão (12/11/2026)
+
+Priorizar imagem inteira proporcional à largura do card (moldura297/210, contain),
+sem alturas fixas que reduzam fotos. Prog compacto mantém4 colunas e paginação
+adaptável, sem compromisso de16 fichas por folha. Identificação/data/tarjas ficam
+preservadas. Galerias gerais, CQ e RaioX seguem padrão. PDFs automáticos novos
+usam cards maiores e malotes por setor/página; PDFs existentes não regenerados.
+
+Raio X (13/11/2026): impressão deve excluir painéis, seleção de setores e KPIs
+independentemente da classe temporária body; usar galeria como fallback quando
+a cópia de impressão não existir, sem duplicar quando existir. Tela não afetada.
+
+## Follow de produto (13/11/2026)
+
+Consulta integrada por código completo+OF, sem misturar sufixos; fonte main guarda
+rawRows para Comp1/Comp2 de todas linhas consolidadas. OF externa com zeros
+diferentes só concilia quando main inequívoca. Setor Prog usa OP, SETOR é descrição;
+status modelagem prioriza Descrição do Local, não código Local Produto. Fontes
+indisponíveis não são prova de ausência de pendência. Não escreve em planilhas.
+
+Follow (13/11/2026): layout ERP com7colunas, foto maior, divisórias e status à direita.
+Cinco filtros fixos usam valores exatos eAND entre campos+buscas; Não informado
+para campo ausente. Limpar remove buscas local/topo e todos os seletores.
+
+Follow (16/11/2026): todos5filtros aceitam múltiplos valores por checkbox, semCtrl.
+OR dentro de um filtro eAND entre campos+busca. Lista vazia=Todos; Não informado
+pode coexistir com valores. Limpeza individual ou global.
+
+Follow (16/11/2026): busca de opções nos5multifiltros (sem acento/caixa), sem
+perder seleções ocultas; campo Produto é código-only por trecho, ao lado dos
+demais campos. Limpar global limpa também consultas e Produto.
+
+Follow (16/11/2026): critérios preenchidos são rascunho; só Pesquisar aplica
+snapshot profundo. Edição/limpeza não recria cards; paginação e sincronização
+reutilizam critérios aplicados. Busca instantânea nas outras telas permanece.
+
+PDF automático (16/11/2026): cabeçalho compacto para até8cards mesmo tema por
+folha, inclusive primeira. Mantém fotos proporcionais e informações; cards com
+previsões extras crescem sem cortes. Não regenera arquivos históricos.
+
+Prog Feira (17/11/2026): até8cards por folha do mesmo setor em ambos modos.
+Escala por página baseada no conteúdo impresso, preservando fotos e todas linhas;
+permite reduzir conjunto para caber. Não juntar setores diferentes. Limpeza após
+impressão restaura tela.
+
+Relatórios automáticos(17/11/2026):Comp1/Comp2 pela main usadaFollow, todas linhas
+porOF+código, aliases de zeros apenas inequívocos. Preservar textos/OFs distintos
+na consolidação. PP SAMPLE e data próxima em vermelho, sem grifar outras datas.
+Complementos PDF não truncam; estendem/continuam cards, mantendo8quando couber.
+Snapshots antigos não enriquecidos retroativamente.
+
+Relatórios automáticos(17/11/2026): linhaD36 usa FE/D36 ativa com saldo>0 e
+DT_SAIDA formatadaDD/MM; nunca dataentrega. Mantém todos pares atuais setor/data
+por OF+código completo, sem cruzar sufixos, aliaszeros só inequívoco.
+
+Calendário Industrial(19/11/2026): ciclos podem coexistir durante publicação gradual
+do ano seguinte. Exigir ao menosum ciclo anual completo individualmente; não exigir
+ano único e não unir semanasparciais de anosdiferentes. Preservar validaçõesdatas/
+limites e cacheválido. Falhasparciais não significam que todas fontes falharam.

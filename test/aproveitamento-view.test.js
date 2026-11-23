@@ -109,3 +109,32 @@ test('aproveitamento usa o código canônico e escapa campos externos na tabela'
     assert.match(appSource, /escapeHtml\(m\.name\)/);
 });
 
+
+
+test('seleção múltipla permite união, todos exceto um e nenhum sem duplicar clientes', () => {
+    const vm=require('node:vm');
+    const mapping=appSource.slice(appSource.indexOf('const CLIENTES_APROVEITAMENTO'),appSource.indexOf('};',appSource.indexOf('const CLIENTES_APROVEITAMENTO'))+2);
+    const callbacks=appSource.slice(appSource.indexOf('    window.crmSetAproveitamentoClient ='),appSource.indexOf('    window.crmSetAproveitamentoCustomDate ='));
+    const state={aproveitamentoClients:null};
+    const context=vm.createContext({state,window:{},document:{querySelector:()=>null},renderActiveView:()=>{}});
+    vm.runInContext(mapping+'\n'+callbacks,context);
+    context.window.crmToggleAproveitamentoClient('Hering');
+    assert.equal(state.aproveitamentoClients.length,8);
+    assert.ok(!state.aproveitamentoClients.includes('Hering'));
+    context.window.crmClearAproveitamentoClients();assert.equal(state.aproveitamentoClients.length,0);
+    context.window.crmToggleAproveitamentoClient('Renner');context.window.crmToggleAproveitamentoClient('C&A');
+    assert.deepEqual([...state.aproveitamentoClients],['Renner','C&A']);
+    context.window.crmToggleAproveitamentoClient('Renner');assert.deepEqual([...state.aproveitamentoClients],['C&A']);
+    context.window.crmSetAproveitamentoClient('all');assert.equal(state.aproveitamentoClients,null);
+});
+
+test('observação atualiza texto literal sem renderizar novamente e oculta conteúdo vazio', () => {
+    const vm=require('node:vm');const output={parentElement:{hidden:true}};const state={};
+    const start=appSource.indexOf('    window.crmSetAproveitamentoObservation =');
+    const callback=appSource.slice(start,appSource.indexOf('    window.crmSetAproveitamentoCustomDate =',start));
+    const context=vm.createContext({state,window:{},document:{querySelector:()=>output}});vm.runInContext(callback,context);
+    context.window.crmSetAproveitamentoObservation('<b>Observação</b>');
+    assert.equal(output.textContent,'<b>Observação</b>');assert.equal(output.parentElement.hidden,false);
+    context.window.crmSetAproveitamentoObservation(' '.repeat(10));assert.equal(output.parentElement.hidden,true);
+    context.window.crmSetAproveitamentoObservation('a'.repeat(700));assert.equal(state.aproveitamentoObservation.length,600);
+});

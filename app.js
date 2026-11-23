@@ -64,6 +64,7 @@
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
         progCQFilters: { flow: 'all', sectors: [] },
+        progFeiraTrimForecast: 'all',
         progFeiraSectors: [],
         progFeiraStylist: 'all',
         progFeiraDeliveries: [],
@@ -81,6 +82,8 @@
         cqViewAllMode: false,
         aproveitamentoSearch: '',
         aproveitamentoClient: 'all',
+        aproveitamentoClients: null,
+        aproveitamentoObservation: '',
         aproveitamentoPeriod: 'all',
         aproveitamentoDateStart: '',
         aproveitamentoDateEnd: '',
@@ -127,6 +130,7 @@
         'processo',
         'setor01',
         'raio-x',
+        'follow-produto',
         'estampa',
         'andamento-cq',
         'rotativos',
@@ -141,13 +145,6 @@
     // INICIALIZAÇÃO
     // =========================================================================
 
-    function renderAproveitamentoView(container) {
-        const ext = state.aproveitamentoExternalData || { count: 0, records: [] };
-        const finalization=window.CRMAproveitamentoFinalizacao;
-        const finalizationSource=state.aproveitamentoFinalizationData;
-        const rawRecords = finalization.join(ext.records || [],finalizationSource);
-        const finalizationStats=finalization.summarize(rawRecords);
-
         const CLIENTES_APROVEITAMENTO = {
             '01': 'C&A',
             '02': 'Renner',
@@ -157,6 +154,15 @@
             '15': 'Carrefour',
             '21': 'Santa Marca'
         };
+
+    function renderAproveitamentoView(container) {
+        const ext = state.aproveitamentoExternalData || { count: 0, records: [] };
+        const finalization=window.CRMAproveitamentoFinalizacao;
+        const finalizationSource=state.aproveitamentoFinalizationData;
+        const rawRecords = finalization.join(ext.records || [],finalizationSource);
+        const finalizationStats=finalization.summarize(rawRecords);
+
+
 
         function parseAproveitamentoDate(value) {
             return window.CRMAproveitamentoDates.parse(value);
@@ -179,7 +185,9 @@
             ? new Date(Math.max(...validDates.map(date => date.getTime())))
             : null;
         const activePeriod = state.aproveitamentoPeriod || 'all';
-        const activeCli = state.aproveitamentoClient || 'all';
+        const clientOptions = [...new Set([...Object.values(CLIENTES_APROVEITAMENTO), 'Showroom Oneda', 'Outros'])];
+        const selectedClients = state.aproveitamentoClients;
+        const activeCli = selectedClients === null ? 'all' : (selectedClients.length ? selectedClients.join(', ') : 'Nenhum cliente');
         let periodStart = null;
         let periodEnd = dataMaxDate ? new Date(dataMaxDate) : null;
 
@@ -199,7 +207,7 @@
 
         const filteredRecords = rawRecords.filter(record => {
             const recordClient = getAproveitamentoClient(record).name;
-            if (activeCli !== 'all' && recordClient !== activeCli) return false;
+            if (selectedClients !== null && !selectedClients.includes(recordClient)) return false;
             const recordDate = parseAproveitamentoDate(record.CRM_FINALIZACAO.date);
             if(activePeriod!=='all'&&!recordDate)return false;
             if(activePeriod==='custom'&&periodStart&&periodEnd&&periodStart>periodEnd)return false;
@@ -328,8 +336,8 @@
         
         // SVG dimensions
         const svgW = 1000;
-        const svgH = 400;
-        const pad = { top: 40, right: 60, bottom: 75, left: 60 };
+        const svgH = 420;
+        const pad = { top: 40, right: 60, bottom: 95, left: 60 };
         const drawW = svgW - pad.left - pad.right;
         const drawH = svgH - pad.top - pad.bottom;
         
@@ -352,7 +360,7 @@
             else paretoPathD += ` L ${cx} ${py}`;
             
             return `
-                <g style="cursor:pointer;" onclick="window.crmSetAproveitamentoClient('${c.name}')">
+                <g style="cursor:pointer;" onclick="window.crmToggleAproveitamentoClient('${c.name}')">
                     <rect x="${cx - colW/2}" y="${pad.top + drawH - hComp}" width="${colW}" height="${hComp}" fill="#10b981" />
                     <rect x="${cx - colW/2}" y="${pad.top + drawH - hComp - hNao}" width="${colW}" height="${hNao}" fill="#f43f5e" />
                     
@@ -360,6 +368,7 @@
                     <text x="${cx}" y="${pad.top + drawH + 20}" fill="#cbd5e1" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui">${c.name}</text>
                     <text x="${cx}" y="${pad.top + drawH + 35}" fill="#64748b" font-size="10" font-weight="normal" text-anchor="middle" font-family="system-ui">${c.prefix ? 'Pref: '+c.prefix : ''}</text>
                     <text x="${cx}" y="${pad.top + drawH + 52}" fill="#0ea5e9" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui">${((c.total / totalCount) * 100).toFixed(1)}%</text>
+                    <text class="aproveitamento-client-conversion" x="${cx}" y="${pad.top + drawH + 70}" fill="#34d399" font-size="11" font-weight="bold" text-anchor="middle" font-family="system-ui">Compra: ${(c.total > 0 ? c.comp / c.total * 100 : 0).toFixed(1)}%</text>
                 </g>
             `;
         }).join('');
@@ -421,6 +430,8 @@
 
         const html = `
             <div id="print-area-aproveitamento" style="background:#0f172a; padding: 24px;">
+                <section class="aproveitamento-print-summary">
+                <h1 class="aproveitamento-print-title">controle do aproveitamento da venda de amostras - RQ 008 - setor desenvolvimento</h1>
                 <div class="header-main-title" style="margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; display:flex; justify-content: space-between; align-items:center;">
                     <div>
                         <h2 style="font-size: 24px; font-weight: 800; color: #f8fafc; margin: 0; text-transform: uppercase;">APROVEITAMENTO AMOSTRAS ${periodText ? periodText : ''}</h2>
@@ -429,7 +440,7 @@
                     <div style="display:flex; gap:12px;">
                         ${activeCli !== 'all' ? `
                         <button onclick="window.crmSetAproveitamentoClient('all')" class="badge badge-purple" style="border:none; cursor:pointer;">
-                            <i class="fa-solid fa-times"></i> Limpar Filtro: ${activeCli}
+                            <i class="fa-solid fa-times"></i> Limpar Filtro: ${escapeHtml(activeCli)}
                         </button>
                         ` : ''}
                         <button onclick="window.print()" class="btn btn-primary" style="font-size:13px; font-weight:bold;">
@@ -466,15 +477,14 @@
                             </label>
                         </div>
                     ` : ''}
-                    <label style="display:flex; flex-direction:column; gap:6px; min-width:220px; margin-left:auto;">
-                        <span style="font-size:11px; color:#94a3b8; font-weight:800; text-transform:uppercase;">Cliente</span>
-                        <select onchange="window.crmSetAproveitamentoClient(this.value)" style="padding:8px 10px; border-radius:6px; border:1px solid rgba(255,255,255,.12); background:#0b1220; color:#e2e8f0;">
-                            <option value="all" ${activeCli === 'all' ? 'selected' : ''}>Todos os clientes</option>
-                            ${Object.values(CLIENTES_APROVEITAMENTO).map(name => `<option value="${name}" ${activeCli === name ? 'selected' : ''}>${name}</option>`).join('')}
-                            <option value="Showroom Oneda" ${activeCli === 'Showroom Oneda' ? 'selected' : ''}>Showroom Oneda</option>
-                            <option value="Outros" ${activeCli === 'Outros' ? 'selected' : ''}>Outros</option>
-                        </select>
-                    </label>
+                    <div class="aproveitamento-client-filter">
+                        <strong>Clientes: ${escapeHtml(activeCli === 'all' ? 'Todos' : activeCli)}</strong>
+                        <details class="aproveitamento-client-options"><summary>Selecionar clientes</summary>
+                            <button type="button" onclick="window.crmSetAproveitamentoClient('all')">Marcar todos</button>
+                            <button type="button" onclick="window.crmClearAproveitamentoClients()">Limpar seleção</button>
+                            ${clientOptions.map(name => `<label><input type="checkbox" ${selectedClients === null || selectedClients.includes(name) ? 'checked' : ''} onchange="window.crmToggleAproveitamentoClient(this.value)" value="${escapeHtml(name)}"> ${escapeHtml(name)}</label>`).join('')}
+                        </details>
+                    </div>
                     <div class="aproveitamento-date-note" style="font-size:12px; width:100%;">
                         Período pela <strong>data de finalização da amostra no setor 01F</strong>.
                         ${dataMaxDate ? `Atalhos calculados até ${dataMaxDate.toLocaleDateString('pt-BR')}, a finalização mais recente dos produtos vinculados.` : 'Aguardando datas válidas na nova planilha.'}
@@ -544,7 +554,7 @@
                     </div>
                 </div>
 
-                <!-- Pareto --><div class="page-break-before"></div>
+                <!-- Pareto -->
                 <div class="cq-macro-card" style="margin-bottom: 24px; padding: 20px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
                         <h3 style="color: #f8fafc; font-size: 16px; font-weight: 700; margin: 0;"><i class="fa-solid fa-chart-column" style="color:#fbbf24; margin-right:8px;"></i> Visualização geral por cliente</h3>
@@ -554,7 +564,7 @@
                             <span style="color: #fbbf24;"><i class="fa-solid fa-minus"></i> % Acumulado</span>
                         </div>
                     </div>
-                    <svg viewBox="0 0 ${svgW} ${svgH}" style="width: 100%; height: auto; background: rgba(15, 23, 42, 0.4); border-radius: 8px;">
+                    <svg preserveAspectRatio="none" viewBox="0 0 ${svgW} ${svgH}" style="width: 100%; height: auto; background: rgba(15, 23, 42, 0.4); border-radius: 8px;">
                         ${[0, 0.25, 0.5, 0.75, 1].map(r => {
                             const y = pad.top + drawH - (drawH * r);
                             return `
@@ -568,6 +578,11 @@
                     </svg>
                 </div>
 
+                <label class="aproveitamento-observation-editor">Observação para impressão (até 600 caracteres)
+                    <textarea maxlength="600" rows="3" oninput="window.crmSetAproveitamentoObservation(this.value)" placeholder="Digite uma informação relevante para este relatório">${escapeHtml(state.aproveitamentoObservation || '')}</textarea>
+                </label>
+                <div class="aproveitamento-observation-print" ${state.aproveitamentoObservation?.trim() ? '' : 'hidden'}><strong>Observação:</strong> <span data-aproveitamento-observation>${escapeHtml(state.aproveitamentoObservation || '')}</span></div>
+                </section>
                 <!-- Exec Table & Macros -->
                 <div style="display: grid; grid-template-columns: 1fr; gap: 24px; margin-bottom: 24px;">
                     <div class="cq-macro-card" style="padding: 20px; max-height: 400px; overflow-y: auto;">
@@ -938,7 +953,7 @@
                 const request = force ? adminFetch(url, { method: 'POST' }) : fetch(url);
                 return request.then(async response => {
                     const payload = await response.json().catch(() => null);
-                    if (!response.ok || !payload?.success || (force && payload.isLive === false)) throw new Error(payload?.error || `Falha ao atualizar ${type}`);
+                    if (!response.ok || !payload?.success || (force && payload.isLive === false)) throw new Error(payload?.error || payload?.warning || `Falha ao atualizar ${type}`);
                     return payload;
                 }).catch(error => { failures.push(`${type}: ${error.message}`); return null; });
             };
@@ -986,7 +1001,7 @@
             const changed = previousRecords !== JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.aproveitamentoFinalizationData, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
             if (state.activeSubmodule === 'producao-costura') await loadCosturaData(force);
             updateSidebarBadges();
-            if ((changed || force || !sheetsWereLoaded || previousSheetSources !== JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive])) && ['raio-x', 'cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
+            if ((changed || force || !sheetsWereLoaded || previousSheetSources !== JSON.stringify([state.coresExternalData?.isLive, state.aviamentosExternalData?.isLive])) && ['follow-produto', 'raio-x', 'cores-pendentes', 'aviamentos-pendentes', 'cores-aviamentos', 'andamento-cq', 'aproveitamento', 'leadtime', 'rotativos', 'prog-feira', 'imagens-ausentes', 'alertas', 'geral'].includes(state.activeSubmodule)) {
                 renderActiveView();
             }
             if (force && failures.length) throw new Error(`Atualização parcial: ${failures.join('; ')}`);
@@ -1120,6 +1135,8 @@
             // distintos na mesma OF/setor precisam permanecer separados para imagens e alertas.
             const normalizedProductKey = String(codigo || 'SEM_CODIGO').trim().toUpperCase();
             const productKey = `${op}__${setor || 'SEM_SETOR'}__${normalizedProductKey}`;
+            const diasParadoRaw = getField(r, ['Dias Parado', 'Dias Parado Setor', 'Dias No Setor', 'Dias Parado no Setor', 'Dias'], '');
+            const rotativosPendingDays=parseRotativosPendingDays(diasParadoRaw);
 
             if (!groups.has(productKey)) {
                 // 2. STATUS DE MODELAGEM (Coluna: Descrição do Local) - Informação mais completa (se estiver em branco sinalizar!)
@@ -1159,7 +1176,6 @@
                 const progAmostras = getField(r, ['Descrição2', 'Descricao2', 'Descrio2', 'Descricao 2', 'Descrição 2', 'Prog Amostras', 'Prog Amostra', 'Amostra'], '—');
 
                 // 8. QUANTIDADE DIAS PENDENTE NO SETOR (Coluna: Dias Parado) - Destaque > 2 dias
-                const diasParadoRaw = getField(r, ['Dias Parado', 'Dias Parado Setor', 'Dias No Setor', 'Dias Parado no Setor', 'Dias'], '0');
                 const diasParado = parseInt(diasParadoRaw.replace(/[^0-9]/g, ''), 10) || 0;
 
                 // Metadados adicionais
@@ -1222,6 +1238,7 @@
 
                 groups.set(productKey, {
                     raw: r,
+                    rawRows: [],
                     key: productKey,
                     op,
                     codigo,
@@ -1250,6 +1267,7 @@
                     statusProd,             // Alias para compatibilidade
                     progAmostras,           // Coluna Descrição2
                     diasParado,             // Coluna Dias Parado
+                    diasParadoFonte:rotativosPendingDays,
                     oc,
                     pedPeriodo,
                     pedDescPeriodo,
@@ -1262,7 +1280,9 @@
             }
 
             const prod = groups.get(productKey);
+            prod.rawRows.push(r);
             prod.qtdeOriginal += qtdeOriginal;
+            if(rotativosPendingDays!==null)prod.diasParadoFonte=Math.max(prod.diasParadoFonte ?? 0,rotativosPendingDays);
             if (codigo && (!prod.codigo || prod.codigo === '—' || prod.codigo === '')) {
                 prod.codigo = codigo;
             }
@@ -1583,7 +1603,7 @@
             searchInput.addEventListener('input', (e) => {
                 state.filters.search = e.target.value.toLowerCase().trim();
                 if (clearSearchBtn) clearSearchBtn.style.display = state.filters.search ? 'block' : 'none';
-                applyFiltersAndRender();
+                if(state.activeSubmodule !== 'follow-produto') applyFiltersAndRender();
             });
         }
         if (clearSearchBtn) {
@@ -1591,7 +1611,7 @@
                 searchInput.value = '';
                 state.filters.search = '';
                 clearSearchBtn.style.display = 'none';
-                applyFiltersAndRender();
+                if(state.activeSubmodule !== 'follow-produto') applyFiltersAndRender();
             });
         }
 
@@ -1826,6 +1846,7 @@
         else if (state.activeSubmodule === 'setor01') label = 'Pend. Setor 01';
         else if (state.activeSubmodule === 'relatorios-automaticos') label = 'Relatórios automáticos';
         else if (state.activeSubmodule === 'raio-x') label = 'Raio X';
+        else if (state.activeSubmodule === 'follow-produto') label = 'Follow de produto';
         else if (state.activeSubmodule === 'estampa') label = 'Sit. Estampa';
         else if (state.activeSubmodule === 'cores-pendentes') label = 'Cores Pendentes (Setor D01)';
         else if (state.activeSubmodule === 'aviamentos-pendentes') label = 'Aviamentos Pendentes (Setor X01)';
@@ -1892,6 +1913,9 @@
                     removeAll:()=>deleteAutomaticReports(state.automaticReports.map(r=>r.id),true)
                 });
                 if (!state.automaticReportsLoaded && !state.automaticReportsLoading) loadAutomaticReports();
+                break;
+            case 'follow-produto':
+                renderFollowProductView(container);
                 break;
             case 'raio-x':
                 renderRaioXView(container);
@@ -2071,7 +2095,7 @@
         const s43Repetidos = s43Items.filter(r => state.productionCodes.has(r.codigo)).length;
         const s43Regulares = s43Items.length - s43Repetidos;
 
-        const rotExt = state.rotativosExternalData || { count: 12, faltaReceberCount: 5, recebidosCount: 7, records: [] };
+        const rotExt = state.rotativosExternalData || { count: 0, faltaReceberCount: 0, recebidosCount: 0, records: [] };
         const rotDriveTotal = rotExt.count || 0;
         const rotFaltaReceber = rotExt.faltaReceberCount || 0;
         const rotRecebidos = rotExt.recebidosCount || (rotDriveTotal - rotFaltaReceber);
@@ -4023,6 +4047,81 @@
     // =========================================================================
     // 3.5 MÓDULO ESTILO PEDIDO - PENDÊNCIAS SETOR 01 (POR CLIENTE & DIAS)
     // =========================================================================
+    function renderFollowProductView(container) {
+        const api = window.CRMFollowProduct;
+        const all = api.build({main:state.allData, progFeira:state.progFeiraExternalData?.records,
+            colors:state.coresExternalData?.records,trims:state.aviamentosExternalData?.records,
+            rotativos:state.rotativosExternalData?.records});
+        const selections=state.followFixedFilters || {};
+        const options=api.filterOptions(all);
+        const applied=state.followApplied || {filters:{},code:'',search:'',top:''};
+        const selected = api.filterProductCode(api.filterFixed(api.filter(api.filter(all,applied.top),applied.search),applied.filters),applied.code);
+        const filters=Object.entries(api.FILTER_FIELDS).map(([key,label])=>{
+            const checked=(Array.isArray(selections[key])?selections[key]:[selections[key]]).filter(Boolean);
+            const values=[...new Set(['__follow_missing__',...(options[key] || []),...checked])];
+            return `<div class="follow-filter"><span id="follow-label-${key}">${escapeHtml(label)}</span><details class="follow-multi" data-follow-menu="${key}" ${state.followOpenFilter===key?'open':''}><summary aria-labelledby="follow-label-${key} follow-summary-${key}"><span id="follow-summary-${key}">${checked.length?escapeHtml(checked.map(value=>value==='__follow_missing__'?'Não informado':value).join(', ')):'Todos'}</span></summary><div class="follow-multi-options"><input type="search" class="follow-option-search" data-follow-option-search="${key}" aria-label="Buscar opções de ${escapeHtml(label)}" placeholder="Digite para buscar…" value="${escapeHtml(state.followOptionQueries?.[key] || '')}"><p class="follow-options-empty" data-follow-options-empty="${key}" role="status" hidden>Nenhuma opção encontrada.</p><button type="button" data-follow-all="${key}">Todos / limpar seleção</button>${values.map((value,index)=>`<label><input type="checkbox" id="follow-${key}-${index}" data-follow-filter="${key}" value="${escapeHtml(value)}" ${checked.includes(value)?'checked':''}><span>${escapeHtml(value==='__follow_missing__'?'Não informado':value)}</span></label>`).join('')}</div></details></div>`;
+        }).join('');
+        const limit=state.followLimit || 40;
+        container.innerHTML = `<section class="follow-product-view"><header class="module-view-header"><div><h2>Follow de produto</h2><p>Preencha os filtros e clique em Pesquisar para atualizar os resultados.</p></div></header>
+            <div class="follow-fixed-filters"><label class="follow-filter" for="followProductCode"><span>Produto</span><input type="search" id="followProductCode" class="follow-code-search" placeholder="Código do produto" value="${escapeHtml(state.followProductCode || '')}"></label>${filters}<div class="follow-filter-actions"><button type="button" class="exec-action-btn" data-follow-submit>Pesquisar</button><button type="button" class="exec-action-btn" data-follow-clear>Limpar filtros</button></div></div>
+            <label class="follow-search-label" for="followProductSearch">Buscar produto ou OF</label>
+            <input id="followProductSearch" class="follow-search" type="search" placeholder="Código, OF, etiqueta, semana ou B46, B47…" value="${escapeHtml(state.followSearch || '')}">
+            <p class="follow-result-count">${selected.length} produto(s) / OF(s) • exibindo ${Math.min(limit,selected.length)}</p>
+            ${api.render(selected.slice(0,limit),{getImage:getProductImage,escapeHtml})}
+            ${selected.length>limit?'<button type="button" class="exec-action-btn" data-follow-more>Mostrar mais produtos</button>':''}</section>`;
+        const codeInput=container.querySelector('#followProductCode');
+        codeInput.addEventListener('input',()=>{state.followProductCode=codeInput.value;});
+        container.querySelectorAll('[data-follow-menu]').forEach(menu=>menu.addEventListener('toggle',()=>{if(menu.isConnected)state.followOpenFilter=menu.open?menu.dataset.followMenu:null;}));
+        container.querySelectorAll('[data-follow-option-search]').forEach(search=>{
+            const update=()=>{
+                const key=search.dataset.followOptionSearch;
+                state.followOptionQueries={...state.followOptionQueries,[key]:search.value};
+                const normalize=value=>String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+                const query=normalize(search.value);
+                let visible=0;
+                container.querySelectorAll(`[data-follow-filter="${key}"]`).forEach(input=>{
+                    const label=input.closest('label');
+                    label.hidden=!normalize(label.textContent).includes(query);
+                    if(!label.hidden)visible++;
+                });
+                container.querySelector(`[data-follow-options-empty="${key}"]`).hidden=visible>0;
+            };
+            search.addEventListener('input',update);update();
+        });
+        const updateSummary=key=>{
+            const values=state.followFixedFilters?.[key] || [];
+            container.querySelector(`#follow-summary-${key}`).textContent=values.length?values.map(value=>value==='__follow_missing__'?'Não informado':value).join(', '):'Todos';
+        };
+        container.querySelectorAll('[data-follow-filter]').forEach(input=>input.addEventListener('change',()=>{
+            const key=input.dataset.followFilter;
+            const values=[...container.querySelectorAll(`[data-follow-filter="${key}"]:checked`)].map(item=>item.value);
+            state.followFixedFilters={...state.followFixedFilters,[key]:values};updateSummary(key);
+        }));
+        container.querySelectorAll('[data-follow-all]').forEach(button=>button.addEventListener('click',()=>{
+            const key=button.dataset.followAll;state.followFixedFilters={...state.followFixedFilters,[key]:[]};
+            container.querySelectorAll(`[data-follow-filter="${key}"]`).forEach(input=>{input.checked=false;});updateSummary(key);
+        }));
+        container.querySelector('[data-follow-submit]').addEventListener('click',()=>{
+            state.followApplied={filters:JSON.parse(JSON.stringify(state.followFixedFilters || {})),code:state.followProductCode || '',search:state.followSearch || '',top:state.filters.search || ''};
+            state.followLimit=40;state.followOpenFilter=null;renderFollowProductView(container);
+        });
+        container.querySelector('[data-follow-clear]').addEventListener('click',()=>{
+            state.followFixedFilters={};state.followProductCode='';state.followOptionQueries={};state.followSearch='';state.filters.search='';
+            container.querySelectorAll('[data-follow-filter]').forEach(input=>{input.checked=false;});
+            Object.keys(api.FILTER_FIELDS).forEach(updateSummary);
+            container.querySelectorAll('input[type="search"]').forEach(input=>{input.value='';input.dispatchEvent(new Event('input'));});
+            const top=document.getElementById('headerSearchInput');if(top)top.value='';
+            const clearTop=document.getElementById('clearSearchBtn');if(clearTop)clearTop.style.display='none';
+        });
+        const input=container.querySelector('#followProductSearch');
+        input.addEventListener('input',()=>{state.followSearch=input.value;});
+        container.querySelector('[data-follow-more]')?.addEventListener('click',()=>{state.followLimit=limit+40;renderFollowProductView(container);});
+        container.querySelectorAll('.follow-product-card img').forEach(img=>{
+            img.addEventListener('click',()=>window.crmOpenImageLightbox(img.dataset.large || img.src,img.alt,'Follow de produto',img.dataset.largeFallback || ''));
+            img.addEventListener('error',()=>{if(img.dataset.fallback && !img.dataset.tried){img.dataset.tried='1';img.src=img.dataset.fallback;}else {img.hidden=true;}});
+        });
+    }
+
     function renderRaioXView(container) {
         const api = window.CRMRaioX;
         const helpers = window.CRMSetor01RelatedSectors;
@@ -4167,52 +4266,22 @@
         const report = document.createElement('div');
         report.id = 'raioXPrintReport';
         const cards = [...view.querySelectorAll('#raioXGallery .rx-card')];
-        for (let offset = 0; offset < Math.max(1, cards.length); offset += 6) {
+        // Full Prog Feira layout: up to eight cards, preserving product information.
+        for (let offset = 0; offset < Math.max(1, cards.length); offset += 8) {
             const page = document.createElement('section');
             page.className = 'rx-print-page';
-            if (offset === 0) {
-                const summary = document.createElement('div');
-                summary.className = 'rx-print-summary';
-                for (const selector of ['.rx-filter-summary', '.rx-kpis']) {
-                    const original = view.querySelector(selector);
-                    if (original) summary.appendChild(original.cloneNode(true));
-                }
-                page.appendChild(summary);
-            }
             const grid = document.createElement('div');
             grid.className = 'rx-print-grid';
-            cards.slice(offset, offset + 6).forEach(card => {
+            cards.slice(offset, offset + 8).forEach(card => {
                 const copy = card.cloneNode(true);
-                copy.querySelectorAll('.rx-sector-counts > span').forEach(badge => {
-                    badge.textContent = badge.textContent.replace(/ — [^•]+(?=•)/, ' ');
-                });
-                const body = copy.querySelector('.s13-card-body');
-                const textOf = selector => [...copy.querySelectorAll(selector)].map(el => el.textContent.trim()).filter(Boolean).join(' / ');
-                const details = [
-                    ['Setores / dias', textOf('.rx-sector-counts > span')],
-                    ['Estilo', ''],
-                    ['Modelagem', ''],
-                ];
-                // Read statuses by their ordered blocks, independently of badge styling.
-                const statuses = [...copy.querySelectorAll('.rx-status')];
-                details[1][1] = statuses[0] ? [...statuses[0].querySelectorAll(':scope > span')].map(el => el.textContent.trim()).join(' / ') : '';
-                details[2][1] = statuses[1] ? [...statuses[1].querySelectorAll(':scope > span')].map(el => el.textContent.trim()).join(' / ') : '';
-                details.push(['Aviamento / cor', [...copy.querySelectorAll('.rx-secondary .s13-meta-item')].map(el => el.querySelector('.s13-meta-label').textContent.trim() + ': ' + el.querySelector('.s01-sector-chip-list').textContent.trim()).join(' • ')]);
-                details.push(['Malote', textOf('.rx-secondary > .s01-sector-chip').replace(/^Malote D7:\s*/, '')]);
-                const sheetDetails = [...copy.querySelectorAll('.rx-sheet-details')].map(section => section.cloneNode(true));
-                const identification = body.querySelector('.s13-card-code-row').outerHTML;
-                const description = body.querySelector('.s13-card-description').textContent.trim();
-                body.innerHTML = identification + `<p class="rx-print-description">${escapeHtml(description)}</p><dl class="rx-print-details">${details.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value || 'Não informado')}</dd></div>`).join('')}</dl>`;
-                sheetDetails.forEach(section => body.appendChild(section));
+                copy.querySelectorAll('.s13-photo-overlay, .s13-btn-action').forEach(el => el.remove());
                 copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
                 copy.querySelectorAll('img').forEach(img => {
                     img.loading = 'eager';
                     img.addEventListener('error', () => {
                         if (!img.dataset.rxTried && img.dataset.rxFallback) {
                             img.dataset.rxTried = '1'; img.src = img.dataset.rxFallback;
-                        } else {
-                            img.hidden = true;
-                        }
+                        } else img.hidden = true;
                     });
                 });
                 grid.appendChild(copy);
@@ -4224,6 +4293,32 @@
         view.appendChild(report);
         document.body.classList.add('print-raio-x');
     }
+
+    function prepareProgFeiraPrint() {
+        if(state.activeSubmodule !== 'prog-feira') return;
+        document.body.classList.add('print-prog-feira','print-gallery-report');
+        const pages=[...document.querySelectorAll('.prog-feira-print-page')];
+        pages.forEach(page=>{
+            page.style.removeProperty('--prog-print-scale');
+            page.style.removeProperty('--prog-print-width');
+        });
+        // Measure the actual print layout, including all trim rows, before fitting the sheet.
+        const availableHeight=194*96/25.4;
+        pages.forEach(page=>{
+            const bounds=page.getBoundingClientRect();
+            const height=Math.max(bounds.height,page.scrollHeight);
+            page.style.setProperty('--prog-print-width',`${bounds.width}px`);
+            page.style.setProperty('--prog-print-scale',String(Math.min(1,availableHeight/Math.max(1,height))));
+        });
+    }
+    window.addEventListener('beforeprint',prepareProgFeiraPrint);
+    window.matchMedia('print').addEventListener('change',event=>{if(event.matches)prepareProgFeiraPrint();});
+    window.addEventListener('afterprint',()=>{
+        document.querySelectorAll('.prog-feira-print-page').forEach(page=>{
+            page.style.removeProperty('--prog-print-scale');page.style.removeProperty('--prog-print-width');
+        });
+        document.body.classList.remove('print-prog-feira','print-gallery-report');
+    });
 
     window.addEventListener('beforeprint', prepareRaioXPrint);
     window.addEventListener('afterprint', () => {
@@ -8695,6 +8790,53 @@
     // =========================================================================
     // 6. MÓDULO ESTILO PEDIDO - ROTATIVOS (SETOR 43)
     // =========================================================================
+    function getRotativosGalleryItems(records) {
+        const products=new Map();
+        for(const row of records || []) {
+            const codigo=String(row.produto || '').trim().toUpperCase();
+            if(!codigo)continue;
+            if(!products.has(codigo))products.set(codigo,{codigo,forecasts:[]});
+            const prediction=String(row.prevMesa || '').trim() || 'Não informada';
+            if(!products.get(codigo).forecasts.includes(prediction))products.get(codigo).forecasts.push(prediction);
+        }
+        return [...products.values()];
+    }
+
+    function parseRotativosPendingDays(value) {
+        const text=String(value ?? '').trim();
+        if(!/^\d+(?:[.,]\d+)?$/.test(text))return null;
+        const days=Number(text.replace(',','.'));
+        return Number.isFinite(days)?days:null;
+    }
+
+    function getRotativosSectorGalleryItems(records) {
+        const products=new Map();
+        for(const row of records || []) {
+            if(String(row?.setor || '').trim().replace(/^0+/, '')!=='43')continue;
+            const codigo=String(row.codigo || '').trim().toUpperCase();
+            if(!codigo)continue;
+            const raw=Object.hasOwn(row,'diasParadoFonte')?row.diasParadoFonte:row.diasParado;
+            const days=parseRotativosPendingDays(raw);
+            if(!products.has(codigo))products.set(codigo,{codigo,days});
+            else if(days!==null)products.get(codigo).days=Math.max(products.get(codigo).days ?? 0,days);
+        }
+        return [...products.values()];
+    }
+
+    function renderRotativosImageGallery(items,title,kind,caption) {
+        return `<section class="rotativos-sheet-images" data-rotativos-gallery="${kind}" aria-label="${escapeHtml(title)}">
+            <h3>${escapeHtml(title)}</h3><div class="rotativos-sheet-image-grid">
+                ${items.length?items.map((item,index)=>{
+                    const img=getProductImage(item.codigo);
+                    return `<figure class="rotativos-sheet-image">
+                        <button type="button" class="rotativos-sheet-image-open" data-rotativo-image="${index}" data-rotativo-gallery="${kind}" aria-label="Ampliar imagem de ${escapeHtml(item.codigo)}" ${img.hasImage?'':'disabled'}>
+                            ${img.hasImage?`<img src="${escapeHtml(img.thumbUrl)}" data-rotativo-fallback="${escapeHtml(img.proxyUrl || '')}" alt="${escapeHtml(item.codigo)}" loading="lazy">`:'<span>Imagem indisponível</span>'}
+                        </button><figcaption>${escapeHtml(caption(item))}</figcaption>
+                    </figure>`;
+                }).join(''):'<p class="rotativos-sheet-images-empty">Nenhum produto para os filtros selecionados.</p>'}
+            </div></section>`;
+    }
+
     function renderRotativosView(container) {
         // Regra do Usuário:
         // - produtos pendentes no setor 43 (coluna AY) ou com indicação de processo rotativo
@@ -8725,10 +8867,10 @@
         const regularesPct = totalItems > 0 ? ((regularesCount / totalItems) * 100).toFixed(1) : '0';
 
         // 1. Dados da Planilha Externa de Rotativos (Google Drive - Mesas Pendentes)
-        const rotExt = state.rotativosExternalData || { count: 12, faltaReceberCount: 5, recebidosCount: 7, records: [], isLive: false };
-        const rotDriveTotal = rotExt.count || (rotExt.records ? rotExt.records.length : 12);
-        const rotFaltaReceber = rotExt.faltaReceberCount !== undefined ? rotExt.faltaReceberCount : 5;
-        const rotRecebidos = rotExt.recebidosCount !== undefined ? rotExt.recebidosCount : 7;
+        const rotExt = state.rotativosExternalData || { count: 0, faltaReceberCount: 0, recebidosCount: 0, records: [], isLive: false };
+        const rotDriveTotal = rotExt.count || (rotExt.records ? rotExt.records.length : 0);
+        const rotFaltaReceber = rotExt.faltaReceberCount !== undefined ? rotExt.faltaReceberCount : 0;
+        const rotRecebidos = rotExt.recebidosCount !== undefined ? rotExt.recebidosCount : 0;
         const rotDriveFaltaPct = rotDriveTotal > 0 ? ((rotFaltaReceber / rotDriveTotal) * 100).toFixed(1) : '0';
         const rotDriveRecebidosPct = rotDriveTotal > 0 ? ((rotRecebidos / rotDriveTotal) * 100).toFixed(1) : '0';
 
@@ -8747,20 +8889,7 @@
         const driveRecebidosOffset = -driveFaltaDash;
 
         // 2. Filtragem de dados da Planilha Google Drive
-        let driveDisplayRecords = rotExt.records && rotExt.records.length > 0 ? rotExt.records : [
-            { produto: 'ON.11.0123', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61318', mesaEnviada: '02/09/2026', prevMesa: '14/09/2026', dias: '11', recebido: '09/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '01.14.00.7490', arquivoAprov: '02/09/2026', fid: '68644', prevEntCilindro: '04/09/2026', solicitacao: '61533', mesaEnviada: '10/09/2026', prevMesa: '14/09/2026', dias: '7', recebido: '16/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: 'ON.13.0121', arquivoAprov: 'C. LANCASTER', fid: '52791', prevEntCilindro: 'C. LANCASTER', solicitacao: '61526', mesaEnviada: '10/09/2026', prevMesa: '18/09/2026', dias: '10', recebido: '18/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '13.14.00.0624E', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61639', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '23/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '13.14.00.0624F', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61641', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '22/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '13.14.00.0624G', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61643', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '22/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: '13.13.00.0622F', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61648', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' },
-            { produto: '13.13.00.0622G', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61649', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' },
-            { produto: '13.13.00.0623F', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61658', mesaEnviada: '16/09/2026', prevMesa: '25/09/2026', dias: '5', recebido: '22/09/2026', envCliente: '', obs: '', isRecebido: true, statusRecebimento: 'Já Recebido' },
-            { produto: 'ON.13.0127', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61905', mesaEnviada: '22/09/2026', prevMesa: '01/10/2026', dias: '1', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' },
-            { produto: 'ON.16.0146', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '61992', mesaEnviada: '23/09/2026', prevMesa: '02//10/2026', dias: '-2', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' },
-            { produto: '13.14.00.0624E', arquivoAprov: 'C. LANCASTER', fid: '', prevEntCilindro: 'C. LANCASTER', solicitacao: '62040', mesaEnviada: '', prevMesa: '', dias: '33062', recebido: '', envCliente: '', obs: '', isRecebido: false, statusRecebimento: 'Falta Receber' }
-        ];
+        let driveDisplayRecords = Array.isArray(rotExt.records) ? rotExt.records : [];
 
         if (state.rotativosDriveFilter === 'faltaReceber') {
             driveDisplayRecords = driveDisplayRecords.filter(r => !r.isRecebido);
@@ -8780,6 +8909,8 @@
                 (r.obs || '').toLowerCase().includes(q)
             );
         }
+
+        const rotativosGalleryItems=getRotativosGalleryItems(driveDisplayRecords);
 
         // 3. Filtragem de dados do CRM (Setor 43)
         let searchFilteredItems = rotItems;
@@ -8810,6 +8941,10 @@
             displayCrmItems = searchFilteredItems.filter(r => !state.productionCodes.has(r.codigo));
             activeCrmFilterLabel = 'Rotativos Regulares (Sem Conflito com Produção)';
         }
+
+        const rotativosSectorGalleryItems=getRotativosSectorGalleryItems(displayCrmItems);
+        const rotativosGalleryGroups={sheet:rotativosGalleryItems,sector:rotativosSectorGalleryItems};
+        const sectorCaption=item=>item.days===null?'Dias pendentes no setor 43: não informados':`${item.days} ${item.days===1?'dia pendente':'dias pendentes'} no setor 43`;
 
         container.innerHTML = `
             <!-- CABEÇALHO DO MÓDULO -->
@@ -9133,6 +9268,8 @@
                         </table>
                     </div>
                 </div>
+                ${renderRotativosImageGallery(rotativosGalleryItems,'Imagens dos produtos da planilha','sheet',item=>`Previsão da mesa: ${item.forecasts.join(' / ')}`)}
+                ${renderRotativosImageGallery(rotativosSectorGalleryItems,'Produtos pendentes no setor 43','sector',sectorCaption)}
             ` : `
                 <!-- CONTEÚDO DA ABA 2: PRODUTOS NO SETOR 43 DO CRM -->
                 <div class="table-card" style="margin-bottom: 24px; padding: 14px 18px;">
@@ -9321,6 +9458,21 @@
                 `}
             `}
         `;
+        container.querySelectorAll('[data-rotativo-image]').forEach(button=>button.addEventListener('click',()=>{
+            const item=rotativosGalleryGroups[button.dataset.rotativoGallery]?.[Number(button.dataset.rotativoImage)];
+            if(!item)return;
+            const img=getProductImage(item.codigo);
+            window.crmOpenImageLightbox(img.largeUrl,item.codigo,button.dataset.rotativoGallery==='sector'?sectorCaption(item):`Previsão da mesa: ${item.forecasts.join(' / ')}`,img.largeFallbackUrl || '');
+        }));
+        container.querySelectorAll('[data-rotativo-fallback]').forEach(img=>img.addEventListener('error',()=>{
+            if(!img.dataset.tried&&img.dataset.rotativoFallback&&img.src!==img.dataset.rotativoFallback) {
+                img.dataset.tried='1';img.src=img.dataset.rotativoFallback;
+            } else {
+                const button=img.parentElement;
+                button.disabled=true;
+                button.textContent='Imagem indisponível';
+            }
+        }));
     }
 
     // =========================================================================
@@ -10555,7 +10707,17 @@
             return;
         }
 
+        const trimPendingIndex=api.buildTrimPendingIndex(state.aviamentosExternalData?.records);
+        const visibleParallelPending=item=>(item.parallelPending || []).filter(p=>!['D01','X01'].includes(p.sector));
+        const renderTrimPending=item=>{
+            const rows=trimPendingIndex.get(String(item.codigo || '').trim().toUpperCase()) || [];
+            return rows.length?`<div class="prog-feira-trim-lines" aria-label="Aviamentos pendentes na planilha">${rows.map(row=>`<div class="prog-feira-trim-item" title="Fornecedor / Descrição / Solicitado / Previsão"><strong>AVIAMENTO:</strong> ${[row.supplier,row.description,row.requested,row.forecast].map(value=>escapeHtml(value || '—')).join(' / ')}</div>`).join('')}</div>`:'';
+        };
+
         const allProducts = api.buildProducts(source.records || []);
+        const trimForecastAvailable=Array.isArray(state.aviamentosExternalData?.records);
+        const forecastProducts=api.filterByTrimForecast(allProducts,trimForecastAvailable?trimPendingIndex:null,state.progFeiraTrimForecast);
+        const trimForecastSummary=state.progFeiraTrimForecast==='with'?'Aviamentos: com previsão':state.progFeiraTrimForecast==='without'?'Aviamentos: sem previsão':'';
         const search = String(state.filters.search || '').trim().toLowerCase();
         const headerSearchText = document.getElementById('headerSearchInput')?.value;
         const searchText = typeof headerSearchText === 'string' && headerSearchText.toLowerCase().trim() === search ? headerSearchText : (state.filters.search || '');
@@ -10568,8 +10730,8 @@
         const programUnavailable = source.programColumnAvailable === false;
         const parallelFilters = { color:state.progFeiraColor, ting:state.progFeiraTing, cost:state.progFeiraCost };
         const parallelSummary = Object.entries(parallelFilters).filter(([,value]) => value !== 'all').map(([kind,value]) => `${api.PARALLEL_FILTERS[kind].label}: ${value === 'unknown' ? 'Sem informação' : value}`).join(' • ');
-        const renderParallelFilter = kind => `<label class="prog-feira-parallel-filter"><span>${escapeHtml(api.PARALLEL_FILTERS[kind].label)}</span><select data-prog-parallel-filter="${kind}" aria-label="${escapeHtml(api.PARALLEL_FILTERS[kind].label)}" onchange="window.crmFilterProgFeiraParallel('${kind}',this.value)"><option value="all">Todos</option>${api.getParallelFilterOptions(allProducts,kind,parallelFilters[kind]).map(option => `<option value="${escapeHtml(option.value)}" ${parallelFilters[kind] === option.value ? 'selected' : ''}>${escapeHtml(option.value)} — ${escapeHtml(option.label)} (${option.count})</option>`).join('')}<option value="unknown" ${parallelFilters[kind] === 'unknown' ? 'selected' : ''}>Sem informação</option></select></label>`;
-        const labelBaseProducts = window.CRMProductStylist.filter(api.filterByParallelSectors(allProducts, parallelFilters), state.progFeiraStylist).filter(item => {
+        const renderParallelFilter = kind => `<label class="prog-feira-parallel-filter"><span>${escapeHtml(api.PARALLEL_FILTERS[kind].label)}</span><select data-prog-parallel-filter="${kind}" aria-label="${escapeHtml(api.PARALLEL_FILTERS[kind].label)}" onchange="window.crmFilterProgFeiraParallel('${kind}',this.value)"><option value="all">Todos</option>${api.getParallelFilterOptions(forecastProducts,kind,parallelFilters[kind]).map(option => `<option value="${escapeHtml(option.value)}" ${parallelFilters[kind] === option.value ? 'selected' : ''}>${escapeHtml(option.value)} — ${escapeHtml(option.label)} (${option.count})</option>`).join('')}<option value="unknown" ${parallelFilters[kind] === 'unknown' ? 'selected' : ''}>Sem informação</option></select></label>`;
+        const labelBaseProducts = window.CRMProductStylist.filter(api.filterByParallelSectors(forecastProducts, parallelFilters), state.progFeiraStylist).filter(item => {
             if (!search) return true;
             return [item.codigo, item.numero, item.sector, item.sectorLabel, item.program, item.customerProgram, item.prints, item.notes, ...api.labelValues(item), ...(item.parallelPending || []).map(p => [p.label,p.sector,p.description].join(' '))]
                 .some(value => String(value || '').toLowerCase().includes(search));
@@ -10607,44 +10769,40 @@
             return `<img class="prog-feira-image js-prog-feira-image" src="${escapeHtml(info.thumbUrl)}" alt="Produto ${title}" loading="lazy" decoding="async" data-fallback-src="${escapeHtml(info.proxyUrl || '')}" data-large-url="${escapeHtml(info.largeUrl || info.thumbUrl)}" data-image-title="${title}" data-image-subtitle="${subtitle}" data-large-fallback="${escapeHtml(info.largeFallbackUrl || '')}">`;
         };
 
-        const renderHistory = item => {
-            if (!item.history.length) return '<span class="prog-feira-history-empty">Histórico ainda não informado</span>';
-            return item.history.map(step => `
-                <span class="prog-feira-history-step ${step.pending ? 'current' : 'done'}" title="${escapeHtml(step.label || step.sector)}">
-                    <strong>${escapeHtml(step.sector)}</strong><small>${escapeHtml(step.date || '—')}</small>
-                </span>
-            `).join('');
-        };
-
         const renderProductCard = item => `
             <article class="prog-feira-card ${item.sourceFormat === 'parallel' ? 'prog-feira-parallel' : ''}" style="--ting-color:${item.tingInfo.color}">
-                ${item.isDes ? '<div class="prog-feira-des-ribbon"><i class="fa-solid fa-calculator"></i> DES • CUSTO PENDENTE</div>' : ''}
                 <div class="prog-feira-card-top"><span>${escapeHtml(item.codigo)}</span><span>OP ${escapeHtml(item.numero || '—')}</span></div>
                 <div class="prog-feira-media">${renderImage(item)}<div class="prog-feira-delivery"><small>ENTREGA</small><strong>${escapeHtml(item.delivery || '—')}</strong></div></div>
+                <div class="prog-feira-compact-id"><strong>${escapeHtml(item.codigo)}</strong><span>OF ${escapeHtml(item.numero || '—')}</span></div>
                 <div class="prog-feira-card-body">
                     <div class="prog-feira-status-row"><span class="prog-feira-sector-badge">${escapeHtml(item.sector)} • ${escapeHtml(item.sectorLabel)}</span><span class="prog-feira-ting-badge" style="--ting-color:${item.tingInfo.color}">${item.ting ? escapeHtml(item.ting) + ' • ' : ''}${escapeHtml(item.tingInfo.label)}</span></div>
                     <div class="prog-feira-time-grid" aria-label="Permanência nos fluxos D36 e D43">
                         <div class="prog-feira-days prog-feira-time ${item.daysInSector == null ? 'unknown' : item.daysInSector > 2 ? 'late' : ''}" data-prog-duration="main"><span>${state.progFeiraImagesOnly ? 'D36' : 'D36 · ' + escapeHtml(item.sector)}</span><strong>${item.daysInSector == null ? '—' : formatNumber(item.daysInSector)}</strong><small>${item.daysInSector == null ? 'Data não informada' : `${item.daysInSector === 1 ? 'dia' : 'dias'} no setor atual`}</small></div>
-                        <div class="prog-feira-days prog-feira-time ${item.tingDays == null ? 'unknown' : ''}" data-prog-duration="ting" data-ting-sector="${escapeHtml(item.ting)}"><span>${state.progFeiraImagesOnly ? 'D43' : 'D43 · ' + escapeHtml(item.ting || 'Sem registro')}</span><strong>${item.tingDays == null ? '—' : formatNumber(item.tingDays)}</strong><small>${item.tingDays == null ? 'Data não informada' : `${item.tingDays === 1 ? 'dia' : 'dias'} no tingimento`}</small></div>
+                        <div class="prog-feira-days prog-feira-time ${item.tingDays == null ? 'unknown' : ''}" data-prog-duration="ting" data-ting-sector="${escapeHtml(item.ting)}"><span>${state.progFeiraImagesOnly ? 'ENTRADA NO SETOR' : 'D43 · ' + escapeHtml(item.ting || 'Sem registro')}</span><strong>${state.progFeiraImagesOnly ? escapeHtml(item.tingEntryDate || '—') : item.tingDays == null ? '—' : formatNumber(item.tingDays)}</strong><small>${state.progFeiraImagesOnly ? (item.tingEntryDate ? escapeHtml(item.ting || 'Tingimento') : 'Data não informada') : item.tingDays == null ? 'Data não informada' : `${item.tingDays === 1 ? 'dia' : 'dias'} no tingimento`}</small></div>
                     </div>
                     ${item.program ? `<div class="prog-feira-program"><i class="fa-solid fa-layer-group"></i>${escapeHtml(item.program)}</div>` : ''}
                     <div class="prog-feira-customer-program"><span>Programação: ${programUnavailable ? 'indisponível' : escapeHtml(item.customerProgram || 'VAZIO / Sem programação')}</span><span>Etiqueta: <strong class="prog-feira-label-value">${labelUnavailable ? 'Indisponível' : escapeHtml(api.labelValues(item).join(' / ') || 'Sem etiqueta')}</strong></span></div>
                     <dl><div><dt>Movimentação</dt><dd>${escapeHtml(item.movementDate || '—')}</dd></div><div><dt>Estampas</dt><dd>${escapeHtml(item.prints || '—')}</dd></div><div><dt>Observação</dt><dd>${escapeHtml(item.notes || '—')}</dd></div><div><dt>Quantidade pendente</dt><dd>${formatNumber(item.quantity)}</dd></div></dl>
-                    ${item.parallelPending?.length ? `<div class="prog-feira-parallel-pending" aria-label="Pendências dos fluxos complementares">${[...item.parallelPending].sort((a,b) => ['CO','D6','TF','AV'].indexOf(a.part) - ['CO','D6','TF','AV'].indexOf(b.part)).map(p => `<div class="prog-feira-parallel-item"><span>Pendente ${escapeHtml(({CO:'COR',D6:'CUSTO',TF:'TINT. CASEIRA',AV:'AVIAMENTO'})[p.part])}:</span><strong>${escapeHtml(p.sector)}</strong></div>`).join('')}</div>` : ''}
-                    <details class="prog-feira-history"><summary><i class="fa-solid fa-timeline"></i> Histórico do fluxo</summary><div>${renderHistory(item)}</div></details>
+                    ${visibleParallelPending(item).length ? `<div class="prog-feira-parallel-pending" aria-label="Pendências dos fluxos complementares">${visibleParallelPending(item).sort((a,b) => ['CO','D6','TF','AV'].indexOf(a.part) - ['CO','D6','TF','AV'].indexOf(b.part)).map(p => `<div class="prog-feira-parallel-item"><span>Pendente ${escapeHtml(({CO:'COR',D6:'CUSTO',TF:'TINT. CASEIRA',AV:'AVIAMENTO'})[p.part])}:</span><strong>${escapeHtml(p.sector)}</strong></div>`).join('')}</div>` : ''}
+                    ${renderTrimPending(item)}
+
                 </div>
+                ${item.isDes || ['M02','M00'].includes(item.ting) ? `<div class="prog-feira-sector-ribbons" aria-label="Destaques de setores pendentes">
+                    ${item.isDes ? '<div class="prog-feira-sector-ribbon" data-ribbon-sector="DES">DES • CUSTO PENDENTE</div>' : ''}
+                    ${['M02','M00'].includes(item.ting) ? `<div class="prog-feira-sector-ribbon" data-ribbon-sector="${item.ting}">${item.ting} • ${escapeHtml(item.tingInfo.label)}</div>` : ''}
+                </div>` : ''}
             </article>
         `;
 
         const renderSectorPages = group => {
             const pages = [];
-            const cardsPerPage = state.progFeiraImagesOnly ? 16 : 8;
+            const cardsPerPage = 8;
             for (let index = 0; index < group.items.length; index += cardsPerPage) {
                 pages.push(group.items.slice(index, index + cardsPerPage));
             }
             return pages.map((items, pageIndex) => `
                 <section class="prog-feira-sector prog-feira-print-page" data-sector="${escapeHtml(group.sector)}">
-                    <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}${pageIndex ? ' • continuação' : ''}</span><small class="prog-feira-print-filter-summary">Programação: ${selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO')).join(' + ') : 'Todas'}${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}</small></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
+                    <header><div><strong>${escapeHtml(group.sector)}</strong><span>${escapeHtml(group.label)}${pageIndex ? ' • continuação' : ''}</span><small class="prog-feira-print-filter-summary">Programação: ${selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO')).join(' + ') : 'Todas'}${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}${trimForecastSummary?' • '+escapeHtml(trimForecastSummary):''}${trimForecastSummary&&!trimForecastAvailable?' (filtro suspenso: fonte indisponível)':''}</small></div><em>${group.items.length} ${group.items.length === 1 ? 'referência' : 'referências'} • ${allProducts.length ? ((group.items.length / allProducts.length) * 100).toFixed(1).replace('.', ',') : '0'}%</em></header>
                     <div class="prog-feira-grid">${items.map(renderProductCard).join('')}</div>
                 </section>
             `).join('');
@@ -10691,7 +10849,7 @@
                     <div class="prog-feira-sector-selection" role="status"><strong>Setores:</strong><span>${selectedSectors.length ? selectedSectors.map(escapeHtml).join(', ') : 'Todos'}</span>${selectedSectors.length ? '<button type="button" onclick="window.crmFilterProgFeiraSector(\'all\')">Mostrar todos</button>' : ''}</div>
                     <label class="prog-feira-parallel-filter"><span>Estilista responsável</span><select data-prog-stylist aria-label="Estilista responsável" onchange="window.crmFilterProgFeiraStylist(this.value)">${[['all','Todos'],...window.CRMProductStylist.OPTIONS].map(([value,label])=>`<option value="${value}" ${state.progFeiraStylist===value?'selected':''}>${label}</option>`).join('')}</select></label>
                     ${['color','ting','cost'].map(renderParallelFilter).join('')}
-                    ${(selectedDeliveries.length || state.progFeiraStylist !== 'all' || selectedSectors.length || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
+                    ${(state.progFeiraTrimForecast!=='all' || selectedDeliveries.length || state.progFeiraStylist !== 'all' || selectedSectors.length || Object.values(parallelFilters).some(value => value !== 'all') || selectedPrograms.length || selectedLabels.length || search) ? '<button class="filter-clear-btn" onclick="window.crmClearProgFeiraFilters()"><i class="fa-solid fa-xmark"></i> Limpar</button>' : ''}
                 </div>
 
                 <fieldset class="prog-feira-label-filter prog-feira-program-filter">
@@ -10716,7 +10874,7 @@
                     <div class="prog-feira-label-group-grid">${api.getLabelGroups(products).map(group => `<article class="prog-feira-label-group" data-label-group="${escapeHtml(group.prefix)}" title="${escapeHtml(group.labels.join(', ') || 'Produtos sem etiqueta')}"><span>${escapeHtml(group.prefix || 'Sem etiqueta')}</span><strong>${formatNumber(group.count)}</strong><small>${group.count === 1 ? 'produto' : 'produtos'} · <b>${(products.length ? group.count * 100 / products.length : 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</b> do total</small></article>`).join('') || '<p>Nenhum produto nos filtros atuais.</p>'}</div>
                     <small>Contagem por prefixo de duas posições. Percentuais sobre o total filtrado. Cada produto conta uma vez por grupo; grupos podem se sobrepor.</small>
                 </section>`}
-                <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}</p>
+                <p class="prog-feira-program-selection">Programação: ${programUnavailable ? 'indisponível (filtro suspenso)' : selectedPrograms.length ? selectedPrograms.map(value => escapeHtml(value || 'VAZIO / Sem programação')).join(' + ') : 'Todas'} • ${products.length} de ${allProducts.length} referências${state.progFeiraStylist!=='all'?' • Estilista responsável: '+window.CRMProductStylist.label(state.progFeiraStylist):''}${parallelSummary ? ' • ' + escapeHtml(parallelSummary) : ''}${labelSummary ? ' • ' + escapeHtml(labelSummary) : ''}${deliverySummary ? ' • ' + escapeHtml(deliverySummary) : ''}${trimForecastSummary?' • '+escapeHtml(trimForecastSummary):''}${trimForecastSummary&&!trimForecastAvailable?' (filtro suspenso: fonte de aviamentos indisponível)':''}</p>
 
                 <div class="prog-feira-legend">
                     <strong>Cor da borda:</strong>${Object.entries(api.TINGIMENTO).map(([code, info]) => `<span><i style="background:${info.color}"></i>${code} — ${escapeHtml(info.label)}</span>`).join('')}
@@ -10724,6 +10882,8 @@
                 </div>
 
                 <div class="prog-feira-gallery-actions">
+                    <button type="button" class="exec-action-btn" data-prog-trim-forecast="with" aria-pressed="${state.progFeiraTrimForecast==='with'}" ${trimForecastAvailable?'':'disabled'} onclick="window.crmFilterProgFeiraTrimForecast('with')">Ver produtos com previsão de aviamentos</button>
+                    <button type="button" class="exec-action-btn" data-prog-trim-forecast="without" aria-pressed="${state.progFeiraTrimForecast==='without'}" ${trimForecastAvailable?'':'disabled'} onclick="window.crmFilterProgFeiraTrimForecast('without')">Produtos sem previsão de aviamentos</button>
                     <button type="button" class="exec-action-btn" data-prog-images-only aria-pressed="${state.progFeiraImagesOnly}" onclick="window.crmToggleProgFeiraImagesOnly()"><i class="fa-solid fa-images"></i> Apenas imagens e dias</button>
                 </div>
 
@@ -12839,6 +12999,12 @@
         }, 180);
     };
 
+    window.crmFilterProgFeiraTrimForecast = selection => {
+        if(!Array.isArray(state.aviamentosExternalData?.records))return;
+        state.progFeiraTrimForecast=state.progFeiraTrimForecast===selection || !['with','without'].includes(selection)?'all':selection;
+        renderActiveView();
+    };
+
     window.crmToggleProgFeiraImagesOnly = () => {
         state.progFeiraImagesOnly = !state.progFeiraImagesOnly;
         renderActiveView();
@@ -12909,6 +13075,7 @@
         state.progFeiraCost = 'all';
         state.progFeiraPrograms = [];
         state.progFeiraLabels = [];
+        state.progFeiraTrimForecast = 'all';
         applyFiltersAndRender();
     };
 
@@ -13076,7 +13243,28 @@
 
     window.crmSetAproveitamentoClient = (client) => {
         state.aproveitamentoClient = client || 'all';
+        state.aproveitamentoClients = !client || client === 'all' ? null : [client];
         renderActiveView();
+    };
+
+    window.crmClearAproveitamentoClients = () => {
+        state.aproveitamentoClients = [];
+        renderActiveView();
+    };
+    window.crmToggleAproveitamentoClient = client => {
+        const all = [...new Set([...Object.values(CLIENTES_APROVEITAMENTO), 'Showroom Oneda', 'Outros'])];
+        const current = state.aproveitamentoClients === null ? all : state.aproveitamentoClients;
+        state.aproveitamentoClients = current.includes(client) ? current.filter(name => name !== client) : [...current, client];
+        renderActiveView();
+        document.querySelector('.aproveitamento-client-options')?.setAttribute('open', '');
+    };
+    window.crmSetAproveitamentoObservation = value => {
+        state.aproveitamentoObservation = value.slice(0, 600);
+        const output = document.querySelector('[data-aproveitamento-observation]');
+        if (output) {
+            output.textContent = state.aproveitamentoObservation;
+            output.parentElement.hidden = !state.aproveitamentoObservation.trim();
+        }
     };
 
     window.crmSetAproveitamentoCustomDate = (boundary, value) => {
@@ -13384,6 +13572,7 @@
             showNotification('A planilha da Prog CQ ainda não foi configurada. O relatório estará disponível após a conexão dos dados.', 'info', 'Prog CQ');
             return;
         }
+        if (window.crmGeneratePDFReport.pending) return;
         if(state.activeSubmodule==='relatorios-automaticos') {
             if(state.automaticReport) window.open(`/api/automatic-reports?id=${encodeURIComponent(state.automaticReport.id)}&format=pdf`,'_blank','noopener');
             else showNotification('Selecione um relatório do histórico para abrir o PDF.','info','Relatórios automáticos');
@@ -13483,6 +13672,7 @@
         if (state.activeSubmodule === 'raio-x') prepareRaioXPrint();
 
         const cleanupPrintMode = () => {
+            window.crmGeneratePDFReport.pending = false;
             document.body.classList.remove(...printModeClasses);
             if (viewWasAdjustedForPrint) {
                 state.setor13ViewMode = originalSetor13ViewMode;
@@ -13496,7 +13686,41 @@
         window.addEventListener('afterprint', cleanupPrintMode, { once: true });
 
         showNotification('Formatando relatório executivo para salvar em PDF ou imprimir...', 'info', 'Gerando Relatório');
+        const printSubmodule = state.activeSubmodule;
+        window.crmGeneratePDFReport.pending = printSubmodule === 'prog-feira';
+        const printView = printSubmodule === 'prog-feira' ? document.querySelector('.prog-feira-view') : null;
         setTimeout(async () => {
+            if (printSubmodule === 'prog-feira') {
+                const images = [...document.querySelectorAll('.prog-feira-media img')];
+                images.forEach(img => { img.loading = 'eager'; });
+                let timeout;
+                await Promise.race([
+                    Promise.allSettled(images.map(async img => {
+                        try { await img.decode(); }
+                        catch (_) {
+                            if (img.dataset.fallbackSrc && img.dataset.fallback !== '1') {
+                                img.dataset.fallback = '1';
+                                img.src = img.dataset.fallbackSrc;
+                            }
+                            try { await img.decode(); } catch (_) { /* Existing unavailable-image state remains visible. */ }
+                        }
+                    })),
+                    new Promise(resolve => { timeout = setTimeout(resolve, 20000); })
+                ]);
+                clearTimeout(timeout);
+                if (state.activeSubmodule !== printSubmodule || document.querySelector('.prog-feira-view') !== printView) {
+                    cleanupPrintMode();
+                    window.removeEventListener('afterprint', cleanupPrintMode);
+                    return;
+                }
+                const pending = images.filter(img => !img.complete || !img.naturalWidth);
+                if (pending.length) {
+                    cleanupPrintMode();
+                    window.removeEventListener('afterprint', cleanupPrintMode);
+                    showNotification('Algumas imagens ainda não carregaram. Aguarde e tente imprimir novamente.', 'warning', 'Imagens do relatório');
+                    return;
+                }
+            }
             if (state.activeSubmodule === 'raio-x') {
                 const images = [...document.querySelectorAll('#raioXPrintReport img')];
                 await Promise.race([

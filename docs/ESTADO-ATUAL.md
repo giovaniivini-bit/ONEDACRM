@@ -16,6 +16,353 @@ ou fotos fictícias; PDF pendente da definição dos dados. Guia: PROG-CQ.md.
 temas claro/escuro, ordem e seleção sem erros JS. Arquivos operacionais preservados.
 Sem commit/deploy nesta etapa. Próximo passo: receber planilha e contrato de
 cruzamentos/cards para integrar os dados e definir métricas/impressão.
+## Sincronização calendário — coexistência ciclos (19/11/2026)
+
+Causa verificada na VPS: calendar rejeitado por exigir ciclo único; planilhaagora
+contém52semanas26+6semanas27. Outras fontes atualizavam, mas UI reportava parcial.
+Validador aceita cicloscoexistentes quando pelo menosum ciclo possui>=40semanas
+abrangendo começo/fim, sem juntar parciais para simular ciclo completo. Mantém
+rejeição de datas/linhasinválidas, duplicatas e limites ausentes/conflitantes.
+UI usa warning de cache para mostrar motivo real em sync forçado.262testes passam,
+calendário real58rows validado e revisão independente aprovada. Publicado GitHub/
+VPS commitc3e8a8b;262testes passaram, saúdeOK,1.140arquivos operacionais preservados
+por hash antes sync. API pública carregou58semanas ao vivo com6do27 às10:35UTC;
+cores/aviamentos/CQ/leadtime/rotativos/Prog retornaram success/isLive true. Backup:
+/home/ubuntu/backups/oneda-crm-calendar-sync-20261119-c3e8a8b.
+
+
+## Relatórios automáticos — setor/data D36 (17/11/2026)
+
+Linha D36 nos cards de tela/PDF, exemplo01F-17/12. Fonte FE/D36 ativa, quantidade
+pendente positiva, setor válido exceto01Z; dataDT_SAIDA, sem usar entrega. Vínculo
+por código completo+OF, aliases numéricos só inequívocos. Múltiplos pares setor/data
+e OFs preservados em consolidados; data inválida informa ausência. Reusa pipeline
+de complementos/wrapping/continuação, fonte existente.262testes passam, revisão
+independente aprovada. Edge conferiu textoD36/Comp1/Comp2/destaques/temas; PDF real
+com8cards+D36 numa folha. Novas gerações; histórico preservado. Publicado GitHub/
+VPS commit877b546;262testes passaram na VPS, saúdeOK e1.092arquivos operacionais
+preservados por hash. Edge com arquivos públicos confirmouD36 e complementos. Backup:
+/home/ubuntu/backups/oneda-crm-auto-d36-20261117-877b546.
+
+
+## Relatórios automáticos — Comp1/Comp2 e PP SAMPLE (17/11/2026)
+
+Complementos de todas linhas main por OF+código completo, alias numérico só quando
+OF única inequívoca. Consolidação preserva textos e OFs; todos tipos de relatórios
+recebem dados. Tela inclui blocosComp1/2, mesma fonte do card; PP SAMPLE e data
+próxima na frase em vermelho, restante intacto e escapado. PDF Helvetica7, wrapping
+e cardscontinuação para texto extenso; oito cards curtos permanecem por folha.
+260testes passam e revisão independente aprovada. Edge conferiu destaque13/11,
+texto completo,escaping,temas. PDF real8fotos numa folha inspecionado; complemento
+extenso preservado até marcador final em2páginas. Novas gerações somente, histórico
+não alterado. Publicado GitHub/VPS commit58f3968;260testes passaram na VPS,
+saúdeOK e1.076arquivos operacionais preservados por hash. Edge com arquivos públicos
+confirmou Comp1/2,destaques,escaping e temas. Backup:
+/home/ubuntu/backups/oneda-crm-auto-complements-20261117-58f3968.
+
+
+## Prog Feira — oito cards por folha/setor (17/11/2026)
+
+Ambos modos agrupam até8produtos por setor. Impressão mede conteúdo real por grupo
+e ajusta zoom somente se necessário para194mm úteis, incluindo todos aviamentos.
+CSS A4paisagem, margens5x7mm, linhas flexíveis e menor espaçamento; fotos mantêm
+proporção. beforeprint e mudança de mídia ajustam; afterprint remove escalas/classes.
+EdgePDF: grupo8cards31linhas aviamentos cabe1folha completa e1compacta; PDFs
+renderizados/inspecionados sem cortes.254testes passam, revisão independente aprovada.
+Publicado GitHub/VPS commitdee5ca8;254testes passaram na VPS. Verificação de hash
+identificou apenas atualização concorrente de data/drive_images.json; cache JSON
+válido preservado, demais1.107arquivos sem mudanças. Reinício concluído e saúdeOK.
+Edge público confirmou8cards31aviamentos em1folha, completo e compacto. Backup:
+/home/ubuntu/backups/oneda-crm-prog-eight-20261117-dee5ca8.
+
+
+## Relatórios automáticos — até8cards por folha (16/11/2026)
+
+Cabeçalho PDF compacto: título10pt, metadados/descrição6,5pt, aviso6pt e faixa
+tema8pt. Cards começam52pt primeira página,34pt seguintes +14pt faixa tema.
+Permite2linhas de4cards248pt já na primeira folha (limite570<571,28). Cards/fotos
+inalterados e temas separados. Cards extensos continuam com altura necessária.
+254 testes passaram; revisão independente aprovada; PDF com8fotos reais numa
+folha renderizado e inspecionado. Vale para novas gerações; PDFs antigos preservados.
+Publicado GitHub/VPS commitb12d376;254 testes passaram na VPS, saúde OK e1.070
+arquivos operacionais preservados por hash. Backup:
+/home/ubuntu/backups/oneda-crm-automatic-eight-20261116-b12d376.
+
+
+## Follow — pesquisa somente por botão (16/11/2026)
+
+Edição de produto, busca local/topo e multisseletores não re-renderiza resultados.
+Pesquisar captura snapshot profundo dos critérios; paginação/sync usam snapshot.
+Limpar global/individual limpa rascunho e exige Pesquisar para aplicar. Pesquisa
+instantânea das demais telas preservada.253 testes passam, review independente
+aprovada; Edge local/público confirmou cards idênticos durante edição e limpeza,
+Pesquisar aplica, Mostrar mais usa snapshot. Publicado GitHub/VPS commit9967848;
+253 testes passaram na VPS, saúde OK,1.182 arquivos operacionais preservados. Backup:
+/home/ubuntu/backups/oneda-crm-follow-submit-20261116-9967848.
+
+
+## Follow — busca de opções e campo Produto (16/11/2026)
+
+Busca dentro dos5multifiltros por trecho sem distinguir caixa/acentos. Mantém
+seleções ocultas e consulta após re-render; informa lista vazia. Limpar global
+remove consultas. Campo Produto ao lado consulta só codigo, por trecho, combina
+com demais buscas/filtros;6campos na linha desktop e responsivo.253 testes passam
+e revisão independente aprovada. Publicado GitHub/VPS commit0790084;253 testes
+passaram na VPS, saúde OK,1.181 arquivos operacionais preservados por hash. Edge
+público validouCG,Produto,6campos alinhados,multisseleção,limpeza e celular. Backup:
+/home/ubuntu/backups/oneda-crm-follow-option-search-20261116-0790084.
+
+
+## Follow — filtros multisseleção (16/11/2026)
+
+Cinco filtros com caixas de seleção: OR dentro campo, AND entre campos+buscas.
+Vazio significa Todos; Não informado pode combinar com valores. Limpeza por campo
+e global; menu mantém aberto e foco na marcação.252 testes passam, review
+independente aprovada. Edge:2 etiquetas+2 programações,5campos,limpeza,celular
+e sem errosJS. Publicado GitHub/VPS commit4e8a35e;252 testes passaram na VPS,
+saúde OK,1.165 arquivos operacionais preservados por hash. Edge público confirmou
+multisseleção/limpeza/celular sem erros. Backup:
+/home/ubuntu/backups/oneda-crm-follow-multi-20261116-4e8a35e.
+
+
+## Follow — layout ERP e filtros fixos (13/11/2026)
+
+Cards com7 colunas e divisórias, foto240px proporcional, texto14px; semana/imagem/
+produto-OF/observações-rotativos/cor-aviamentos/setores/status separados. Mobile
+empilha. Cinco selects: etiqueta, programação, semana, status produto e modelagem;
+comparação exata por campo, AND com buscas, Todos/Não informado/Limpar filtros.
+251 testes passam, revisão independente aprovada; Edge validou filtro59A+B48,
+limpeza, buscaComp2, temas/celular/vazio sem errosJS. Publicado GitHub/VPS
+commite8efe04;251 testes passaram na VPS, saúde OK,1.100 arquivos operacionais
+preservados por hash; Edge público confirmou filtros/layout/temas/celular. Backup:
+/home/ubuntu/backups/oneda-crm-follow-layout-filters-20261113-e8efe04.
+
+
+## Follow de produto (13/11/2026)
+
+Nova tela Estilo Pedido com cards horizontais por código completo+OF. Busca local
+e topo por código/OF, etiqueta, semana e programação. Reúne Comp1/Comp2 de todas
+as linhas rawRows, status produto/modelagem, setores e fluxosD35/D41/D43, Prog Feira
+e itens das planilhas cor/aviamentos/rotativos. Mesmos sufixos obrigatórios; OF
+externa sem zeros só cruza com uma única OF main inequívoca do mesmo código.
+Exibe fontes indisponíveis separadas de sem registro; observações não truncadas.
+Fotos ampliáveis, temas/celular,40 cards iniciais e Mostrar mais. Consulta somente
+leitura.250 testes passaram; revisão independente aprovada. Edge real:buscas produto,
+59A,B48,Comp2 preço bordado, temas/celular/vazio sem errosJS.
+Publicado GitHub/VPS commits06bd56d+b4bc3ce (allowlist assets).250 testes passaram
+na VPS, saúde OK e1.100 arquivos operacionais preservados por hash. Edge público
+repetiu buscas/Comp2/temas/celular/vazio sem erros. Backup final:
+/home/ubuntu/backups/oneda-crm-follow-assets-20261113-b4bc3ce.
+Guia:FOLLOW-PRODUTO.md.
+
+
+## Raio X — impressão sem painéis numéricos (13/11/2026)
+
+CSS de impressão esconde filhos de raioXView exceto galeria/relatório, sem depender
+somente da classe temporária body. Fallback direto imprime galeria em4 colunas;
+quando existe relatório, só ele aparece. Tela permanece completa. Cards mantêm
+foto proporcional e informações do produto, sem botões/overlays.241 testes passam.
+Edge validou impressão direta/botão sem resumo/KPIs,4 cards preservados, tela
+restaurada; PDF renderizado e inspecionado. Publicado GitHub/VPS commit7d81bfd,
+241 testes passaram na VPS, saúde OK,1.084 arquivos operacionais preservados por
+hash. Edge público confirmou ambos caminhos sem painéis e com cards. Backup:
+/home/ubuntu/backups/oneda-crm-rx-clean-print-20261113-7d81bfd.
+
+
+## Impressão — imagens proporcionais à largura dos cards (12/11/2026)
+
+Prog Feira completo/compacto, galerias Setor13/01/processo/estampa/malotes, CQ e
+RaioX usam moldura297/210 na largura do card, contain sem corte/padding. Retirados
+limites fixos de altura e linhas compactas42mm; cards/páginas crescem pelo conteúdo.
+Compacto mantém4 colunas, mas não promete16 fichas por folha física. Código/OF/data/
+tarjas preservados. Alertas usam proporção na miniatura lateral; MPO foto natural
+na largura; Rotativos já proporcional. Sem alterar tamanho das fotos na tela.
+PDF automático: foto proporcional à largura, cards248pt + extras, paginação ajustada;
+malotes separa setores por página, abandonando metades incompatíveis com foto maior.
+PDFs antigos preservados; regra vale para novas gerações.241 testes passam e revisão
+independente aprovada. Edge confirmou proporção em8 galerias com dados reais, sem
+errosJS; PDF compacto e PDF automático com foto real renderizados/inspecionados.
+Publicado GitHub/VPS commitb9bba81;241 testes passaram na VPS, saúde OK
+e1.081 arquivos operacionais preservados por hash. Edge público repetiu as8
+galerias, todas proporcionais sem errosJS. Backup:
+/home/ubuntu/backups/oneda-crm-print-proportional-20261112-b9bba81.
+
+
+## Prog Feira — identificação e data no modo compacto (12/11/2026)
+
+Linha abaixo da foto: código à esquerda e OF à direita, fonte14px. Quadro direito
+mostra entrada no setor tingimento em vez de dias D43; usa TF/D43 DT_SAIDA do setor
+selecionado e menor data válida (consistente com maior permanência). Sem data mantém
+aviso, sem usar data D36. Modo completo conserva dias. PDF16 cards mantém tarjas,
+reserva linha5mm; datas legíveis e tarjas inteiras verificadas em PDF renderizado.
+241 testes passaram; revisão independente aprovada; Edge temas/celular/impressão
+sem errosJS. Publicado GitHub/VPS commit6aeb797;241 testes passaram na VPS,
+saúde OK e1.080 arquivos operacionais preservados por hash. Edge público validou
+identificação/data, temas/celular/impressão sem cortes de tarjas. Backup:
+/home/ubuntu/backups/oneda-crm-prog-feira-compact-date-20261112-6aeb797.
+
+
+## Prog Feira — tarjas no modo apenas imagens e dias (12/11/2026)
+
+Tarjas DES/M02/M00 também visíveis no modo compacto, abaixo dos dias.
+Impressão mantém16 fichas/folha e reserva5mm para tarjas, reduzindo a foto
+somente nos cards com tarjas. Edge:188 cards,142 tarjas; temas/celular/impressão
+verificados, todas as tarjas dentro dos limites dos cards, sem errosJS.
+Publicado GitHub/VPS commit40be035;241 testes passaram local/VPS. Saúde OK,
+1.080 arquivos operacionais preservados por hash; Edge público confirmou tarjas
+compactas em tela/impressão sem cortes ou erros. Backup:
+/home/ubuntu/backups/oneda-crm-prog-feira-compact-ribbons-20261112-40be035.
+
+
+## Prog Feira — tarjas de setores e remoção do histórico (12/11/2026)
+
+Histórico do fluxo removido dos cards. Tarjas no rodapé: DES azul, M02 vermelha,
+M00 laranja piscante. DES combina lado a lado com o tingimento; destaque superior
+DES movido ao rodapé. D43 usa estilo tradicional estático. Impressão e movimento
+reduzido desativam animação; modo compacto preservado. Revisão independente aprovada.
+Edge real:188 cards,102 DES,17 M02,23 M00; sem histórico/animaçãoD43, temas claro/
+escuro, celular e tarjas na impressão verificados sem errosJS. Publicado GitHub/VPS commitb06f38e;241 testes passaram local/VPS, saúde OK,
+1.080 arquivos operacionais preservados por hash. Edge público repetiu validação
+de tarjas/histórico/D43/temas/celular/impressão sem erros. Backup:
+/home/ubuntu/backups/oneda-crm-prog-feira-ribbons-20261112-b06f38e.
+
+
+## Prog Feira — remover X01 dos cards (12/11/2026)
+
+Oculta somente pendência genérica X01 nos cards, em tela e impressão.
+Informações AVIAMENTO da planilha, filtros e dados operacionais preservados.
+241 testes passaram; Edge real:188 cards sem indicadores X01/D01, linhas de
+aviamentos preservadas (até6 por produto), temas/celular/PDF sem errosJS.
+Publicado GitHub/VPS commita6842d2;241 testes também passaram na VPS, saúde OK
+e1.080 arquivos operacionais preservados por hash. Backup:
+/home/ubuntu/backups/oneda-crm-prog-feira-hide-x01-20261112-a6842d2.
+
+
+## Prog Feira — fotos maiores na impressão (12/11/2026)
+
+Impressão completa usa foto na largura do card em proporção A4 paisagem, sem corte.
+Páginas/cards adaptam altura para preservar todos os dados; modo compacto mantido.
+Botão aguarda imagens eager/decode e fallback (limite20s), cancela se a view mudar
+ou fotos falharem e evita clique duplicado. Ausências reais mantêm placeholder.
+241 testes passam, incluindo espera/fallback/timeout/rerender; revisão independente
+aprovada. Edge com fontes locais e APIs reais:187 fotos prontas, largura253px
+igual ao card e altura178px; PDF gerado e inspecionado.9 códigos sem mapeamento
+confirmados sem arquivo exato na VPS; não usa imagem de outro sufixo.
+Publicado GitHub/VPS commit3759679;241 testes passaram na VPS, saúde OK e1.080
+arquivos operacionais preservados por hash. Edge público confirmou187 fotos prontas
+e largura254px igual ao card (altura179px). Backup:
+/home/ubuntu/backups/oneda-crm-prog-feira-print-images-20261112-3759679.
+
+
+## Prog Feira — filtros com/sem previsão de aviamentos (12/11/2026)
+
+Duas opções lado a lado antes das imagens: Ver produtos com previsão de aviamentos
+e Produtos sem previsão de aviamentos. Modo exclusivo all/with/without; clicar na
+opção ativa ou Limpar restaura Todos. Usam o mesmo índice de pendências do card,
+código completo e qualquer linha com PREVISÃO preenchida. Vazio, traço, erro de
+planilha e marcadores Não informada/Sem previsão não qualificam; textos de previsão
+preenchidos continuam válidos, sem exigir nova interpretação de data.
+Sem previsão inclui tanto produto sem aviamento na planilha quanto todas as linhas
+pendentes sem previsão. Combina com filtros existentes, afeta cards/KPIs/gráfico/
+facetas/etiquetas e identifica o recorte no resumo da tela e cabeçalho do PDF.
+Fonte desconhecida suspende o recorte e desabilita botões; fonte vazia válida pode
+retornar nenhum em Com e todos em Sem. Modo de imagens preservado.
+237 testes passaram e revisão independente aprovada. Edge real:196 produtos,
+29com/167sem, grupos complementares sem sobreposição; toggle, alternância exclusiva,
+Limpar, combinação com busca, temas/celular sem overflow/erros. PDF identifica recorte.
+Publicado no GitHub/VPS no commitf9ebe43;237 testes passaram na VPS, saúde OK
+e1.080 arquivos operacionais preservados por hash. Edge público repetiu196total,
+29com/167sem, exclusividade, retorno a Todos e contraste dos controles sem errosJS.
+Backup: /home/ubuntu/backups/oneda-crm-prog-feira-trim-filters-20261112-f9ebe43.
+Arquivos: prog-feira.js,app.js,style.css,index.html,test/prog-feira.test.js.
+
+## Prog Feira — aviamentos da planilha no card (12/11/2026)
+
+Cards cruzam código completo com a planilha Aviamentos Pendentes, sem exigir X01
+no ERP. Cada linha ainda sem DATA APROVADO (vazia/traço, critério da tela existente)
+aparece como AVIAMENTO: fornecedor / descrição / SOLICITADO / previsão. A imagem
+do pedido marcou SOLICITADO; esse é o campo usado como data, sem trocar por recebido
+ou envio ao cliente. Todas as linhas e textos preservados, inclusive previsões
+futuras e aviamentos já recebidos ainda aguardando aprovação. Ausência usa —.
+Removida somente a informação Pendente COR D01 dos cards; filtros e domínio D01
+preservados, assim como demais fluxos. Código com sufixo não cruza com base.
+PDF completo permite altura e páginas extras quando há aviamentos para não cortar;
+modo Apenas imagens e dias continua sem detalhes/16porfolha. Assets atualizados.
+235 testes passaram, revisão independente aprovada. Edge com196cards reais,
+produto05.16.00.0171 com6aviamentos, temas/celular sem erros; PDF do grupo manteve
+30linhas e todos os quatro campos em duas folhas, conferido por extração/render.
+Publicado no GitHub/VPS no commit5afe44d;235 testes passaram na VPS, saúde OK,
+1.059 arquivos operacionais preservados por hash. Edge público confirmou29cards
+com aviamentos, até6linhas porproduto, pendênciaD01 removida do card e sem errosJS.
+Backup: /home/ubuntu/backups/oneda-crm-prog-feira-trims-20261112-5afe44d.
+Arquivos: prog-feira.js,app.js,style.css,index.html,test/prog-feira.test.js.
+
+## Rotativos — segunda galeria: pendentes no setor43 (11/11/2026)
+
+Abaixo da galeria da planilha, nova área com fotos e dias pendentes no setor43.
+Quatro imagens porlinha,semcards, mesmo renderer/fallback/lightbox da primeira.
+Fonte CRM com setor43exato, independente da busca/filtro da planilha; respeita o
+recorte CRM existente. Código completo porproduto, sufixos separados. Várias OFs
+usam a maior permanência, nunca soma. Fonte ausente/inválida é não informada,
+zero válido continua0. processRawRecords preserva diasParadoFonte nullable e
+maior valor válido das grades; cálculo legado diasParado dos demais módulos intacto.
+233 testes passaram, revisão final aprovada. Edge com fonte real: galeria planilha8,
+setor43 com3 produtos (6/5/5dias), todas fotos carregadas, quatrocolunas, área abaixo
+da primeira galeria, busca planilha independente, lightbox com dias, temas e celular
+sem overflow/erros JS. Publicado no GitHub/VPS no commit91a1411;233 testes
+passaram na VPS, saúde OK e1.040 arquivos operacionais preservados por hash.
+Edge público confirmou3 fotos carregadas e dias6/5/5, sem errosJavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-rotativos-sector43-gallery-20261111-91a1411.
+Arquivos: app.js,index.html,test/rotativos-gallery.test.js.
+
+## Rotativos — fotos da planilha e previsão da mesa (11/11/2026)
+
+Galeria logo abaixo da planilha Google Drive, quatro imagens por linha, sem cards:
+somente imagem contida e previsão da mesa (prevMesa). Clique amplia. Produtos vêm
+dos mesmos registros filtrados pela busca e situação; códigos completos/sufixos
+preservados. Repetições do código agrupam previsões distintas. Sem produto/fonte
+válida, não cria imagens fictícias; removido fallback antigo de exemplos da tabela.
+Reutiliza getProductImage/índice da VPS, fallback e lightbox existentes; Rotativos
+já participa da atualização periódica do índice. Sem mudanças no envio de imagens.
+230 testes aprovados e revisão independente sem Critical/Important. Inspeção SSH
+confirmou nove arquivos exatos na pasta de imagens da VPS. Edge carregou nove
+fotos reais, quatro colunas; filtro pendentes5, busca por sufixo1, vazio, ampliação,
+temas claro/escuro e celular sem overflow na galeria nem erros JavaScript.
+Publicado no GitHub/VPS no commitd91aef7.230 testes passaram também na VPS,
+saúde OK e1.085 arquivos operacionais preservados por hash. Edge público confirmou
+nove fotos carregadas, quatro colunas e nove previsões, sem erros JavaScript.
+Backup: /home/ubuntu/backups/oneda-crm-rotativos-gallery-20261111-d91aef7.
+Arquivos: app.js, style.css, index.html, package.json, test/rotativos-gallery.test.js.
+
+## Raio X — impressão com foto e dados do card (11/11/2026)
+
+Padrão vigente: foto e informações completas de cada card, sem painel global de
+setores/filtros/KPIs. Substitui a impressão somente imagens publicada antes.
+Paginação em grupos de até8 cards (quatro colunas), altura automática para não
+cortar descrição, status, metadados ou complementos de cor/aviamento. Conteúdo
+denso pode ocupar mais folhas. Botões interativos removidos; fotos contidas.
+228 testes aprovados e revisão sem Critical/Important. PDF com10 cards reais
+preservou corpos completos, status, OF e malote, sem filtros/KPIs; densidade gerou
+três folhas. Espaços internos compactados e contraste dos badges corrigido.
+Publicado no GitHub/VPS no commite0a6c36;228 testes passaram na VPS, saúde OK e
+1.069 arquivos operacionais preservados por hash. Backup:
+/home/ubuntu/backups/oneda-crm-raio-x-details-20261111-e0a6c36.
+
+## Raio X — impressão somente imagens, 16 por folha (11/11/2026)
+
+Layout compacto semelhante ao Prog Feira: 4×4 cards por A4 paisagem, com margem
+12mm e fotos inteiras (contain). Sem painel de setores, filtros, KPIs, resumo,
+textos de status ou detalhes. Respeita todos os cards atualmente filtrados na tela;
+última folha pode ser parcial. Tela, filtros, imagens e dados permanecem iguais.
+Substitui o formato anterior de seis cards com detalhes. Fallback e limpeza após
+impressão preservados. Arquivos: app.js, style.css, index.html, test/raio-x.test.js.
+228 testes passaram; revisão independente sem Critical/Important. Edge com cards
+reais:33→3folhas(16/16/1),17→2(16/1),6→1. PDF extraído e renderizado confirmou
+paginação sem filtros/KPIs; outra amostra carregou17 fotos reais,16na primeira folha,
+inteiras e sem cortes. Tela preservada e sem erros JavaScript.
+Publicado no GitHub/VPS no commitba05578; testes passaram na VPS, saúde OK e
+1.067 arquivos operacionais preservados por hash. Backup:
+/home/ubuntu/backups/oneda-crm-raio-x-images-20261111-ba05578.
 
 ## PDFs por estilista — um tema por folha (09/11/2026)
 
@@ -82,6 +429,71 @@ código com sufixo, fonte vazia/falha/cache, tabela, temas e celular, sem erros 
 PDF com coluna e data individual conferido por extração. Na leitura real, 29
 finalizações vinculadas a 2.097 registros; 2.068 sem data e nenhum conflito.
 Nenhuma escrita feita nas planilhas. Publicado em GitHub e VPS no commit 8c928a7, em 08/11/2026 (America/Sao_Paulo), após autorização explícita do usuário. Os 220 testes passaram também na VPS; hashes confirmaram preservação de 1.697 arquivos operacionais. Backup: /home/ubuntu/backups/oneda-crm-aproveitamento-20261108-8c928a7. Reiniciado somente oneda-crm-app. Saúde OK, fonte nova ao vivo com 29 linhas, versão pública e navegador Edge confirmados: 29 vínculos/2.097 registros, coluna de finalização presente e nenhum erro JavaScript.
+Atualizado em 12/11/2026. Snapshot de continuidade, não monitoramento ao vivo.
+
+## Relatórios por estilista — produto único por tema (09/11/2026)
+
+Consolidação por código completo e subtema na geração. Card mostra quantidade de
+OFs distintas e partes por OF; grades não multiplicam partes. Mesma referência
+permanece em temas diferentes, sufixos preservados. Ocorrências no snapshot,
+detalhes expansíveis na tela e detalhamento textual paginado no PDF conservam
+vínculos OF/parte, status, datas, quantidades e previsões. Permanência mostra
+maior valor (até), com dados de cada OF consultáveis. Fotos não repetem por OF;
+previsões acima20 têm continuação sem foto. PDFs antigos preservados.
+228 testes aprovados, revisão independente e Edge real sem erros: Camila125→106,
+Ketlyn28→14; produto01.14.00.7269H reúne duas OFs e cinco partes. PDF renderizado
+conferido com ambas OFs no detalhamento. Guia RELATORIOS-AUTOMATICOS.md atualizado.
+Publicado no GitHub/VPS no commit36473fb. 228 testes passaram na VPS, saúde OK,
+1.026 arquivos operacionais preservados por hashes durante deploy. Novo lote de
+oito relatórios gerado: unicidade código/tema validada nos quatro estilistas,
+16 arquivos PDF/snapshot anteriores e ledger preservados. Edge público confirmou
+106 cards de Camila e detalhes de ambas OFs, sem erros JS.
+Backup: /home/ubuntu/backups/oneda-crm-reports-product-theme-20261109-36473fb.
+Arquivos: stylist-reports.js, automatic-report-groups.js, automatic-reports-view.js,
+automatic-reports-pdf.js, style.css, index.html e testes por estilista.
+
+## Aproveitamento — ocultar nota técnica na impressão (09/11/2026)
+
+Bloco aproveitamento-date-note (critério de datas, estatísticas de vínculos e link
+à planilha de finalização) oculto somente na impressão, a pedido do usuário.
+Tela mantém o bloco. Período, seleção de clientes e observação do usuário preservados.
+
+## Aproveitamento — vários clientes e observação (09/11/2026)
+
+Filtro de clientes agora tem checkboxes, Marcar todos e Limpar seleção. Seleção
+múltipla usa união: Renner+C&A ou todos menos Hering. Limpar significa nenhum;
+Marcar todos restaura a base e inclui clientes em atualizações. Cliques no gráfico
+alternam o cliente na seleção. KPIs, gráfico, resumo e lista usam o mesmo recorte.
+
+Campo de observação opcional até 600 caracteres, mantido no estado da tela ao
+mudar filtros. Texto literal/escapado, sem HTML; digitá-lo não redesenha a tela.
+Na primeira folha aparece abaixo do gráfico com fonte9pt; quebras são compactadas
+para não gerar folhas por linhas vazias. Campo vazio não cria bloco impresso.
+225 testes passaram; revisão independente final aprovada. Edge verificou união,
+exclusão de Hering, vazio, todos e nota preservada/segura. PDFs com600 caracteres
+e300 quebras de linha foram extraídos e renderizados: título, gráfico e observação
+na primeira página. Arquivos: app.js, style.css, index.html e teste Aproveitamento.
+
+## Aproveitamento — gráfico ampliado e conversão por cliente (09/11/2026)
+
+Cartões menores no PDF; gráfico ampliado em toda a largura, cabeçalho e gráfico
+mantidos na primeira página. Abaixo da participação de produtos, nova linha
+Compra: percentual de amostras compradas/total do próprio cliente. Mesmos filtros
+e cálculo já usados no resumo; disponível na tela e impressão. Margem inferior do
+SVG ampliada para não cortar a nova linha. 223 testes passaram, revisão independente
+aprovada. PDF real renderizado e conferido: primeira página com título, KPIs,
+gráfico inteiro e taxas de todos os clientes. Publicação via backup e hashes.
+
+## Impressão Aproveitamento — 09/11/2026
+
+Removida quebra obrigatória antes do gráfico. Cabeçalho, filtros, KPIs e gráfico
+agrupados na primeira página, com medidas próprias para impressão. Título grande:
+controle do aproveitamento da venda de amostras - RQ 008 - setor desenvolvimento.
+Título novo aparece somente na impressão; layout em tela preservado.
+212 testes aprovados e revisão independente sem Critical/Important. PDF A4 paisagem
+com dados reais gerado e primeira página renderizada: título, indicadores e gráfico
+juntos, sem cortes. Arquivos: app.js, style.css, index.html. Publicação autorizada
+pelo fluxo vigente; conferir saúde e preservação dos dados no deploy.
 
 ## Relatórios automáticos — botão Gerar relatórios (07/11/2026)
 

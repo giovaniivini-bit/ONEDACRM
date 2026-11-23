@@ -55,7 +55,7 @@ test('organiza Prog Feira em paginas de oito cards e quatro colunas no PDF', () 
     const css = fs.readFileSync(path.join(__dirname, '..', 'style.css'), 'utf8');
     const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
-    assert.match(app, /const cardsPerPage = state\.progFeiraImagesOnly \? 16 : 8/);
+    assert.match(app, /const cardsPerPage = 8/);
     assert.match(app, /prog-feira-sector prog-feira-print-page/);
     assert.match(app, /'prog-feira': 'print-prog-feira'/);
     assert.match(css, /body\.print-prog-feira \.prog-feira-grid[\s\S]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
@@ -183,7 +183,7 @@ test('dias de TF acompanham o setor real M00 a M03 e não usam a data do D36',()
     const now=new Date(2026,9,27);
     for(const setor of ['M00','M01','M02','M03']){
         const [p]=buildProducts([erp('FE','D36','01A',{'Data Saída':'26/10/2026'}),erp('TF','D43',setor,{'Data Saída':'20/10/2026'})],now);
-        assert.equal(p.daysInSector,1);assert.equal(p.tingDays,7);assert.equal(p.ting,setor);
+        assert.equal(p.daysInSector,1);assert.equal(p.tingDays,7);assert.equal(p.ting,setor);assert.equal(p.tingEntryDate,'20/10/2026');
     }
     const [missing]=buildProducts([erp('FE','D36','01A'),erp('TF','D43','M00',{'Data Saída':''})],now);assert.equal(missing.tingDays,null);
     const [absent]=buildProducts([erp('FE','D36','01A')],now);assert.equal(absent.tingDays,null);
@@ -291,4 +291,41 @@ test('filtro de entrega usa a mesma FICHA do card FE D36 e não a de fluxos para
     assert.equal(deliveryKey(products[0],now),'2026-11-27');
     assert.equal(filterByDeliveries(products,['2026-11-03'],now).length,0);
     assert.equal(filterByDeliveries(products,['2026-11-27'],now).length,1);
+});
+
+
+test('aviamentos por código completo, sem exigir X01, preservam linhas e campos da planilha',()=>{
+ const {buildTrimPendingIndex}=require('../prog-feira');
+ const records=[{PRODUTO:' 01.16.00.7322A ',FORNECEDOR:'HI','DESCRIÇÃO':'ETIQUETA',SOLICITADO:'21/10/2026','PREVISÃO':'30/10/2026','DATA APROVADO':'','RECEBIDO':'10/11/2026'},
+ {PRODUTO:'01.16.00.7322A',FORNECEDOR:'AL','DESCRIÇÃO':'CADARÇO',SOLICITADO:'texto preservado','PREVISÃO':'11/11/2026','DATA APROVADO':'—'},
+ {PRODUTO:'01.16.00.7322',FORNECEDOR:'OUTRO','DATA APROVADO':''},
+ {PRODUTO:'01.16.00.7322B',FORNECEDOR:'APROVADO','DATA APROVADO':'10/11/2026'}];
+ const index=buildTrimPendingIndex(records);
+ assert.deepEqual(index.get('01.16.00.7322A'),[{supplier:'HI',description:'ETIQUETA',requested:'21/10/2026',forecast:'30/10/2026'},{supplier:'AL',description:'CADARÇO',requested:'texto preservado',forecast:'11/11/2026'}]);
+ assert.equal(index.get('01.16.00.7322').length,1);assert.equal(index.has('01.16.00.7322B'),false);
+ assert.equal(buildTrimPendingIndex(null).size,0);
+});
+test('aviamentos aceitam cabeçalhos sem acento e não inventam valores ausentes',()=>{
+ const {buildTrimPendingIndex}=require('../prog-feira');
+ const index=buildTrimPendingIndex([{produto:'01.A',fornecedor:'<img>',descricao:'Texto',solicitado:'',previsao:'',data_aprovado:'-'},{PRODUTO:' '}]);
+ assert.equal(index.size,1);assert.deepEqual(index.get('01.A'),[{supplier:'<img>',description:'Texto',requested:'',forecast:''}]);
+});
+
+
+test('filtros com/sem previsão são complementares por código completo e consideram qualquer linha pendente',()=>{
+ const {buildTrimPendingIndex,filterByTrimForecast}=require('../prog-feira');
+ const products=['01.A','01.AX','02.B','03.C','04.D'].map(codigo=>({codigo}));
+ const index=buildTrimPendingIndex([{PRODUTO:'01.A',PREVISÃO:''},{PRODUTO:'01.A',PREVISÃO:'18/11/2026'},
+ {PRODUTO:'01.AX',PREVISÃO:'—'},{PRODUTO:'02.B',PREVISÃO:'20/11/2026','DATA APROVADO':'10/11/2026'},
+ {PRODUTO:'03.C',PREVISÃO:'',SOLICITADO:'20/11/2026'},{PRODUTO:'04.D',PREVISÃO:'#REF!'}]);
+ const withForecast=filterByTrimForecast(products,index,'with'),without=filterByTrimForecast(products,index,'without');
+ assert.deepEqual(withForecast.map(p=>p.codigo),['01.A']);
+ assert.deepEqual(without.map(p=>p.codigo),['01.AX','02.B','03.C','04.D']);
+ assert.equal(withForecast.length+without.length,products.length);assert.equal(filterByTrimForecast(products,index,'all'),products);
+ assert.equal(filterByTrimForecast(products,null,'without'),products,'fonte desconhecida suspende o recorte');
+});
+test('previsões textuais preenchidas são preservadas; marcadores de ausência não qualificam',()=>{
+ const {buildTrimPendingIndex,filterByTrimForecast}=require('../prog-feira');
+ const index=buildTrimPendingIndex([{PRODUTO:'A',PREVISÃO:'segunda-feira'},{PRODUTO:'B',PREVISÃO:'Não informada'},{PRODUTO:'C',PREVISÃO:'SEM PREVISÃO'}]);
+ assert.deepEqual(filterByTrimForecast(['A','B','C'].map(codigo=>({codigo})),index,'with').map(p=>p.codigo),['A']);
 });

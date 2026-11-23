@@ -105,3 +105,60 @@ Contador aplica todos os filtros da tela e conta produtos, sem somar quantidade 
 peças. Mesmo produto com CFA e CFAN conta uma vez em CF; com CF e CG pode entrar em
 ambos. Grupos ordenados alfabeticamente, Sem etiqueta quando necessário. Apenas
 consulta, sem criar seleção adicional; bloco oculto na impressão.
+
+## Aviamentos da planilha — 12/11/2026
+
+Bloco AVIAMENTO por linha pendente de aprovação da planilha: fornecedor, descrição,
+SOLICITADO e PREVISÃO. Vínculo por código completo, com sufixos; não requer X01 noERP.
+DATA APROVADO vazio/traço define pendência como na tabela; recebido não encerra
+aprovação. Preservar todas as linhas sem truncar e sem inventar campos ausentes.
+Pendente COR D01 deixa de aparecer no card, mantendo filtros e cálculos de cor.
+Impressão completa se adapta ao conteúdo; modo Apenas imagens e dias inalterado.
+
+## Filtros de previsão de aviamentos — 12/11/2026
+
+Ver produtos com previsão de aviamentos e Produtos sem previsão de aviamentos são
+alternativas, ao lado de Apenas imagens e dias. Com verifica qualquer linha do
+índice pendente com previsão preenchida; Sem é seu complemento. Fonte desconhecida
+suspende o filtro. Clicar de novo na opção ativa ou Limpar retorna todos. Busca,
+etiquetas, programação, entrega, setores e estilista continuam combináveis. Resumo
+impresso identifica o recorte. Não altera dados ou previsões na planilha.
+
+## Prog Feira — fotos na impressão (12/11/2026)
+
+Impressão completa mantém fotos na largura do card, sem corte (297/210), e altura
+adaptável para preservar informações. Modo compacto mantém sua composição.
+Exportar aguarda todas as fotos mapeadas, tenta fallback e cancela em timeout/erro
+ou troca da view. Código sem arquivo exato permanece explicitamente sem imagem;
+nunca substituir pela imagem de outro sufixo.
+
+Cards omitem também a pendência genérica X01 (12/11/2026), preservando o bloco
+AVIAMENTO da planilha e todos os filtros e dados de domínio.
+
+## Prog Feira — tarjas no rodapé (12/11/2026)
+
+Histórico do fluxo removido dos cards; tarjas no rodapé substituem o destaque
+superior DES: DES azul, M02 vermelha, M00 laranja piscante. DES e tingimento
+coexistem lado a lado. D43 volta ao estilo tradicional sem animação. Impressão
+e movimento reduzido mantêm tarjas estáticas; modo compacto não as exibe.
+
+Atualização12/11/2026: modo Apenas imagens e dias também exibe tarjas no rodapé;
+PDF compacto mantém16 fichas/folha reservando espaço para evitar corte das tarjas.
+
+Modo Apenas imagens e dias (12/11/2026): código e OF abaixo da imagem; quadro
+direito usa data entrada TF/D43 DT_SAIDA do setor tingimento. Menor data válida
+corresponde à maior permanência anterior; ausente mantém aviso, não usa D36.
+Modo completo permanece com dias. PDF compacto mantém16 cards e tarjas.
+
+## Fotos proporcionais na impressão (12/11/2026)
+
+Priorizar imagem inteira proporcional à largura do card (moldura297/210, contain),
+sem alturas fixas que reduzam fotos. Prog compacto mantém4 colunas e paginação
+adaptável, sem compromisso de16 fichas por folha. Identificação/data/tarjas ficam
+preservadas. Galerias gerais, CQ e RaioX seguem padrão. PDFs automáticos novos
+usam cards maiores e malotes por setor/página; PDFs existentes não regenerados.
+
+Prog Feira (17/11/2026): até8cards por folha do mesmo setor em ambos modos.
+Escala por página baseada no conteúdo impresso, preservando fotos e todas linhas;
+permite reduzir conjunto para caber. Não juntar setores diferentes. Limpeza após
+impressão restaura tela.

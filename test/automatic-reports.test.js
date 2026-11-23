@@ -37,7 +37,7 @@ test('atraso usa entrega FE, exclui hoje/futuro/inválidas/cancelados sem confun
     assert.ok(report.warnings);
 });
 
-test('PDF real tem introdução, suporta relatório vazio e pagina em oito cards',async t=>{
+test('PDF real tem introdução, suporta relatório vazio e pagina cards com fotos maiores',async t=>{
     const dir=fs.mkdtempSync(path.join(os.tmpdir(),'oneda-report-pdf-'));
     t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
     const report=buildReports([main('A'),tf('A','M00','01/10/2026')],now)[0];
@@ -123,12 +123,12 @@ test('paginação mantém título junto dos cards, oito por folha e meia área �
     assert.ok(pages.every(p=>p.cards.length>0&&p.cards.length<=8));
     assert.equal(pages.flatMap(p=>p.cards).length,21);
     for(const page of pages) {
-        for(const h of page.headings) assert.ok(page.cards.some(c=>c.y===h.y+22));
+        for(const h of page.headings) assert.ok(page.cards.some(c=>c.y===h.y+14));
         assert.ok(page.cards.every(c=>c.y+c.height<=595.28-24));
     }
     const firsts=new Map(),lasts=new Map();
     pages.forEach((p,n)=>p.cards.forEach(c=>{
-        const top=n*(595.28-24-58)+(c.y-58);
+        const top=n*(595.28-24-34)+(c.y-34);
         if(!firsts.has(c.item.groupKey))firsts.set(c.item.groupKey,top);
         lasts.set(c.item.groupKey,top+c.height);
     }));
@@ -150,20 +150,17 @@ test('novos tipos persistem e são acessíveis por ID; falha de qualquer fonte p
     assert.equal(store.list().length,8);
 });
 
-test('malotes reservam metade superior para 88 e inferior para 83, continuando quatro por setor',()=>{
+test('malotes preservam fotos proporcionais e separam setores sem cortar cards',()=>{
     const item=(sector,i)=>({sector,codigo:`${sector}-${i}`});
     const report={type:'malotes',items:[...Array.from({length:9},(_,i)=>item('88',i)),...Array.from({length:5},(_,i)=>item('83',i))]};
-    const groups=groupReportItems(report);
-    assert.deepEqual(groups.map(g=>g.key),['88','83']);
     const pages=planReportPages(report);
-    assert.equal(pages.length,3);
-    assert.deepEqual(pages.map(p=>p.cards.length),[8,5,1]);
+    assert.equal(pages.flatMap(p=>p.cards).length,14);
     for(const page of pages) {
-        const split=595.28/2;
-        assert.equal(page.headings[1].y,split+8);
-        assert.ok(page.cards.filter(c=>c.item.sector==='88').every(c=>c.y+c.height<=split));
-        assert.ok(page.cards.filter(c=>c.item.sector==='83').every(c=>c.y>=split+22));
-        assert.ok(page.cards.every(c=>c.y+c.height<=595.28-24));
+        assert.equal(new Set(page.cards.map(c=>c.item.sector)).size,1);
+        for(const c of page.cards) {
+            assert.ok(c.y+c.height<=595.28-24);
+            assert.ok(c.height >= (c.width-6)*210/297+100);
+        }
     }
     assert.equal(planReportPages({type:'malotes',items:[]})[0].emptyTexts.length,2);
 });
@@ -263,4 +260,11 @@ test('falha de fonte preserva histórico; fila que perde o horário não gera de
     const admitted=store.generateScheduled(load),late=store.generateScheduled(()=>assert.fail('Não buscar fonte após o horário'));
     assert.equal((await admitted).generatedReports.length,8);await assert.rejects(late,/somente às/);
     assert.equal(store.list().length,8);fail=false;
+});
+
+test('cabeçalho compacto permite oito cards do mesmo tema já na primeira folha',()=>{
+ const items=Array.from({length:17},(_,i)=>({codigo:String(i),groupKey:'tema'}));
+ const pages=planReportPages({type:'estilista-camila',stylist:'camila',sections:[{key:'tema',theme:'PEDIDO',title:'COR'}],items});
+ assert.deepEqual(pages.map(p=>p.cards.length),[8,8,1]);
+ assert.ok(pages.every(p=>p.cards.every(c=>c.y+c.height<=595.28-24)));
 });

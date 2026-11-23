@@ -3,7 +3,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const prog = require('./prog-feira');
 const alerts = require('./alerts-engine');
-const {STYLIST_IDS,normalizeOrderReportRecords,buildStylistReports} = require('./stylist-reports');
+const {buildD36Index,buildComplementIndex,STYLIST_IDS,normalizeOrderReportRecords,buildStylistReports} = require('./stylist-reports');
 const {requireReportSlot}=require('./report-schedule');
 const REPORT_TYPES=new Set(['tingimento','entregas','malotes','cores',...STYLIST_IDS.map(id=>`estilista-${id}`)]);
 
@@ -13,7 +13,10 @@ function referenceDay(now) {
 function buildReports(records, now = new Date(), sources = {}) {
     const day = referenceDay(now);
     const reference = new Date(`${day}T12:00:00`);
+    const mainRecords = normalizeOrderReportRecords(sources.mainRecords);
+    const complements=buildComplementIndex(mainRecords);
     const rows = prog.normalizeSourceRecords(records);
+    const d36=buildD36Index(rows,reference);
     const products = prog.buildProducts(rows, reference);
     const byKey = new Map(products.map(p => [p.key, p]));
     const ting = new Map();
@@ -46,7 +49,7 @@ function buildReports(records, now = new Date(), sources = {}) {
         numero: String(p.numero || ''), codigo: String(p.codigo || ''), imageCode: String(p.imageCode || p.codigo || ''),
         sector: String(p.sector || ''), sectorLabel: String(p.sectorLabel || ''), delivery: String(p.delivery || ''),
         customerProgram: String(p.customerProgram || ''), etiqueta: String(p.etiqueta || ''), notes: String(p.notes || ''),
-        ting: String(p.ting || ''), reason
+        ting: String(p.ting || ''), d36:d36(p.numero,p.codigo), complements:complements(p.numero,p.codigo), reason
     });
     const aging = [...ting.values()].flatMap(({ product, reasons }) => reasons.map(r => ({
         ...item(product, `${r.sector}: ${r.days} dias (limite ${r.limit})`),
@@ -70,7 +73,6 @@ function buildReports(records, now = new Date(), sources = {}) {
     aging.sort((a,b) => a.groupKey.localeCompare(b.groupKey) || a.movementDays-b.movementDays || byProduct(a,b));
     late.sort((a,b) => b.groupKey.localeCompare(a.groupKey) || byProduct(a,b));
     // Same operational rule as Alertas, with only the fields needed by that rule.
-    const mainRecords = normalizeOrderReportRecords(sources.mainRecords);
     const maloteRule = alerts.cloneDefaults().filter(r => r.id === 'malotes-parte-principal');
     const malotes = alerts.evaluateRecords(alerts.buildOperationalAlertRecords(mainRecords,[],{now:reference}),maloteRule,{now:reference})
         .map(a => ({...item({numero:a.op,codigo:a.codigo,sector:a.record.maloteSetor,sectorLabel:a.record.descSetor,etiqueta:a.record.etiqueta},a.message)})).sort(byProduct);
@@ -83,7 +85,7 @@ function buildReports(records, now = new Date(), sources = {}) {
         { type:'entregas', grouping:'delivery', title:'Prog Feira - entregas em atraso', description:'Produtos ativos com entrega anterior ao dia de referência, agrupados da data menos atrasada para a mais atrasada. Hoje não é atraso. Datas sem ano seguem a regra do Prog Feira.', warnings: missingDelivery ? `${missingDelivery} produtos sem entrega válida não foram classificados.` : '', items:late },
         { type:'malotes', grouping:'malote-halves', title:'Malotes pendentes', description:'Pedidos com malote nos setores 88/83 e parte principal em 20/26. Setor 88 na metade superior e setor 83 na inferior de cada folha.', warnings:'', items:malotes },
         { type:'cores', title:'Cores - previsões para hoje e em atraso', description:'Mesma regra do alerta de cores: previsão para hoje ou vencida, sem data de recebimento nem envio ao cliente. Cada card representa uma pendência de cor.', warnings:'', items:cores },
-        ...buildStylistReports(mainRecords,products,reference,day,sources)
+        ...buildStylistReports(mainRecords,products,reference,day,{...sources,d36Records:rows})
     ].map(report => ({ ...report, referenceDay:day }));
 }
 
