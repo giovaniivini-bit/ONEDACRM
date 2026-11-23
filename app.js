@@ -63,6 +63,7 @@
         corteSelectedWeek: '',
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
+        progCQFilters: { flow: 'all', sectors: [] },
         progFeiraSectors: [],
         progFeiraStylist: 'all',
         progFeiraDeliveries: [],
@@ -1833,6 +1834,7 @@
         else if (state.activeSubmodule === 'malotes') label = 'Malotes (Setores 88 e 83)';
         else if (state.activeSubmodule === 'feira') label = 'Feira & Protótipos';
         else if (state.activeSubmodule === 'prog-feira') label = 'Prog Feira';
+        else if (state.activeSubmodule === 'prog-cq') label = 'Prog CQ';
         else if (state.activeSubmodule === 'producao-costura') label = 'Produção time de amostras';
         else if (state.activeSubmodule === 'mpo') label = 'MPO';
         else if (state.activeSubmodule === 'andamento-cq') label = 'Andamento do CQ (Qualidade)';
@@ -1851,7 +1853,7 @@
     function renderActiveView() {
         const container = document.getElementById('viewContainer');
         if (!container) return;
-        const costuraView = state.activeSubmodule === 'producao-costura';
+        const costuraView = ['producao-costura', 'prog-cq'].includes(state.activeSubmodule);
         document.querySelectorAll('.toolbar-search-pill, .toolbar-stat-text').forEach(el => { el.style.display = costuraView ? 'none' : ''; });
 
         // Seletor de Views
@@ -1914,6 +1916,26 @@
             case 'andamento-cq':
                 renderAndamentoCQView(container);
                 break;
+            case 'prog-cq': {
+                const view = window.CRMProgCQView;
+                if (!view || !window.CRMProgCQ) {
+                    container.innerHTML = '<div class="empty-state">Atualize a página para carregar a Prog CQ.</div>';
+                    break;
+                }
+                const count = document.getElementById('toolbarActiveCount');
+                if (count) count.textContent = '—';
+                view.render(container, {
+                    filters: state.progCQFilters, search: state.filters.search, escape: escapeHtml,
+                    onFlow: flow => { state.progCQFilters.flow = flow; renderActiveView(); container.querySelector('[data-cq-flow]')?.focus(); },
+                    onSector: key => {
+                        state.progCQFilters.sectors = window.CRMProgCQ.toggleSector(state.progCQFilters.sectors, key);
+                        renderActiveView();
+                        Array.from(container.querySelectorAll('[data-cq-sector]')).find(button => button.dataset.cqSector === key)?.focus();
+                    },
+                    onClear: () => { state.progCQFilters = { flow: 'all', sectors: [] }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
+                });
+                break;
+            }
             case 'aproveitamento':
                 renderAproveitamentoView(container);
                 break;
@@ -13358,6 +13380,10 @@
     };
 
     window.crmGeneratePDFReport = () => {
+        if (state.activeSubmodule === 'prog-cq') {
+            showNotification('A planilha da Prog CQ ainda não foi configurada. O relatório estará disponível após a conexão dos dados.', 'info', 'Prog CQ');
+            return;
+        }
         if(state.activeSubmodule==='relatorios-automaticos') {
             if(state.automaticReport) window.open(`/api/automatic-reports?id=${encodeURIComponent(state.automaticReport.id)}&format=pdf`,'_blank','noopener');
             else showNotification('Selecione um relatório do histórico para abrir o PDF.','info','Relatórios automáticos');

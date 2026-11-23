@@ -81,6 +81,9 @@ const EXTERNAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.EXTERNAL_CACHE
 const PUBLIC_FILES = new Set(['index.html', 'style.css', 'light-theme.css', 'app.js', 'alerts-engine.js', 'setor01-related-sectors.js', 'raio-x.js', 'product-stylist.js', 'prog-feira.js', 'image-coverage.js', 'mpo-filters.js', 'mpo-view.js', 'costura.js', 'costura-view.js', 'corte-view.js', 'costura.css']);
 
 PUBLIC_FILES.add('automatic-reports-view.js');
+PUBLIC_FILES.add('prog-cq.js');
+PUBLIC_FILES.add('prog-cq-view.js');
+PUBLIC_FILES.add('prog-cq.css');
 PUBLIC_FILES.add('automatic-report-groups.js');
 PUBLIC_FILES.add('aproveitamento-dates.js');
 PUBLIC_FILES.add('aproveitamento-finalizacao.js');

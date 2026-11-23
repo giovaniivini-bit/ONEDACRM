@@ -1,5 +1,22 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — estrutura inicial (22/11/2026)
+
+Fonte recebida: Prog CQ, ID 1QMegrgLwnsXnOyOrkUK_XELhL6Tji_WARdZXu3WSlKg,
+Página1/gid0. Metadados e A1:Z5 conferidos via conector: ainda sem cabeçalhos/dados.
+Configuração SOURCE e link na tela preparados; leitura automática pendente das
+colunas e regras a serem informadas. Não editadas células da fonte.
+
+Módulo local em Controle de Qualidade, baseado visualmente na Prog Feira.
+Fluxos C32 e D32, com 9 e 11 setores respectivamente na sequência do usuário.
+Gráficos e grupos verticais usam configuração única; multisseleção por fluxo:setor,
+filtro de fluxo, limpeza e aviso aguardando planilha. Sem fonte/cache/API, contagens
+ou fotos fictícias; PDF pendente da definição dos dados. Guia: PROG-CQ.md.
+226 testes passaram; revisão independente aprovada, navegador local validado nos
+temas claro/escuro, ordem e seleção sem erros JS. Arquivos operacionais preservados.
+Sem commit/deploy nesta etapa. Próximo passo: receber planilha e contrato de
+cruzamentos/cards para integrar os dados e definir métricas/impressão.
+
 ## PDFs por estilista — um tema por folha (09/11/2026)
 
 Substitui o espaço de meia folha: cada tema/subtema começa em folha própria,
