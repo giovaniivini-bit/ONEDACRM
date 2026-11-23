@@ -1,5 +1,15 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — publicação (23/11/2026)
+
+Publicada no GitHub/VPS em 9cac422, integrando origin/main fb8959a para preservar
+as entregas recentes. 265 testes passaram localmente e na VPS. Revisão independente
+da integração aprovada. Hashes confirmaram 1.257 arquivos operacionais preservados.
+Backup: /home/ubuntu/backups/oneda-crm-prog-cq-20261123. Somente oneda-crm-app
+reiniciado. Navegador público confirmou menu Prog CQ, 20 grupos na ordem C32/D32,
+seleção C32:17x+D32:EN e link da fonte, sem erros JS. Parser, dados e cruzamentos
+continuam pendentes da definição das colunas; o módulo apresenta essa condição.
+
 ## Prog CQ — estrutura inicial (22/11/2026)
 
 Fonte recebida: Prog CQ, ID 1QMegrgLwnsXnOyOrkUK_XELhL6Tji_WARdZXu3WSlKg,

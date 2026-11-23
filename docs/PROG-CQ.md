@@ -44,4 +44,5 @@ cache, imagens, filtros complementares e impressão conforme contrato confirmado
 226 testes passaram na suíte completa. Browser local validou os dois fluxos,
 ordem dos 20 grupos, seleção cruzada C32:17x+D32:EN, limpeza e filtro D32,
 temas claro/escuro e console sem erros. Revisão independente sem Critical/Important.
-Estrutura preparada localmente, sem publicação nesta etapa.
+Publicada no GitHub/VPS em 23/11/2026 no commit 9cac422. Após integrar as entregas
+recentes, 265 testes passaram nos dois ambientes e a navegação pública foi validada.
