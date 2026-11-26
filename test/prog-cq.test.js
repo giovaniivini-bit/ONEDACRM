@@ -55,7 +55,23 @@ test('tela sem fonte sinaliza ausência de dados e conecta seleção e limpeza',
         escape:String, onPart(){}, onSector(){}, onClear(){}
     });
     assert.match(container.innerHTML,/TINTURARIA\nVALIDAÇÃO/);
+    assert.match(container.innerHTML,/prog-cq-order-missing/);
+    assert.match(container.innerHTML,/prog-cq-bar[^>]+height:72px/);
     assert.match(container.innerHTML,/Não informado/);
     assert.equal((container.innerHTML.match(/AV\. PENDENTE CQ/g)||[]).length,1);
     assert.doesNotMatch(container.innerHTML,/OUTRO PEDIDO/);
+});
+
+test('malha exige todas as partes fora da tecelagem e tinturaria', () => {
+    const { filterAvailability } = require('../prog-cq');
+    const ready = { andamentoPedido: '2704 - 078501 - 126855-LAB-APROVAÇÃO LOTE TINTURARIA\nDEPÓSITO MALHA', aviamentoPendente: false };
+    const missing = { andamentoPedido: 'CORTE\n2708 - 078912 - 126856-PPCP - TECELAGEM ANÁLISE OI', aviamentoPendente: false };
+    const missingTrim = { andamentoPedido: 'CORTE', aviamentoPendente: true };
+    const unknown = { andamentoPedido: '', aviamentoPendente: true };
+    const rows = [ready, missing, missingTrim, unknown];
+    assert.deepEqual(filterAvailability(rows,{mesh:'available',trims:'available'}),[ready]);
+    assert.deepEqual(filterAvailability(rows,{mesh:'missing'}),[missing]);
+    assert.deepEqual(filterAvailability(rows,{mesh:'unknown'}),[unknown]);
+    assert.deepEqual(filterAvailability(rows,{trims:'missing'}),[missingTrim,unknown]);
+    assert.deepEqual(filterAvailability([{andamentoPedido:'2704 - 078501 - 126855-TINTURARIA'}],{mesh:'missing'}).length,1);
 });

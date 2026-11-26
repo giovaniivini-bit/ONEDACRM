@@ -1,5 +1,12 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — disponibilidade de materiais (26/11/2026)
+
+Barras por setor, andamento vazio em cinza e filtros de malha e aviamento.
+A classificação usa as colunas K e M. Regras em PROG-CQ.md.
+270 testes passaram no checkout.
+
+
 ## Prog CQ — leitura da planilha (26/11/2026)
 
 Fonte Página1 conectada ao sincronizador. Parte G e setor C agrupam cards.

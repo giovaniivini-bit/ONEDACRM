@@ -56,6 +56,27 @@
         if (!valid) return [...selected];
         return selected.includes(key) ? selected.filter(value => value !== key) : [...selected, key];
     }
+    function meshStatus(andamentoPedido) {
+        const sectors = String(andamentoPedido || '').split(/\r?\n/).map(line =>
+            line.replace(/^\s*\d+\s*-\s*\d+\s*-\s*\d*\s*-\s*/, '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+        ).filter(sector => sector && !/^(?:[-—–]+|nao informado|sem informacao)$/.test(sector));
+        if (!sectors.length) return 'unknown';
+
+        const blocked = sectors.some(sector =>
+            /\b(?:tecelagem|tinturaria)\b/.test(sector) &&
+            !/\b(?:lab|laboratorio|deposito)\b/.test(sector)
+        );
+        return blocked ? 'missing' : 'available';
+    }
+
+    function filterAvailability(items, { mesh = 'all', trims = 'all' } = {}) {
+        return items.filter(item =>
+            (mesh === 'all' || meshStatus(item.andamentoPedido) === mesh) &&
+            (trims === 'all' || (trims === 'missing' ? item.aviamentoPendente : item.aviamentoPendente === false))
+        );
+    }
+
     function groups(items = [], { part = 'all', sectors = [], search = '' } = {}) {
         const term = String(search).trim().toLocaleLowerCase('pt-BR');
         return partsFor(items).filter(entry => part === 'all' || entry.code === part).flatMap(entry => entry.sectors
@@ -65,5 +86,5 @@
                     (!term || [item.codigo, item.numero].some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(term))))
             })));
     }
-    return { SOURCE, PARTS, parseMatrix, partsFor, sectorKey, toggleSector, groups };
+    return { SOURCE, PARTS, parseMatrix, filterAvailability, partsFor, sectorKey, toggleSector, groups };
 });

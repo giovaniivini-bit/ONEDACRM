@@ -6,8 +6,10 @@
 .prog-cq-distribution .prog-feira-chart-scroll { padding-left:0; margin-top:12px; }
 .prog-cq-distribution .prog-feira-flow { min-width:780px; background:none; }
 .prog-cq-distribution .prog-feira-flow-step { grid-template-rows:100px 22px 22px 22px 20px; }
-.prog-cq-distribution .prog-feira-sector-plot { height:100px; width:100%; border:1px dashed var(--border-color); border-radius:6px; align-items:center; }
-.prog-cq-distribution .prog-feira-sector-plot .prog-cq-unavailable { min-height:0; font-size:24px; color:var(--text-muted); }
+.prog-cq-distribution .prog-feira-sector-plot { height:100px; width:100%; border:1px dashed var(--border-color); border-radius:6px; align-items:center; justify-content:flex-end; flex-direction:column; gap:4px; }
+.prog-cq-distribution .prog-cq-bar-count { min-height:0; font-size:14px; font-weight:800; color:var(--text-primary); }
+.prog-cq-distribution .prog-cq-bar { min-height:0; flex:none; display:block; width:65%; border-radius:5px 5px 0 0; background:#0284c7; }
+.prog-cq-distribution .active .prog-cq-bar { background:#0d9488; }
 .prog-cq-distribution .prog-feira-flow-step small { color:var(--text-secondary); }
 
 .prog-cq-card .prog-feira-media { position:relative; width:100%; height:auto; aspect-ratio:297/210; }
@@ -19,3 +21,7 @@
 
 .prog-cq-card .prog-feira-image { cursor:default; }
 .prog-cq-card [hidden] { display:none !important; }
+
+.prog-cq-card .prog-cq-order-missing { color:var(--text-muted); }
+.prog-cq-view .prog-feira-toolbar { flex-wrap:wrap; }
+.prog-cq-view .prog-feira-parallel-filter { flex:1 1 135px; }

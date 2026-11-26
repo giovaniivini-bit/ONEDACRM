@@ -31,3 +31,11 @@ fonte entram no fim da lista da parte. F6 inclui o setor 17, distinto de 17x.
 
 Falhas de leitura mantêm o último cache válido. Sem cache, a tela indica que a
 fonte está indisponível. A impressão específica da Prog CQ ainda está pendente.
+
+
+Os filtros de malha e aviamento podem ser combinados com parte e setor. Qualquer
+linha de andamento em tecelagem ou tinturaria indica falta de malha. Laboratório
+e depósito são considerados outros setores, ainda que o nome cite tinturaria.
+Andamento sem setor informado fica separado como situação desconhecida. A coluna
+M preenchida indica falta de aviamento. As barras contam registros após o filtro
+de materiais, por parte, e continuam servindo para selecionar setores.
