@@ -4,6 +4,9 @@
 
 Parte F6 ocupa o grupo anterior C32, e Parte F7 o grupo anterior D32.
 Ordem dos 20 setores preservada. Filtro, seleção e contrato interno usam parte.
+Publicado no GitHub e na VPS em 6461fdd. 265 testes passaram localmente e na VPS.
+Revisão independente aprovada. Edge público confirmou seleção F6:17x + F7:EN,
+filtro F7 e limpeza dos filtros. 1.079 arquivos operacionais preservados na publicação.
 
 
 ## Prog CQ — publicação (23/11/2026)
