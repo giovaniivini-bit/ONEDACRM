@@ -1978,19 +1978,6 @@
                     },
                     onClear: () => { state.progCQFilters = { part: 'all', sectors: [], mesh: 'all', trims: 'all', weeks: [] }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
                 });
-                container.querySelectorAll('[data-cq-image-fallback]').forEach(img => {
-                    const recoverImage = () => {
-                        const fallback = img.dataset.cqImageFallback;
-                        if (fallback && new URL(fallback, document.baseURI).href !== img.src) {
-                            img.src = fallback;
-                            return;
-                        }
-                        img.hidden = true;
-                        img.nextElementSibling.hidden = false;
-                    };
-                    img.addEventListener('error', recoverImage);
-                    if (img.complete && !img.naturalWidth) recoverImage();
-                });
                 break;
             }
             case 'aproveitamento':
@@ -4327,16 +4314,22 @@
         document.body.classList.add('print-raio-x');
     }
 
-    function prepareProgFeiraPrint() {
-        if(state.activeSubmodule !== 'prog-feira') return;
+    function prepareProgGalleryPrint() {
+        if (!['prog-feira', 'prog-cq'].includes(state.activeSubmodule)) return;
+        if (state.activeSubmodule === 'prog-cq') {
+            const view = document.querySelector('.prog-cq-view');
+            if (!view) return;
+            window.CRMProgCQView.preparePrint(view);
+        }
         document.body.classList.add('print-prog-feira','print-gallery-report');
-        const pages=[...document.querySelectorAll('.prog-feira-print-page')];
+        const selector = state.activeSubmodule === 'prog-cq' ? '.prog-cq-print-sheet' : '.prog-feira-print-page';
+        const pages = [...document.querySelectorAll(selector)];
         pages.forEach(page=>{
             page.style.removeProperty('--prog-print-scale');
             page.style.removeProperty('--prog-print-width');
         });
         // Measure the actual print layout, including all trim rows, before fitting the sheet.
-        const availableHeight=194*96/25.4;
+        const availableHeight = (state.activeSubmodule === 'prog-cq' ? 192 : 194) * 96 / 25.4;
         pages.forEach(page=>{
             const bounds=page.getBoundingClientRect();
             const height=Math.max(bounds.height,page.scrollHeight);
@@ -4344,12 +4337,20 @@
             page.style.setProperty('--prog-print-scale',String(Math.min(1,availableHeight/Math.max(1,height))));
         });
     }
-    window.addEventListener('beforeprint',prepareProgFeiraPrint);
-    window.matchMedia('print').addEventListener('change',event=>{if(event.matches)prepareProgFeiraPrint();});
+    window.addEventListener('keydown', event => {
+        if (state.activeSubmodule === 'prog-cq' && (event.ctrlKey || event.metaKey) &&
+            !event.defaultPrevented && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'p') {
+            event.preventDefault();
+            window.crmGeneratePDFReport();
+        }
+    });
+    window.addEventListener('beforeprint',prepareProgGalleryPrint);
+    window.matchMedia('print').addEventListener('change',event=>{if(event.matches)prepareProgGalleryPrint();});
     window.addEventListener('afterprint',()=>{
         document.querySelectorAll('.prog-feira-print-page').forEach(page=>{
             page.style.removeProperty('--prog-print-scale');page.style.removeProperty('--prog-print-width');
         });
+        document.querySelector('.prog-cq-print-report')?.remove();
         document.body.classList.remove('print-prog-feira','print-gallery-report');
     });
 
@@ -13601,10 +13602,6 @@
     };
 
     window.crmGeneratePDFReport = () => {
-        if (state.activeSubmodule === 'prog-cq') {
-            showNotification('O relatório em PDF da Prog CQ ainda não está disponível.', 'info', 'Prog CQ');
-            return;
-        }
         if (window.crmGeneratePDFReport.pending) return;
         if(state.activeSubmodule==='relatorios-automaticos') {
             if(state.automaticReport) window.open(`/api/automatic-reports?id=${encodeURIComponent(state.automaticReport.id)}&format=pdf`,'_blank','noopener');
@@ -13657,6 +13654,7 @@
             'rotativos': 'Estilo Pedido - Rotativos (Setor 43)',
             'feira': 'Estilo Amostras - Feira & Protótipos (Fluxo D36)'
             ,'andamento-cq': 'Andamento do Controle de Qualidade (CQ)'
+            ,'prog-cq': 'Prog CQ — Controle de Qualidade'
         };
         const title = subTitleMap[state.activeSubmodule] || 'Relatório Executivo de Produção & Métricas';
 
@@ -13696,6 +13694,7 @@
             malotes: 'print-malotes'
             ,alertas: 'print-alertas'
             ,'prog-feira': 'print-prog-feira'
+            ,'prog-cq': 'print-prog-feira'
             ,'andamento-cq': 'print-cq'
             ,'raio-x': 'print-raio-x'
         }[state.activeSubmodule];
@@ -13704,7 +13703,10 @@
         }
         if (state.activeSubmodule === 'raio-x') prepareRaioXPrint();
 
+        if (state.activeSubmodule === 'prog-cq') prepareProgGalleryPrint();
+
         const cleanupPrintMode = () => {
+            if (printSubmodule === 'prog-cq') printView?.querySelector('.prog-cq-print-report')?.remove();
             window.crmGeneratePDFReport.pending = false;
             document.body.classList.remove(...printModeClasses);
             if (viewWasAdjustedForPrint) {
@@ -13720,11 +13722,16 @@
 
         showNotification('Formatando relatório executivo para salvar em PDF ou imprimir...', 'info', 'Gerando Relatório');
         const printSubmodule = state.activeSubmodule;
-        window.crmGeneratePDFReport.pending = printSubmodule === 'prog-feira';
-        const printView = printSubmodule === 'prog-feira' ? document.querySelector('.prog-feira-view') : null;
+        const printGallery = ['prog-feira', 'prog-cq'].includes(printSubmodule);
+        const printRequest = {};
+        window.crmGeneratePDFReport.pending = printGallery ? printRequest : false;
+        const printViewSelector = printSubmodule === 'prog-cq' ? '.prog-cq-view' : '.prog-feira-view';
+        const printView = printGallery ? document.querySelector(printViewSelector) : null;
         setTimeout(async () => {
-            if (printSubmodule === 'prog-feira') {
-                const images = [...document.querySelectorAll('.prog-feira-media img')];
+            if (printGallery) {
+                if (window.crmGeneratePDFReport.pending !== printRequest) return;
+                const imageSelector = printSubmodule === 'prog-cq' ? '.prog-cq-print-report img:not([hidden])' : '.prog-feira-media img';
+                const images = [...document.querySelectorAll(imageSelector)];
                 images.forEach(img => { img.loading = 'eager'; });
                 let timeout;
                 await Promise.race([
@@ -13735,18 +13742,25 @@
                                 img.dataset.fallback = '1';
                                 img.src = img.dataset.fallbackSrc;
                             }
-                            try { await img.decode(); } catch (_) { /* Existing unavailable-image state remains visible. */ }
+                            try { await img.decode(); }
+                            catch (_) {
+                                if (printSubmodule === 'prog-cq' && img.complete && !img.naturalWidth) {
+                                    img.hidden = true;
+                                    img.nextElementSibling.hidden = false;
+                                }
+                            }
                         }
                     })),
                     new Promise(resolve => { timeout = setTimeout(resolve, 20000); })
                 ]);
                 clearTimeout(timeout);
-                if (state.activeSubmodule !== printSubmodule || document.querySelector('.prog-feira-view') !== printView) {
+                if (window.crmGeneratePDFReport.pending !== printRequest) return;
+                if (state.activeSubmodule !== printSubmodule || document.querySelector(printViewSelector) !== printView) {
                     cleanupPrintMode();
                     window.removeEventListener('afterprint', cleanupPrintMode);
                     return;
                 }
-                const pending = images.filter(img => !img.complete || !img.naturalWidth);
+                const pending = images.filter(img => !img.hidden && (!img.complete || !img.naturalWidth));
                 if (pending.length) {
                     cleanupPrintMode();
                     window.removeEventListener('afterprint', cleanupPrintMode);

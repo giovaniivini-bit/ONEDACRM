@@ -41,7 +41,16 @@ vínculo deixam o valor indefinido. Zero aparece como número. Campo vazio,
 inválido, divergente ou sem correspondência aparece como traço.
 
 Falhas de leitura mantêm o último cache válido. Sem cache, a tela indica que a
-fonte está indisponível. A impressão específica da Prog CQ ainda está pendente.
+fonte está indisponível.
+
+## Impressão
+
+Gerar PDF e Ctrl+P usam a composição da Prog Feira em A4 paisagem, com quatro
+cards por linha e até oito da mesma parte e setor por folha. São impressos os
+cards que correspondem aos filtros da tela, com título de parte e setor por
+folha. Imagens continuam proporcionais à largura do card e os dados do card
+são preservados, incluindo dias parados, andamento e pendência de aviamento.
+A impressão aguarda as imagens e tenta a fonte alternativa em caso de erro.
 
 
 Os filtros de malha e aviamento podem ser combinados com parte e setor. Qualquer

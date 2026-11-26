@@ -135,3 +135,54 @@ for (const scenario of ['loaded', 'rerender', 'timeout', 'fallback']) {
         }
     });
 }
+
+test('Prog CQ espera a foto alternativa e invalida o pedido se a impressão já terminou', async () => {
+    const vm = require('node:vm');
+    const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const start = app.indexOf('window.crmGeneratePDFReport = () => {');
+    const end = app.indexOf('\n    };', start) + '\n    };'.length;
+    let prepared = 0, printed = 0, afterPrint, finish;
+    const jobs = [];
+    const report = { remove() {} };
+    const view = { querySelector: () => report };
+    const ready = new Promise(resolve => { finish = resolve; });
+    const img = {
+        dataset:{fallbackSrc:'/proxy.jpg'}, complete:false, naturalWidth:0,
+        async decode() {
+            if (this.src !== '/proxy.jpg') throw new Error('Miniatura indisponível');
+            await ready;
+            this.complete = true;
+            this.naturalWidth = 297;
+        }
+    };
+    const context = {
+        state:{activeSubmodule:'prog-cq'},
+        document:{
+            body:{classList:{add(){},remove(){}}},
+            getElementById:()=>null,
+            querySelector:()=>view,
+            querySelectorAll: selector => {
+                assert.equal(selector, '.prog-cq-print-report img:not([hidden])');
+                return [img];
+            }
+        },
+        window:{
+            addEventListener(event, callback) { if (event === 'afterprint') afterPrint = callback; },
+            print() { printed++; }
+        },
+        prepareProgGalleryPrint() { prepared++; },
+        showNotification(){}, setTimeout(fn){jobs.push(fn);}, clearTimeout(){}
+    };
+    vm.runInNewContext(app.slice(start,end), context);
+    context.window.crmGeneratePDFReport();
+    const inProgress = jobs.shift()();
+    await new Promise(setImmediate);
+    assert.equal(prepared, 1);
+    assert.equal(img.src, '/proxy.jpg');
+    assert.equal(printed, 0);
+    afterPrint();
+    finish();
+    await inProgress;
+    assert.equal(printed, 0);
+    assert.equal(context.window.crmGeneratePDFReport.pending, false);
+});

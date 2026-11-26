@@ -1,6 +1,62 @@
 (function(root) {
     'use strict';
+    function watchImage(img) {
+        const recover = () => {
+            const fallback = img.dataset.fallbackSrc;
+            if (fallback && new URL(fallback, img.ownerDocument.baseURI).href !== img.src) {
+                img.src = fallback;
+                return;
+            }
+            img.hidden = true;
+            img.nextElementSibling.hidden = false;
+        };
+        img.addEventListener('error', recover);
+        if (img.complete && !img.naturalWidth) recover();
+    }
+
+    function preparePrint(view) {
+        if (view.querySelector('.prog-cq-print-report')) return;
+        const doc = view.ownerDocument;
+        const report = doc.createElement('div');
+        report.className = 'prog-cq-print-report';
+        for (const group of view.querySelectorAll('[data-cq-group]')) {
+            const cards = [...group.querySelectorAll('.prog-cq-card')];
+            const [part, sector] = group.dataset.cqGroup.split(':');
+            for (let offset = 0; offset < cards.length; offset += 8) {
+                const page = doc.createElement('section');
+                page.className = 'prog-feira-print-page prog-cq-print-page';
+                const sheet = doc.createElement('div');
+                sheet.className = 'prog-feira-sector prog-cq-print-sheet';
+                const header = doc.createElement('header');
+                const title = doc.createElement('strong');
+                title.textContent = `Prog CQ • Parte ${part} • Setor ${sector}${offset ? ' • continuação' : ''}`;
+                const count = doc.createElement('em');
+                const batch = cards.slice(offset, offset + 8);
+                count.textContent = `${batch.length} ${batch.length === 1 ? 'produto' : 'produtos'}`;
+                header.append(title, count);
+
+                const grid = doc.createElement('div');
+                grid.className = 'prog-feira-grid';
+                for (const card of batch) {
+                    const copy = card.cloneNode(true);
+                    const img = copy.querySelector('img[data-fallback-src]');
+                    if (img && !img.hidden) {
+                        img.loading = 'eager';
+                        watchImage(img);
+                    }
+                    grid.appendChild(copy);
+                }
+                sheet.append(header, grid);
+                page.appendChild(sheet);
+                report.appendChild(page);
+            }
+        }
+        if (!report.childElementCount) report.textContent = 'Prog CQ • Nenhum produto para os filtros selecionados.';
+        view.appendChild(report);
+    }
+
     root.CRMProgCQView = {
+        preparePrint,
         render(container, { filters, search, escape: esc, source, feiraDays, loading, image = () => ({}), onPart, onFilter, onSector, onClear }) {
             const api = root.CRMProgCQ;
             const selected = filters.sectors;
@@ -28,7 +84,7 @@
                 const andamento = api.orderProgressForWeeks(item.andamentoPedido, weeks).trim();
                 return `<article class="prog-feira-card prog-cq-card">
                     <div class="prog-feira-card-top"><strong>${esc(item.codigo)}</strong>${item.numero ? `<span>OF ${esc(item.numero)}</span>` : ''}</div>
-                    <div class="prog-feira-media">${photo.hasImage ? `<img class="prog-feira-image" src="${esc(photo.thumbUrl)}" data-cq-image-fallback="${esc(photo.proxyUrl || '')}" alt="${esc(item.codigo)}" loading="lazy"><span class="prog-feira-image-empty" hidden>Imagem indisponível</span>` : '<span class="prog-feira-image-empty">Imagem indisponível</span>'}</div>
+                    <div class="prog-feira-media">${photo.hasImage ? `<img class="prog-feira-image" src="${esc(photo.thumbUrl)}" data-fallback-src="${esc(photo.proxyUrl || '')}" alt="${esc(item.codigo)}" loading="lazy"><span class="prog-feira-image-empty" hidden>Imagem indisponível</span>` : '<span class="prog-feira-image-empty">Imagem indisponível</span>'}</div>
                     <div class="prog-feira-card-body">
                         <div class="prog-cq-sector-days"><strong>${days == null ? '—' : days.toLocaleString('pt-BR')}</strong><span>Dias parados no setor</span></div>
                         ${item.aviamentoPendente ? '<strong class="prog-cq-trim-pending">AV. PENDENTE CQ</strong>' : ''}
@@ -95,6 +151,7 @@
                         : `<div class="prog-cq-empty">${source ? 'Nenhum registro neste setor.' : status}</div>`}</section>`).join('') : '<div class="empty-state">Nenhum setor selecionado pertence à parte exibida. Limpe a seleção ou escolha outra parte.</div>'}
                 </section>
             </section>`;
+            container.querySelectorAll('img[data-fallback-src]').forEach(watchImage);
             container.querySelector('[data-cq-part]').addEventListener('change', event => onPart(event.target.value));
             container.querySelectorAll('[data-cq-filter]').forEach(select => {
                 select.addEventListener('change', () => onFilter(select.dataset.cqFilter, select.value));

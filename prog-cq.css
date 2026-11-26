@@ -34,3 +34,28 @@
 .prog-cq-week-menu .follow-multi-options p { margin:8px; color:var(--text-secondary); }
 .prog-cq-view .prog-feira-toolbar { flex-wrap:wrap; }
 .prog-cq-view .prog-feira-parallel-filter { flex:1 1 135px; }
+
+.prog-cq-print-report { display:none; }
+
+@media print {
+    html:has(.prog-cq-print-report),
+    body:has(.prog-cq-print-report),
+    body:has(.prog-cq-print-report) :is(.app-layout, .main-content, .view-container) {
+        display:block !important;
+        height:auto !important;
+        min-height:0 !important;
+    }
+    body:has(.prog-cq-print-report) :is(#globalAlertBanner, #printReportHeader) { display:none !important; }
+    body.print-prog-feira .prog-cq-view:has(.prog-cq-print-report) > :not(.prog-cq-print-report) { display:none !important; }
+    body.print-prog-feira .prog-cq-print-report { display:block; }
+    body.print-prog-feira .prog-cq-view .prog-cq-print-report .prog-cq-print-page { height:193mm; overflow:hidden !important; }
+    .prog-cq-print-sheet { width:var(--prog-print-width,100%); zoom:var(--prog-print-scale,1); box-sizing:border-box; margin:0 auto; }
+    body.print-prog-feira .prog-cq-view .prog-feira-card-body { display:grid !important; gap:1mm; font-size:10px; }
+    .prog-cq-print-report .prog-cq-sector-days { grid-template-columns:auto auto; align-items:baseline; justify-content:center; gap:2mm; padding:1mm; }
+    .prog-cq-print-report .prog-cq-sector-days strong { font-size:18px; }
+    .prog-cq-print-report .prog-cq-sector-days span,
+    .prog-cq-print-report .prog-cq-order-progress { font-size:9px; }
+    .prog-cq-print-report .prog-cq-order-progress { gap:.5mm; }
+    body.print-prog-feira .prog-cq-print-report .prog-feira-image[hidden] { display:none !important; }
+    .prog-cq-print-report .prog-cq-trim-pending { padding:1mm; font-size:10px; }
+}

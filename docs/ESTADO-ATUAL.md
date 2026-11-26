@@ -1,11 +1,18 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — impressão no padrão da Prog Feira
+
+PDF em A4 paisagem, com quatro colunas e até oito cards da mesma parte e setor.
+Edge e Poppler confirmaram 8, 1 e 2 cards em três folhas para dois setores,
+mantendo os andamentos extensos, dias parados e tarjas, sem folhas extras.
+
 ## Prog CQ — dias parados no setor
 
 Cards exibem em destaque os dias da coluna DB da Prog Feira. A consulta cruzada
 identificou 119 dos 121 registros atuais por código completo, OF, parte e setor.
 Zero é exibido como número e ausência aparece como traço.
-273 testes passaram no checkout.
+Publicado em 8117a43 com 273 testes no checkout e na VPS. Edge confirmou 119
+dos 121 cards com dias parados e dois sem correspondência.
 
 ## Prog CQ — seleção múltipla de semanas
 
