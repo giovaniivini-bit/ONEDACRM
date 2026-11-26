@@ -63,7 +63,7 @@
         corteSelectedWeek: '',
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
-        progCQFilters: { flow: 'all', sectors: [] },
+        progCQFilters: { part: 'all', sectors: [] },
         progFeiraTrimForecast: 'all',
         progFeiraSectors: [],
         progFeiraStylist: 'all',
@@ -1950,13 +1950,13 @@
                 if (count) count.textContent = '—';
                 view.render(container, {
                     filters: state.progCQFilters, search: state.filters.search, escape: escapeHtml,
-                    onFlow: flow => { state.progCQFilters.flow = flow; renderActiveView(); container.querySelector('[data-cq-flow]')?.focus(); },
+                    onPart: part => { state.progCQFilters.part = part; renderActiveView(); container.querySelector('[data-cq-part]')?.focus(); },
                     onSector: key => {
                         state.progCQFilters.sectors = window.CRMProgCQ.toggleSector(state.progCQFilters.sectors, key);
                         renderActiveView();
                         Array.from(container.querySelectorAll('[data-cq-sector]')).find(button => button.dataset.cqSector === key)?.focus();
                     },
-                    onClear: () => { state.progCQFilters = { flow: 'all', sectors: [] }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
+                    onClear: () => { state.progCQFilters = { part: 'all', sectors: [] }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
                 });
                 break;
             }

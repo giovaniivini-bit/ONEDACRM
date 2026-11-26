@@ -15,7 +15,7 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 
 ## Decisões que devem permanecer
 
-- Prog CQ (22/11/2026): módulo distinto da Prog Feira, com fluxos C32 e D32,
+- Prog CQ (22/11/2026): módulo distinto da Prog Feira, com partes F6 e F7,
   ordenação de setores em docs/PROG-CQ.md. Fonte e cruzamentos aguardam definição;
   não herdar regras de negócio D36/Feira. Manter sufixos x dos setores.
 

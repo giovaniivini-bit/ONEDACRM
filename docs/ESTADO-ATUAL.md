@@ -1,5 +1,11 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — agrupamento por parte (26/11/2026)
+
+Parte F6 ocupa o grupo anterior C32, e Parte F7 o grupo anterior D32.
+Ordem dos 20 setores preservada. Filtro, seleção e contrato interno usam parte.
+
+
 ## Prog CQ — publicação (23/11/2026)
 
 Publicada no GitHub/VPS em 9cac422, integrando origin/main fb8959a para preservar

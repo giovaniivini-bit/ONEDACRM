@@ -3,13 +3,13 @@
 ## Escopo confirmado em 22/11/2026
 
 Novo módulo em Controle de Qualidade, com padrão visual da Prog Feira.
-Fluxos, nesta ordem:
+Partes, nesta ordem (definidas em 26/11/2026):
 
-- C32: 17x, D9x, B8x, D11, B9x, E7x, E8x, E9x, E5x.
-- D32: EN, IS, 17, D9, B8, D10, B9, E7, E8, E9, E5.
+- Parte F6: 17x, D9x, B8x, D11, B9x, E7x, E8x, E9x, E5x.
+- Parte F7: EN, IS, 17, D9, B8, D10, B9, E7, E8, E9, E5.
 
 A mesma configuração ordena os gráficos horizontais e os grupos verticais.
-Seleção múltipla por união, identificada por fluxo:setor. Filtro de fluxo e
+Seleção múltipla por união, identificada por parte:setor. Filtro de parte e
 limpeza disponíveis. Não tratar 17 e 17x como o mesmo setor.
 
 ## Implementado nesta etapa
@@ -21,7 +21,7 @@ limpeza disponíveis. Não tratar 17 e 17x como o mesmo setor.
 - Gerar PDF informa que a fonte precisa ser configurada, sem imprimir base alheia.
 
 Não existe API, sincronização, cache CQ ou parser da planilha nesta etapa.
-prog-cq.js contém apenas um contrato interno de apresentação (flow, sector,
+prog-cq.js contém apenas um contrato interno de apresentação (part, sector,
 codigo completo, numero opcional); não define nomes/colunas da futura planilha,
 chave de consolidação ou contagens finais. Nenhuma regra D36 da Feira é aplicada.
 
@@ -34,7 +34,7 @@ SOURCE registrada no helper e link disponível na tela. Não houve escrita na
 planilha; nenhuma sincronização ou interpretação de colunas foi ativada.
 
 Confirmar URL/aba, cabeçalhos, identificação do produto e da amostra/OF, indicação
-de fluxo/setor, estados válidos e regras de saldo. Definir os cruzamentos, campos
+de parte/setor, estados válidos e regras de saldo. Definir os cruzamentos, campos
 dos cards, datas/ordenação dentro de cada setor e métricas com o usuário. Preservar
 códigos completos e sufixos para as fotos. Só então implementar adaptador/API,
 cache, imagens, filtros complementares e impressão conforme contrato confirmado.
