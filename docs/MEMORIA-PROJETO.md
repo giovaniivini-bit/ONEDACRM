@@ -398,3 +398,7 @@ Calendário Industrial(19/11/2026): ciclos podem coexistir durante publicação 
 do ano seguinte. Exigir ao menosum ciclo anual completo individualmente; não exigir
 ano único e não unir semanasparciais de anosdiferentes. Preservar validaçõesdatas/
 limites e cacheválido. Falhasparciais não significam que todas fontes falharam.
+
+- Prog CQ: disponibilidade de malha é inferida de todos os setores da coluna K.
+  Tecelagem ou tinturaria impede a disponibilidade, com exceção de laboratório
+  ou depósito. Sem setor fica desconhecida. Coluna M preenchida significa sem aviamento.

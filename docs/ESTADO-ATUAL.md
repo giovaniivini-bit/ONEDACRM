@@ -4,7 +4,9 @@
 
 Barras por setor, andamento vazio em cinza e filtros de malha e aviamento.
 A classificação usa as colunas K e M. Regras em PROG-CQ.md.
-270 testes passaram no checkout.
+270 testes passaram no checkout e na VPS. Publicado em 8d565ea.
+Navegador público confirmou barras, texto cinza e filtros: 13 de 121 registros
+com malha e aviamento. Publicação preservou 1.096 arquivos operacionais.
 
 
 ## Prog CQ — leitura da planilha (26/11/2026)
