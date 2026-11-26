@@ -1,11 +1,19 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — margens do PDF
+
+A impressão usa uma área segura de largura fixa e quatro colunas. Dois e quatro
+cards ocupam a mesma largura por coluna. Margens internas protegem as bordas
+superior e inferior. Edge e Poppler confirmaram três folhas com 2, 4 e 8 cards,
+incluindo descrição longa e andamento completo. 275 testes no checkout.
+
 ## Prog CQ — ordem de compra
 
 A coluna L alimenta o filtro Com OC/Sem OC e uma faixa abaixo de aviamento.
 Números múltiplos mantêm a grafia da planilha. Sem OC tem fundo amarelo e texto
 preto. A planilha consultada tinha 68 registros com OC e 53 sem OC. A suíte
 local passou com 274 testes, e o Edge confirmou seleção, faixas e paginação.
+Publicado em 1dc0e3b, com 68 registros com OC e 53 sem OC verificados em produção.
 
 ## Prog CQ — cabeçalho dos cards
 

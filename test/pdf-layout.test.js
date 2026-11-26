@@ -186,3 +186,30 @@ test('Prog CQ espera a foto alternativa e invalida o pedido se a impressão já 
     assert.equal(printed, 0);
     assert.equal(context.window.crmGeneratePDFReport.pending, false);
 });
+
+test('Prog CQ fits print content inside its centered frame and vertical padding', () => {
+    const vm = require('node:vm');
+    const source = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+    const start = source.indexOf('function prepareProgGalleryPrint()');
+    const end = source.indexOf("\n    window.addEventListener('keydown'", start);
+    const props = new Map();
+    const page = {
+        parentElement:{clientWidth:1000, clientHeight:700},
+        style:{setProperty:(name,value)=>props.set(name,value),removeProperty:name=>props.delete(name)},
+        scrollWidth:1100, scrollHeight:800,
+        getBoundingClientRect:()=>({width:1000,height:600})
+    };
+    const view = {};
+    const context = {
+        state:{activeSubmodule:'prog-cq'},
+        document:{body:{classList:{add(){}}},querySelector:()=>view,querySelectorAll:()=>[page]},
+        window:{CRMProgCQView:{preparePrint(){}},getComputedStyle:()=>({paddingTop:'40px',paddingBottom:'40px'})}
+    };
+    vm.runInNewContext(source.slice(start,end),context);
+    context.prepareProgGalleryPrint();
+    assert.equal(Number(props.get('--prog-print-scale')), 618/800);
+    assert.equal(props.has('--prog-print-width'),false);
+    page.scrollHeight=600;
+    context.prepareProgGalleryPrint();
+    assert.equal(Number(props.get('--prog-print-scale')), 1000/1200);
+});

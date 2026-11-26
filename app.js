@@ -4322,19 +4322,31 @@
             window.CRMProgCQView.preparePrint(view);
         }
         document.body.classList.add('print-prog-feira','print-gallery-report');
-        const selector = state.activeSubmodule === 'prog-cq' ? '.prog-cq-print-sheet' : '.prog-feira-print-page';
+        const isProgCQ = state.activeSubmodule === 'prog-cq';
+        const selector = isProgCQ ? '.prog-cq-print-sheet' : '.prog-feira-print-page';
         const pages = [...document.querySelectorAll(selector)];
         pages.forEach(page=>{
             page.style.removeProperty('--prog-print-scale');
             page.style.removeProperty('--prog-print-width');
         });
         // Measure the actual print layout, including all trim rows, before fitting the sheet.
-        const availableHeight = (state.activeSubmodule === 'prog-cq' ? 192 : 194) * 96 / 25.4;
-        pages.forEach(page=>{
-            const bounds=page.getBoundingClientRect();
-            const height=Math.max(bounds.height,page.scrollHeight);
-            page.style.setProperty('--prog-print-width',`${bounds.width}px`);
-            page.style.setProperty('--prog-print-scale',String(Math.min(1,availableHeight/Math.max(1,height))));
+        const feiraHeight = 194 * 96 / 25.4;
+        pages.forEach(page => {
+            const bounds = page.getBoundingClientRect();
+            if (!bounds.width || !bounds.height) return;
+            const height = Math.max(bounds.height, page.scrollHeight);
+            let availableHeight = feiraHeight;
+            let widthScale = 1;
+            if (isProgCQ) {
+                const frame = page.parentElement;
+                const padding = window.getComputedStyle(frame);
+                availableHeight = frame.clientHeight - parseFloat(padding.paddingTop) - parseFloat(padding.paddingBottom) - 2;
+                // The sheet stays centered, so horizontal overflow needs space on both sides.
+                const overflow = Math.max(0, page.scrollWidth - bounds.width);
+                widthScale = frame.clientWidth / (bounds.width + 2 * overflow);
+            }
+            if (!isProgCQ) page.style.setProperty('--prog-print-width', `${bounds.width}px`);
+            page.style.setProperty('--prog-print-scale', String(Math.min(1, widthScale, availableHeight / height)));
         });
     }
     window.addEventListener('keydown', event => {
