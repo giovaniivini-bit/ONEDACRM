@@ -1,10 +1,17 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — seleção múltipla de semanas
+
+O filtro Semana aceita várias opções. Cada produto aparece uma vez por card
+mesmo quando o andamento corresponde a mais de uma semana selecionada.
+272 testes passaram. O Edge confirmou seleção por mouse e teclado, foco e limpeza.
+
 ## Prog CQ — totais de produtos visíveis
 
 O total ao lado de cada gráfico acompanha os cards exibidos após os filtros.
 Quando as duas partes estão abertas, a tela também soma os resultados de F6 e F7.
-272 testes passaram no checkout.
+Publicado em f771a36 com 272 testes no checkout e na VPS. Edge em produção
+confirmou 121 produtos no total, 86 em F6:17 + F6:D9 e 8 nesses setores na semana 2704.
 
 ## Prog CQ — setores oficiais por parte
 

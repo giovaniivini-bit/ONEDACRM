@@ -6,23 +6,24 @@
             const selected = filters.sectors;
             const items = source?.records || [];
             const parts = api.PARTS;
-            const weeks = api.availableWeeks(items);
-            const week = weeks.includes(filters.week) ? filters.week : 'all';
+            const weekOptions = api.availableWeeks(items);
+            const weeks = weekOptions.filter(week => filters.weeks?.includes(week));
+            const weekSummary = weeks.length > 2 ? `${weeks.length} semanas` : weeks.join(', ') || 'Todas';
             const filtered = api.filterAvailability(items, filters);
-            const visible = api.groups(items, { ...filters, search, week }).map(group => ({
+            const visible = api.groups(items, { ...filters, search, weeks }).map(group => ({
                 ...group, items: api.filterAvailability(group.items, filters)
             }));
             const totals = new Map(parts.map(part => [part.code, 0]));
             for (const group of visible) totals.set(group.part, totals.get(group.part) + group.items.length);
             const totalLabel = selected.length ? 'Selecionados' : 'Total';
             const formatTotal = count => `${count.toLocaleString('pt-BR')} ${count === 1 ? 'produto' : 'produtos'}`;
-            const counts = new Map(api.groups(filtered, { search, week }).map(group => [group.key, group.items.length]));
-            const filterSelect = (key, label, options, selectedValue = filters[key] || 'all') => `<label class="prog-feira-parallel-filter"><span>${label}</span><select aria-label="${label}" data-cq-filter="${key}">${options.map(([value, text]) => `<option value="${value}" ${selectedValue === value ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
+            const counts = new Map(api.groups(filtered, { search, weeks }).map(group => [group.key, group.items.length]));
+            const filterSelect = (key, label, options) => `<label class="prog-feira-parallel-filter"><span>${label}</span><select aria-label="${label}" data-cq-filter="${key}">${options.map(([value, text]) => `<option value="${value}" ${(filters[key] || 'all') === value ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
             const status = loading ? 'Carregando planilha' : !source ? 'Planilha indisponível'
                 : source.isLive === false ? 'Exibindo última sincronização' : 'Dados sincronizados';
             const card = item => {
                 const photo = image(item.codigo, item.numero);
-                const andamento = api.orderProgressForWeek(item.andamentoPedido, week).trim();
+                const andamento = api.orderProgressForWeeks(item.andamentoPedido, weeks).trim();
                 return `<article class="prog-feira-card prog-cq-card">
                     <div class="prog-feira-card-top"><strong>${esc(item.codigo)}</strong>${item.numero ? `<span>OF ${esc(item.numero)}</span>` : ''}</div>
                     <div class="prog-feira-media">${photo.hasImage ? `<img class="prog-feira-image" src="${esc(photo.thumbUrl)}" data-cq-image-fallback="${esc(photo.proxyUrl || '')}" alt="${esc(item.codigo)}" loading="lazy"><span class="prog-feira-image-empty" hidden>Imagem indisponível</span>` : '<span class="prog-feira-image-empty">Imagem indisponível</span>'}</div>
@@ -33,6 +34,16 @@
                     </div>
                 </article>`;
             };
+            const previousWeekMenu = container.querySelector('[data-cq-week-menu]');
+            const weekMenuOpen = Boolean(previousWeekMenu?.open);
+            const weekScroll = weekMenuOpen ? previousWeekMenu.querySelector('[data-cq-week-options]').scrollTop : 0;
+            const activeControl = container.ownerDocument?.activeElement;
+            let weekFocus;
+            if (activeControl && previousWeekMenu?.contains(activeControl)) {
+                weekFocus = activeControl.matches('[data-cq-week]')
+                    ? `[data-cq-week][value="${activeControl.value}"]`
+                    : activeControl.matches('[data-cq-weeks-clear]') ? '[data-cq-weeks-clear]' : 'summary';
+            }
             container.innerHTML = `<section class="prog-feira-view prog-cq-view">
                 <header class="module-view-header"><h2>Prog CQ</h2><p>Andamento das amostras de controle de qualidade • Partes F6 e F7</p></header>
                 <div class="table-card prog-cq-source" role="status"><strong>${status}</strong> <a class="exec-action-btn" href="${esc(api.SOURCE.url)}" target="_blank" rel="noopener noreferrer">Abrir planilha Prog CQ</a></div>
@@ -40,7 +51,17 @@
                     <label class="prog-feira-parallel-filter"><span>Parte</span><select data-cq-part aria-label="Parte Prog CQ"><option value="all" ${filters.part === 'all' ? 'selected' : ''}>Todas as partes</option>${parts.map(part => `<option value="${part.code}" ${filters.part === part.code ? 'selected' : ''}>Parte ${part.code}</option>`).join('')}</select></label>
                     ${filterSelect('mesh', 'Situação malha', [['all','Todas'],['available','Tem malha'],['missing','Sem malha'],['unknown','Não informada']])}
                     ${filterSelect('trims', 'Aviamento', [['all','Todos'],['available','Com aviamento'],['missing','Sem aviamento']])}
-                    ${filterSelect('week', 'Semana', [['all', 'Todas'], ...weeks.map(value => [value, value])], week)}
+                    <div class="prog-feira-parallel-filter">
+                        <span id="prog-cq-week-label">Semana</span>
+                        <details class="follow-multi prog-cq-week-menu" data-cq-week-menu>
+                            <summary aria-labelledby="prog-cq-week-label prog-cq-week-summary"><span id="prog-cq-week-summary">${weekSummary}</span></summary>
+                            <div class="follow-multi-options" data-cq-week-options>
+                                <button type="button" data-cq-weeks-clear>Todas / limpar seleção</button>
+                                ${weekOptions.map(week => `<label><input type="checkbox" data-cq-week value="${week}" ${weeks.includes(week) ? 'checked' : ''}><span>${week}</span></label>`).join('')}
+                                ${weekOptions.length ? '' : '<p>Nenhuma semana disponível.</p>'}
+                            </div>
+                        </details>
+                    </div>
                     <div class="prog-feira-sector-selection"><strong>Setores:</strong><span>${selected.length ? selected.map(esc).join(', ') : 'Todos'}</span></div>
                     <button type="button" class="filter-clear-btn" data-cq-clear>Limpar filtros</button>
                 </div>
@@ -75,7 +96,21 @@
             container.querySelectorAll('[data-cq-filter]').forEach(select => {
                 select.addEventListener('change', () => onFilter(select.dataset.cqFilter, select.value));
             });
-            container.querySelector('[data-cq-clear]').addEventListener('click', onClear);
+            const weekMenu = container.querySelector('[data-cq-week-menu]');
+            weekMenu.open = weekMenuOpen;
+            if (weekMenuOpen) weekMenu.querySelector('[data-cq-week-options]').scrollTop = weekScroll;
+            if (weekFocus) {
+                (weekMenu.querySelector(weekFocus) || weekMenu.querySelector('summary')).focus({ preventScroll: true });
+            }
+            weekMenu.addEventListener('change', () => {
+                const values = Array.from(weekMenu.querySelectorAll('[data-cq-week]:checked'), checkbox => checkbox.value);
+                onFilter('weeks', values);
+            });
+            container.querySelector('[data-cq-weeks-clear]').addEventListener('click', () => onFilter('weeks', []));
+            container.querySelector('[data-cq-clear]').addEventListener('click', () => {
+                weekMenu.open = false;
+                onClear();
+            });
             container.querySelectorAll('[data-cq-sector]').forEach(button => button.addEventListener('click', () => onSector(button.dataset.cqSector)));
         }
     };

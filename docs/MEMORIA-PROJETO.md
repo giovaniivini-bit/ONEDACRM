@@ -21,8 +21,8 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
   definem setor e parte, K traz andamento e M preenchida indica aviamento pendente;
   não herdar regras de negócio D36/Feira. Manter sufixos x dos setores.
   Mostrar no gráfico e nos grupos apenas os setores oficiais da parte, mesmo
-  se a planilha trouxer outros setores. O filtro Semana usa as semanas das linhas
-  de andamento da coluna K. Os totais de produtos contam cards visíveis após
+  se a planilha trouxer outros setores. O filtro Semana permite selecionar várias
+  semanas das linhas de andamento da coluna K. Os totais de produtos contam cards visíveis após
   todos os filtros da tela, por parte e no conjunto.
 
 - Preservar funcionalidades atuais em qualquer alteração; testar áreas afetadas.

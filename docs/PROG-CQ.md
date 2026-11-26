@@ -46,6 +46,7 @@ M preenchida indica falta de aviamento. As barras contam registros após o filtr
 de materiais, por parte, e continuam servindo para selecionar setores.
 
 O filtro Semana lista os códigos de quatro dígitos do início das linhas da coluna K,
-em ordem crescente e sem duplicatas, para as duas partes. A seleção combina com os
-demais filtros e atualiza o gráfico. Um card com pedidos de semanas diferentes é
-exibido quando tem pedido na semana selecionada e mostra os andamentos dessa semana.
+em ordem crescente e sem duplicatas, para as duas partes. Marque uma ou mais
+semanas para filtrar gráfico, cards e totais junto com os demais filtros. Cada card
+exibe somente os andamentos das semanas marcadas e conta uma vez no total mesmo
+quando contém pedidos de várias delas. Sem marcações, todas são consideradas.

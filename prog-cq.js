@@ -78,14 +78,14 @@
         return [...new Set(weeks)].sort((a, b) => Number(a) - Number(b));
     }
 
-    function orderProgressForWeek(andamentoPedido, week) {
-        if (week === 'all') return andamentoPedido || '';
-        return orderLines(andamentoPedido).filter(order => order.week === week).map(order => order.line).join('\n');
+    function orderProgressForWeeks(andamentoPedido, weeks) {
+        if (!weeks.length) return andamentoPedido || '';
+        return orderLines(andamentoPedido).filter(order => weeks.includes(order.week)).map(order => order.line).join('\n');
     }
 
-    function groups(items = [], { part = 'all', sectors = [], search = '', week = 'all' } = {}) {
+    function groups(items = [], { part = 'all', sectors = [], search = '', weeks = [] } = {}) {
         const term = String(search).trim().toLocaleLowerCase('pt-BR');
-        const matchingItems = week === 'all' ? items : items.filter(item => orderProgressForWeek(item.andamentoPedido, week));
+        const matchingItems = weeks.length ? items.filter(item => orderProgressForWeeks(item.andamentoPedido, weeks)) : items;
         return PARTS.filter(entry => part === 'all' || entry.code === part).flatMap(entry => entry.sectors
             .filter(sector => !sectors.length || sectors.includes(sectorKey(entry.code, sector)))
             .map(sector => ({ part: entry.code, sector, key: sectorKey(entry.code, sector),
@@ -93,5 +93,5 @@
                     (!term || [item.codigo, item.numero].some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(term))))
             })));
     }
-    return { SOURCE, PARTS, parseMatrix, filterAvailability, availableWeeks, orderProgressForWeek, sectorKey, toggleSector, groups };
+    return { SOURCE, PARTS, parseMatrix, filterAvailability, availableWeeks, orderProgressForWeeks, sectorKey, toggleSector, groups };
 });

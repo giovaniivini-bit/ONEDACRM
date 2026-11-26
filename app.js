@@ -64,7 +64,7 @@
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
         progCQExternalData: null,
-        progCQFilters: { part: 'all', sectors: [], mesh: 'all', trims: 'all', week: 'all' },
+        progCQFilters: { part: 'all', sectors: [], mesh: 'all', trims: 'all', weeks: [] },
         progFeiraTrimForecast: 'all',
         progFeiraSectors: [],
         progFeiraStylist: 'all',
@@ -1970,7 +1970,7 @@
                         renderActiveView();
                         Array.from(container.querySelectorAll('[data-cq-sector]')).find(button => button.dataset.cqSector === key)?.focus();
                     },
-                    onClear: () => { state.progCQFilters = { part: 'all', sectors: [], mesh: 'all', trims: 'all', week: 'all' }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
+                    onClear: () => { state.progCQFilters = { part: 'all', sectors: [], mesh: 'all', trims: 'all', weeks: [] }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
                 });
                 container.querySelectorAll('[data-cq-image-fallback]').forEach(img => {
                     const recoverImage = () => {

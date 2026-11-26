@@ -26,5 +26,8 @@
 .prog-cq-card [hidden] { display:none !important; }
 
 .prog-cq-card .prog-cq-order-missing { color:var(--text-muted); }
+.prog-cq-week-menu summary { min-height:34px; padding:6px 10px; font-size:11px; font-weight:700; background:var(--bg-elevated); }
+.prog-cq-week-menu .follow-multi-options { min-width:min(160px,100%); }
+.prog-cq-week-menu .follow-multi-options p { margin:8px; color:var(--text-secondary); }
 .prog-cq-view .prog-feira-toolbar { flex-wrap:wrap; }
 .prog-cq-view .prog-feira-parallel-filter { flex:1 1 135px; }

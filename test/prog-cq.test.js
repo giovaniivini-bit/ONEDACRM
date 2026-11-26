@@ -93,44 +93,50 @@ test('malha exige todas as partes fora da tecelagem e tinturaria', () => {
     assert.deepEqual(filterAvailability([{andamentoPedido:'2704 - 078501 - 126855-TINTURARIA'}],{mesh:'missing'}).length,1);
 });
 
-test('semana lista códigos em ordem e filtra as linhas dos cards e o gráfico', () => {
+test('semanas em ordem e seleção múltipla filtram cards e gráfico sem duplicar produtos', () => {
     const fs = require('node:fs');
     const vm = require('node:vm');
     const records = [
-        {part:'F6', sector:'17', codigo:'MULTI', andamentoPedido:'2708 - CORTE\r\n 2704 - TINTURARIA\n2704 - LABORATÓRIO'},
-        {part:'F6', sector:'17', codigo:'OUTRA', andamentoPedido:'2708 - DEPÓSITO'},
+        {part:'F6', sector:'17', codigo:'MULTI', andamentoPedido:'2708 - CORTE\r\n 2704 - TINTURARIA\n2704 - LABORATÓRIO\n2712 - REVISÃO'},
+        {part:'F6', sector:'17', codigo:'OUTRA', andamentoPedido:'2708 - TECELAGEM'},
         {part:'F6', sector:'17', codigo:'TEM-MALHA', andamentoPedido:'2704 - DEPÓSITO'},
-        {part:'F6', sector:'17', codigo:'SEM', andamentoPedido:'OF 2660 - CORTE'},
+        {part:'F6', sector:'17', codigo:'SEM', andamentoPedido:'OF 2660 - TINTURARIA'},
         {part:'F7', sector:'D9x', codigo:'F7-ANTIGA', andamentoPedido:'2652 – DEPÓSITO'}
     ];
-    let changeWeek, selection;
-    const weekSelect = {
-        dataset:{cqFilter:'week'},
-        value:'2708',
+    let changeWeek, clearWeeks, selection;
+    const menu = {
+        querySelector: () => ({scrollTop:0, focus(){}}),
+        querySelectorAll: () => [{value:'2704'}, {value:'2708'}],
         addEventListener(event, callback) { if (event === 'change') changeWeek = callback; }
     };
     const container = {
         innerHTML:'',
-        querySelector: () => ({ addEventListener(){} }),
-        querySelectorAll: selector => selector === '[data-cq-filter]' ? [weekSelect] : []
+        querySelector(selector) {
+            if (selector === '[data-cq-week-menu]') return menu;
+            return { addEventListener(event, callback) { if (selector === '[data-cq-weeks-clear]') clearWeeks = callback; } };
+        },
+        querySelectorAll: () => []
     };
     const context = {window:{CRMProgCQ:require('../prog-cq')}};
     vm.runInNewContext(fs.readFileSync(require.resolve('../prog-cq-view'), 'utf8'), context);
     context.window.CRMProgCQView.render(container, {
-        filters:{part:'F6', sectors:['F6:17'], week:'2704', mesh:'missing'},
+        filters:{part:'F6', sectors:['F6:17'], weeks:['2708', '2704'], mesh:'missing'},
         source:{records},
-        escape:String, onPart(){}, onFilter:(key, value) => { selection = [key, value]; }, onSector(){}, onClear(){}
+        escape:String, onPart(){}, onFilter:(key, value) => { selection = [key, Array.from(value)]; }, onSector(){}, onClear(){}
     });
-    const weekOptions = container.innerHTML.match(/data-cq-filter="week">([^]*?)<\/select>/)[1];
-    assert.deepEqual([...weekOptions.matchAll(/value="([^"]+)"/g)].map(match => match[1]), ['all','2652','2704','2708']);
-    assert.match(weekOptions, /value="2704" selected/);
-    assert.match(container.innerHTML, /data-cq-total="F6">Selecionados · 1 produto</);
-    assert.match(container.innerHTML, /data-cq-sector="F6:17"[^>]+aria-label="Parte F6 setor 17, 1 registros"/);
-    assert.equal((container.innerHTML.match(/class="prog-feira-card prog-cq-card"/g) || []).length, 1);
-    assert.match(container.innerHTML, /2704 - TINTURARIA\n2704 - LABORATÓRIO/);
-    assert.doesNotMatch(container.innerHTML, /2708 - CORTE|OUTRA|TEM-MALHA|F7-ANTIGA|OF 2660/);
-    changeWeek();
-    assert.deepEqual(selection, ['week', '2708']);
+    const options = [...container.innerHTML.matchAll(/data-cq-week value="([^"]+)" (checked)?/g)];
+    assert.deepEqual(options.map(match => match[1]), ['2652','2704','2708','2712']);
+    assert.deepEqual(options.filter(match => match[2]).map(match => match[1]), ['2704','2708']);
+    assert.match(container.innerHTML, /data-cq-total="F6">Selecionados · 2 produtos</);
+    assert.match(container.innerHTML, /data-cq-sector="F6:17"[^>]+aria-label="Parte F6 setor 17, 2 registros"/);
+    assert.equal((container.innerHTML.match(/class="prog-feira-card prog-cq-card"/g) || []).length, 2);
+    assert.match(container.innerHTML, /2708 - CORTE\n 2704 - TINTURARIA\n2704 - LABORATÓRIO/);
+    assert.match(container.innerHTML, /2708 - TECELAGEM/);
+    assert.doesNotMatch(container.innerHTML, /2712 - REVISÃO|TEM-MALHA|F7-ANTIGA|OF 2660/);
+    changeWeek({target:{value:'2708'}});
+    assert.deepEqual(selection, ['weeks', ['2704', '2708']]);
+    clearWeeks();
+    assert.deepEqual(selection, ['weeks', []]);
 });
 
 test('total de produtos acompanha os setores selecionados e soma as duas partes', () => {
