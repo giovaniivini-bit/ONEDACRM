@@ -66,16 +66,18 @@
             const weekOptions = api.availableWeeks(items);
             const weeks = weekOptions.filter(week => filters.weeks?.includes(week));
             const weekSummary = weeks.length > 2 ? `${weeks.length} semanas` : weeks.join(', ') || 'Todas';
-            const filtered = api.filterAvailability(items, filters);
+            const purchaseOrderUnavailable = source?.sourceSchemaVersion === 1;
+            const recordFilters = purchaseOrderUnavailable ? { ...filters, purchaseOrder: 'all' } : filters;
+            const filtered = api.filterAvailability(items, recordFilters);
             const visible = api.groups(items, { ...filters, search, weeks }).map(group => ({
-                ...group, items: api.filterAvailability(group.items, filters)
+                ...group, items: api.filterAvailability(group.items, recordFilters)
             }));
             const totals = new Map(parts.map(part => [part.code, 0]));
             for (const group of visible) totals.set(group.part, totals.get(group.part) + group.items.length);
             const totalLabel = selected.length ? 'Selecionados' : 'Total';
             const formatTotal = count => `${count.toLocaleString('pt-BR')} ${count === 1 ? 'produto' : 'produtos'}`;
             const counts = new Map(api.groups(filtered, { search, weeks }).map(group => [group.key, group.items.length]));
-            const filterSelect = (key, label, options) => `<label class="prog-feira-parallel-filter"><span>${label}</span><select aria-label="${label}" data-cq-filter="${key}">${options.map(([value, text]) => `<option value="${value}" ${(filters[key] || 'all') === value ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
+            const filterSelect = (key, label, options, disabled = false) => `<label class="prog-feira-parallel-filter"><span>${label}</span><select aria-label="${label}" data-cq-filter="${key}"${disabled ? ' disabled' : ''}>${options.map(([value, text]) => `<option value="${value}" ${(recordFilters[key] || 'all') === value ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
             const status = loading ? 'Carregando planilha' : !source ? 'Planilha indisponível'
                 : source.isLive === false ? 'Exibindo última sincronização' : 'Dados sincronizados';
             const card = item => {
@@ -83,6 +85,9 @@
                 const days = sectorDays.get(api.sectorDaysKey(item));
                 const andamento = api.orderProgressForWeeks(item.andamentoPedido, weeks).trim();
                 const firstWeek = api.firstOrderWeek(item.andamentoPedido);
+                const purchaseOrder = item.purchaseOrder;
+                const purchaseOrderLabel = purchaseOrder ? `OC ${esc(purchaseOrder)}`
+                    : purchaseOrder === '' ? 'SEM OC' : 'OC indisponível';
                 return `<article class="prog-feira-card prog-cq-card">
                     <div class="prog-feira-card-top prog-cq-card-top">
                         <strong>${esc(item.codigo)}</strong>
@@ -93,6 +98,7 @@
                     <div class="prog-feira-card-body">
                         <div class="prog-cq-sector-days"><strong>${days == null ? '—' : days.toLocaleString('pt-BR')}</strong><span>Dias parados no setor</span></div>
                         ${item.aviamentoPendente ? '<strong class="prog-cq-trim-pending">AV. PENDENTE CQ</strong>' : ''}
+                        <strong class="prog-cq-purchase-order${purchaseOrder === '' ? ' prog-cq-purchase-order-missing' : ''}">${purchaseOrderLabel}</strong>
                         ${item.descricao ? `<strong>${esc(item.descricao)}</strong>` : ''}
                         <p class="prog-cq-order-progress${andamento ? '' : ' prog-cq-order-missing'}"><strong>Andamento do pedido</strong><span>${esc(andamento || 'Não informado')}</span></p>
                     </div>
@@ -115,6 +121,9 @@
                     <label class="prog-feira-parallel-filter"><span>Parte</span><select data-cq-part aria-label="Parte Prog CQ"><option value="all" ${filters.part === 'all' ? 'selected' : ''}>Todas as partes</option>${parts.map(part => `<option value="${part.code}" ${filters.part === part.code ? 'selected' : ''}>Parte ${part.code}</option>`).join('')}</select></label>
                     ${filterSelect('mesh', 'Situação malha', [['all','Todas'],['available','Tem malha'],['missing','Sem malha'],['unknown','Não informada']])}
                     ${filterSelect('trims', 'Aviamento', [['all','Todos'],['available','Com aviamento'],['missing','Sem aviamento']])}
+                    ${filterSelect('purchaseOrder', 'Ordem de compra',
+                        purchaseOrderUnavailable ? [['all','Indisponível']] : [['all','Todas'],['with','Com OC'],['without','Sem OC']],
+                        purchaseOrderUnavailable)}
                     <div class="prog-feira-parallel-filter">
                         <span id="prog-cq-week-label">Semana</span>
                         <details class="follow-multi prog-cq-week-menu" data-cq-week-menu>

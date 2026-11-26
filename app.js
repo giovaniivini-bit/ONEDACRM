@@ -64,7 +64,7 @@
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
         progCQExternalData: null,
-        progCQFilters: { part: 'all', sectors: [], mesh: 'all', trims: 'all', weeks: [] },
+        progCQFilters: { part: 'all', sectors: [], mesh: 'all', trims: 'all', purchaseOrder: 'all', weeks: [] },
         progFeiraTrimForecast: 'all',
         progFeiraSectors: [],
         progFeiraStylist: 'all',
@@ -1976,7 +1976,7 @@
                         renderActiveView();
                         Array.from(container.querySelectorAll('[data-cq-sector]')).find(button => button.dataset.cqSector === key)?.focus();
                     },
-                    onClear: () => { state.progCQFilters = { part: 'all', sectors: [], mesh: 'all', trims: 'all', weeks: [] }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
+                    onClear: () => { state.progCQFilters = { part: 'all', sectors: [], mesh: 'all', trims: 'all', purchaseOrder: 'all', weeks: [] }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
                 });
                 break;
             }

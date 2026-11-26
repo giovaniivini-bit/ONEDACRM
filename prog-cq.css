@@ -28,7 +28,10 @@ body.light-mode .prog-cq-card-of { color:#000; }
 .prog-cq-sector-days span { color:var(--text-secondary); font-size:12px; }
 .prog-cq-order-progress { display:grid; gap:5px; margin:0; font-size:13px; }
 .prog-cq-order-progress span { white-space:pre-wrap; overflow-wrap:anywhere; }
-.prog-cq-trim-pending { display:block; padding:8px; text-align:center; font-size:16px; background:#9a3412; color:#fff; border:1px solid #fb923c; border-radius:5px; }
+.prog-cq-trim-pending, .prog-cq-purchase-order { display:block; padding:8px; text-align:center; font-size:16px; border:1px solid; border-radius:5px; overflow-wrap:anywhere; }
+.prog-cq-trim-pending { background:#9a3412; color:#fff; border-color:#fb923c; }
+.prog-cq-purchase-order { background:var(--bg-base); color:var(--text-secondary); border-color:var(--border-color); white-space:pre-line; }
+.prog-cq-purchase-order-missing { background:#facc15; color:#000; border-color:#eab308; }
 
 .prog-cq-card .prog-feira-image { cursor:default; }
 .prog-cq-card [hidden] { display:none !important; }
@@ -65,5 +68,5 @@ body.light-mode .prog-cq-card-of { color:#000; }
     .prog-cq-print-report .prog-cq-order-progress { font-size:9px; }
     .prog-cq-print-report .prog-cq-order-progress { gap:.5mm; }
     body.print-prog-feira .prog-cq-print-report .prog-feira-image[hidden] { display:none !important; }
-    .prog-cq-print-report .prog-cq-trim-pending { padding:1mm; font-size:10px; }
+    .prog-cq-print-report :is(.prog-cq-trim-pending, .prog-cq-purchase-order) { padding:1mm; font-size:10px; }
 }

@@ -32,6 +32,7 @@ conserva as linhas fora do fluxo no cache.
 | F | Descrição |
 | G | Parte |
 | K | Andamento do pedido, com as quebras de linha da planilha |
+| L | Números de ordem de compra, exibidos abaixo de aviamento e usados no filtro OC |
 | M | Campo preenchido aciona a tarja laranja AV. PENDENTE CQ |
 
 Dias parados no setor vêm da coluna DB da Prog Feira para as partes F6/F7 da
@@ -41,7 +42,8 @@ vínculo deixam o valor indefinido. Zero aparece como número. Campo vazio,
 inválido, divergente ou sem correspondência aparece como traço.
 
 Falhas de leitura mantêm o último cache válido. Sem cache, a tela indica que a
-fonte está indisponível.
+fonte está indisponível. Cache anterior à leitura da coluna L mantém os cards,
+mostra OC indisponível e suspende o filtro de OC até a próxima leitura válida.
 
 ## Impressão
 

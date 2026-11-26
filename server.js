@@ -96,7 +96,7 @@ const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
 const PROG_FEIRA_CSV_URL = 'https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/export?format=csv&gid=0';
 const PROG_CQ_CSV_URL = `https://docs.google.com/spreadsheets/d/${progCQ.SOURCE.spreadsheetId}/export?format=csv&gid=${progCQ.SOURCE.gid}`;
-const PROG_CQ_SOURCE_SCHEMA = 1;
+const PROG_CQ_SOURCE_SCHEMA = 2;
 const COLORS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1j7k8WWvE9m4YZrw7qadANIcx_XtOzAlwYfWnm0AC5sA/export?format=csv&gid=722944309';
 const TRIMS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1aAsiicOY0vu5MgQjeeBCsqcAZwGn3JQmj8drYrVaZtc/export?format=csv&gid=0';
 const FINALIZATION_CSV_URL = 'https://docs.google.com/spreadsheets/d/1bshn2-m-8O2WvkS5uX0Qbnt3YoCbGAM_gLX5pciTmsk/export?format=csv&gid=0';
@@ -255,8 +255,8 @@ async function fetchProgFeiraReportSource(fetchSheet = fetchGoogleSheetCSV) {
     return createProgFeiraPayload(await fetchSheet(PROG_FEIRA_CSV_URL));
 }
 
-function createProgCQPayload(records, timestamp = new Date().toISOString()) {
-    return { success: true, type: 'prog_cq', title: progCQ.SOURCE.title, sourceSchemaVersion: PROG_CQ_SOURCE_SCHEMA,
+function createProgCQPayload(records, timestamp = new Date().toISOString(), sourceSchemaVersion = PROG_CQ_SOURCE_SCHEMA) {
+    return { success: true, type: 'prog_cq', title: progCQ.SOURCE.title, sourceSchemaVersion,
         count: records.length, records, timestamp, isLive: true };
 }
 
@@ -266,7 +266,8 @@ async function fetchProgCQSource(fetchSheet = fetchGoogleSheetCSV) {
 }
 
 function readProgCQCache(payload) {
-    if (payload?.sourceSchemaVersion !== PROG_CQ_SOURCE_SCHEMA || payload.type !== 'prog_cq' || payload.success !== true ||
+    const schema = payload?.sourceSchemaVersion;
+    if (![1, PROG_CQ_SOURCE_SCHEMA].includes(schema) || payload.type !== 'prog_cq' || payload.success !== true ||
         !Array.isArray(payload.records) || payload.records.length !== payload.count ||
         typeof payload.timestamp !== 'string' || !Number.isFinite(Date.parse(payload.timestamp))) return null;
 
@@ -274,11 +275,13 @@ function readProgCQCache(payload) {
     for (const record of payload.records) {
         if (!record || !progCQ.PARTS.some(entry => entry.code === record.part) || typeof record.sector !== 'string' || !record.sector.trim() ||
             typeof record.codigo !== 'string' || !record.codigo.trim() || typeof record.numero !== 'string' || typeof record.descricao !== 'string' ||
-            typeof record.andamentoPedido !== 'string' || typeof record.aviamentoPendente !== 'boolean') return null;
+            typeof record.andamentoPedido !== 'string' || typeof record.aviamentoPendente !== 'boolean' ||
+            (schema === PROG_CQ_SOURCE_SCHEMA && typeof record.purchaseOrder !== 'string')) return null;
         const { part, sector, codigo, numero, descricao, andamentoPedido, aviamentoPendente } = record;
-        records.push({ part, sector, codigo, numero, descricao, andamentoPedido, aviamentoPendente });
+        records.push({ part, sector, codigo, numero, descricao, andamentoPedido, aviamentoPendente,
+            purchaseOrder: schema === PROG_CQ_SOURCE_SCHEMA ? record.purchaseOrder : null });
     }
-    return createProgCQPayload(records, payload.timestamp);
+    return createProgCQPayload(records, payload.timestamp, schema);
 }
 
 async function fetchSampleFinalizationSource(fetchSheet = fetchGoogleSheetCSV) {
@@ -1522,7 +1525,7 @@ async function requestHandler(req, res) {
             }
 
             const cachedAt = cachedData && Date.parse(cachedData.timestamp || '');
-            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === PROG_FEIRA_SOURCE_SCHEMA) && (type !== 'producao_costura' || cachedData.sourceSchemaVersion === 3)) {
+            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === PROG_FEIRA_SOURCE_SCHEMA) && (type !== 'prog_cq' || cachedData.sourceSchemaVersion === PROG_CQ_SOURCE_SCHEMA) && (type !== 'producao_costura' || cachedData.sourceSchemaVersion === 3)) {
                 sendJson(res, 200, { ...cachedData, cacheAgeMs: Date.now() - cachedAt });
                 return;
             }

@@ -1,11 +1,19 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — ordem de compra
+
+A coluna L alimenta o filtro Com OC/Sem OC e uma faixa abaixo de aviamento.
+Números múltiplos mantêm a grafia da planilha. Sem OC tem fundo amarelo e texto
+preto. A planilha consultada tinha 68 registros com OC e 53 sem OC. A suíte
+local passou com 274 testes, e o Edge confirmou seleção, faixas e paginação.
+
 ## Prog CQ — cabeçalho dos cards
 
 A OF fica maior no canto direito, branca no tema escuro e preta no claro.
 No centro aparece a primeira semana do andamento da coluna K. O cabeçalho
 é compartilhado pela tela e pela impressão. Edge confirmou os dois temas
 e manteve a paginação de 8, 1 e 2 cards no PDF de teste.
+Publicado em 16e6a1f e verificado no Edge em produção. 274 testes passaram na VPS.
 
 ## Prog CQ — impressão no padrão da Prog Feira
 

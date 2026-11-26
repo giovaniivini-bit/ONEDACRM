@@ -17,12 +17,12 @@
         Object.freeze({ code: 'F6', sectors: Object.freeze(['EN', 'IS', '17', 'D9', 'B8', 'D10', 'B9', 'E7', 'E8', 'E9', 'E5']) }),
         Object.freeze({ code: 'F7', sectors: Object.freeze(['17x', 'D9x', 'B8x', 'D11', 'B9x', 'E7x', 'E8x', 'E9x', 'E5x']) })
     ]);
-    const SOURCE_COLUMNS = { 1: 'NUMERO', 2: 'SETOR', 4: 'CODIGO', 5: 'DESCRICAO', 6: 'PARTE', 10: 'SIT_AMOSTRA', 12: 'OF_PEND_ALMOXARIFADO' };
+    const SOURCE_COLUMNS = { 1: 'NUMERO', 2: 'SETOR', 4: 'CODIGO', 5: 'DESCRICAO', 6: 'PARTE', 10: 'SIT_AMOSTRA', 11: 'OC', 12: 'OF_PEND_ALMOXARIFADO' };
 
     function parseMatrix(matrix) {
         const [header = [], ...rows] = matrix;
         if (!Object.entries(SOURCE_COLUMNS).every(([index, name]) => header[index] === name)) {
-            throw new Error('Cabeçalhos da planilha Prog CQ inválidos. Confira as colunas B, C, E, F, G, K e M.');
+            throw new Error('Cabeçalhos da planilha Prog CQ inválidos. Confira as colunas B, C, E, F, G, K, L e M.');
         }
 
         const records = [];
@@ -34,8 +34,11 @@
             const codigo = (row[4] || '').trim();
             if (!sector || !codigo) throw new Error(`Linha da Parte ${part} sem setor ou código na planilha Prog CQ.`);
 
+            const oc = (row[11] || '').trim();
             records.push({ part, sector, codigo, numero: (row[1] || '').trim(), descricao: (row[5] || '').trim(),
-                andamentoPedido: (row[10] || '').trim(), aviamentoPendente: Boolean((row[12] || '').trim()) });
+                andamentoPedido: (row[10] || '').trim(),
+                purchaseOrder: !oc.startsWith('#') && /\d/.test(oc) ? oc : '',
+                aviamentoPendente: Boolean((row[12] || '').trim()) });
         }
         return records;
     }
@@ -107,10 +110,12 @@
         return blocked ? 'missing' : 'available';
     }
 
-    function filterAvailability(items, { mesh = 'all', trims = 'all' } = {}) {
+    function filterAvailability(items, { mesh = 'all', trims = 'all', purchaseOrder = 'all' } = {}) {
         return items.filter(item =>
             (mesh === 'all' || meshStatus(item.andamentoPedido) === mesh) &&
-            (trims === 'all' || (trims === 'missing' ? item.aviamentoPendente : item.aviamentoPendente === false))
+            (trims === 'all' || (trims === 'missing' ? item.aviamentoPendente : item.aviamentoPendente === false)) &&
+            (purchaseOrder === 'all' || (typeof item.purchaseOrder === 'string' &&
+                (purchaseOrder === 'with' ? Boolean(item.purchaseOrder) : item.purchaseOrder === '')))
         );
     }
 

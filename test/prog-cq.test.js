@@ -50,8 +50,8 @@ test('tela sem fonte sinaliza ausência de dados e conecta seleção e limpeza',
         filters:{part:'F6',sectors:['F6:17']},
         feiraDays:[{part:'F6',sector:'17',codigo:'A',numero:'12',days:0}],
         source:{records:[
-            {part:'F6',sector:'17',codigo:'A',numero:'00012',aviamentoPendente:true,andamentoPedido:'TINTURARIA\nVALIDAÇÃO'},
-            {part:'F6',sector:'17',codigo:'B',aviamentoPendente:false,andamentoPedido:''},
+            {part:'F6',sector:'17',codigo:'A',numero:'00012',purchaseOrder:'00123.00124',aviamentoPendente:true,andamentoPedido:'TINTURARIA\nVALIDAÇÃO'},
+            {part:'F6',sector:'17',codigo:'B',purchaseOrder:'',aviamentoPendente:false,andamentoPedido:''},
             {part:'F7',sector:'17x',codigo:'C',aviamentoPendente:true,andamentoPedido:'OUTRO PEDIDO'},
             {part:'F6',sector:'17x',codigo:'D',aviamentoPendente:true,andamentoPedido:'FORA DO FLUXO F6'},
             {part:'F7',sector:'EN',codigo:'E',aviamentoPendente:true,andamentoPedido:'FORA DO FLUXO F7'}
@@ -60,6 +60,8 @@ test('tela sem fonte sinaliza ausência de dados e conecta seleção e limpeza',
     });
     assert.match(container.innerHTML,/TINTURARIA\nVALIDAÇÃO/);
     assert.match(container.innerHTML, /prog-cq-card-of">OF 00012</);
+    assert.match(container.innerHTML, /AV\. PENDENTE CQ<\/strong>\s+<strong class="prog-cq-purchase-order">OC 00123\.00124</);
+    assert.match(container.innerHTML, /prog-cq-purchase-order-missing">SEM OC</);
     assert.match(container.innerHTML, /prog-cq-sector-days"><strong>0<\/strong><span>Dias parados no setor/);
     assert.match(container.innerHTML, /prog-cq-sector-days"><strong>—<\/strong><span>Dias parados no setor/);
     assert.match(container.innerHTML,/prog-cq-order-missing/);
@@ -94,6 +96,12 @@ test('malha exige todas as partes fora da tecelagem e tinturaria', () => {
     assert.deepEqual(filterAvailability(rows,{mesh:'missing'}),[missing]);
     assert.deepEqual(filterAvailability(rows,{mesh:'unknown'}),[unknown]);
     assert.deepEqual(filterAvailability(rows,{trims:'missing'}),[missingTrim,unknown]);
+    const withOC = { ...ready, purchaseOrder:'00123.00124' };
+    const withoutOC = { ...ready, purchaseOrder:'' };
+    const legacy = { ...ready, purchaseOrder:null };
+    const rowsByOC = [withOC, withoutOC, legacy, { ...missing, purchaseOrder:'00234' }];
+    assert.deepEqual(filterAvailability(rowsByOC,{mesh:'available',purchaseOrder:'with'}),[withOC]);
+    assert.deepEqual(filterAvailability(rowsByOC,{purchaseOrder:'without'}),[withoutOC]);
     assert.deepEqual(filterAvailability([{andamentoPedido:'2704 - 078501 - 126855-TINTURARIA'}],{mesh:'missing'}).length,1);
 });
 
@@ -159,8 +167,10 @@ test('total de produtos acompanha os setores selecionados e soma as duas partes'
         {part:'F7', sector:'17x', codigo:'D'},
         {part:'F6', sector:'17x', codigo:'FORA'}
     ]};
-    function totals(part, sectors) {
-        context.window.CRMProgCQView.render(container, { filters:{part, sectors}, source, escape:String });
+    function totals(part, sectors, purchaseOrder = 'all', sourceSchemaVersion = 2) {
+        context.window.CRMProgCQView.render(container, {
+            filters:{part, sectors, purchaseOrder}, source:{ ...source, sourceSchemaVersion }, escape:String
+        });
         return Object.fromEntries([...container.innerHTML.matchAll(/data-cq-total="([^"]+)">([^<]+)/g)].map(match => match.slice(1)));
     }
 
@@ -171,4 +181,7 @@ test('total de produtos acompanha os setores selecionados e soma as duas partes'
         all:'Selecionados nas duas partes · 3 produtos', F6:'Selecionados · 2 produtos', F7:'Selecionados · 1 produto'
     });
     assert.deepEqual(totals('F6', ['F7:17x']), { F6:'Selecionados · 0 produtos' });
+    assert.deepEqual(totals('F6', [], 'without', 1), { F6:'Total · 3 produtos' });
+    assert.match(container.innerHTML, /data-cq-filter="purchaseOrder" disabled/);
+    assert.doesNotMatch(container.innerHTML, /SEM OC/);
 });

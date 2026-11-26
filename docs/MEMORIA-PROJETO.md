@@ -26,6 +26,7 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
   todos os filtros da tela, por parte e no conjunto. Os dias parados vêm da
   coluna DB da Prog Feira, vinculados por código completo, OF, parte e setor.
   Impressão segue a composição da Prog Feira, até oito cards por parte e setor.
+  A coluna L alimenta o filtro Ordem de compra e a faixa da OC nos cards.
 
 - Preservar funcionalidades atuais em qualquer alteração; testar áreas afetadas.
 - Dados operacionais `data.js`, CSVs, índices e `data/*_external.json` não devem ser
