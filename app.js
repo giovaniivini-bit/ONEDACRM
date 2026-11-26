@@ -63,6 +63,7 @@
         corteSelectedWeek: '',
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
+        progCQExternalData: null,
         progCQFilters: { part: 'all', sectors: [] },
         progFeiraTrimForecast: 'all',
         progFeiraSectors: [],
@@ -130,6 +131,7 @@
         'processo',
         'setor01',
         'raio-x',
+        'prog-cq',
         'follow-produto',
         'estampa',
         'andamento-cq',
@@ -957,7 +959,7 @@
                     return payload;
                 }).catch(error => { failures.push(`${type}: ${error.message}`); return null; });
             };
-            const [coresRes, avRes, cqRes, ltRes, rotRes, apRes, calendarRes, progFeiraRes, finalizationRes] = await Promise.all([
+            const [coresRes, avRes, cqRes, ltRes, rotRes, apRes, calendarRes, progFeiraRes, finalizationRes, progCQRes] = await Promise.all([
                 requestExternal('cores'),
                 requestExternal('aviamentos'),
                 requestExternal('cq'),
@@ -966,9 +968,14 @@
                 requestExternal('aproveitamento'),
                 requestExternal('calendar'),
                 requestExternal('prog_feira'),
-                requestExternal('amostras_finalizadas')
+                requestExternal('amostras_finalizadas'),
+                requestExternal('prog_cq')
             ]);
             state.externalSheetsLoaded = true;
+            state.progCQExternalData = progCQRes || (state.progCQExternalData ? {
+                ...state.progCQExternalData, isLive: false
+            } : null);
+            if (state.activeSubmodule === 'prog-cq') renderActiveView();
             if (coresRes && coresRes.success) {
                 state.coresExternalData = coresRes;
             }
@@ -1949,14 +1956,29 @@
                 const count = document.getElementById('toolbarActiveCount');
                 if (count) count.textContent = '—';
                 view.render(container, {
-                    filters: state.progCQFilters, search: state.filters.search, escape: escapeHtml,
+                    filters: state.progCQFilters, escape: escapeHtml,
+                    source: state.progCQExternalData, loading: !state.externalSheetsLoaded,
+                    image: (codigo, numero) => getProductImage(codigo, numero),
                     onPart: part => { state.progCQFilters.part = part; renderActiveView(); container.querySelector('[data-cq-part]')?.focus(); },
                     onSector: key => {
-                        state.progCQFilters.sectors = window.CRMProgCQ.toggleSector(state.progCQFilters.sectors, key);
+                        state.progCQFilters.sectors = window.CRMProgCQ.toggleSector(state.progCQFilters.sectors, key, state.progCQExternalData?.records);
                         renderActiveView();
                         Array.from(container.querySelectorAll('[data-cq-sector]')).find(button => button.dataset.cqSector === key)?.focus();
                     },
                     onClear: () => { state.progCQFilters = { part: 'all', sectors: [] }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
+                });
+                container.querySelectorAll('[data-cq-image-fallback]').forEach(img => {
+                    const recoverImage = () => {
+                        const fallback = img.dataset.cqImageFallback;
+                        if (fallback && new URL(fallback, document.baseURI).href !== img.src) {
+                            img.src = fallback;
+                            return;
+                        }
+                        img.hidden = true;
+                        img.nextElementSibling.hidden = false;
+                    };
+                    img.addEventListener('error', recoverImage);
+                    if (img.complete && !img.naturalWidth) recoverImage();
                 });
                 break;
             }
@@ -13569,7 +13591,7 @@
 
     window.crmGeneratePDFReport = () => {
         if (state.activeSubmodule === 'prog-cq') {
-            showNotification('A planilha da Prog CQ ainda não foi configurada. O relatório estará disponível após a conexão dos dados.', 'info', 'Prog CQ');
+            showNotification('O relatório em PDF da Prog CQ ainda não está disponível.', 'info', 'Prog CQ');
             return;
         }
         if (window.crmGeneratePDFReport.pending) return;

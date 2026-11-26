@@ -1,5 +1,14 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — leitura da planilha (26/11/2026)
+
+Fonte Página1 conectada ao sincronizador. Parte G e setor C agrupam cards.
+Coluna K traz andamento do pedido multilinha. M preenchida ativa AV. PENDENTE CQ.
+F6 mostra 17 separado de 17x. O código integral resolve imagem pela base do CRM.
+CSV real conferido com 121 registros e 94 pendências de aviamento.
+A suíte completa passou com 269 testes.
+
+
 ## Prog CQ — agrupamento por parte (26/11/2026)
 
 Parte F6 ocupa o grupo anterior C32, e Parte F7 o grupo anterior D32.

@@ -13,6 +13,7 @@ const { createDriveImageProxy } = require('./drive-image-cache');
 const { fetchEmbeddedFolder, fetchDriveHtml } = require('./drive-folder-list');
 const alertsEngine = require('./alerts-engine');
 const progFeira = require('./prog-feira');
+const progCQ = require('./prog-cq');
 const { createReportStore } = require('./automatic-reports');
 const { createPdfRenderer } = require('./automatic-reports-pdf');
 const costura = require('./costura');
@@ -94,6 +95,8 @@ const WRITE_BODY_LIMIT = 10 * 1024 * 1024;
 
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1CWbwOq6tgkVFLTdHfU30Q50K7iXmhNoqnvRfTijkuEQ/export?format=csv';
 const PROG_FEIRA_CSV_URL = 'https://docs.google.com/spreadsheets/d/1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s/export?format=csv&gid=0';
+const PROG_CQ_CSV_URL = `https://docs.google.com/spreadsheets/d/${progCQ.SOURCE.spreadsheetId}/export?format=csv&gid=${progCQ.SOURCE.gid}`;
+const PROG_CQ_SOURCE_SCHEMA = 1;
 const COLORS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1j7k8WWvE9m4YZrw7qadANIcx_XtOzAlwYfWnm0AC5sA/export?format=csv&gid=722944309';
 const TRIMS_CSV_URL = 'https://docs.google.com/spreadsheets/d/1aAsiicOY0vu5MgQjeeBCsqcAZwGn3JQmj8drYrVaZtc/export?format=csv&gid=0';
 const FINALIZATION_CSV_URL = 'https://docs.google.com/spreadsheets/d/1bshn2-m-8O2WvkS5uX0Qbnt3YoCbGAM_gLX5pciTmsk/export?format=csv&gid=0';
@@ -246,6 +249,32 @@ function createProgFeiraPayload(records) {
 
 async function fetchProgFeiraReportSource(fetchSheet = fetchGoogleSheetCSV) {
     return createProgFeiraPayload(parseCSV(await fetchSheet(PROG_FEIRA_CSV_URL)));
+}
+
+function createProgCQPayload(records, timestamp = new Date().toISOString()) {
+    return { success: true, type: 'prog_cq', title: progCQ.SOURCE.title, sourceSchemaVersion: PROG_CQ_SOURCE_SCHEMA,
+        count: records.length, records, timestamp, isLive: true };
+}
+
+async function fetchProgCQSource(fetchSheet = fetchGoogleSheetCSV) {
+    const csv = await fetchSheet(PROG_CQ_CSV_URL, 5, 1);
+    return createProgCQPayload(progCQ.parseMatrix(parseCSVRows(csv, { strict: true })));
+}
+
+function readProgCQCache(payload) {
+    if (payload?.sourceSchemaVersion !== PROG_CQ_SOURCE_SCHEMA || payload.type !== 'prog_cq' || payload.success !== true ||
+        !Array.isArray(payload.records) || payload.records.length !== payload.count ||
+        typeof payload.timestamp !== 'string' || !Number.isFinite(Date.parse(payload.timestamp))) return null;
+
+    const records = [];
+    for (const record of payload.records) {
+        if (!record || !progCQ.PARTS.some(entry => entry.code === record.part) || typeof record.sector !== 'string' || !record.sector.trim() ||
+            typeof record.codigo !== 'string' || !record.codigo.trim() || typeof record.numero !== 'string' || typeof record.descricao !== 'string' ||
+            typeof record.andamentoPedido !== 'string' || typeof record.aviamentoPendente !== 'boolean') return null;
+        const { part, sector, codigo, numero, descricao, andamentoPedido, aviamentoPendente } = record;
+        records.push({ part, sector, codigo, numero, descricao, andamentoPedido, aviamentoPendente });
+    }
+    return createProgCQPayload(records, payload.timestamp);
 }
 
 async function fetchSampleFinalizationSource(fetchSheet = fetchGoogleSheetCSV) {
@@ -433,7 +462,7 @@ const MIME_TYPES = {
 };
 
 // Simple & robust CSV Parser
-function parseCSVRows(csvText) {
+function parseCSVRows(csvText, { strict = false } = {}) {
     if (!csvText) return [];
 
     // Remove BOM if present
@@ -455,6 +484,9 @@ function parseCSVRows(csvText) {
                 currentField += '"';
                 i++; // skip escaped quote
             } else {
+                if (strict && ((!inQuotes && currentField) || (inQuotes && nextChar && ![',', '\r', '\n'].includes(nextChar)))) {
+                    throw new Error('O CSV da planilha contém aspas inválidas.');
+                }
                 inQuotes = !inQuotes;
             }
         } else if (char === ',' && !inQuotes) {
@@ -475,6 +507,7 @@ function parseCSVRows(csvText) {
         }
     }
     
+    if (strict && inQuotes) throw new Error('O CSV da planilha contém uma célula com aspas não fechadas.');
     if (currentField.length > 0 || currentLine.length > 0) {
         currentLine.push(currentField.trim());
         if (currentLine.some(f => f.length > 0)) {
@@ -1446,6 +1479,10 @@ async function requestHandler(req, res) {
                 url: PROG_FEIRA_CSV_URL,
                 cacheFile: path.join(DATA_DIR, 'prog_feira_external.json'),
                 targetColIndex: 0
+            },
+            prog_cq: {
+                name: progCQ.SOURCE.title,
+                cacheFile: path.join(DATA_DIR, 'prog_cq_external.json')
             }
         };
 
@@ -1457,6 +1494,7 @@ async function requestHandler(req, res) {
             if (fs.existsSync(cfg.cacheFile)) {
                 try {
                     cachedData = JSON.parse(fs.readFileSync(cfg.cacheFile, 'utf8'));
+                    if (type === 'prog_cq') cachedData = readProgCQCache(cachedData);
                     if(type==='amostras_finalizadas' && (cachedData.sourceSchemaVersion!==1 || !Array.isArray(cachedData.records)))cachedData=null;
                     if (type === 'producao_costura' && (![1,2,3].includes(cachedData.sourceSchemaVersion) || (cachedData.sourceSchemaVersion >= 2 && !Array.isArray(cachedData.cuttingWeeks)) || !Array.isArray(cachedData.weeks) || !cachedData.weeks.length || !cachedData.weeks.every(w => Array.isArray(w.people) && Array.isArray(w.dates) && Number.isFinite(w.total)))) cachedData = null;
                     if (type === 'calendar') {
@@ -1482,6 +1520,12 @@ async function requestHandler(req, res) {
             }
 
             try {
+                if (type === 'prog_cq') {
+                    const payload = await fetchProgCQSource();
+                    atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
+                    sendJson(res, 200, payload);
+                    return;
+                }
                 if(type==='amostras_finalizadas') {
                     const payload=await fetchSampleFinalizationSource();
                     atomicWriteFileSync(cfg.cacheFile,JSON.stringify(payload,null,2),'utf8');
@@ -1839,6 +1883,8 @@ function startServers() {
 if (require.main === module) startServers();
 
 module.exports = {
+    fetchProgCQSource,
+    readProgCQCache,
     fetchSampleFinalizationSource,
     fetchAutomaticReportSources,
     createColorPayload,

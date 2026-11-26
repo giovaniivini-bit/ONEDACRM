@@ -13,27 +13,57 @@
         url: 'https://docs.google.com/spreadsheets/d/1QMegrgLwnsXnOyOrkUK_XELhL6Tji_WARdZXu3WSlKg/edit#gid=0'
     });
 
-    // This defines the display order only. Spreadsheet mapping is still pending.
     const PARTS = Object.freeze([
-        Object.freeze({ code: 'F6', sectors: Object.freeze(['17x', 'D9x', 'B8x', 'D11', 'B9x', 'E7x', 'E8x', 'E9x', 'E5x']) }),
+        Object.freeze({ code: 'F6', sectors: Object.freeze(['17x', '17', 'D9x', 'B8x', 'D11', 'B9x', 'E7x', 'E8x', 'E9x', 'E5x']) }),
         Object.freeze({ code: 'F7', sectors: Object.freeze(['EN', 'IS', '17', 'D9', 'B8', 'D10', 'B9', 'E7', 'E8', 'E9', 'E5']) })
     ]);
+    const SOURCE_COLUMNS = { 1: 'NUMERO', 2: 'SETOR', 4: 'CODIGO', 5: 'DESCRICAO', 6: 'PARTE', 10: 'SIT_AMOSTRA', 12: 'OF_PEND_ALMOXARIFADO' };
+
+    function parseMatrix(matrix) {
+        const [header = [], ...rows] = matrix;
+        if (!Object.entries(SOURCE_COLUMNS).every(([index, name]) => header[index] === name)) {
+            throw new Error('Cabeçalhos da planilha Prog CQ inválidos. Confira as colunas B, C, E, F, G, K e M.');
+        }
+
+        const records = [];
+        for (const row of rows) {
+            const part = (row[6] || '').trim().toUpperCase();
+            if (!PARTS.some(entry => entry.code === part)) continue;
+
+            const sector = (row[2] || '').trim().toUpperCase().replace(/X$/, 'x');
+            const codigo = (row[4] || '').trim();
+            if (!sector || !codigo) throw new Error(`Linha da Parte ${part} sem setor ou código na planilha Prog CQ.`);
+
+            records.push({ part, sector, codigo, numero: (row[1] || '').trim(), descricao: (row[5] || '').trim(),
+                andamentoPedido: (row[10] || '').trim(), aviamentoPendente: Boolean((row[12] || '').trim()) });
+        }
+        return records;
+    }
+
+    function partsFor(items = []) {
+        return PARTS.map(({ code, sectors }) => {
+            const available = new Set(sectors);
+            for (const item of items) {
+                if (item.part === code) available.add(item.sector);
+            }
+            return { code, sectors: [...available] };
+        });
+    }
+
     function sectorKey(part, sector) { return `${part}:${sector}`; }
-    function toggleSector(selected, key) {
-        const valid = PARTS.some(part => part.sectors.some(sector => sectorKey(part.code, sector) === key));
+    function toggleSector(selected, key, items = []) {
+        const valid = partsFor(items).some(part => part.sectors.some(sector => sectorKey(part.code, sector) === key));
         if (!valid) return [...selected];
         return selected.includes(key) ? selected.filter(value => value !== key) : [...selected, key];
     }
-    // Internal display contract, not a parser for the future spreadsheet.
-    // Keep the full product code and part+sector identity; do not consolidate rows yet.
     function groups(items = [], { part = 'all', sectors = [], search = '' } = {}) {
         const term = String(search).trim().toLocaleLowerCase('pt-BR');
-        return PARTS.filter(entry => part === 'all' || entry.code === part).flatMap(entry => entry.sectors
+        return partsFor(items).filter(entry => part === 'all' || entry.code === part).flatMap(entry => entry.sectors
             .filter(sector => !sectors.length || sectors.includes(sectorKey(entry.code, sector)))
             .map(sector => ({ part: entry.code, sector, key: sectorKey(entry.code, sector),
                 items: items.filter(item => item.part === entry.code && item.sector === sector &&
                     (!term || [item.codigo, item.numero].some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(term))))
             })));
     }
-    return { SOURCE, PARTS, sectorKey, toggleSector, groups };
+    return { SOURCE, PARTS, parseMatrix, partsFor, sectorKey, toggleSector, groups };
 });

@@ -9,3 +9,13 @@
 .prog-cq-distribution .prog-feira-sector-plot { height:100px; width:100%; border:1px dashed var(--border-color); border-radius:6px; align-items:center; }
 .prog-cq-distribution .prog-feira-sector-plot .prog-cq-unavailable { min-height:0; font-size:24px; color:var(--text-muted); }
 .prog-cq-distribution .prog-feira-flow-step small { color:var(--text-secondary); }
+
+.prog-cq-card .prog-feira-media { position:relative; width:100%; height:auto; aspect-ratio:297/210; }
+.prog-cq-card .prog-feira-image { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+.prog-cq-card .prog-feira-card-body { display:grid; gap:10px; height:auto; color:var(--text-primary); }
+.prog-cq-order-progress { display:grid; gap:5px; margin:0; font-size:13px; }
+.prog-cq-order-progress span { white-space:pre-wrap; overflow-wrap:anywhere; }
+.prog-cq-trim-pending { display:block; padding:8px; text-align:center; font-size:16px; background:#9a3412; color:#fff; border:1px solid #fb923c; border-radius:5px; }
+
+.prog-cq-card .prog-feira-image { cursor:default; }
+.prog-cq-card [hidden] { display:none !important; }
