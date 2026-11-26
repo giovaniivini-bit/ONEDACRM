@@ -1,10 +1,19 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — cabeçalho dos cards
+
+A OF fica maior no canto direito, branca no tema escuro e preta no claro.
+No centro aparece a primeira semana do andamento da coluna K. O cabeçalho
+é compartilhado pela tela e pela impressão. Edge confirmou os dois temas
+e manteve a paginação de 8, 1 e 2 cards no PDF de teste.
+
 ## Prog CQ — impressão no padrão da Prog Feira
 
 PDF em A4 paisagem, com quatro colunas e até oito cards da mesma parte e setor.
 Edge e Poppler confirmaram 8, 1 e 2 cards em três folhas para dois setores,
 mantendo os andamentos extensos, dias parados e tarjas, sem folhas extras.
+Publicado em 9d24de3. Em produção, F7 imprimiu os cinco cards em uma folha
+e o filtro da tela permaneceu ao fechar o PDF. 274 testes passaram na VPS.
 
 ## Prog CQ — dias parados no setor
 

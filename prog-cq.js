@@ -120,6 +120,10 @@
         }));
     }
 
+    function firstOrderWeek(andamentoPedido) {
+        return orderLines(andamentoPedido).find(order => order.week)?.week || '';
+    }
+
     function availableWeeks(items) {
         const weeks = items.flatMap(item => orderLines(item.andamentoPedido).map(order => order.week).filter(Boolean));
         return [...new Set(weeks)].sort((a, b) => Number(a) - Number(b));
@@ -140,5 +144,5 @@
                     (!term || [item.codigo, item.numero].some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(term))))
             })));
     }
-    return { SOURCE, PARTS, parseMatrix, parseFeiraDays, sanitizeFeiraDays, sectorDaysKey, indexSectorDays, filterAvailability, availableWeeks, orderProgressForWeeks, sectorKey, toggleSector, groups };
+    return { SOURCE, PARTS, parseMatrix, parseFeiraDays, sanitizeFeiraDays, sectorDaysKey, indexSectorDays, filterAvailability, firstOrderWeek, availableWeeks, orderProgressForWeeks, sectorKey, toggleSector, groups };
 });

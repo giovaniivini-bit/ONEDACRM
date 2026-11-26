@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { PARTS, groups, toggleSector } = require('../prog-cq');
+const { PARTS, firstOrderWeek, groups, toggleSector } = require('../prog-cq');
 
 test('Prog CQ mantém a ordem F6/F7 e a sequência exata dos setores', () => {
     assert.deepEqual(PARTS.map(part => part.code), ['F6', 'F7']);
@@ -59,6 +59,7 @@ test('tela sem fonte sinaliza ausência de dados e conecta seleção e limpeza',
         escape:String, onPart(){}, onSector(){}, onClear(){}
     });
     assert.match(container.innerHTML,/TINTURARIA\nVALIDAÇÃO/);
+    assert.match(container.innerHTML, /prog-cq-card-of">OF 00012</);
     assert.match(container.innerHTML, /prog-cq-sector-days"><strong>0<\/strong><span>Dias parados no setor/);
     assert.match(container.innerHTML, /prog-cq-sector-days"><strong>—<\/strong><span>Dias parados no setor/);
     assert.match(container.innerHTML,/prog-cq-order-missing/);
@@ -127,6 +128,9 @@ test('semanas em ordem e seleção múltipla filtram cards e gráfico sem duplic
         source:{records},
         escape:String, onPart(){}, onFilter:(key, value) => { selection = [key, Array.from(value)]; }, onSector(){}, onClear(){}
     });
+    assert.equal(firstOrderWeek('Texto sem semana\n2708 - CORTE\n2704 - TINTURARIA'), '2708');
+    assert.equal(firstOrderWeek('SEM INFORMACAO'), '');
+    assert.match(container.innerHTML, /prog-cq-card-week" title="Semana do pedido">2708</);
     const options = [...container.innerHTML.matchAll(/data-cq-week value="([^"]+)" (checked)?/g)];
     assert.deepEqual(options.map(match => match[1]), ['2652','2704','2708','2712']);
     assert.deepEqual(options.filter(match => match[2]).map(match => match[1]), ['2704','2708']);

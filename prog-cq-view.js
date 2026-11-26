@@ -82,8 +82,13 @@
                 const photo = image(item.codigo, item.numero);
                 const days = sectorDays.get(api.sectorDaysKey(item));
                 const andamento = api.orderProgressForWeeks(item.andamentoPedido, weeks).trim();
+                const firstWeek = api.firstOrderWeek(item.andamentoPedido);
                 return `<article class="prog-feira-card prog-cq-card">
-                    <div class="prog-feira-card-top"><strong>${esc(item.codigo)}</strong>${item.numero ? `<span>OF ${esc(item.numero)}</span>` : ''}</div>
+                    <div class="prog-feira-card-top prog-cq-card-top">
+                        <strong>${esc(item.codigo)}</strong>
+                        ${firstWeek ? `<strong class="prog-cq-card-week" title="Semana do pedido">${firstWeek}</strong>` : ''}
+                        ${item.numero ? `<strong class="prog-cq-card-of">OF ${esc(item.numero)}</strong>` : ''}
+                    </div>
                     <div class="prog-feira-media">${photo.hasImage ? `<img class="prog-feira-image" src="${esc(photo.thumbUrl)}" data-fallback-src="${esc(photo.proxyUrl || '')}" alt="${esc(item.codigo)}" loading="lazy"><span class="prog-feira-image-empty" hidden>Imagem indisponível</span>` : '<span class="prog-feira-image-empty">Imagem indisponível</span>'}</div>
                     <div class="prog-feira-card-body">
                         <div class="prog-cq-sector-days"><strong>${days == null ? '—' : days.toLocaleString('pt-BR')}</strong><span>Dias parados no setor</span></div>

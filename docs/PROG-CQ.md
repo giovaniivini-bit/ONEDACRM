@@ -52,6 +52,10 @@ folha. Imagens continuam proporcionais à largura do card e os dados do card
 são preservados, incluindo dias parados, andamento e pendência de aviamento.
 A impressão aguarda as imagens e tenta a fonte alternativa em caso de erro.
 
+Na tela e no PDF, o cabeçalho mostra o código à esquerda, a primeira semana
+da coluna K no centro e a OF em destaque à direita. A semana do cabeçalho
+segue a ordem original do andamento do pedido, inclusive com filtros ativos.
+
 
 Os filtros de malha e aviamento podem ser combinados com parte e setor. Qualquer
 linha de andamento em tecelagem ou tinturaria indica falta de malha. Laboratório
