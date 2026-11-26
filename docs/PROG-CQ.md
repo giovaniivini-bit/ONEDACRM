@@ -34,6 +34,12 @@ conserva as linhas fora do fluxo no cache.
 | K | Andamento do pedido, com as quebras de linha da planilha |
 | M | Campo preenchido aciona a tarja laranja AV. PENDENTE CQ |
 
+Dias parados no setor vêm da coluna DB da Prog Feira para as partes F6/F7 da
+coluna E. O cruzamento usa código completo, OF, parte e setor. Zeros de formatação
+à esquerda da OF não alteram o vínculo. Grades com dias diferentes no mesmo
+vínculo deixam o valor indefinido. Zero aparece como número. Campo vazio,
+inválido, divergente ou sem correspondência aparece como traço.
+
 Falhas de leitura mantêm o último cache válido. Sem cache, a tela indica que a
 fonte está indisponível. A impressão específica da Prog CQ ainda está pendente.
 

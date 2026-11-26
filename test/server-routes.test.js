@@ -122,7 +122,8 @@ test('sync dos relatórios busca explicitamente a fonte Prog Feira em vez da bas
     });
     assert.ok(target.includes('1VdgVNsnz5HTeoCO2pRseXkvgbVcIDxc9u1zrIVLrv1s'));
     assert.equal(payload.records[0].CODIGO,'PROG-ONLY');
-    assert.equal(payload.sourceSchemaVersion,4);
+    assert.equal(payload.sourceSchemaVersion,5);
+    assert.equal(payload.cqSectorDays,null);
 });
 
 test('enforces method and admin authorization on write routes', async () => {
@@ -432,10 +433,17 @@ test('sincronizar Prog Feira atualiza a fonte sem gerar PDFs nem baixar fontes d
         https.get=(url,callback)=>{
             urls.push(String(url));const req=new EventEmitter();req.setTimeout=()=>req;req.destroy=()=>{};
             setImmediate(()=>{const res=new EventEmitter();res.statusCode=200;res.headers={};res.setEncoding=()=>{};callback(res);
-                res.emit('data','Número,Código,Parte,Fluxo,Setor,Qtde Pend\n'+Array.from({length:40},(_,i)=>`${i+1},01.12.00.1000,FE,D36,01B,4`).join('\n'));res.emit('end');});return req;
+                res.emit('data','Número,Código,Parte,Fluxo,Setor,Qtde Pend,Descrição2\n'+Array.from({length:40},(_,i)=>`${i+1},01.12.00.1000,FE,D36,01B,4,B47`).join('\n'));res.emit('end');});return req;
         };
         const response=await request({method:'POST',route:'/api/external-sheet?type=prog_feira&refresh=1',headers:{'X-CRM-Admin-Token':'route-test-secret'}});
         assert.equal(response.status,200);const payload=JSON.parse(response.body);assert.equal(payload.success,true);assert.equal(payload.isLive,true);assert.equal(payload.records.length,40);
+        const cqDay = { numero:'0012', codigo:'01.12.00.1000', part:'F6', sector:'17', days:0 };
+        fs.writeFileSync(cache, JSON.stringify({ ...payload, cqSectorDays:[
+            { ...cqDay, confidential:'remove' }, { ...cqDay, numero:'  ' }
+        ] }), 'utf8');
+        const cached = await request({ route:'/api/external-sheet?type=prog_feira' });
+        assert.equal(cached.status, 200);
+        assert.deepEqual(JSON.parse(cached.body).cqSectorDays, [cqDay]);
         assert.equal(Object.hasOwn(payload,'generatedReports'),false);assert.equal(urls.length,1);
         assert.equal(fs.readFileSync(path.join(reportsDir,'index.json'),'utf8'),reportsBefore);
     } finally {https.get=original;if(saved)fs.writeFileSync(cache,saved);else if(fs.existsSync(cache))fs.unlinkSync(cache);}

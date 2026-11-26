@@ -1,10 +1,11 @@
 (function(root) {
     'use strict';
     root.CRMProgCQView = {
-        render(container, { filters, search, escape: esc, source, loading, image = () => ({}), onPart, onFilter, onSector, onClear }) {
+        render(container, { filters, search, escape: esc, source, feiraDays, loading, image = () => ({}), onPart, onFilter, onSector, onClear }) {
             const api = root.CRMProgCQ;
             const selected = filters.sectors;
             const items = source?.records || [];
+            const sectorDays = api.indexSectorDays(feiraDays || []);
             const parts = api.PARTS;
             const weekOptions = api.availableWeeks(items);
             const weeks = weekOptions.filter(week => filters.weeks?.includes(week));
@@ -23,11 +24,13 @@
                 : source.isLive === false ? 'Exibindo última sincronização' : 'Dados sincronizados';
             const card = item => {
                 const photo = image(item.codigo, item.numero);
+                const days = sectorDays.get(api.sectorDaysKey(item));
                 const andamento = api.orderProgressForWeeks(item.andamentoPedido, weeks).trim();
                 return `<article class="prog-feira-card prog-cq-card">
                     <div class="prog-feira-card-top"><strong>${esc(item.codigo)}</strong>${item.numero ? `<span>OF ${esc(item.numero)}</span>` : ''}</div>
                     <div class="prog-feira-media">${photo.hasImage ? `<img class="prog-feira-image" src="${esc(photo.thumbUrl)}" data-cq-image-fallback="${esc(photo.proxyUrl || '')}" alt="${esc(item.codigo)}" loading="lazy"><span class="prog-feira-image-empty" hidden>Imagem indisponível</span>` : '<span class="prog-feira-image-empty">Imagem indisponível</span>'}</div>
                     <div class="prog-feira-card-body">
+                        <div class="prog-cq-sector-days"><strong>${days == null ? '—' : days.toLocaleString('pt-BR')}</strong><span>Dias parados no setor</span></div>
                         ${item.aviamentoPendente ? '<strong class="prog-cq-trim-pending">AV. PENDENTE CQ</strong>' : ''}
                         ${item.descricao ? `<strong>${esc(item.descricao)}</strong>` : ''}
                         <p class="prog-cq-order-progress${andamento ? '' : ' prog-cq-order-missing'}"><strong>Andamento do pedido</strong><span>${esc(andamento || 'Não informado')}</span></p>

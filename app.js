@@ -942,6 +942,12 @@
         }
     }
 
+    function applyProgFeiraSource(payload) {
+        const current = state.progFeiraExternalData;
+        if (current && Date.parse(payload.timestamp) < Date.parse(current.timestamp)) return;
+        state.progFeiraExternalData = payload;
+    }
+
     // Carregamento assíncrono das planilhas externas do Drive (Cores, Aviamentos e CQ)
     async function loadExternalSheets(force = false) {
         const sheetsWereLoaded = state.externalSheetsLoaded;
@@ -975,7 +981,6 @@
             state.progCQExternalData = progCQRes || (state.progCQExternalData ? {
                 ...state.progCQExternalData, isLive: false
             } : null);
-            if (state.activeSubmodule === 'prog-cq') renderActiveView();
             if (coresRes && coresRes.success) {
                 state.coresExternalData = coresRes;
             }
@@ -999,12 +1004,13 @@
                 state.calendarExternalData = calendarRes;
             }
             if (progFeiraRes && progFeiraRes.success) {
-                state.progFeiraExternalData = progFeiraRes;
+                applyProgFeiraSource(progFeiraRes);
                 if (force) {
                     state.automaticReportsLoaded = false;
                     if (state.activeSubmodule === 'relatorios-automaticos') loadAutomaticReports();
                 }
             }
+            if (state.activeSubmodule === 'prog-cq') renderActiveView();
             const changed = previousRecords !== JSON.stringify([state.coresExternalData?.records, state.aviamentosExternalData?.records, state.cqExternalData?.records, state.leadtimeExternalData?.records, state.rotativosExternalData?.records, state.aproveitamentoExternalData?.records, state.aproveitamentoFinalizationData, state.calendarExternalData?.records, state.progFeiraExternalData?.records]);
             if (state.activeSubmodule === 'producao-costura') await loadCosturaData(force);
             updateSidebarBadges();
@@ -1957,7 +1963,7 @@
                 if (count) count.textContent = '—';
                 view.render(container, {
                     filters: state.progCQFilters, escape: escapeHtml,
-                    source: state.progCQExternalData, loading: !state.externalSheetsLoaded,
+                    source: state.progCQExternalData, feiraDays: state.progFeiraExternalData?.cqSectorDays, loading: !state.externalSheetsLoaded,
                     image: (codigo, numero) => getProductImage(codigo, numero),
                     onPart: part => { state.progCQFilters.part = part; renderActiveView(); container.querySelector('[data-cq-part]')?.focus(); },
                     onFilter: (field, value) => {
@@ -13112,7 +13118,7 @@
             const response = await adminFetch('/api/external-sheet?type=prog_feira&refresh=1', { method: 'POST' });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.success) throw new Error(payload.error || `HTTP ${response.status}`);
-            state.progFeiraExternalData = payload;
+            applyProgFeiraSource(payload);
             updateSidebarBadges();
             renderActiveView();
             showNotification(`${window.CRMProgFeira.buildProducts(payload.records || []).length} referências atualizadas.`, 'success', 'Prog Feira');

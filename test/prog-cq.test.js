@@ -48,8 +48,9 @@ test('tela sem fonte sinaliza ausência de dados e conecta seleção e limpeza',
     assert.equal(part,'F7'); assert.equal(cleared,true);
     context.window.CRMProgCQView.render(container,{
         filters:{part:'F6',sectors:['F6:17']},
+        feiraDays:[{part:'F6',sector:'17',codigo:'A',numero:'12',days:0}],
         source:{records:[
-            {part:'F6',sector:'17',codigo:'A',aviamentoPendente:true,andamentoPedido:'TINTURARIA\nVALIDAÇÃO'},
+            {part:'F6',sector:'17',codigo:'A',numero:'00012',aviamentoPendente:true,andamentoPedido:'TINTURARIA\nVALIDAÇÃO'},
             {part:'F6',sector:'17',codigo:'B',aviamentoPendente:false,andamentoPedido:''},
             {part:'F7',sector:'17x',codigo:'C',aviamentoPendente:true,andamentoPedido:'OUTRO PEDIDO'},
             {part:'F6',sector:'17x',codigo:'D',aviamentoPendente:true,andamentoPedido:'FORA DO FLUXO F6'},
@@ -58,6 +59,8 @@ test('tela sem fonte sinaliza ausência de dados e conecta seleção e limpeza',
         escape:String, onPart(){}, onSector(){}, onClear(){}
     });
     assert.match(container.innerHTML,/TINTURARIA\nVALIDAÇÃO/);
+    assert.match(container.innerHTML, /prog-cq-sector-days"><strong>0<\/strong><span>Dias parados no setor/);
+    assert.match(container.innerHTML, /prog-cq-sector-days"><strong>—<\/strong><span>Dias parados no setor/);
     assert.match(container.innerHTML,/prog-cq-order-missing/);
     assert.match(container.innerHTML,/prog-cq-bar[^>]+height:72px/);
     assert.match(container.innerHTML,/Não informado/);

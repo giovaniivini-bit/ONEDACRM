@@ -40,6 +40,53 @@
         return records;
     }
 
+    const FEIRA_DAY_COLUMNS = { part: 4, numero: 5, codigo: 40, sector: 81, days: 105 };
+    const FEIRA_DAY_HEADERS = ['PARTE', 'NUMERO', 'CODIGO', 'SETOR', 'DIAS PARADO'];
+
+    function sanitizeFeiraDays(records = []) {
+        const result = [];
+        for (const row of records) {
+            if (!row) continue;
+            const { part, numero, codigo, sector, days } = row;
+            if (PARTS.some(entry => entry.code === part) &&
+                [numero, codigo, sector].every(value => typeof value === 'string' && value.trim()) &&
+                Number.isSafeInteger(days) && days >= 0) {
+                result.push({ part, numero, codigo, sector, days });
+            }
+        }
+        return result;
+    }
+
+    function parseFeiraDays([header = [], ...rows]) {
+        const columns = Object.values(FEIRA_DAY_COLUMNS);
+        const headersAreValid = columns.every((column, index) =>
+            header[column]?.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase() === FEIRA_DAY_HEADERS[index]
+        );
+        if (!headersAreValid) return null;
+
+        const { part, numero, codigo, sector, days } = FEIRA_DAY_COLUMNS;
+        return sanitizeFeiraDays(rows.map(row => ({
+            part: row[part]?.toUpperCase(), numero: row[numero], codigo: row[codigo], sector: row[sector],
+            days: /^\d+(?:[.,]0+)?$/.test(row[days] || '') ? Number(row[days].replace(',', '.')) : null
+        })));
+    }
+
+    function sectorDaysKey({ part, sector, numero, codigo }) {
+        return JSON.stringify([
+            part, sector?.trim().toUpperCase(), numero?.trim().replace(/^0+(?=\d+$)/, ''), codigo?.trim().toUpperCase()
+        ]);
+    }
+
+    function indexSectorDays(records = []) {
+        const index = new Map();
+        for (const item of records) {
+            const key = sectorDaysKey(item);
+            if (!index.has(key)) index.set(key, item.days);
+            else if (index.get(key) !== item.days) index.set(key, null);
+        }
+        return index;
+    }
+
     function sectorKey(part, sector) { return `${part}:${sector}`; }
     function toggleSector(selected, key) {
         const valid = PARTS.some(part => part.sectors.some(sector => sectorKey(part.code, sector) === key));
@@ -93,5 +140,5 @@
                     (!term || [item.codigo, item.numero].some(value => String(value || '').toLocaleLowerCase('pt-BR').includes(term))))
             })));
     }
-    return { SOURCE, PARTS, parseMatrix, filterAvailability, availableWeeks, orderProgressForWeeks, sectorKey, toggleSector, groups };
+    return { SOURCE, PARTS, parseMatrix, parseFeiraDays, sanitizeFeiraDays, sectorDaysKey, indexSectorDays, filterAvailability, availableWeeks, orderProgressForWeeks, sectorKey, toggleSector, groups };
 });

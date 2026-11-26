@@ -23,7 +23,8 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
   Mostrar no gráfico e nos grupos apenas os setores oficiais da parte, mesmo
   se a planilha trouxer outros setores. O filtro Semana permite selecionar várias
   semanas das linhas de andamento da coluna K. Os totais de produtos contam cards visíveis após
-  todos os filtros da tela, por parte e no conjunto.
+  todos os filtros da tela, por parte e no conjunto. Os dias parados vêm da
+  coluna DB da Prog Feira, vinculados por código completo, OF, parte e setor.
 
 - Preservar funcionalidades atuais em qualquer alteração; testar áreas afetadas.
 - Dados operacionais `data.js`, CSVs, índices e `data/*_external.json` não devem ser

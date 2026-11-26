@@ -19,7 +19,7 @@ const { parseEmbeddedFolder } = require('../drive-folder-list');
 test('partial sheet failure still applies fresh Prog Feira data and reports the failed source', async () => {
     const vm = require('node:vm');
     const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-    const start = app.indexOf('async function loadExternalSheets(');
+    const start = app.indexOf('function applyProgFeiraSource(');
     const end = app.indexOf('function getProductImage(', start);
     const state = { activeSubmodule: 'prog-feira', progFeiraExternalData: { records: [{ CODIGO: 'OLD' }] } };
     let renders = 0;
@@ -28,12 +28,14 @@ test('partial sheet failure still applies fresh Prog Feira data and reports the 
         updateSidebarBadges() {}, renderActiveView() { renders++; },
         adminFetch: async url => ({ ok: !url.includes('type=cq'), json: async () => url.includes('type=cq')
             ? { success: false, error: 'Fonte CQ indisponível' }
-            : { success: true, isLive: true, records: [{ CODIGO: 'NEW' }] } })
+            : { success: true, isLive: true, timestamp:'2026-11-26T12:00:00Z', records: [{ CODIGO: 'NEW' }] } })
     });
     vm.runInContext(app.slice(start, end), context);
     await assert.rejects(context.loadExternalSheets(true), /Atualização parcial: cq/);
     assert.equal(state.progFeiraExternalData.records[0].CODIGO, 'NEW');
     assert.equal(renders, 1);
+    context.applyProgFeiraSource({ timestamp:'2026-11-26T11:59:59Z', records:[{ CODIGO:'STALE' }] });
+    assert.equal(state.progFeiraExternalData.records[0].CODIGO, 'NEW');
 });
 
 test('embedded Drive listing discovers exact product filenames beyond the main page window', () => {

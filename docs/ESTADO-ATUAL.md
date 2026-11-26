@@ -1,10 +1,18 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — dias parados no setor
+
+Cards exibem em destaque os dias da coluna DB da Prog Feira. A consulta cruzada
+identificou 119 dos 121 registros atuais por código completo, OF, parte e setor.
+Zero é exibido como número e ausência aparece como traço.
+273 testes passaram no checkout.
+
 ## Prog CQ — seleção múltipla de semanas
 
 O filtro Semana aceita várias opções. Cada produto aparece uma vez por card
 mesmo quando o andamento corresponde a mais de uma semana selecionada.
-272 testes passaram. O Edge confirmou seleção por mouse e teclado, foco e limpeza.
+Publicado em 7ede7f9 com 272 testes no checkout e na VPS. Edge em produção
+confirmou 15 cards selecionando 2704 e 2708 juntas e 121 ao limpar o filtro.
 
 ## Prog CQ — totais de produtos visíveis
 

@@ -18,6 +18,9 @@
 .prog-cq-card .prog-feira-media { position:relative; width:100%; height:auto; aspect-ratio:297/210; }
 .prog-cq-card .prog-feira-image { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
 .prog-cq-card .prog-feira-card-body { display:grid; gap:10px; height:auto; color:var(--text-primary); }
+.prog-cq-sector-days { display:grid; gap:3px; padding:8px; text-align:center; border:1px solid var(--border-color); border-radius:6px; background:var(--bg-surface); }
+.prog-cq-sector-days strong { color:var(--text-primary); font-size:28px; line-height:1.1; font-variant-numeric:tabular-nums; }
+.prog-cq-sector-days span { color:var(--text-secondary); font-size:12px; }
 .prog-cq-order-progress { display:grid; gap:5px; margin:0; font-size:13px; }
 .prog-cq-order-progress span { white-space:pre-wrap; overflow-wrap:anywhere; }
 .prog-cq-trim-pending { display:block; padding:8px; text-align:center; font-size:16px; background:#9a3412; color:#fff; border:1px solid #fb923c; border-radius:5px; }

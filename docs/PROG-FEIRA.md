@@ -62,8 +62,11 @@ CUSTO,TINT. CASEIRA,AVIAMENTO. Tingimento real também conserva badge e filtro; 
 Sem informação distingue ausência de M00. Busca considera pendências complementares.
 Impressão mantém oito cards e abrevia complementos para códigos sem omiti-los.
 
-O cache schema4 mantém o formato canônico com Parte/Fluxo. Evitar expor todos os
-campos da planilha: a API conserva whitelist, sem preços, CNPJ, endereços ou IDs.
+O cache schema5 mantém os registros canônicos com Parte/Fluxo e acrescenta uma
+projeção separada de dias parados para a Prog CQ. A API expõe apenas os campos
+previstos, incluindo código, OF, parte, setor e dias nessa projeção. Um CSV sem
+o cabeçalho esperado das colunas de CQ continua alimentando a Prog Feira, com
+projeção de dias indisponível.
 
 Dias: somente D36 e TF/D43 aparecem na tela. O badge de tingimento informa dias no
 estado atual M00–M03, calculados de Data Saída das próprias linhas TF. Maior tempo

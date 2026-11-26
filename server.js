@@ -215,6 +215,7 @@ function validateCalendarRecords(records) {
     return contentRows.filter(row => validRowSet.has(row) || limitOnlyRowSet.has(row));
 }
 
+const PROG_FEIRA_SOURCE_SCHEMA = 5;
 const PROG_FEIRA_PUBLIC_FIELDS = [
     'NUMERO', 'CODIGO', 'IMG_PRODUTO', 'OP', 'SETOR', 'ORDEM',
     'DT_SAIDA', 'TIPO', 'QTDE_PEND', 'ESTAMPAS', 'OBS',
@@ -237,10 +238,13 @@ function sanitizeProgFeiraRecords(records) {
     ));
 }
 
-function createProgFeiraPayload(records) {
+function createProgFeiraPayload(csv) {
+    const rows = parseCSVRows(csv);
+    const records = csvRowsToRecords(rows);
     const safe = sanitizeProgFeiraRecords(records);
     return {
-        success:true, type:'prog_feira', sourceSchemaVersion:4,
+        success:true, type:'prog_feira', sourceSchemaVersion:PROG_FEIRA_SOURCE_SCHEMA,
+        cqSectorDays:progCQ.parseFeiraDays(rows),
         labelColumnAvailable:records.some(record=>Object.keys(record).some(key=>key.trim().toUpperCase()==='ETIQUETA')),
         programColumnAvailable:records.some(record=>Object.keys(record).some(key=>['CODCLIENTE','DESCRICAO2'].includes(key.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[ _]/g,'').toUpperCase()))),
         title:'Programação Feira', count:safe.length, records:safe, timestamp:new Date().toISOString(), isLive:true
@@ -248,7 +252,7 @@ function createProgFeiraPayload(records) {
 }
 
 async function fetchProgFeiraReportSource(fetchSheet = fetchGoogleSheetCSV) {
-    return createProgFeiraPayload(parseCSV(await fetchSheet(PROG_FEIRA_CSV_URL)));
+    return createProgFeiraPayload(await fetchSheet(PROG_FEIRA_CSV_URL));
 }
 
 function createProgCQPayload(records, timestamp = new Date().toISOString()) {
@@ -519,7 +523,10 @@ function parseCSVRows(csvText, { strict = false } = {}) {
 }
 
 function parseCSV(csvText) {
-    const lines = parseCSVRows(csvText);
+    return csvRowsToRecords(parseCSVRows(csvText));
+}
+
+function csvRowsToRecords(lines) {
     if (lines.length < 2) return [];
 
     // Clean headers
@@ -1505,7 +1512,8 @@ async function requestHandler(req, res) {
                         const labelColumnAvailable = cachedData.labelColumnAvailable !== false && cachedData.records?.some(record => Object.hasOwn(record, 'ETIQUETA'));
                         const programColumnAvailable = cachedData.programColumnAvailable !== false && cachedData.records?.some(record => Object.hasOwn(record, 'COD_CLIENTE'));
                         const safeCachedRows = sanitizeProgFeiraRecords(cachedData?.records);
-                        cachedData = { ...cachedData, labelColumnAvailable: Boolean(labelColumnAvailable), programColumnAvailable: Boolean(programColumnAvailable), count: safeCachedRows.length, records: safeCachedRows };
+                        cachedData = { ...cachedData, labelColumnAvailable: Boolean(labelColumnAvailable), programColumnAvailable: Boolean(programColumnAvailable), count: safeCachedRows.length, records: safeCachedRows,
+                            cqSectorDays: Array.isArray(cachedData.cqSectorDays) ? progCQ.sanitizeFeiraDays(cachedData.cqSectorDays) : null };
                     }
                 } catch (e) {
                     if (type === 'calendar') console.warn(`[CALENDÁRIO] Cache ignorado: ${e.message}`);
@@ -1514,7 +1522,7 @@ async function requestHandler(req, res) {
             }
 
             const cachedAt = cachedData && Date.parse(cachedData.timestamp || '');
-            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === 4) && (type !== 'producao_costura' || cachedData.sourceSchemaVersion === 3)) {
+            if (!force && cachedData && cachedData.programColumnAvailable !== false && Number.isFinite(cachedAt) && Date.now() - cachedAt < EXTERNAL_CACHE_TTL_MS && (type !== 'prog_feira' || cachedData.sourceSchemaVersion === PROG_FEIRA_SOURCE_SCHEMA) && (type !== 'producao_costura' || cachedData.sourceSchemaVersion === 3)) {
                 sendJson(res, 200, { ...cachedData, cacheAgeMs: Date.now() - cachedAt });
                 return;
             }
@@ -1546,15 +1554,14 @@ async function requestHandler(req, res) {
                     sendJson(res, 200, payload);
                     return;
                 }
-                const records = parseCSV(csvText);
-
                 if (type === 'prog_feira') {
-                    const payload = createProgFeiraPayload(records);
+                    const payload = createProgFeiraPayload(csvText);
                     atomicWriteFileSync(cfg.cacheFile, JSON.stringify(payload, null, 2), 'utf8');
                     sendJson(res, 200, payload);
                     return;
                 }
 
+                const records = parseCSV(csvText);
                 if (type === 'calendar') {
                     const calendarRows = validateCalendarRecords(records);
                     const payload = {

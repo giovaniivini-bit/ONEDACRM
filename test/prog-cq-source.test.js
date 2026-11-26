@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { fetchProgCQSource, readProgCQCache } = require('../server');
-const { groups, toggleSector } = require('../prog-cq');
+const { fetchProgCQSource, readProgCQCache, fetchProgFeiraReportSource } = require('../server');
+const { groups, toggleSector, indexSectorDays, sectorDaysKey } = require('../prog-cq');
 
 const header = 'PERIODO,NUMERO,SETOR,DESC_SETOR,CODIGO,DESCRICAO,PARTE,OBS,PROGRAMACAO,SIT_AMOSTRA2,SIT_AMOSTRA,OC,OF_PEND_ALMOXARIFADO';
 const populated = [header,
@@ -61,4 +61,43 @@ test('cache Prog CQ exige o esquema atual, valida registros e mantém apenas cam
     assert.equal(readProgCQCache({ ...payload, records: [{ ...payload.records[0], aviamentoPendente: '0' }], count: 1 }), null);
     const cache = readProgCQCache({ ...payload, internal: true, records: payload.records.map(record => ({ ...record, internal: true })) });
     assert.deepEqual(cache, payload);
+});
+
+test('Prog Feira lê DB para F6/F7 e o cruzamento usa OF, código completo, parte e setor', async () => {
+    const headers = Array.from({length:110}, (_, i) => `Coluna ${i}`);
+    const columns = {4:'Parte', 5:'Número', 40:'Código', 79:'Fluxo', 81:'Setor', 105:'Dias Parado', 107:'Dias Parado'};
+    for (const [index, label] of Object.entries(columns)) headers[index] = label;
+    const row = (part, numero, codigo, sector, days) => {
+        const values = Array(headers.length).fill('');
+        Object.assign(values, {4:part, 5:numero, 40:codigo, 79:part === 'FE' ? 'D36' : 'CQ', 81:sector, 105:days, 107:'999'});
+        return values.join(',');
+    };
+    const code = '01.14.00.1000A';
+    const csv = [
+        headers.join(','),
+        row('FE','0010',code,'01A','20'),
+        row('F6','0012',code,'17','0'),
+        row('F6','0012',code,'17','0'),
+        row('F6','0013',code,'17','29'),
+        row('F6','0012',code,'D9','6'),
+        row('F7','0012',code,'D9X','4'),
+        row('F7','0012',code,'D9x','8'),
+        row('F6','0012','01.14.00.1000','17','9'),
+        row('F6','0014',code,'17',''),
+        row('F6','0015',code,'17','#N/A')
+    ].join('\n');
+    const payload = await fetchProgFeiraReportSource(async () => csv);
+    assert.equal(payload.records.length, 1);
+    assert.equal(payload.records[0].PARTE, 'FE');
+    assert.equal(payload.cqSectorDays.length, 7);
+    const index = indexSectorDays(payload.cqSectorDays);
+    const days = (part, sector, numero, codigo = code) => index.get(sectorDaysKey({part, sector, numero, codigo}));
+    assert.equal(days('F6','17','12'), 0);
+    assert.equal(days('F6','17','13'), 29);
+    assert.equal(days('F6','D9','0012'), 6);
+    assert.equal(days('F7','D9x','0012'), null);
+    assert.equal(days('F6','17','0012','01.14.00.1000'), 9);
+    assert.equal(days('F7','17','0012'), undefined);
+    assert.equal(days('F6','17','0014'), undefined);
+    assert.equal(days('F6','17','0015'), undefined);
 });
