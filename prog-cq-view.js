@@ -12,6 +12,10 @@
             const visible = api.groups(items, { ...filters, search, week }).map(group => ({
                 ...group, items: api.filterAvailability(group.items, filters)
             }));
+            const totals = new Map(parts.map(part => [part.code, 0]));
+            for (const group of visible) totals.set(group.part, totals.get(group.part) + group.items.length);
+            const totalLabel = selected.length ? 'Selecionados' : 'Total';
+            const formatTotal = count => `${count.toLocaleString('pt-BR')} ${count === 1 ? 'produto' : 'produtos'}`;
             const counts = new Map(api.groups(filtered, { search, week }).map(group => [group.key, group.items.length]));
             const filterSelect = (key, label, options, selectedValue = filters[key] || 'all') => `<label class="prog-feira-parallel-filter"><span>${label}</span><select aria-label="${label}" data-cq-filter="${key}">${options.map(([value, text]) => `<option value="${value}" ${selectedValue === value ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
             const status = loading ? 'Carregando planilha' : !source ? 'Planilha indisponível'
@@ -40,11 +44,15 @@
                     <div class="prog-feira-sector-selection"><strong>Setores:</strong><span>${selected.length ? selected.map(esc).join(', ') : 'Todos'}</span></div>
                     <button type="button" class="filter-clear-btn" data-cq-clear>Limpar filtros</button>
                 </div>
+                ${source && filters.part === 'all' ? `<p class="prog-cq-total prog-cq-total-all" data-cq-total="all">${totalLabel} nas duas partes · ${formatTotal([...totals.values()].reduce((sum, count) => sum + count, 0))}</p>` : ''}
                 ${parts.filter(part => filters.part === 'all' || filters.part === part.code).map(part => {
                     const max = Math.max(1, ...part.sectors.map(sector => counts.get(api.sectorKey(part.code, sector)) || 0));
                     return `
                     <section class="prog-feira-distribution prog-cq-distribution" aria-label="Produtos por setor da Parte ${part.code}">
-                        <header><h3>Produtos por setor • Parte ${part.code}</h3><span>${source ? `${part.sectors.reduce((sum, sector) => sum + (counts.get(api.sectorKey(part.code, sector)) || 0), 0)} registros` : 'Quantidades ainda não disponíveis'}</span></header>
+                        <header class="prog-cq-chart-header">
+                            <h3>Produtos por setor • Parte ${part.code}</h3>
+                            ${source ? `<strong class="prog-cq-total" data-cq-total="${part.code}">${totalLabel} · ${formatTotal(totals.get(part.code))}</strong>` : '<span>Quantidades ainda não disponíveis</span>'}
+                        </header>
                         <p>Selecione um ou mais setores para filtrar os grupos abaixo. Sem seleção, todos são apresentados.</p>
                         <div class="prog-feira-chart-scroll"><div class="prog-feira-flow" style="--sector-columns:${part.sectors.length}">
                             ${part.sectors.map(sector => {

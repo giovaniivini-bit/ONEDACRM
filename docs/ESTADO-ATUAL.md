@@ -1,11 +1,19 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — totais de produtos visíveis
+
+O total ao lado de cada gráfico acompanha os cards exibidos após os filtros.
+Quando as duas partes estão abertas, a tela também soma os resultados de F6 e F7.
+272 testes passaram no checkout.
+
 ## Prog CQ — setores oficiais por parte
 
 O gráfico, a seleção de setores e os grupos de cards usam a sequência oficial de
 cada parte. Linhas com setores de outro fluxo continuam na fonte e ficam fora do
 gráfico e dos grupos. Cobertura de regressão com 17x na F6 e EN na F7.
-271 testes passaram no checkout.
+Publicado em 8a6aaed. A suíte passou com 271 testes no checkout e na VPS.
+O Edge em produção confirmou as sequências exatas, 116 cards da F6 e 5 da F7.
+Semana 2704 apresentou 13 cards. O deploy preservou 1.099 arquivos operacionais.
 
 ## Prog CQ — filtro Semana
 

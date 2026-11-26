@@ -12,6 +12,10 @@ A mesma configuração ordena os gráficos horizontais e os grupos verticais.
 Seleção múltipla por união, identificada por parte:setor. Filtro de parte e
 limpeza disponíveis. Não tratar 17 e 17x como o mesmo setor.
 
+O total de produtos de cada parte fica junto ao título do gráfico e conta os
+cards visíveis após os filtros, incluindo a seleção de setores. Quando as duas
+partes são exibidas, o total geral soma F6 e F7.
+
 ## Planilha conectada
 
 A fonte é a aba Página1 da planilha Prog CQ. A integração usa o cache do CRM e

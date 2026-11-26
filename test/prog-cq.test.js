@@ -124,10 +124,38 @@ test('semana lista códigos em ordem e filtra as linhas dos cards e o gráfico',
     const weekOptions = container.innerHTML.match(/data-cq-filter="week">([^]*?)<\/select>/)[1];
     assert.deepEqual([...weekOptions.matchAll(/value="([^"]+)"/g)].map(match => match[1]), ['all','2652','2704','2708']);
     assert.match(weekOptions, /value="2704" selected/);
+    assert.match(container.innerHTML, /data-cq-total="F6">Selecionados · 1 produto</);
     assert.match(container.innerHTML, /data-cq-sector="F6:17"[^>]+aria-label="Parte F6 setor 17, 1 registros"/);
     assert.equal((container.innerHTML.match(/class="prog-feira-card prog-cq-card"/g) || []).length, 1);
     assert.match(container.innerHTML, /2704 - TINTURARIA\n2704 - LABORATÓRIO/);
     assert.doesNotMatch(container.innerHTML, /2708 - CORTE|OUTRA|TEM-MALHA|F7-ANTIGA|OF 2660/);
     changeWeek();
     assert.deepEqual(selection, ['week', '2708']);
+});
+
+test('total de produtos acompanha os setores selecionados e soma as duas partes', () => {
+    const fs = require('node:fs');
+    const vm = require('node:vm');
+    const container = { innerHTML:'', querySelector:() => ({ addEventListener(){} }), querySelectorAll:() => [] };
+    const context = {window:{CRMProgCQ:require('../prog-cq')}};
+    vm.runInNewContext(fs.readFileSync(require.resolve('../prog-cq-view'), 'utf8'), context);
+    const source = {records:[
+        {part:'F6', sector:'17', codigo:'A'},
+        {part:'F6', sector:'17', codigo:'B'},
+        {part:'F6', sector:'D9', codigo:'C'},
+        {part:'F7', sector:'17x', codigo:'D'},
+        {part:'F6', sector:'17x', codigo:'FORA'}
+    ]};
+    function totals(part, sectors) {
+        context.window.CRMProgCQView.render(container, { filters:{part, sectors}, source, escape:String });
+        return Object.fromEntries([...container.innerHTML.matchAll(/data-cq-total="([^"]+)">([^<]+)/g)].map(match => match.slice(1)));
+    }
+
+    assert.deepEqual(totals('all', []), {
+        all:'Total nas duas partes · 4 produtos', F6:'Total · 3 produtos', F7:'Total · 1 produto'
+    });
+    assert.deepEqual(totals('all', ['F6:17', 'F7:17x']), {
+        all:'Selecionados nas duas partes · 3 produtos', F6:'Selecionados · 2 produtos', F7:'Selecionados · 1 produto'
+    });
+    assert.deepEqual(totals('F6', ['F7:17x']), { F6:'Selecionados · 0 produtos' });
 });
