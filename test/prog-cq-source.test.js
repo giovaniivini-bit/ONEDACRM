@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { fetchProgCQSource, readProgCQCache } = require('../server');
-const { groups, partsFor, toggleSector } = require('../prog-cq');
+const { groups, toggleSector } = require('../prog-cq');
 
 const header = 'PERIODO,NUMERO,SETOR,DESC_SETOR,CODIGO,DESCRICAO,PARTE,OBS,PROGRAMACAO,SIT_AMOSTRA2,SIT_AMOSTRA,OC,OF_PEND_ALMOXARIFADO';
 const populated = [header,
@@ -32,14 +32,13 @@ test('lê a aba Prog CQ preservando texto multilinha, OF e código completo', as
     assert.equal(payload.isLive, true);
 });
 
-test('ordena os setores conhecidos e acrescenta extra apenas à parte de origem', async () => {
+test('agrupa e permite selecionar apenas os setores oficiais de cada parte', async () => {
     const { records } = await fetchProgCQSource(async () => populated);
-    const [f6, f7] = partsFor(records);
-    assert.deepEqual(f6.sectors.slice(0, 2), ['17x', '17']);
-    assert.equal(f7.sectors.at(-1), 'D9x');
-    const selected = toggleSector([], 'F7:D9x', records);
+    assert.deepEqual(groups(records).flatMap(group => group.items), [records[0], records[2]]);
+    assert.deepEqual(toggleSector([], 'F6:17x'), []);
+    assert.deepEqual(toggleSector([], 'F7:EN'), []);
+    const selected = toggleSector([], 'F7:D9x');
     assert.deepEqual(groups(records, { sectors: selected }).flatMap(group => group.items), [records[2]]);
-    assert.deepEqual(groups(records, { sectors: ['F6:D9x'] }).flatMap(group => group.items), []);
 });
 
 test('distingue aba vazia válida de resposta quebrada ou com colunas deslocadas', async () => {

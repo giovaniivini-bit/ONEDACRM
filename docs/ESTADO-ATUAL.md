@@ -1,5 +1,23 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — setores oficiais por parte
+
+O gráfico, a seleção de setores e os grupos de cards usam a sequência oficial de
+cada parte. Linhas com setores de outro fluxo continuam na fonte e ficam fora do
+gráfico e dos grupos. Cobertura de regressão com 17x na F6 e EN na F7.
+271 testes passaram no checkout.
+
+## Prog CQ — filtro Semana
+
+Semanas extraídas do início das linhas da coluna K e exibidas em ordem crescente.
+O gráfico e os cards respeitam a seleção. O teste local no Edge confirmou seleção,
+limpeza e layout de 390 px. A suíte passou com 271 testes.
+
+## Prog CQ — ordem dos setores por parte (26/11/2026)
+
+A sequência de F6 começa em EN, IS, 17, e a de F7 em 17x, D9x, B8x.
+Gráfico e grupos de cards usam a mesma ordem. Sequências completas em PROG-CQ.md.
+
 ## Prog CQ — disponibilidade de materiais (26/11/2026)
 
 Barras por setor, andamento vazio em cinza e filtros de malha e aviamento.

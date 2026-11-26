@@ -16,9 +16,13 @@ sem Express/React. Planilhas Google Sheets alimentam APIs e snapshots em `data/`
 ## Decisões que devem permanecer
 
 - Prog CQ (22/11/2026): módulo distinto da Prog Feira, com partes F6 e F7,
-  ordenação de setores em docs/PROG-CQ.md. Página1 sincronizada por CSV. C e G
+  ordenação própria por parte em docs/PROG-CQ.md. F6 começa em EN, IS, 17 e F7
+  começa em 17x, D9x, B8x. Página1 sincronizada por CSV. C e G
   definem setor e parte, K traz andamento e M preenchida indica aviamento pendente;
   não herdar regras de negócio D36/Feira. Manter sufixos x dos setores.
+  Mostrar no gráfico e nos grupos apenas os setores oficiais da parte, mesmo
+  se a planilha trouxer outros setores. O filtro Semana usa as semanas das linhas
+  de andamento da coluna K.
 
 - Preservar funcionalidades atuais em qualquer alteração; testar áreas afetadas.
 - Dados operacionais `data.js`, CSVs, índices e `data/*_external.json` não devem ser

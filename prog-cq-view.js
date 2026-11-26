@@ -1,22 +1,24 @@
 (function(root) {
     'use strict';
     root.CRMProgCQView = {
-        render(container, { filters, search, escape: esc, source, loading, image = () => ({}), onPart, onAvailability, onSector, onClear }) {
+        render(container, { filters, search, escape: esc, source, loading, image = () => ({}), onPart, onFilter, onSector, onClear }) {
             const api = root.CRMProgCQ;
             const selected = filters.sectors;
             const items = source?.records || [];
-            const parts = api.partsFor(items);
+            const parts = api.PARTS;
+            const weeks = api.availableWeeks(items);
+            const week = weeks.includes(filters.week) ? filters.week : 'all';
             const filtered = api.filterAvailability(items, filters);
-            const visible = api.groups(items, { ...filters, search }).map(group => ({
+            const visible = api.groups(items, { ...filters, search, week }).map(group => ({
                 ...group, items: api.filterAvailability(group.items, filters)
             }));
-            const counts = new Map(api.groups(filtered, { search }).map(group => [group.key, group.items.length]));
-            const availabilitySelect = (key, label, options) => `<label class="prog-feira-parallel-filter"><span>${label}</span><select data-cq-availability="${key}">${options.map(([value, text]) => `<option value="${value}" ${(filters[key] || 'all') === value ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
+            const counts = new Map(api.groups(filtered, { search, week }).map(group => [group.key, group.items.length]));
+            const filterSelect = (key, label, options, selectedValue = filters[key] || 'all') => `<label class="prog-feira-parallel-filter"><span>${label}</span><select aria-label="${label}" data-cq-filter="${key}">${options.map(([value, text]) => `<option value="${value}" ${selectedValue === value ? 'selected' : ''}>${text}</option>`).join('')}</select></label>`;
             const status = loading ? 'Carregando planilha' : !source ? 'Planilha indisponível'
                 : source.isLive === false ? 'Exibindo última sincronização' : 'Dados sincronizados';
             const card = item => {
                 const photo = image(item.codigo, item.numero);
-                const andamento = item.andamentoPedido?.trim();
+                const andamento = api.orderProgressForWeek(item.andamentoPedido, week).trim();
                 return `<article class="prog-feira-card prog-cq-card">
                     <div class="prog-feira-card-top"><strong>${esc(item.codigo)}</strong>${item.numero ? `<span>OF ${esc(item.numero)}</span>` : ''}</div>
                     <div class="prog-feira-media">${photo.hasImage ? `<img class="prog-feira-image" src="${esc(photo.thumbUrl)}" data-cq-image-fallback="${esc(photo.proxyUrl || '')}" alt="${esc(item.codigo)}" loading="lazy"><span class="prog-feira-image-empty" hidden>Imagem indisponível</span>` : '<span class="prog-feira-image-empty">Imagem indisponível</span>'}</div>
@@ -32,8 +34,9 @@
                 <div class="table-card prog-cq-source" role="status"><strong>${status}</strong> <a class="exec-action-btn" href="${esc(api.SOURCE.url)}" target="_blank" rel="noopener noreferrer">Abrir planilha Prog CQ</a></div>
                 <div class="prog-feira-toolbar">
                     <label class="prog-feira-parallel-filter"><span>Parte</span><select data-cq-part aria-label="Parte Prog CQ"><option value="all" ${filters.part === 'all' ? 'selected' : ''}>Todas as partes</option>${parts.map(part => `<option value="${part.code}" ${filters.part === part.code ? 'selected' : ''}>Parte ${part.code}</option>`).join('')}</select></label>
-                    ${availabilitySelect('mesh', 'Situação malha', [['all','Todas'],['available','Tem malha'],['missing','Sem malha'],['unknown','Não informada']])}
-                    ${availabilitySelect('trims', 'Aviamento', [['all','Todos'],['available','Com aviamento'],['missing','Sem aviamento']])}
+                    ${filterSelect('mesh', 'Situação malha', [['all','Todas'],['available','Tem malha'],['missing','Sem malha'],['unknown','Não informada']])}
+                    ${filterSelect('trims', 'Aviamento', [['all','Todos'],['available','Com aviamento'],['missing','Sem aviamento']])}
+                    ${filterSelect('week', 'Semana', [['all', 'Todas'], ...weeks.map(value => [value, value])], week)}
                     <div class="prog-feira-sector-selection"><strong>Setores:</strong><span>${selected.length ? selected.map(esc).join(', ') : 'Todos'}</span></div>
                     <button type="button" class="filter-clear-btn" data-cq-clear>Limpar filtros</button>
                 </div>
@@ -61,10 +64,8 @@
                 </section>
             </section>`;
             container.querySelector('[data-cq-part]').addEventListener('change', event => onPart(event.target.value));
-            container.querySelectorAll('[data-cq-availability]').forEach(select => {
-                if (select.dataset.cqAvailability) {
-                    select.addEventListener('change', () => onAvailability(select.dataset.cqAvailability, select.value));
-                }
+            container.querySelectorAll('[data-cq-filter]').forEach(select => {
+                select.addEventListener('change', () => onFilter(select.dataset.cqFilter, select.value));
             });
             container.querySelector('[data-cq-clear]').addEventListener('click', onClear);
             container.querySelectorAll('[data-cq-sector]').forEach(button => button.addEventListener('click', () => onSector(button.dataset.cqSector)));

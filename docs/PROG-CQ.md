@@ -5,8 +5,8 @@
 Novo módulo em Controle de Qualidade, com padrão visual da Prog Feira.
 Partes, nesta ordem (definidas em 26/11/2026):
 
-- Parte F6: 17x, 17, D9x, B8x, D11, B9x, E7x, E8x, E9x, E5x.
-- Parte F7: EN, IS, 17, D9, B8, D10, B9, E7, E8, E9, E5.
+- Parte F6: EN, IS, 17, D9, B8, D10, B9, E7, E8, E9, E5.
+- Parte F7: 17x, D9x, B8x, D11, B9x, E7x, E8x, E9x, E5x.
 
 A mesma configuração ordena os gráficos horizontais e os grupos verticais.
 Seleção múltipla por união, identificada por parte:setor. Filtro de parte e
@@ -15,9 +15,10 @@ limpeza disponíveis. Não tratar 17 e 17x como o mesmo setor.
 ## Planilha conectada
 
 A fonte é a aba Página1 da planilha Prog CQ. A integração usa o cache do CRM e
-o comando Sincronizar Sheets. Cada linha válida de Parte F6 ou F7 gera um card,
-agrupado pelo setor da coluna C e pela parte da coluna G. Setores adicionais da
-fonte entram no fim da lista da parte. F6 inclui o setor 17, distinto de 17x.
+o comando Sincronizar Sheets. As linhas das partes F6 e F7 são agrupadas pelo
+setor da coluna C e pela parte da coluna G. O gráfico, a seleção e os cards
+mostram somente os setores previstos na sequência oficial da parte. A importação
+conserva as linhas fora do fluxo no cache.
 
 | Coluna | Uso |
 | --- | --- |
@@ -39,3 +40,8 @@ e depósito são considerados outros setores, ainda que o nome cite tinturaria.
 Andamento sem setor informado fica separado como situação desconhecida. A coluna
 M preenchida indica falta de aviamento. As barras contam registros após o filtro
 de materiais, por parte, e continuam servindo para selecionar setores.
+
+O filtro Semana lista os códigos de quatro dígitos do início das linhas da coluna K,
+em ordem crescente e sem duplicatas, para as duas partes. A seleção combina com os
+demais filtros e atualiza o gráfico. Um card com pedidos de semanas diferentes é
+exibido quando tem pedido na semana selecionada e mostra os andamentos dessa semana.

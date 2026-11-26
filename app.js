@@ -64,7 +64,7 @@
         costuraSelectedWeek: '',
         progFeiraImagesOnly: false,
         progCQExternalData: null,
-        progCQFilters: { part: 'all', sectors: [], mesh: 'all', trims: 'all' },
+        progCQFilters: { part: 'all', sectors: [], mesh: 'all', trims: 'all', week: 'all' },
         progFeiraTrimForecast: 'all',
         progFeiraSectors: [],
         progFeiraStylist: 'all',
@@ -1960,17 +1960,17 @@
                     source: state.progCQExternalData, loading: !state.externalSheetsLoaded,
                     image: (codigo, numero) => getProductImage(codigo, numero),
                     onPart: part => { state.progCQFilters.part = part; renderActiveView(); container.querySelector('[data-cq-part]')?.focus(); },
-                    onAvailability: (field, value) => {
+                    onFilter: (field, value) => {
                         state.progCQFilters[field] = value;
                         renderActiveView();
-                        container.querySelector(`[data-cq-availability="${field}"]`)?.focus();
+                        container.querySelector(`[data-cq-filter="${field}"]`)?.focus();
                     },
                     onSector: key => {
-                        state.progCQFilters.sectors = window.CRMProgCQ.toggleSector(state.progCQFilters.sectors, key, state.progCQExternalData?.records);
+                        state.progCQFilters.sectors = window.CRMProgCQ.toggleSector(state.progCQFilters.sectors, key);
                         renderActiveView();
                         Array.from(container.querySelectorAll('[data-cq-sector]')).find(button => button.dataset.cqSector === key)?.focus();
                     },
-                    onClear: () => { state.progCQFilters = { part: 'all', sectors: [], mesh: 'all', trims: 'all' }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
+                    onClear: () => { state.progCQFilters = { part: 'all', sectors: [], mesh: 'all', trims: 'all', week: 'all' }; renderActiveView(); container.querySelector('[data-cq-clear]')?.focus(); }
                 });
                 container.querySelectorAll('[data-cq-image-fallback]').forEach(img => {
                     const recoverImage = () => {
