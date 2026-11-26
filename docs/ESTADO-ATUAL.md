@@ -6,7 +6,9 @@ Fonte Página1 conectada ao sincronizador. Parte G e setor C agrupam cards.
 Coluna K traz andamento do pedido multilinha. M preenchida ativa AV. PENDENTE CQ.
 F6 mostra 17 separado de 17x. O código integral resolve imagem pela base do CRM.
 CSV real conferido com 121 registros e 94 pendências de aviamento.
-A suíte completa passou com 269 testes.
+A suíte completa passou com 269 testes no checkout e na VPS. Publicado em e0a78d8.
+O navegador em produção conferiu 121 cards, 94 tarjas, textos de K e filtros por parte/setor.
+A publicação preservou 1.079 arquivos operacionais.
 
 
 ## Prog CQ — agrupamento por parte (26/11/2026)
