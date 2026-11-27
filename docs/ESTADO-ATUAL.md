@@ -1,11 +1,19 @@
 # Estado atual — Oneda CRM
 
+## Prog CQ — grade de impressão em tamanho fixo
+
+A grade ocupa a área útil da folha, em quatro colunas e duas linhas, sem reduzir
+as imagens por causa do texto. Somente o bloco de detalhes de um card pode ser
+compactado. Edge e Poppler confirmaram dimensões iguais nas folhas de 2, 4 e 8
+cards, com o andamento completo. 275 testes passaram no checkout.
+
 ## Prog CQ — margens do PDF
 
 A impressão usa uma área segura de largura fixa e quatro colunas. Dois e quatro
 cards ocupam a mesma largura por coluna. Margens internas protegem as bordas
 superior e inferior. Edge e Poppler confirmaram três folhas com 2, 4 e 8 cards,
-incluindo descrição longa e andamento completo. 275 testes no checkout.
+incluindo descrição longa e andamento completo. Publicado em 48ecfbd.
+275 testes passaram na VPS, e o PDF F7 em produção manteve as margens.
 
 ## Prog CQ — ordem de compra
 

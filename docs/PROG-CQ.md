@@ -53,9 +53,10 @@ cards que correspondem aos filtros da tela, com título de parte e setor por
 folha. Imagens continuam proporcionais à largura do card e os dados do card
 são preservados, incluindo dias parados, andamento e pendência de aviamento.
 A impressão aguarda as imagens e tenta a fonte alternativa em caso de erro.
-A largura é limitada à área segura da folha, com quatro colunas fixas mesmo
-quando uma página tem menos cards. Margens internas protegem cabeçalho e
-rodapé. Para conteúdo extenso, a escala considera largura e altura disponíveis.
+A grade fixa de quatro colunas por duas linhas ocupa a área útil da folha.
+Páginas incompletas conservam o mesmo tamanho de card e de imagem. As margens
+internas protegem as bordas do papel. Quando um card contém mais detalhes do
+que cabem no espaço reservado, somente os detalhes daquele card são reduzidos.
 
 Na tela e no PDF, o cabeçalho mostra o código à esquerda, a primeira semana
 da coluna K no centro e a OF em destaque à direita. A semana do cabeçalho

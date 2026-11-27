@@ -187,29 +187,29 @@ test('Prog CQ espera a foto alternativa e invalida o pedido se a impressão já 
     assert.equal(context.window.crmGeneratePDFReport.pending, false);
 });
 
-test('Prog CQ fits print content inside its centered frame and vertical padding', () => {
+test('Prog CQ fits only the details of cards whose content exceeds its slot', () => {
     const vm = require('node:vm');
-    const source = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-    const start = source.indexOf('function prepareProgGalleryPrint()');
-    const end = source.indexOf("\n    window.addEventListener('keydown'", start);
-    const props = new Map();
-    const page = {
-        parentElement:{clientWidth:1000, clientHeight:700},
-        style:{setProperty:(name,value)=>props.set(name,value),removeProperty:name=>props.delete(name)},
-        scrollWidth:1100, scrollHeight:800,
-        getBoundingClientRect:()=>({width:1000,height:600})
+    const context = {window:{}};
+    vm.runInNewContext(fs.readFileSync(path.join(root, 'prog-cq-view.js'), 'utf8'), context);
+
+    const fitFrame = (height, scaledHeight) => {
+        const properties = new Map();
+        return {
+            properties, clientHeight:100,
+            style:{setProperty:(name, value) => properties.set(name, value), removeProperty:name => properties.delete(name)},
+            firstElementChild:{
+                scrollHeight:height,
+                getBoundingClientRect:()=>({width:200, height:properties.has('--prog-cq-detail-scale') ? scaledHeight : height})
+            }
+        };
     };
-    const view = {};
-    const context = {
-        state:{activeSubmodule:'prog-cq'},
-        document:{body:{classList:{add(){}}},querySelector:()=>view,querySelectorAll:()=>[page]},
-        window:{CRMProgCQView:{preparePrint(){}},getComputedStyle:()=>({paddingTop:'40px',paddingBottom:'40px'})}
-    };
-    vm.runInNewContext(source.slice(start,end),context);
-    context.prepareProgGalleryPrint();
-    assert.equal(Number(props.get('--prog-print-scale')), 618/800);
-    assert.equal(props.has('--prog-print-width'),false);
-    page.scrollHeight=600;
-    context.prepareProgGalleryPrint();
-    assert.equal(Number(props.get('--prog-print-scale')), 1000/1200);
+    const compact = fitFrame(60, 60);
+    const long = fitFrame(190, 99);
+    context.window.CRMProgCQView.fitPrint({ querySelectorAll:selector => {
+        assert.equal(selector, '.prog-cq-print-details');
+        return [compact,long];
+    } });
+    assert.equal(compact.properties.size,0);
+    assert.deepEqual([...long.properties.keys()], ['--prog-cq-detail-scale']);
+    assert.equal(Number(long.properties.get('--prog-cq-detail-scale')), 0.5 * 95 / 99);
 });

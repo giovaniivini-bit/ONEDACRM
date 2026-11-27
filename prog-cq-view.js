@@ -39,6 +39,11 @@
                 grid.className = 'prog-feira-grid';
                 for (const card of batch) {
                     const copy = card.cloneNode(true);
+                    const details = doc.createElement('div');
+                    details.className = 'prog-cq-print-details';
+                    const body = copy.querySelector('.prog-feira-card-body');
+                    body.replaceWith(details);
+                    details.appendChild(body);
                     const img = copy.querySelector('img[data-fallback-src]');
                     if (img && !img.hidden) {
                         img.loading = 'eager';
@@ -55,8 +60,31 @@
         view.appendChild(report);
     }
 
+    function fitPrint(view) {
+        const details = [...view.querySelectorAll('.prog-cq-print-details')];
+        for (const frame of details) {
+            frame.style.removeProperty('--prog-cq-detail-scale');
+        }
+        for (const frame of details) {
+            const body = frame.firstElementChild;
+            const bounds = body.getBoundingClientRect();
+            if (!frame.clientHeight || !bounds.height) continue;
+            const height = Math.max(bounds.height, body.scrollHeight);
+            const availableHeight = Math.max(1, frame.clientHeight - 5);
+            const scale = Math.min(1, availableHeight / height);
+            if (scale < 1) {
+                frame.style.setProperty('--prog-cq-detail-scale', String(scale));
+                const scaledHeight = body.getBoundingClientRect().height;
+                if (scaledHeight > availableHeight) {
+                    frame.style.setProperty('--prog-cq-detail-scale', String(scale * availableHeight / scaledHeight));
+                }
+            }
+        }
+    }
+
     root.CRMProgCQView = {
         preparePrint,
+        fitPrint,
         render(container, { filters, search, escape: esc, source, feiraDays, loading, image = () => ({}), onPart, onFilter, onSector, onClear }) {
             const api = root.CRMProgCQ;
             const selected = filters.sectors;

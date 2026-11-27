@@ -4316,15 +4316,16 @@
 
     function prepareProgGalleryPrint() {
         if (!['prog-feira', 'prog-cq'].includes(state.activeSubmodule)) return;
+        document.body.classList.add('print-prog-feira','print-gallery-report');
         if (state.activeSubmodule === 'prog-cq') {
             const view = document.querySelector('.prog-cq-view');
-            if (!view) return;
-            window.CRMProgCQView.preparePrint(view);
+            if (view) {
+                window.CRMProgCQView.preparePrint(view);
+                window.CRMProgCQView.fitPrint(view);
+            }
+            return;
         }
-        document.body.classList.add('print-prog-feira','print-gallery-report');
-        const isProgCQ = state.activeSubmodule === 'prog-cq';
-        const selector = isProgCQ ? '.prog-cq-print-sheet' : '.prog-feira-print-page';
-        const pages = [...document.querySelectorAll(selector)];
+        const pages = [...document.querySelectorAll('.prog-feira-print-page')];
         pages.forEach(page=>{
             page.style.removeProperty('--prog-print-scale');
             page.style.removeProperty('--prog-print-width');
@@ -4335,18 +4336,8 @@
             const bounds = page.getBoundingClientRect();
             if (!bounds.width || !bounds.height) return;
             const height = Math.max(bounds.height, page.scrollHeight);
-            let availableHeight = feiraHeight;
-            let widthScale = 1;
-            if (isProgCQ) {
-                const frame = page.parentElement;
-                const padding = window.getComputedStyle(frame);
-                availableHeight = frame.clientHeight - parseFloat(padding.paddingTop) - parseFloat(padding.paddingBottom) - 2;
-                // The sheet stays centered, so horizontal overflow needs space on both sides.
-                const overflow = Math.max(0, page.scrollWidth - bounds.width);
-                widthScale = frame.clientWidth / (bounds.width + 2 * overflow);
-            }
-            if (!isProgCQ) page.style.setProperty('--prog-print-width', `${bounds.width}px`);
-            page.style.setProperty('--prog-print-scale', String(Math.min(1, widthScale, availableHeight / height)));
+            page.style.setProperty('--prog-print-width', `${bounds.width}px`);
+            page.style.setProperty('--prog-print-scale', String(Math.min(1, feiraHeight / height)));
         });
     }
     window.addEventListener('keydown', event => {
