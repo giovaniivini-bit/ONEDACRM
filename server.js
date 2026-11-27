@@ -176,7 +176,14 @@ function validateCalendarRecords(records) {
     const currentYear = new Date().getFullYear();
     const weeksByCycle = new Map();
     const seenWeeks = new Set();
-    const contentRows = records.filter(row => Object.values(row).some(value => String(value || '').trim()));
+    const cqHeadingColumn = 16; // Q
+    const contentRows = records.filter(row => {
+        const cells = Object.values(row).map(value => String(value || '').trim());
+        const populated = cells.flatMap((value, index) => value ? [index] : []);
+        if (populated.length !== 1 || populated[0] !== cqHeadingColumn) return populated.length > 0;
+
+        return normalizeHeader(cells[cqHeadingColumn]) !== 'datalimiteenviocqsem';
+    });
     const validRows = contentRows.filter(row => {
         const values = Object.values(row);
         const week = String(values[0] || '').trim();

@@ -1,5 +1,12 @@
 # Estado atual — Oneda CRM
 
+## Calendário Industrial — sincronização (27/11/2026)
+
+O CRM usava o cache de 19/11 porque o export novo inclui o título auxiliar
+«Data limite envio CQ SEM» em Q2. Essa linha isolada passou a ser reconhecida
+e ignorada no calendário de Alertas. A planilha estava com 58 semanas válidas.
+As demais nove fontes responderam com dados atuais no diagnóstico.
+
 ## Prog CQ — grade de impressão em tamanho fixo
 
 A grade ocupa a área útil da folha, em quatro colunas e duas linhas, sem reduzir

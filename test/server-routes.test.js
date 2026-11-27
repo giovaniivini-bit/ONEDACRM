@@ -275,6 +275,12 @@ test('validates the industrial calendar before it can replace the cache', () => 
     // The next industrial cycle is published gradually while the current remains complete.
     const nextCycle = validRows.slice(3,9).map(row=>({...row,SEMANA:'27'+row.SEMANA.slice(2)}));
     assert.equal(validateCalendarRecords([...embeddedLimitRows,...nextCycle]).length,46);
+    const addCqColumn = row => ({ ...row, 'Quantidade dias SETOR M00': '', 'Quantidade dias SETOR M02': '', '': '' });
+    const calendarWithCqColumn = [...embeddedLimitRows, ...nextCycle].map(addCqColumn);
+    const cqHeadingRow = { ...Object.fromEntries(Object.keys(calendarWithCqColumn[0]).map(key => [key, ''])), '': 'Data limite envio CQ SEM' };
+    assert.deepEqual(validateCalendarRecords([cqHeadingRow, ...calendarWithCqColumn]), calendarWithCqColumn);
+    assert.throws(() => validateCalendarRecords([{ ...cqHeadingRow, '': 'Texto não relacionado' }, ...calendarWithCqColumn]), /inválido/);
+    assert.throws(() => validateCalendarRecords([{ ...cqHeadingRow, SEMANA:'2704' }, ...calendarWithCqColumn]), /inválido/);
     assert.throws(()=>validateCalendarRecords([...embeddedLimitRows,{...nextCycle[0],'Data limite para setor 13':'31/fev.'}]),/inválido/);
     assert.throws(()=>validateCalendarRecords([...embeddedLimitRows,nextCycle[0],{...nextCycle[0]}]),/inválido/);
     assert.throws(()=>validateCalendarRecords([...embeddedLimitRows.slice(0,25),...validRows.slice(25).map(row=>({...row,SEMANA:'27'+row.SEMANA.slice(2)}))]),/inválido/);
